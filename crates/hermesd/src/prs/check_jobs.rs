@@ -149,6 +149,7 @@ pub async fn dispatch(app: &Arc<AppState>, project: &str) -> anyhow::Result<()> 
         let needs = needs_of(&check.needs, &check.run);
         match route(&needs, check.machine.as_deref(), &machines, limits) {
             Route::Wait(why) => note(app, check, &why),
+            Route::Unroutable(why) => super::check_unroutable::mark(app, check, &why),
             Route::To(name) => {
                 let Some(m) = machines.iter_mut().find(|m| m.name == name) else {
                     continue;
@@ -164,6 +165,7 @@ pub async fn dispatch(app: &Arc<AppState>, project: &str) -> anyhow::Result<()> 
             }
         }
     }
+    super::check_unroutable::tell_devops(app, project);
     Ok(())
 }
 

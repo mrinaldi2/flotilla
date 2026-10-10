@@ -37,6 +37,7 @@ pub(crate) fn weight(kind: AttentionKind) -> u32 {
         AttentionKind::P0Item
         | AttentionKind::ServingOff
         | AttentionKind::PrMergeStuck
+        | AttentionKind::CheckUnroutable
         | AttentionKind::DiskLow => 2,
         AttentionKind::RelayedRulings
         | AttentionKind::BotWaiting

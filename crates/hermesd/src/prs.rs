@@ -11,6 +11,7 @@ pub mod check_model;
 pub mod check_remote;
 pub mod check_rerun;
 pub mod check_route;
+pub mod check_unroutable;
 pub mod checks;
 pub mod comments;
 pub mod diff;

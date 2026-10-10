@@ -1,7 +1,9 @@
 //! Where a queued check runs (H-283, H-261 §7): a computer whose probed
 //! tools cover the check's `needs`, that matches its `machine` if it names
 //! one, is online, has room under the per-machine cap and isn't short of
-//! disk. The least busy wins, this computer first on a tie.
+//! disk. The least busy wins, this computer first on a tie. When no
+//! computer that reported its tools could ever run it, online or not, the
+//! check is unroutable (H-318) rather than waiting for nothing.
 
 use std::collections::BTreeMap;
 
@@ -23,11 +25,14 @@ pub struct Machine {
     pub online: bool,
 }
 
-/// What a check gets: a computer, or why it waits.
+/// What a check gets: a computer, why it waits, or why none can run it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Route {
     To(String),
     Wait(String),
+    /// No reported computer has its tools on its `machine` (H-318). It
+    /// stays queued: the next probe may change that.
+    Unroutable(String),
 }
 
 /// Limits every computer is held to.
@@ -89,7 +94,7 @@ pub fn route(
         (false, None) => format!("a computer with {}", needs.join(", ")),
     };
     if able.is_empty() {
-        return Route::Wait(format!("waiting for {what}: none has reported one"));
+        return Route::Unroutable(unroutable(needs, machine, machines));
     }
     let online: Vec<&Machine> = able.iter().copied().filter(|m| m.online).collect();
     if online.is_empty() {
@@ -118,6 +123,39 @@ pub fn route(
                 limits.jobs_per_machine
             ))
         })
+}
+
+/// "no computer can run this: needs cargo on a mac computer; mac has node,
+/// python3, xcodebuild".
+fn unroutable(needs: &[String], machine: Option<&str>, machines: &[Machine]) -> String {
+    let wants = match (needs.is_empty(), machine) {
+        (true, Some(want)) => format!("a {want} computer"),
+        (false, Some(want)) => format!("{} on a {want} computer", needs.join(", ")),
+        (_, None) => needs.join(", "),
+    };
+    let has: Vec<String> = machines
+        .iter()
+        .map(|m| {
+            let tools: Vec<&str> = m
+                .tools
+                .keys()
+                .map(String::as_str)
+                .filter(|t| *t != OS && *t != DISK_FREE_GB)
+                .collect();
+            match m.tools.get(OS) {
+                Some(os) if tools.is_empty() => format!("{} ({os}) has none", m.name),
+                Some(os) => format!("{} ({os}) has {}", m.name, tools.join(", ")),
+                None if tools.is_empty() => format!("{} has none", m.name),
+                None => format!("{} has {}", m.name, tools.join(", ")),
+            }
+        })
+        .collect();
+    let has = if has.is_empty() {
+        "no computer has reported its tools yet".to_string()
+    } else {
+        has.join("; ")
+    };
+    format!("no computer can run this: needs {wants}; {has}")
 }
 
 /// A computer that never reported its disk isn't held back by it here: its

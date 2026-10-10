@@ -62,6 +62,17 @@ impl CheckResult {
     }
 }
 
+/// A required check no computer can run (H-318), one per check name.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Unroutable {
+    pub name: String,
+    /// The oldest time one on an open PR's head was found so.
+    pub since: DateTime<Utc>,
+    pub note: String,
+    /// The newest open PR it holds up.
+    pub pr: u32,
+}
+
 /// A check to queue on a head: its `checks.toml` entry at the base.
 #[derive(Debug, Clone, PartialEq)]
 pub struct NewCheck {
@@ -99,6 +110,8 @@ pub struct CheckRun {
     pub queued_at: DateTime<Utc>,
     pub started_at: Option<DateTime<Utc>>,
     pub finished_at: Option<DateTime<Utc>>,
+    /// Queued with no computer that could ever run it since then (H-318).
+    pub unroutable_since: Option<DateTime<Utc>>,
     /// Set when this result is another commit's with the same tree, which
     /// counts for this one (§1.5): that commit.
     pub tree_of: Option<String>,
@@ -114,6 +127,7 @@ impl CheckRun {
             "log_url": self.log_artifact, "tool_versions": self.tool_versions,
             "started_at": self.started_at, "finished_at": self.finished_at,
             "tree_of": self.tree_of.clone().unwrap_or_default(),
+            "unroutable": self.unroutable_since.is_some(),
         })
     }
 }

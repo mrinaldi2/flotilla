@@ -117,7 +117,7 @@ fn the_cap_and_the_disk_floor_hold_a_check_back() {
 }
 
 #[test]
-fn an_offline_or_missing_computer_makes_the_check_wait() {
+fn an_offline_computer_makes_the_check_wait() {
     let mut team = team();
     team[2].online = false;
     let offline = route(&needs(&["cargo"]), Some("windows"), &team, LIMITS);
@@ -125,10 +125,56 @@ fn an_offline_or_missing_computer_makes_the_check_wait() {
         offline,
         Route::Wait("waiting for win-pc to come online".into())
     );
+}
+
+/// H-318 AC1: no reported computer has the tool, online or not: unroutable,
+/// naming what is missing and what each computer has.
+#[test]
+fn a_tool_no_computer_reported_is_unroutable() {
+    let mut team = team();
+    team[1].online = false;
     let none = route(&needs(&["swift"]), None, &team, LIMITS);
+    let Route::Unroutable(why) = &none else {
+        panic!("{none:?}");
+    };
     assert!(
-        matches!(&none, Route::Wait(w) if w.contains("none has reported")),
-        "{none:?}"
+        why.starts_with("no computer can run this: needs swift; "),
+        "{why}"
+    );
+    assert!(
+        why.contains("imac (macos) has cargo, python3, xcodebuild"),
+        "{why}"
+    );
+    assert!(why.contains("win-pc (windows) has cargo"), "{why}");
+    assert!(!why.contains(DISK_FREE_GB), "{why}");
+    // Only offline, the Mac's pnpm is still a wait.
+    assert_eq!(
+        route(&needs(&["pnpm"]), None, &team, LIMITS),
+        Route::Wait("waiting for mac to come online".into())
+    );
+    let nobody = route(&needs(&["cargo"]), None, &[], LIMITS);
+    assert_eq!(
+        nobody,
+        Route::Unroutable(
+            "no computer can run this: needs cargo; no computer has reported its tools yet".into()
+        )
+    );
+}
+
+/// H-318 AC1: a Windows check where only Macs report is unroutable.
+#[test]
+fn a_windows_check_with_only_macs_reporting_is_unroutable() {
+    let macs: Vec<Machine> = team().into_iter().take(2).collect();
+    let why = route(&needs(&["cargo"]), Some("windows"), &macs, LIMITS);
+    assert!(
+        matches!(&why, Route::Unroutable(w)
+            if w.starts_with("no computer can run this: needs cargo on a windows computer; ")),
+        "{why:?}"
+    );
+    let bare = route(&[], Some("windows"), &macs, LIMITS);
+    assert!(
+        matches!(&bare, Route::Unroutable(w) if w.contains("needs a windows computer")),
+        "{bare:?}"
     );
 }
 

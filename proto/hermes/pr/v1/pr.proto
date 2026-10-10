@@ -192,6 +192,10 @@ message CheckRun {
   map<string, string> tool_versions = 10;   // "cargo" → "1.99.0"
   // Ran on another commit with the same tree, which counts (§1.5).
   string tree_of = 11;                      // that commit; empty = this sha
+  // Queued, and no computer that reported its tools can run it (H-318):
+  // "No computer can run this" with the note, instead of "queued".
+  bool unroutable = 12;
+  string note = 13;                         // why it waits, or how it ended; empty = none
 }
 
 message Blocker {

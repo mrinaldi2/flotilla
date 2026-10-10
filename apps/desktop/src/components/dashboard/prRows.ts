@@ -2,7 +2,8 @@
 // H-269, H-284): "Review pull request #42 · H-247 …" once the bots have
 // approved, "Re-check #45 …" after a change since you approved, which opens
 // only that delta, and the merge rows: waiting for DevOps, and main moved
-// outside the merge gate. Several PRs are one row each: no bulk approve.
+// outside the merge gate, and a required check no computer can run (H-318).
+// Several PRs are one row each: no bulk approve.
 
 import type { AttentionRowJson } from "../../protocol/dashboard";
 import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
@@ -88,6 +89,19 @@ export function prRow(r: AttentionRowJson, a: PrRowActions): RowViewProps | unde
         glyph: "⏸",
         title: r.title,
         meta: "Waiting for DevOps to merge it",
+        action: go.ok ? "Open" : undefined,
+        label: `Open pull request #${r.pr_number ?? ""}`,
+        onAction: go.onAction,
+        verb: "Open",
+      };
+    }
+    case "check_unroutable": {
+      const go = open(a, r.pr_number, false);
+      return {
+        glyph: "⚠",
+        tone: "bad",
+        title: r.title,
+        meta: "Install the tool on a computer, or change the check's needs in a PR",
         action: go.ok ? "Open" : undefined,
         label: `Open pull request #${r.pr_number ?? ""}`,
         onAction: go.onAction,

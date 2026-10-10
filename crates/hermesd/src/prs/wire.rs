@@ -177,6 +177,8 @@ pub fn check(app: &dyn Names, c: &Value) -> p::CheckRun {
             .filter_map(|(k, v)| Some((k.clone(), v.as_str()?.to_string())))
             .collect(),
         tree_of: text(c, "tree_of"),
+        unroutable: flag(c, "unroutable"),
+        note: text(c, "note"),
     }
 }
 

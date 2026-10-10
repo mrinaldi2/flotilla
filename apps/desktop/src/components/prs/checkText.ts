@@ -28,7 +28,18 @@ export function checkResult(check: CheckRun): {
   readonly word: string;
   readonly tone: Tone;
 } {
+  if (unroutableNote(check) !== "") {
+    return { glyph: "⚠", word: "No computer can run this", tone: "warn" };
+  }
   return RESULTS[check.result];
+}
+
+/** Why no computer can run a queued check (H-318), or "" when one can. */
+export function unroutableNote(check: CheckRun): string {
+  if (!check.unroutable || check.result !== CheckResult.QUEUED) {
+    return "";
+  }
+  return check.note.replace(/^no computer can run this: /, "") || "no computer has its tools";
 }
 
 /** "mac · 14m", "win-pc", "waiting for a computer". */
@@ -66,8 +77,12 @@ export function checksSummary(checks: readonly CheckRun[]): {
   const count = (result: CheckResult): number => checks.filter((c) => c.result === result).length;
   const failed = count(CheckResult.FAIL);
   const errored = count(CheckResult.ERROR);
+  const unroutable = checks.filter((c) => unroutableNote(c) !== "").length;
   const pending =
-    count(CheckResult.RUNNING) + count(CheckResult.QUEUED) + count(CheckResult.UNSPECIFIED);
+    count(CheckResult.RUNNING) +
+    count(CheckResult.QUEUED) +
+    count(CheckResult.UNSPECIFIED) -
+    unroutable;
   if (checks.length === 0) {
     return { text: "○ No checks yet", tone: "dim" };
   }
@@ -76,6 +91,12 @@ export function checksSummary(checks: readonly CheckRun[]): {
   }
   if (errored > 0) {
     return { text: `⚠ ${plural(errored, "check", "checks")} couldn't run`, tone: "warn" };
+  }
+  if (unroutable > 0) {
+    return {
+      text: `⚠ No computer can run ${plural(unroutable, "check", "checks")}`,
+      tone: "warn",
+    };
   }
   if (pending > 0) {
     return { text: "◌ Checks running", tone: "dim" };

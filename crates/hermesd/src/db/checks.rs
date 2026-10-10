@@ -14,7 +14,8 @@ use crate::prs::check_model::{CheckResult, CheckRun, NewCheck, Report};
 pub(super) const COLUMNS: &str =
     "id, project_id, repo, sha, tree, name, run, needs, machine, required,
     result, note, runner, ran_on, log_artifact, tool_versions, queued_at, started_at,
-    finished_at";
+    finished_at,
+    (SELECT since FROM check_unroutable WHERE check_id = id) AS unroutable_since";
 
 pub(super) fn check_row(r: &Row<'_>) -> rusqlite::Result<CheckRun> {
     let opt_ts = |i: usize| -> rusqlite::Result<_> {
@@ -41,6 +42,7 @@ pub(super) fn check_row(r: &Row<'_>) -> rusqlite::Result<CheckRun> {
         queued_at: parse_ts(&r.get::<_, String>(16)?),
         started_at: opt_ts(17)?,
         finished_at: opt_ts(18)?,
+        unroutable_since: opt_ts(19)?,
         tree_of: None,
     })
 }

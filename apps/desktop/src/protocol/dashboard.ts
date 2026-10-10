@@ -110,6 +110,7 @@ export interface AttentionRowJson {
     | "pr_review"
     | "pr_merge_stuck"
     | "main_moved_outside"
+    | "check_unroutable"
     | "cleanup_held"
     | "disk_low";
   readonly id: string;

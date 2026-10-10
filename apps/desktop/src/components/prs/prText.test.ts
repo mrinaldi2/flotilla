@@ -17,7 +17,7 @@ import {
   readyForYouPr,
   waitingPr,
 } from "../../test/prFixtures";
-import { checksSummary, cleanupLine, splitChecks } from "./checkText";
+import { checkResult, checksSummary, cleanupLine, splitChecks, unroutableNote } from "./checkText";
 import {
   age,
   branchMarker,
@@ -130,6 +130,24 @@ describe("checks and cleanup (decision 6, H-261 §15.6)", () => {
       "⚠ 1 check couldn't run",
     );
     expect(checksSummary([]).text).toBe("○ No checks yet");
+  });
+
+  it("says no computer can run a check instead of queued (H-318)", () => {
+    const stuck = create(CheckRunSchema, {
+      name: "rust",
+      result: CheckResult.QUEUED,
+      unroutable: true,
+      note: "no computer can run this: needs cargo on a mac computer; mac has node",
+    });
+    expect(checkResult(stuck)).toMatchObject({ word: "No computer can run this", tone: "warn" });
+    expect(unroutableNote(stuck)).toBe("needs cargo on a mac computer; mac has node");
+    expect(checksSummary([stuck, run(CheckResult.RUNNING)]).text).toBe(
+      "⚠ No computer can run 1 check",
+    );
+    const queued = run(CheckResult.QUEUED);
+    expect(checkResult(queued).word).toBe("queued");
+    expect(unroutableNote(queued)).toBe("");
+    expect(checksSummary([queued]).text).toBe("◌ Checks running");
   });
 
   it("words cleanup as done, running or held", () => {

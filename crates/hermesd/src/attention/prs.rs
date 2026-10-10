@@ -94,3 +94,32 @@ pub(super) fn mains_moved(app: &AppState, b: &mut Builder<'_>) -> anyhow::Result
     }
     Ok(())
 }
+
+/// Required checks no computer can run for an hour (H-318): one row per
+/// check name, for the oldest, pointing at the newest PR it holds up.
+pub(super) fn unroutable_checks(app: &AppState, b: &mut Builder<'_>) -> anyhow::Result<()> {
+    let since = chrono::Utc::now() - crate::prs::check_unroutable::NEEDS_YOU_AFTER;
+    let stuck = app
+        .db
+        .board_read(|t| t.unroutable_checks(b.project_id, since))?;
+    for crate::prs::check_model::Unroutable {
+        name,
+        since: at,
+        note,
+        pr,
+    } in stuck
+    {
+        let part = Part {
+            kind: AttentionKind::CheckUnroutable,
+            target_id: format!("check-{name}"),
+            title: format!(
+                "No computer can run check {name} (PR #{pr}): {}",
+                note.trim_start_matches("no computer can run this: ")
+            ),
+            created_at: at,
+            target: Some(Target::PrNumber(pr)),
+        };
+        b.push(part, weight(AttentionKind::CheckUnroutable), None);
+    }
+    Ok(())
+}
