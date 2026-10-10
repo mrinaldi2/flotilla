@@ -1,0 +1,90 @@
+# .hermes/checks.toml — mrinaldi2/gravity (H-279 draft, Architect 2026-10-10)
+#
+# Read from the PR's BASE (H-270). Each reported head queues the checks whose
+# `paths` match what the PR changes (no `paths` = every change). Results come
+# only from the exit status of `hermesd check run` under daemon:check-runner
+# (H-283). Routing (H-283): a computer whose probed tools cover `needs` (plus
+# the program `run` starts with), matching `machine` if set (a name, or an OS:
+# `mac`/`macos`, `windows`), online, under its cap (2) and above the disk
+# floor. `run` executes with `sh -c` (Unix) or `cmd /C` (Windows) at the
+# repo root of a fresh checkout at the exact sha. Unsaid `required` = true.
+#
+# The iMac has no Node, so anything needing node/pnpm/docker lands on the Mac.
+# These commands mirror scripts/verify.mjs stage by stage.
+
+[[check]]
+name = "rust"
+machine = "mac"
+needs = ["cargo"]
+paths = ["crates/**", "proto/**", "Cargo.toml", "Cargo.lock", "rust-toolchain*", ".hermes/checks.toml"]
+run = "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace --all-targets --no-fail-fast"
+
+[[check]]
+name = "windows"
+machine = "windows"
+needs = ["cargo"]
+paths = ["crates/**", "proto/**", "Cargo.toml", "Cargo.lock", "rust-toolchain*", "apps/desktop/src-tauri/**", "scripts/prepare-sidecar.ps1", ".hermes/checks.toml"]
+run = "cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace -j 2 --no-fail-fast"
+
+[[check]]
+name = "file-length"
+# No paths: cheap, runs on every change. Rust and CSS sources stay <= 400 lines.
+needs = ["node"]
+machine = "mac"
+run = "node -e \"const {execSync}=require('child_process');const fs=require('fs');let bad=0;for(const f of execSync('git ls-files -z -- *.rs *.css').toString().split('\\0').filter(Boolean)){const t=fs.readFileSync(f,'utf8');const n=t.split('\\n').length-(t.endsWith('\\n')?1:0);if(n>400){console.error(f+':'+n);bad=1}}process.exit(bad)\""
+
+[[check]]
+name = "desktop"
+machine = "mac"
+needs = ["node", "pnpm"]
+paths = ["apps/desktop/**", "proto/**", "buf.yaml", "buf.gen.yaml", "pnpm-lock.yaml", ".hermes/checks.toml"]
+run = "pnpm install --frozen-lockfile && pnpm --dir apps/desktop check && pnpm --dir apps/desktop proto:check && pnpm --dir apps/desktop build"
+
+[[check]]
+name = "contract"
+machine = "mac"
+needs = ["node", "pnpm"]
+paths = ["proto/**", "buf.yaml", "buf.gen.yaml"]
+# buf breaking against main; main carries the protos since ADR-001.
+run = "pnpm install --frozen-lockfile && apps/desktop/node_modules/.bin/buf breaking --against '.git#ref=origin/main'"
+
+[[check]]
+name = "tauri"
+machine = "mac"
+needs = ["cargo", "node", "pnpm"]
+paths = ["apps/desktop/src-tauri/**", "scripts/prepare-sidecar.sh", "crates/hermesd/**"]
+run = "HERMES_DEV_BUILD=1 bash scripts/prepare-sidecar.sh && cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --check && cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings && cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml"
+
+[[check]]
+name = "vr"
+machine = "mac"
+needs = ["node", "pnpm", "docker"]
+paths = ["apps/desktop/src/**", "apps/desktop/tests/visual/**", "apps/desktop/.ladle/**", "apps/desktop/package.json"]
+run = "pnpm install --frozen-lockfile && CI=true bash scripts/vr-ci.sh"
+
+[[check]]
+name = "marketing"
+machine = "mac"
+needs = ["node", "pnpm"]
+paths = ["apps/marketing/**"]
+run = "pnpm install --frozen-lockfile && pnpm --dir apps/marketing check"
+
+[[check]]
+name = "notices"
+needs = ["python3"]
+paths = ["Cargo.lock", "pnpm-lock.yaml", "**/package.json", "third-party/**", "scripts/notices.py", "scripts/test_notices.py"]
+run = "python3 scripts/notices.py && python3 -m unittest discover -s scripts -p test_notices.py"
+
+[[check]]
+name = "skills"
+machine = "mac"
+needs = ["node"]
+paths = [".claude/skills/**"]
+run = "node --test .claude/skills/lib/*.test.mjs"
+
+# Docs build (P2 / H-280) is added when MkDocs lands:
+# [[check]]
+# name = "docs"
+# needs = ["mkdocs"]
+# paths = ["docs/**", "mkdocs.yml"]
+# run = "mkdocs build --strict"
