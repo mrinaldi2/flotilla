@@ -173,6 +173,7 @@ pub fn spawn(app: Arc<AppState>) {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
     use std::path::Path;
 
     use super::parse_version;
@@ -245,6 +246,7 @@ mod tests {
     }
 
     /// The test computer itself may have cargo in /usr/bin.
+    #[cfg(unix)]
     fn which_cargo_on_bare_path() -> bool {
         crate::tool_path::which("cargo", std::ffi::OsStr::new("/usr/bin:/bin")).is_some()
     }
