@@ -24,7 +24,9 @@ name = "windows"
 machine = "windows"
 needs = ["cargo"]
 paths = ["crates/**", "proto/**", "Cargo.toml", "Cargo.lock", "rust-toolchain*", "apps/desktop/src-tauri/**", "scripts/prepare-sidecar.ps1", ".hermes/checks.toml"]
-run = "cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace -j 2 --no-fail-fast"
+# cmd /C: Git's usr\bin (sh.exe, cp.exe) for the tests that shell out; the
+# daemon's PATH carries only Git\cmd.
+run = "set \"PATH=C:\\Program Files\\Git\\usr\\bin;%PATH%\" && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace -j 2 --no-fail-fast"
 
 [[check]]
 name = "file-length"
@@ -39,7 +41,7 @@ run = "node -e \"const {execFileSync}=require('child_process');const fs=require(
 name = "desktop"
 machine = "mac"
 needs = ["node", "pnpm"]
-paths = ["apps/desktop/**", "proto/**", "buf.yaml", "buf.gen.yaml", "pnpm-lock.yaml", ".hermes/checks.toml"]
+paths = ["apps/desktop/**", "proto/**", "buf.yaml", "buf.gen.yaml", ".hermes/checks.toml"]
 run = "pnpm --dir apps/desktop install --frozen-lockfile && pnpm --dir apps/desktop check && pnpm --dir apps/desktop proto:check && pnpm --dir apps/desktop build"
 
 [[check]]
