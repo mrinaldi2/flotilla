@@ -16,10 +16,27 @@ use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
 use hermesd::prs::check_model::{CheckResult, CheckRun};
 use serde_json::{json, Value};
 
+/// The `path` check echoes its PATH in the computer's shell: `sh -c` here,
+/// `cmd /C` on Windows, which prints `$PATH` as it is.
+#[cfg(not(windows))]
 const POLICY: &str = r#"
 [[check]]
 name = "path"
 run = "echo \"PATH=$PATH\""
+paths = ["crates/**"]
+
+[[check]]
+name = "desktop"
+run = "true"
+needs = ["pnpm"]
+paths = ["crates/**"]
+"#;
+
+#[cfg(windows)]
+const POLICY: &str = r#"
+[[check]]
+name = "path"
+run = "echo \"PATH=%PATH%\""
 paths = ["crates/**"]
 
 [[check]]

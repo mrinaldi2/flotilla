@@ -156,20 +156,48 @@ fn triple() -> String {
     }
 }
 
-/// `tool` resolved against `path`, as a shell would: `Command::new` looks
-/// a program up on the daemon's own `PATH`, not the child's.
+/// `tool` resolved against `path`, as the runner's shell would: `Command::new`
+/// looks a program up on the daemon's own `PATH`, not the child's. Folder by
+/// folder; on Windows each folder tries the [`pathext`] extensions in order,
+/// as `cmd /C` does (the runner keeps `PATHEXT`), elsewhere the file must be
+/// executable, as `sh` requires.
 pub fn which(tool: &str, path: &OsStr) -> Option<PathBuf> {
     let names: Vec<String> = if cfg!(windows) {
-        ["exe", "cmd"]
+        pathext(std::env::var_os("PATHEXT").as_deref())
             .iter()
-            .map(|e| format!("{tool}.{e}"))
+            .map(|e| format!("{tool}{e}"))
             .collect()
     } else {
         vec![tool.to_string()]
     };
     std::env::split_paths(path)
         .flat_map(|dir| names.iter().map(move |n| dir.join(n)))
-        .find(|p| p.is_file())
+        .find(|p| runnable(p))
+}
+
+/// The extensions `cmd` tries, lower-cased and in order: `PATHEXT`, or cmd's
+/// own default when it is unset or empty.
+pub fn pathext(pathext: Option<&OsStr>) -> Vec<String> {
+    let list = pathext
+        .map(|p| p.to_string_lossy().into_owned())
+        .filter(|p| !p.trim().is_empty())
+        .unwrap_or_else(|| ".COM;.EXE;.BAT;.CMD".into());
+    list.split(';')
+        .map(str::trim)
+        .filter(|e| e.len() > 1 && e.starts_with('.'))
+        .map(str::to_ascii_lowercase)
+        .collect()
+}
+
+#[cfg(unix)]
+fn runnable(p: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::metadata(p).is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
+}
+
+#[cfg(not(unix))]
+fn runnable(p: &Path) -> bool {
+    p.is_file()
 }
 
 #[cfg(test)]

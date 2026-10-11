@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-use super::{default_toolchain, derive, which, Host};
+use super::{default_toolchain, derive, pathext, which, Host};
 
 /// A computer with `dirs` as its real folders and `files` as its files.
 struct Fake {
@@ -161,10 +161,32 @@ mod unix {
         let dir = tempfile::tempdir().unwrap();
         let bin = dir.path().join("bin");
         std::fs::create_dir(&bin).unwrap();
-        std::fs::write(bin.join("cargo"), "").unwrap();
+        exec(&bin.join("cargo"), 0o755);
         let path = std::env::join_paths([Path::new("/nonexistent"), &bin]).unwrap();
         assert_eq!(which("cargo", &path), Some(bin.join("cargo")));
         assert_eq!(which("pnpm", &path), None);
+    }
+
+    /// Architect S1: `sh` skips a file it can't execute, so `which` does too
+    /// rather than reporting it and shadowing the real tool further on.
+    #[test]
+    fn which_skips_a_file_without_the_exec_bit() {
+        let dir = tempfile::tempdir().unwrap();
+        let (first, second) = (dir.path().join("a"), dir.path().join("b"));
+        std::fs::create_dir(&first).unwrap();
+        std::fs::create_dir(&second).unwrap();
+        exec(&first.join("cargo"), 0o644);
+        exec(&second.join("cargo"), 0o755);
+        std::fs::create_dir(first.join("pnpm")).unwrap();
+        let path = std::env::join_paths([&first, &second]).unwrap();
+        assert_eq!(which("cargo", &path), Some(second.join("cargo")));
+        assert_eq!(which("pnpm", &path), None, "a folder isn't a tool");
+    }
+
+    fn exec(file: &Path, mode: u32) {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::write(file, "#!/bin/sh\n").unwrap();
+        std::fs::set_permissions(file, std::fs::Permissions::from_mode(mode)).unwrap();
     }
 }
 
@@ -183,6 +205,16 @@ fn the_settings_default_toolchain_line_is_read() {
     assert_eq!(default_toolchain("version = \"12\"\n"), None);
     assert_eq!(default_toolchain("default_toolchain = \"../../etc\""), None);
     assert_eq!(default_toolchain("default_toolchain = \"\""), None);
+}
+
+#[test]
+fn pathext_is_cmds_order_or_its_default() {
+    assert_eq!(pathext(None), [".com", ".exe", ".bat", ".cmd"]);
+    assert_eq!(pathext(Some("".as_ref())), [".com", ".exe", ".bat", ".cmd"]);
+    assert_eq!(
+        pathext(Some(".BAT; .EXE;;.CMD;x".as_ref())),
+        [".bat", ".exe", ".cmd"]
+    );
 }
 
 #[cfg(windows)]
@@ -230,5 +262,25 @@ mod windows {
         assert_eq!(which("pnpm", path), Some(dir.path().join("pnpm.cmd")));
         assert_eq!(which("cargo", path), Some(dir.path().join("cargo.exe")));
         assert_eq!(which("node", path), None);
+    }
+
+    /// WIN-CHK-43: pyenv-win's `python3.bat` shim comes earlier on PATH than
+    /// the Store's `python3.exe`; `cmd /C python3` runs the shim, so the
+    /// probe must resolve it too: folder first, then PATHEXT order.
+    #[test]
+    fn which_resolves_a_bat_shim_earlier_on_path_than_an_exe() {
+        let dir = tempfile::tempdir().unwrap();
+        let (shims, store) = (dir.path().join("shims"), dir.path().join("WindowsApps"));
+        std::fs::create_dir(&shims).unwrap();
+        std::fs::create_dir(&store).unwrap();
+        std::fs::write(shims.join("python3.bat"), "@echo Python 3.10.5\r\n").unwrap();
+        std::fs::write(store.join("python3.exe"), "").unwrap();
+        let path = std::env::join_paths([&shims, &store]).unwrap();
+        assert_eq!(which("python3", &path), Some(shims.join("python3.bat")));
+        let store_first = std::env::join_paths([&store, &shims]).unwrap();
+        assert_eq!(
+            which("python3", &store_first),
+            Some(store.join("python3.exe"))
+        );
     }
 }
