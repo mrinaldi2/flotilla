@@ -17,6 +17,7 @@ use hermesd::board::model::Role;
 use hermesd::board::release::machines;
 use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
 use hermesd::prs::check_model::{CheckResult, CheckRun};
+use hermesd::prs::check_route::DISK_FREE_GB;
 use hermesd::prs::check_rerun::{rerun, Asker};
 use serde_json::json;
 
@@ -225,11 +226,15 @@ async fn an_error_retries_once_a_fail_never_and_reruns_are_the_owners_lead_and_a
     let moved = r.origin.with_extension("moved");
     std::fs::rename(&r.origin, &moved).unwrap();
     dispatch(&app, &r.project).await.unwrap();
-    let retry = until(&r, &sha, "unit", |c| {
-        c.result == CheckResult::Queued && c.runner.is_none()
-    })
-    .await;
-    assert!(retry.note.unwrap().contains("retrying once"));
+    // Both erred and were queued again before the pass that retries them:
+    // routing here is by hand, so a retry queued after it would wait.
+    for name in ["unit", "lint"] {
+        let retry = until(&r, &sha, name, |c| {
+            c.result == CheckResult::Queued && c.runner.is_none()
+        })
+        .await;
+        assert!(retry.note.unwrap().contains("retrying once"), "{name}");
+    }
     dispatch(&app, &r.project).await.unwrap();
     let gone = finished(&r, &sha, "unit").await;
     assert_eq!(gone.result, CheckResult::Error, "not retried again");
@@ -270,6 +275,41 @@ async fn an_error_retries_once_a_fail_never_and_reruns_are_the_owners_lead_and_a
     let owner = rerun(&app, &r.project, &sha, "unit", &Asker::Owner).unwrap();
     assert_eq!(owner.result, CheckResult::Queued);
     assert!(owner.note.unwrap().contains("the owner"));
+}
+
+/// H-318: with routing left to the daemon, an error's retry needs no pass
+/// from anyone: its result nudges the router, which starts it again however
+/// late the error lands after the pass that started it.
+#[tokio::test]
+async fn an_errors_retry_is_routed_by_the_daemon_itself() {
+    let mut r = setup_with(|cfg| {
+        cfg.checks.dispatch_interval_secs = 3600;
+        cfg.checks.disk_floor_gb = 1;
+    })
+    .await;
+    give(&r, 0, Role::Lead);
+    set_policy(&r, POLICY);
+    // Under the floor: the checks wait until the repository is gone.
+    tools(&r, &[("cargo", "1.90.0"), (DISK_FREE_GB, "0")]);
+    let item = r.card("Search", "doing");
+    let tree = branch(&r, "H-1-search", "crates/search.rs");
+    r.bots[1]
+        .call("pr_open", json!({"item": item, "branch": "H-1-search"}))
+        .await;
+    let sha = head(&tree);
+    until(&r, &sha, "unit", |c| {
+        c.note.as_deref().is_some_and(|n| n.contains("waiting for disk"))
+    })
+    .await;
+    std::fs::rename(&r.origin, r.origin.with_extension("moved")).unwrap();
+    tools(&r, &[("cargo", "1.90.0"), (DISK_FREE_GB, "1000")]);
+    hermesd::prs::check_jobs::nudge();
+    // A first error is queued again, so only the retry's error is final.
+    for name in ["unit", "lint"] {
+        let run = finished(&r, &sha, name).await;
+        assert_eq!(run.result, CheckResult::Error, "{run:?}");
+        assert!(run.note.unwrap().contains("couldn't check out"), "{name}");
+    }
 }
 
 /// The `checks.toml` check has nothing to run: it is never routed, and a
