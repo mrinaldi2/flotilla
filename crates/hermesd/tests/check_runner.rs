@@ -17,8 +17,8 @@ use hermesd::board::model::Role;
 use hermesd::board::release::machines;
 use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
 use hermesd::prs::check_model::{CheckResult, CheckRun};
-use hermesd::prs::check_route::DISK_FREE_GB;
 use hermesd::prs::check_rerun::{rerun, Asker};
+use hermesd::prs::check_route::DISK_FREE_GB;
 use serde_json::json;
 
 const POLICY: &str = r#"
@@ -298,7 +298,9 @@ async fn an_errors_retry_is_routed_by_the_daemon_itself() {
         .await;
     let sha = head(&tree);
     until(&r, &sha, "unit", |c| {
-        c.note.as_deref().is_some_and(|n| n.contains("waiting for disk"))
+        c.note
+            .as_deref()
+            .is_some_and(|n| n.contains("waiting for disk"))
     })
     .await;
     std::fs::rename(&r.origin, r.origin.with_extension("moved")).unwrap();
