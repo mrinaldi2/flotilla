@@ -7,6 +7,7 @@
 
 use std::path::{Path, PathBuf};
 
+use crate::board::release::git::github_https;
 use crate::safe_git::SafeGit;
 
 /// The checkout, relative to the job's folder.
@@ -33,6 +34,14 @@ pub fn disk_floor(dir: &Path, floor_gb: u64) -> Result<(), LowDisk> {
     Ok(())
 }
 
+/// The URL a check clones: a GitHub remote over https, however it is spelled
+/// (`git@github.com:o/r.git`), so the clone gets the daemon's GitHub token
+/// as the merge executor's fetches do (H-321). [`SafeGit`] still refuses
+/// ssh: any other remote is cloned as it is, and an ssh one is refused.
+pub fn clone_url(url: &str) -> String {
+    github_https(url.trim()).unwrap_or_else(|| url.to_string())
+}
+
 /// Clones `url` into `<job>/check` with `sha` checked out, detached.
 /// Anything already there is removed first, so the tree is always fresh.
 pub fn prepare(job: &Path, url: &str, sha: &str) -> anyhow::Result<PathBuf> {
@@ -40,6 +49,7 @@ pub fn prepare(job: &Path, url: &str, sha: &str) -> anyhow::Result<PathBuf> {
         sha.len() >= 40 && sha.chars().all(|c| c.is_ascii_hexdigit()),
         "{sha} isn't a full commit sha"
     );
+    let url = &clone_url(url);
     std::fs::create_dir_all(job)?;
     let dest = job.join(DIR);
     remove_dir(&dest)?;
