@@ -29,9 +29,11 @@ run = "cargo clippy --workspace --all-targets -- -D warnings && cargo test --wor
 [[check]]
 name = "file-length"
 # No paths: cheap, runs on every change. Rust and CSS sources stay <= 400 lines.
+# git gets the pathspecs as arguments, no shell, so ':(glob)**/' reaches every
+# folder, the repo root included.
 needs = ["node"]
 machine = "mac"
-run = "node -e \"const {execSync}=require('child_process');const fs=require('fs');let bad=0;for(const f of execSync('git ls-files -z -- *.rs *.css').toString().split('\\0').filter(Boolean)){const t=fs.readFileSync(f,'utf8');const n=t.split('\\n').length-(t.endsWith('\\n')?1:0);if(n>400){console.error(f+':'+n);bad=1}}process.exit(bad)\""
+run = "node -e \"const {execFileSync}=require('child_process');const fs=require('fs');let bad=0;for(const f of execFileSync('git',['ls-files','-z','--',':(glob)**/*.rs',':(glob)**/*.css']).toString().split('\\0').filter(Boolean)){const t=fs.readFileSync(f,'utf8');const n=t.split('\\n').length-(t.endsWith('\\n')?1:0);if(n>400){console.error(f+':'+n);bad=1}}process.exit(bad)\""
 
 [[check]]
 name = "desktop"

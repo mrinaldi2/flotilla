@@ -27,15 +27,38 @@ paths = [
   "crates/hermesd/src/paths.rs",
   "crates/hermesd/src/paths/**",
   "crates/hermesd/src/contain.rs",
-  # Owner proof, approvals, grants, Run cards
-  "crates/hermesd/src/ws/owner_auth.rs",
-  "crates/hermesd/src/ws/dispatch.rs",
+  "crates/hermesd/src/botmgmt.rs",
+  "crates/hermesd/src/botmgmt/**",
+  "crates/hermesd/src/mcp/selfmgmt.rs",
+  "crates/hermesd/src/permissions.rs",
+  "crates/hermesd/src/db/permissions.rs",
+  "crates/hermesd/src/redact/**",
+  # The daemon's config (origin allowlist) and its bind (/health)
+  "crates/hermesd/src/config.rs",
+  "crates/hermesd/src/server.rs",
+  # Owner proof on every WS path, approvals, grants, Run cards
+  "crates/hermesd/src/ws.rs",
+  "crates/hermesd/src/ws/**",
   "crates/hermesd/src/approval.rs",
   "crates/hermesd/src/approval/**",
   "crates/hermesd/src/owner_action.rs",
   "crates/hermesd/src/owner_action/**",
-  "crates/hermesd/src/decisions/grants*.rs",
-  "crates/hermesd/src/decisions/authority*.rs",
+  # Owner rulings
+  "crates/hermesd/src/decisions.rs",
+  "crates/hermesd/src/decisions/**",
+  "crates/hermesd/src/db/decisions*.rs",
+  "crates/hermesd/src/mcp/decisions.rs",
+  # Owner-typed provenance (H-195/H-209)
+  "crates/hermesd/src/supervisor/hooks.rs",
+  "crates/hermesd/src/supervisor/session_hooks.rs",
+  "crates/hermesd/src/supervisor/composer*.rs",
+  "crates/hermesd/src/supervisor/typing.rs",
+  # Roles (who may review and merge) and board gates
+  "crates/hermesd/src/board/team.rs",
+  "crates/hermesd/src/mcp/board_roles.rs",
+  "crates/hermesd/src/board/guards.rs",
+  "crates/hermesd/src/board/guards/**",
+  "crates/hermesd/src/db/reviews.rs",
   # Peer trust (links, forwarded owner acts, mirrors)
   "crates/hermesd/src/peer/**",
   # PR gates: reviews, separation of duties, owner review, merge, checks
