@@ -40,7 +40,7 @@ name = "desktop"
 machine = "mac"
 needs = ["node", "pnpm"]
 paths = ["apps/desktop/**", "proto/**", "buf.yaml", "buf.gen.yaml", "pnpm-lock.yaml", ".hermes/checks.toml"]
-run = "pnpm install --frozen-lockfile && pnpm --dir apps/desktop check && pnpm --dir apps/desktop proto:check && pnpm --dir apps/desktop build"
+run = "pnpm --dir apps/desktop install --frozen-lockfile && pnpm --dir apps/desktop check && pnpm --dir apps/desktop proto:check && pnpm --dir apps/desktop build"
 
 [[check]]
 name = "contract"
@@ -48,7 +48,7 @@ machine = "mac"
 needs = ["node", "pnpm"]
 paths = ["proto/**", "buf.yaml", "buf.gen.yaml"]
 # buf breaking against main; main carries the protos since ADR-001.
-run = "pnpm install --frozen-lockfile && apps/desktop/node_modules/.bin/buf breaking --against '.git#ref=origin/main'"
+run = "pnpm --dir apps/desktop install --frozen-lockfile && apps/desktop/node_modules/.bin/buf breaking --against '.git#ref=origin/main'"
 
 [[check]]
 name = "tauri"
@@ -62,14 +62,14 @@ name = "vr"
 machine = "mac"
 needs = ["node", "pnpm", "docker"]
 paths = ["apps/desktop/src/**", "apps/desktop/tests/visual/**", "apps/desktop/.ladle/**", "apps/desktop/package.json"]
-run = "pnpm install --frozen-lockfile && CI=true bash scripts/vr-ci.sh"
+run = "CI=true bash scripts/vr-ci.sh"
 
 [[check]]
 name = "marketing"
 machine = "mac"
 needs = ["node", "pnpm"]
 paths = ["apps/marketing/**"]
-run = "pnpm install --frozen-lockfile && pnpm --dir apps/marketing check"
+run = "pnpm --dir apps/marketing install --frozen-lockfile && pnpm --dir apps/marketing check"
 
 [[check]]
 name = "notices"
