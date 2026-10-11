@@ -36,8 +36,10 @@ pub fn disk_floor(dir: &Path, floor_gb: u64) -> Result<(), LowDisk> {
 
 /// The URL a check clones: a GitHub remote over https, however it is spelled
 /// (`git@github.com:o/r.git`), so the clone gets the daemon's GitHub token
-/// as the merge executor's fetches do (H-321). [`SafeGit`] still refuses
-/// ssh: any other remote is cloned as it is, and an ssh one is refused.
+/// as the merge executor's fetches do (H-321). With no token (win-pc has no gh)
+/// the clone is anonymous, which a public repository allows. [`SafeGit`]
+/// still refuses ssh: any other remote is cloned as it is, and an ssh one
+/// is refused.
 pub fn clone_url(url: &str) -> String {
     github_https(url.trim()).unwrap_or_else(|| url.to_string())
 }
@@ -45,6 +47,17 @@ pub fn clone_url(url: &str) -> String {
 /// Clones `url` into `<job>/check` with `sha` checked out, detached.
 /// Anything already there is removed first, so the tree is always fresh.
 pub fn prepare(job: &Path, url: &str, sha: &str) -> anyhow::Result<PathBuf> {
+    let token = crate::safe_git::daemon_token(&clone_url(url));
+    prepare_with(job, url, sha, token)
+}
+
+/// [`prepare`] with `token` for github.com, or none: an anonymous clone.
+pub(crate) fn prepare_with(
+    job: &Path,
+    url: &str,
+    sha: &str,
+    token: Option<String>,
+) -> anyhow::Result<PathBuf> {
     anyhow::ensure!(
         sha.len() >= 40 && sha.chars().all(|c| c.is_ascii_hexdigit()),
         "{sha} isn't a full commit sha"
@@ -56,7 +69,7 @@ pub fn prepare(job: &Path, url: &str, sha: &str) -> anyhow::Result<PathBuf> {
     let building = crate::safe_git::run_dir()?.join("checks");
     std::fs::create_dir_all(&building)?;
     let partial = building.join(uuid::Uuid::new_v4().to_string());
-    let made = build(&building, &partial, url, sha).and_then(|()| {
+    let made = build(&building, &partial, url, sha, &token).and_then(|()| {
         std::fs::rename(&partial, &dest)
             .map_err(|e| anyhow::anyhow!("moving the checkout into place: {e}"))
     });
@@ -66,9 +79,15 @@ pub fn prepare(job: &Path, url: &str, sha: &str) -> anyhow::Result<PathBuf> {
     made.map(|()| dest)
 }
 
-fn build(building: &Path, partial: &Path, url: &str, sha: &str) -> anyhow::Result<()> {
+fn build(
+    building: &Path,
+    partial: &Path,
+    url: &str,
+    sha: &str,
+    token: &Option<String>,
+) -> anyhow::Result<()> {
     let target = partial.display().to_string();
-    SafeGit::fetching(building, url)?
+    SafeGit::fetching_with(building, token.clone())?
         .args(&[
             "clone",
             "--quiet",
@@ -78,7 +97,7 @@ fn build(building: &Path, partial: &Path, url: &str, sha: &str) -> anyhow::Resul
             &target,
         ])
         .run()?;
-    SafeGit::fetching(partial, url)?
+    SafeGit::fetching_with(partial, token.clone())?
         .args(&["checkout", "--quiet", "--detach", sha])
         .run()?;
     let head = SafeGit::local(partial)?

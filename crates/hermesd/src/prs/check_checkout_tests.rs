@@ -120,20 +120,44 @@ fn a_github_ssh_remote_is_cloned_over_https() {
     );
 }
 
-/// H-321 AC1 for real: the project's own ssh-spelled remote clones at an
-/// exact sha with the daemon's GitHub token. Needs the network and gh's
-/// login, so run by hand on each computer:
-/// `cargo test -p hermesd --lib check_checkout -- --ignored`.
-#[test]
-#[ignore = "needs github.com and a gh login"]
-fn the_projects_ssh_remote_clones_for_real() {
+/// main at the H-279 policy PR's base.
+const LIVE_SHA: &str = "c9fe3e0d5c43ef934d9750381d9981ae52d38a53";
+
+/// Clones the project's own ssh-spelled remote at [`LIVE_SHA`] with
+/// `token`, and checks nothing of a token stays in its config (S2).
+fn live_clone(token: Option<String>) {
     let root = tempfile::tempdir().unwrap();
     let job = root.path().join("job");
-    // main at the H-279 policy PR's base.
-    let sha = "c9fe3e0d5c43ef934d9750381d9981ae52d38a53";
-    let tree = prepare(&job, "git@github.com:mrinaldi2/gravity.git", sha).unwrap();
+    let tree = prepare_with(
+        &job,
+        "git@github.com:mrinaldi2/gravity.git",
+        LIVE_SHA,
+        token,
+    )
+    .unwrap();
     assert!(tree.join("Cargo.toml").is_file());
+    let config = std::fs::read_to_string(tree.join(".git").join("config")).unwrap();
+    for word in ["credential", "x-access-token", "token-"] {
+        assert!(!config.contains(word), "{word}:\n{config}");
+    }
     remove(&job).unwrap();
+}
+
+/// H-321 AC1 for real, as on a computer with no GitHub token (win-pc):
+/// the public repository clones anonymously. Needs github.com.
+#[test]
+fn the_projects_ssh_remote_clones_anonymously() {
+    live_clone(None);
+}
+
+/// H-321 AC1 for real with the daemon's own token (gh's login or
+/// `GH_TOKEN`): `cargo test -p hermesd --lib check_checkout -- --ignored`.
+#[test]
+#[ignore = "needs a GitHub token on this computer"]
+fn the_projects_ssh_remote_clones_with_the_daemons_token() {
+    let token = crate::safe_git::daemon_token("https://github.com/mrinaldi2/gravity.git");
+    assert!(token.is_some(), "no GitHub token on this computer");
+    live_clone(token);
 }
 
 /// H-321 AC2: only GitHub remotes are rewritten. An ssh remote anywhere
