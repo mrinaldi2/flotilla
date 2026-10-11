@@ -1,6 +1,12 @@
 import { create } from "@bufbuild/protobuf";
 import type { MessageInitShape } from "@bufbuild/protobuf";
-import type { BoardColumn, ItemCard, Unmet } from "../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardCall } from "../protocol/board";
+import type {
+  BoardColumn,
+  ItemCard,
+  ProjectRole,
+  Unmet,
+} from "../protocol/gen/hermes/board/v1/board_pb";
 import {
   BoardColumnSchema,
   BoardSettingsSchema,
@@ -9,6 +15,7 @@ import {
   ItemType,
   Platform,
   Priority,
+  ProjectRoleSchema,
   UnmetSchema,
   WipScope,
 } from "../protocol/gen/hermes/board/v1/board_pb";
@@ -202,4 +209,17 @@ export function column(key: string): BoardColumn {
 
 export function unmet(code: string, text: string, fix?: string): Unmet {
   return create(UnmetSchema, { code, text, fix });
+}
+
+/** The roles after a `roleSet` call: the role replaced on its bot, or taken away. */
+export function applyRoleSet(roles: readonly ProjectRole[], call: BoardCall): ProjectRole[] {
+  if (call.case !== "roleSet") {
+    return [...roles];
+  }
+  const { bot, role, machine, remove } = call.value;
+  const rest = roles.filter((x) => x.role !== role);
+  if (remove === true) {
+    return rest;
+  }
+  return [...rest, create(ProjectRoleSchema, { projectId: PROJECT, role, botId: bot, machine })];
 }

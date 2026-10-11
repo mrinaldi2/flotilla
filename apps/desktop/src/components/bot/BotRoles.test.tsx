@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { DaemonError } from "../../protocol/connection";
 import { ProjectRoleSchema, Role } from "../../protocol/gen/hermes/board/v1/board_pb";
 import type { ProjectRole } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { snapshot } from "../../test/boardFixtures";
+import { applyRoleSet, snapshot } from "../../test/boardFixtures";
 import { FakeDaemon } from "../../test/fakeDaemon";
 import { bot } from "../../test/fixtures";
 import BotRoles from "./BotRoles";
@@ -41,9 +41,7 @@ describe("BotRoles", () => {
     const user = userEvent.setup();
     let roles = [role(Role.DEV)];
     const fake = board(roles, true).onBoard("roleSet", (call) => {
-      const v = call.case === "roleSet" ? call.value : undefined;
-      const r = v?.role ?? Role.UNSPECIFIED;
-      roles = v?.remove === true ? roles.filter((x) => x.role !== r) : [...roles, role(r)];
+      roles = applyRoleSet(roles, call);
       return { case: "board", value: { ...snapshot(), roles, canRule: true } };
     });
     render(<BotRoles client={fake} bot={bot()} connected />);

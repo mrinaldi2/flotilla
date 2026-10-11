@@ -5,7 +5,7 @@ import type { ReactElement } from "react";
 import { DaemonError } from "../../protocol/connection";
 import { ProjectRoleSchema, Role } from "../../protocol/gen/hermes/board/v1/board_pb";
 import type { ProjectRole } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { snapshot } from "../../test/boardFixtures";
+import { applyRoleSet, snapshot } from "../../test/boardFixtures";
 import { FakeDaemon } from "../../test/fakeDaemon";
 import { bot } from "../../test/fixtures";
 import BotRoles from "./BotRoles";
@@ -33,12 +33,7 @@ function Frame(props: {
         if (props.refuse !== undefined) {
           throw new DaemonError("invalid_request", props.refuse);
         }
-        const v = call.case === "roleSet" ? call.value : undefined;
-        const r = v?.role ?? Role.UNSPECIFIED;
-        roles =
-          v?.remove === true
-            ? roles.filter((x) => x.role !== r)
-            : [...roles.filter((x) => x.role !== r), role(r, v?.machine)];
+        roles = applyRoleSet(roles, call);
         return { case: "board", value: { ...snapshot(), roles, canRule: props.canRule } };
       });
   });
