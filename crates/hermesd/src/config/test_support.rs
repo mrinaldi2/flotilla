@@ -25,4 +25,12 @@ impl Config {
     pub fn merge_queue_by_hand_for_tests(&mut self, on: bool) {
         self.merge_queue_by_hand = on;
     }
+
+    /// Stops the daemon's release-blockers ticker, so only a test's
+    /// `blockers_watch::step` pushes `release_updated` (H-333). Every test
+    /// daemon turns it on.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn release_watch_by_hand_for_tests(&mut self, on: bool) {
+        self.release_watch_by_hand = on;
+    }
 }

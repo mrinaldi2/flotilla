@@ -136,7 +136,9 @@ pub fn spawn_workers(app: &Arc<AppState>) {
     // Grants for linked computers still waiting from before this start (H-163).
     crate::decisions::grants_peer::spawn_sweep(app.clone());
     crate::overview::spawn(app.clone());
-    crate::board::release::blockers_watch::spawn(app.clone());
+    if !app.cfg.release_watch_by_hand {
+        crate::board::release::blockers_watch::spawn(app.clone());
+    }
     crate::prs::watch::spawn(app.clone());
     crate::cleanup::spawn(app.clone());
     crate::cleanup::sweep::spawn(app.clone());

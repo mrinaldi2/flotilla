@@ -190,7 +190,10 @@ pub(crate) fn drop_link(
     peer_id: &str,
 ) -> anyhow::Result<bool> {
     // Forgotten first, so a roster arriving meanwhile finds no link to apply
-    // and a message in flight finds no bot it may reach.
+    // and a message in flight finds no bot it may reach. Under the roster
+    // lock until the stand-ins are archived: a roster that saw the link
+    // before this can't stand one in again (H-333).
+    let roster_lock = roster::lock();
     if !app.db.delete_project_link(project_id, peer_id)? {
         return Ok(false);
     }
@@ -198,8 +201,9 @@ pub(crate) fn drop_link(
     app.board_mirror.forget(project_id, peer_id);
     app.db.forget_board_home(project_id, peer_id)?;
     for bot in app.db.stand_ins(project_id, peer_id)? {
-        roster::archive_stand_in(app, &bot.id, "project unlinked")?;
+        roster::archive_stand_in_locked(app, &bot.id, "project unlinked")?;
     }
+    drop(roster_lock);
     tracing::info!(project_id, peer_id, "project unlinked");
     links_changed(app, project_id);
     Ok(true)
