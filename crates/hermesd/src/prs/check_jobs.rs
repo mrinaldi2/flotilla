@@ -117,7 +117,7 @@ pub fn on_boot(app: &AppState) {
 }
 
 /// The projects whose board lives on this computer.
-fn home_projects(app: &AppState) -> anyhow::Result<Vec<String>> {
+pub(super) fn home_projects(app: &AppState) -> anyhow::Result<Vec<String>> {
     let me = app.db.daemon_id()?;
     let mut out = Vec::new();
     for project in app.db.list_projects()? {
@@ -220,11 +220,29 @@ pub(super) fn peer_for(app: &AppState, project: &str, name: &str) -> Option<bus:
     (peer.revoked_at.is_none() && linked && app.peers.is_online(&peer.id)).then_some(peer)
 }
 
-/// The jobs this daemon is running now: a job open here that isn't one
-/// was cut short by a restart.
+/// The jobs this daemon is running now, its own and a linked home's: a
+/// job that isn't one was cut short by a restart (H-334 asks a linked
+/// computer the same).
 fn running_here() -> &'static Mutex<HashSet<String>> {
     static RUNNING: OnceLock<Mutex<HashSet<String>>> = OnceLock::new();
     RUNNING.get_or_init(Mutex::default)
+}
+
+/// Marks `job` as running here (`on`) or done.
+pub(super) fn hold(job: &str, on: bool) {
+    let mut running = running_here().lock().unwrap_or_else(|e| e.into_inner());
+    if on {
+        running.insert(job.to_string());
+    } else {
+        running.remove(job);
+    }
+}
+
+/// [`hold`], for tests that stand in for a computer still running a job.
+#[cfg(any(test, feature = "test-support"))]
+#[doc(hidden)]
+pub fn hold_for_tests(job: &str, on: bool) {
+    hold(job, on);
 }
 
 pub(super) fn is_running_here(job: &str) -> bool {

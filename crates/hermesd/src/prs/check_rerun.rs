@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use crate::app::AppState;
 use crate::check_exec;
-use crate::db::check_jobs::JobCause;
+use crate::db::check_jobs::{CheckJob, JobCause};
 use crate::decisions::{conflict, forbidden, invalid, not_found};
 use crate::prs::check_jobs;
 use crate::prs::check_model::{CheckResult, CheckRun, Report};
@@ -113,26 +113,32 @@ pub fn reconcile(app: &AppState, project: &str) -> anyhow::Result<()> {
         } else {
             continue;
         };
-        app.db.board_tx(|t| {
-            let Some(run) = t.check_by_id(&job.check_id)? else {
-                return Ok(());
-            };
-            if run.result.is_final() {
-                return t.end_check_jobs(&run.id);
-            }
-            t.report_check(
-                &run.id,
-                &Report {
-                    result: CheckResult::Error,
-                    ran_on: &job.machine,
-                    log_artifact: None,
-                    tool_versions: &run.tool_versions,
-                },
-            )?;
-            t.set_check_note(&run.id, Some(&why))?;
-            let run = t.check_by_id(&run.id)?.expect("just reported");
-            settle(t, &run)
-        })?;
+        lose(app, &job, &why)?;
     }
     Ok(())
+}
+
+/// Ends `job`, which will never report, as an `error` with `why`, retried
+/// once like any.
+pub(super) fn lose(app: &AppState, job: &CheckJob, why: &str) -> anyhow::Result<()> {
+    app.db.board_tx(|t| {
+        let Some(run) = t.check_by_id(&job.check_id)? else {
+            return Ok(());
+        };
+        if run.result.is_final() {
+            return t.end_check_jobs(&run.id);
+        }
+        t.report_check(
+            &run.id,
+            &Report {
+                result: CheckResult::Error,
+                ran_on: &job.machine,
+                log_artifact: None,
+                tool_versions: &run.tool_versions,
+            },
+        )?;
+        t.set_check_note(&run.id, Some(why))?;
+        let run = t.check_by_id(&run.id)?.expect("just reported");
+        settle(t, &run)
+    })
 }

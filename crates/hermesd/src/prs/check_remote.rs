@@ -80,9 +80,13 @@ pub fn serve_run(app: &Arc<AppState>, peer: &Peer, frame: &Value) -> anyhow::Res
         run: field("run").to_string(),
     };
     let (app, peer_id) = (app.clone(), peer.id.clone());
+    // Held until its result is sent, so the home's `check_jobs_running`
+    // question after a restart finds it (H-334).
+    super::check_jobs::hold(&job, true);
     tokio::spawn(async move {
         let outcome = check_exec::run(&app.cfg, &job, spec).await;
         send_result(&app, &peer_id, &job, &outcome).await;
+        super::check_jobs::hold(&job, false);
     });
     Ok(json!({}))
 }

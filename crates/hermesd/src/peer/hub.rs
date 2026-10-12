@@ -219,6 +219,11 @@ impl PeerHub {
         tokio::spawn(super::board::link_up(app.clone(), peer_id.clone()));
         tokio::spawn(crate::overview::link_up(app.clone(), peer_id.clone()));
         crate::machine_tools::link_up(&app, &peer_id);
+        // Checks it lost in a restart free their heavy slot (H-334).
+        tokio::spawn(crate::prs::check_lost::link_up(
+            app.clone(),
+            peer_id.clone(),
+        ));
         {
             // Grants that waited for this computer (H-163).
             let (app, peer_id) = (app.clone(), peer_id.clone());
