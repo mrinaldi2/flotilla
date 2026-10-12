@@ -15,7 +15,8 @@
 [[check]]
 name = "rust"
 machine = "mac"
-needs = ["cargo"]
+# node: tests/codex_runtime.rs runs node scripts.
+needs = ["cargo", "node"]
 paths = ["crates/**", "proto/**", "Cargo.toml", "Cargo.lock", "rust-toolchain*", ".hermes/checks.toml"]
 run = "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace --all-targets --no-fail-fast"
 
