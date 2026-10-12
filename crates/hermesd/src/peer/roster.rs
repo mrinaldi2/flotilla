@@ -16,7 +16,7 @@ use crate::events::Push;
 /// reads before it writes.
 static STAND_INS: Mutex<()> = Mutex::new(());
 
-fn lock() -> MutexGuard<'static, ()> {
+pub(super) fn lock() -> MutexGuard<'static, ()> {
     STAND_INS.lock().unwrap_or_else(|e| e.into_inner())
 }
 
@@ -88,6 +88,12 @@ pub(super) fn reconcile(
     roster: &[RemoteBot],
 ) -> anyhow::Result<()> {
     let _guard = lock();
+    // Unlinked while this roster was on its way: `drop_link` holds this lock
+    // while it forgets the link and archives the stand-ins, so a link gone
+    // now stays gone, and nothing is stood in again (H-333).
+    if app.db.project_link(project_id, &peer.id)?.is_none() {
+        return Ok(());
+    }
     for remote in roster {
         if let Err(e) = stand_in_locked(app, peer, project_id, remote) {
             tracing::warn!(peer = %peer.name, bot = %remote.name, error = %e,
@@ -123,6 +129,15 @@ pub(super) fn archive_stand_in(
     reason: &str,
 ) -> anyhow::Result<()> {
     let _guard = lock();
+    archive_stand_in_locked(app, bot_id, reason)
+}
+
+/// [`archive_stand_in`] for a caller already holding [`lock`].
+pub(super) fn archive_stand_in_locked(
+    app: &Arc<AppState>,
+    bot_id: &str,
+    reason: &str,
+) -> anyhow::Result<()> {
     if let Some(bot) = app.db.get_live_bot(bot_id)?.filter(Bot::is_linked) {
         botmgmt::archive_bot(app, &bot, &Actor::User, Some(reason))?;
     }

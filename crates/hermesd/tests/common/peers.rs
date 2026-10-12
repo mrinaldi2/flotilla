@@ -28,7 +28,7 @@ pub struct Team {
 const WAIT: Duration = Duration::from_secs(15);
 
 pub async fn wait_until(what: &str, mut check: impl FnMut() -> bool) {
-    let deadline = tokio::time::Instant::now() + WAIT;
+    let deadline = tokio::time::Instant::now() + WAIT * super::timeout_scale();
     while !check() {
         assert!(tokio::time::Instant::now() < deadline, "timed out: {what}");
         tokio::time::sleep(Duration::from_millis(25)).await;
