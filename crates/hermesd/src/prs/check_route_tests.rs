@@ -234,6 +234,11 @@ fn a_heavy_check_waits_for_the_computers_heavy_slot() {
         matches!(&waits, Route::Wait(w) if w.contains("another heavy check") && w.contains("win-pc")),
         "{waits:?}"
     );
+    // S2: it names only the computers this check could use (its pin).
+    assert!(
+        matches!(&waits, Route::Wait(w) if !w.contains("mac")),
+        "{waits:?}"
+    );
     // Its other slot still takes a check that isn't heavy.
     assert_eq!(
         route(&rust, Some("windows"), false, &team, LIMITS),
