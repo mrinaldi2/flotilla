@@ -33,8 +33,14 @@ paths = [
   "crates/hermesd/src/permissions.rs",
   "crates/hermesd/src/db/permissions.rs",
   "crates/hermesd/src/redact/**",
+  # Bot identity on the bus (per-connection bot token) and its tools
+  "crates/hermesd/src/mcp.rs",
+  "crates/hermesd/src/mcp/tools.rs",
+  # Owner credentials (devices behind owner_proof)
+  "crates/hermesd/src/db/devices.rs",
   # The daemon's config (origin allowlist) and its bind (/health)
   "crates/hermesd/src/config.rs",
+  "crates/hermesd/src/config/**",
   "crates/hermesd/src/server.rs",
   # Owner proof on every WS path, approvals, grants, Run cards
   "crates/hermesd/src/ws.rs",
@@ -43,6 +49,12 @@ paths = [
   "crates/hermesd/src/approval/**",
   "crates/hermesd/src/owner_action.rs",
   "crates/hermesd/src/owner_action/**",
+  "crates/hermesd/src/mcp/owner_actions.rs",
+  "crates/hermesd/src/db/owner_actions.rs",
+  # Owner provenance in chat (FROM_OWNER, H-306)
+  "crates/hermesd/src/owner_threads.rs",
+  "crates/hermesd/src/owner_threads/**",
+  "crates/hermesd/src/db/owner_threads.rs",
   # Owner rulings
   "crates/hermesd/src/decisions.rs",
   "crates/hermesd/src/decisions/**",
@@ -53,6 +65,8 @@ paths = [
   "crates/hermesd/src/supervisor/session_hooks.rs",
   "crates/hermesd/src/supervisor/composer*.rs",
   "crates/hermesd/src/supervisor/typing.rs",
+  # Composer off when the hook settings write fails (H-209 M1)
+  "crates/hermesd/src/supervisor/lifecycle.rs",
   # Roles (who may review and merge) and board gates
   "crates/hermesd/src/board/team.rs",
   "crates/hermesd/src/mcp/board_roles.rs",
@@ -60,8 +74,18 @@ paths = [
   "crates/hermesd/src/board/guards/**",
   "crates/hermesd/src/db/reviews.rs",
   # Peer trust (links, forwarded owner acts, mirrors)
+  "crates/hermesd/src/peer.rs",
   "crates/hermesd/src/peer/**",
+  "crates/hermesd/src/db/peers.rs",
+  "crates/hermesd/src/db/peer_grants.rs",
   # PR gates: reviews, separation of duties, owner review, merge, checks
+  "crates/hermesd/src/mcp/prs.rs",
+  "crates/hermesd/src/prs/checks.rs",
+  "crates/hermesd/src/db/checks.rs",
+  "crates/hermesd/src/db/prs.rs",
+  "crates/hermesd/src/db/review_settings.rs",
+  "crates/hermesd/src/db/merge_queue.rs",
+  "crates/hermesd/src/machine_tools.rs",
   "crates/hermesd/src/prs/owner*.rs",
   "crates/hermesd/src/prs/review*.rs",
   "crates/hermesd/src/prs/merge*.rs",
@@ -94,6 +118,9 @@ paths = [
   "crates/hermesd/src/board/release/confine*.rs",
   "crates/hermesd/src/board/release/build_installer*.rs",
   "crates/hermesd/src/board/release/deploy*.rs",
+  "crates/hermesd/src/board/release/assemble.rs",
+  "crates/hermesd/src/board/release/phone.rs",
+  "crates/hermesd/src/board/release/sha_cache.rs",
   # Service install / home migration (runs with the owner's rights)
   "crates/hermesd/src/service.rs",
   "crates/hermesd/src/service/**",
