@@ -131,6 +131,7 @@ impl Owner {
     /// How long a ticket waits for its hello in this daemon. Test daemons
     /// lengthen it: under load a hello can arrive minutes after the mint
     /// (H-333). Products keep [`TICKET_TTL`].
+    #[cfg(any(test, feature = "test-support"))]
     #[doc(hidden)]
     pub fn set_ticket_ttl_for_tests(&self, ttl: Duration) {
         self.ttl_ms.store(ttl.as_millis() as u64, Ordering::Relaxed);
