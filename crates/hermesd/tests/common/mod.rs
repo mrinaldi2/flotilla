@@ -36,19 +36,36 @@ pub mod supersede;
 pub mod tasks;
 pub mod team;
 
-/// How long a test waits for a frame it expects.
-pub const FRAME_WAIT: Duration = Duration::from_secs(5);
+/// How much longer every wait here runs on a loaded computer:
+/// `HERMES_TEST_TIMEOUT_SCALE` (default 1). Waits only bound a failing run.
+pub fn timeout_scale() -> u32 {
+    std::env::var("HERMES_TEST_TIMEOUT_SCALE")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .filter(|n| *n > 0)
+        .unwrap_or(1)
+}
+
+/// How long a test waits for a frame it expects. 20 s, not 5: on a loaded
+/// computer a test binary can sit minutes behind others, and a frame that
+/// is coming is never worth failing for (H-333).
+pub fn frame_wait() -> Duration {
+    Duration::from_secs(20) * timeout_scale()
+}
 
 /// How long a test waits for a frame while it sets up: the hello, projects
 /// and bots. The first run after a build is cold, and every test binary
 /// starts its daemons at once, so a bot's workspace can take far longer to
-/// provision than [`FRAME_WAIT`] on a slow disk or under a virus scan.
+/// provision than [`frame_wait`] on a slow disk or under a virus scan.
 /// `HERMES_TEST_SETUP_WAIT_SECS` overrides it.
 pub fn setup_wait() -> Duration {
     std::env::var("HERMES_TEST_SETUP_WAIT_SECS")
         .ok()
         .and_then(|s| s.parse().ok())
-        .map_or(Duration::from_secs(60), Duration::from_secs)
+        .map_or(
+            Duration::from_secs(60) * timeout_scale(),
+            Duration::from_secs,
+        )
 }
 
 pub struct TestDaemon {
@@ -89,6 +106,9 @@ pub async fn spawn_daemon_on(
     // you row or cache trim follows the real disk (H-275). A test of a low
     // disk injects its own report.
     cfg.free_disk_for_tests(1_000_000_000_000);
+    // Release blockers move when a test steps them: the 5 s ticker, with a
+    // memory of its own, would push a second release_updated (H-333).
+    cfg.release_watch_by_hand_for_tests(true);
     tweak(&mut cfg);
 
     // SafeGit's home is the process's, and the first daemon names it: name
@@ -107,6 +127,9 @@ pub async fn spawn_daemon_on(
         None => AppState::new(cfg, db),
     }
     .expect("app");
+    // A slow hello must not outlive its ticket; the product keeps 60 s (H-333).
+    app.owner
+        .set_ticket_ttl_for_tests(Duration::from_secs(600) * timeout_scale());
     hermesd::server::spawn_workers(&app);
     let router = hermesd::server::router(app.clone());
     tokio::spawn(async move {
@@ -207,7 +230,7 @@ impl WsClient {
     /// Send a request and wait for the frame carrying its req_id, buffering
     /// nothing (pushes are skipped).
     pub async fn request(&mut self, req: Value) -> Value {
-        self.request_within(FRAME_WAIT, req).await
+        self.request_within(frame_wait(), req).await
     }
 
     /// `request` with a deadline of its own, such as [`setup_wait`].
@@ -218,7 +241,7 @@ impl WsClient {
     }
 
     pub async fn wait_for(&mut self, pred: impl Fn(&Value) -> bool) -> Value {
-        self.wait_for_within(FRAME_WAIT, pred).await
+        self.wait_for_within(frame_wait(), pred).await
     }
 
     /// `wait_for` with a deadline of its own, for a frame behind heavy traffic.

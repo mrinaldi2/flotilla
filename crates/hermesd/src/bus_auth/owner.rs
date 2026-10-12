@@ -103,6 +103,8 @@ pub struct OwnerCounts {
 pub struct Owner {
     check: RwLock<Arc<dyn CodeCheck>>,
     tickets: Mutex<HashMap<String, (Instant, Grantee)>>,
+    /// [`TICKET_TTL`], unless a test lengthened it.
+    ttl_ms: AtomicU64,
     granted: AtomicU64,
     redeemed: AtomicU64,
     client_token: AtomicU64,
@@ -114,6 +116,7 @@ impl Owner {
         Self {
             check: RwLock::new(Arc::new(CompiledApp)),
             tickets: Mutex::new(HashMap::new()),
+            ttl_ms: AtomicU64::new(TICKET_TTL.as_millis() as u64),
             granted: AtomicU64::new(0),
             redeemed: AtomicU64::new(0),
             client_token: AtomicU64::new(0),
@@ -123,6 +126,18 @@ impl Owner {
     /// Replaces the code check; tests use a double (real signing can't run in CI).
     pub fn set_check(&self, check: Arc<dyn CodeCheck>) {
         *self.check.write().unwrap_or_else(|e| e.into_inner()) = check;
+    }
+
+    /// How long a ticket waits for its hello in this daemon. Test daemons
+    /// lengthen it: under load a hello can arrive minutes after the mint
+    /// (H-333). Products keep [`TICKET_TTL`].
+    #[doc(hidden)]
+    pub fn set_ticket_ttl_for_tests(&self, ttl: Duration) {
+        self.ttl_ms.store(ttl.as_millis() as u64, Ordering::Relaxed);
+    }
+
+    fn ttl(&self) -> Duration {
+        Duration::from_millis(self.ttl_ms.load(Ordering::Relaxed))
     }
 
     pub fn is_owner_app(&self, peer: &Peer) -> bool {
@@ -147,8 +162,9 @@ impl Owner {
             team = super::app_identity::TEAM_ID,
             "owner ticket granted"
         );
+        let ttl = self.ttl();
         let mut tickets = self.tickets.lock().unwrap_or_else(|e| e.into_inner());
-        tickets.retain(|_, (issued, _)| issued.elapsed() < TICKET_TTL);
+        tickets.retain(|_, (issued, _)| issued.elapsed() < ttl);
         tickets.insert(ticket.clone(), (Instant::now(), to));
         self.granted.fetch_add(1, Ordering::Relaxed);
         ticket
@@ -160,7 +176,8 @@ impl Owner {
             let mut tickets = self.tickets.lock().unwrap_or_else(|e| e.into_inner());
             tickets.remove(ticket)
         };
-        let Some((issued, to)) = spent.filter(|(issued, _)| issued.elapsed() < TICKET_TTL) else {
+        let ttl = self.ttl();
+        let Some((issued, to)) = spent.filter(|(issued, _)| issued.elapsed() < ttl) else {
             return false;
         };
         tracing::info!(

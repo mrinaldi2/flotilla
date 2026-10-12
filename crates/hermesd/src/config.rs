@@ -70,6 +70,11 @@ pub struct Config {
     /// [`Config::merge_queue_by_hand_for_tests`].
     #[serde(skip)]
     pub(crate) merge_queue_by_hand: bool,
+    /// No 5 s release-blockers ticker: a test steps `blockers_watch` itself,
+    /// and a second watcher with its own memory would push twice (H-333).
+    /// See [`Config::release_watch_by_hand_for_tests`].
+    #[serde(skip)]
+    pub(crate) release_watch_by_hand: bool,
     /// `pty` (each bot's saved CLI) or `double` (deterministic test runtime).
     pub runtime: RuntimeKind,
     pub claude_bin: String,
@@ -257,6 +262,7 @@ impl Default for Config {
             trust_forwarded_owner_acts: false,
             disk_free_for_tests: None,
             merge_queue_by_hand: false,
+            release_watch_by_hand: false,
             runtime: RuntimeKind::Pty,
             claude_bin: "claude".to_string(),
             claude_args: Vec::new(),

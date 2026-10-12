@@ -211,10 +211,12 @@ fn a_folder_swapped_for_a_link_mid_write_is_never_followed() {
             let (base, stop, swaps) = (base.clone(), stop.clone(), swaps.clone());
             std::thread::spawn(move || {
                 let at = |name: &str| base.join(name);
-                let deadline = std::time::Instant::now() + std::time::Duration::from_secs(60);
                 // Each step may fail while the daemon has a part open; a stuck
-                // one ends the test rather than hanging it.
+                // one ends the test rather than hanging it. The minute is per
+                // step: the whole swap loop can run for minutes on a loaded
+                // computer (H-333).
                 let retry = |step: &dyn Fn() -> std::io::Result<()>| {
+                    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(60);
                     while step().is_err() {
                         assert!(std::time::Instant::now() < deadline, "the swap is stuck");
                         std::thread::yield_now();
