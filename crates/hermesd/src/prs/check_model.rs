@@ -81,6 +81,8 @@ pub struct NewCheck {
     pub needs: Vec<String>,
     pub machine: Option<String>,
     pub required: bool,
+    /// Its `checks.toml` `heavy`, when said (H-334).
+    pub heavy: Option<bool>,
     /// `Queued`, or `Error` (with `note`) when the base's policy is broken.
     pub result: CheckResult,
     pub note: Option<String>,
@@ -98,6 +100,8 @@ pub struct CheckRun {
     pub needs: Vec<String>,
     pub machine: Option<String>,
     pub required: bool,
+    /// Its `checks.toml` `heavy`, when said (H-334).
+    pub heavy: Option<bool>,
     pub result: CheckResult,
     pub note: Option<String>,
     /// The worker it was dispatched to (H-283).

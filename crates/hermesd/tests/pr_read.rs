@@ -34,6 +34,7 @@ fn errored_check(r: &Repo, sha: &str, name: &str) {
         needs: Vec::new(),
         machine: None,
         required: true,
+        heavy: None,
         result: CheckResult::Error,
         note: Some("couldn't start".into()),
     };

@@ -9,6 +9,7 @@ use super::board_tx::BoardTx;
 use super::checks::{check_row, COLUMNS};
 use super::{parse_ts, ts};
 use crate::prs::check_model::{CheckRun, Unroutable};
+use crate::prs::check_route::{is_heavy, needs_of};
 
 /// Why a job ran: the check's first run, the one automatic retry after an
 /// `error`, or a re-run someone asked for.
@@ -101,6 +102,31 @@ impl BoardTx<'_> {
             |r| r.get(0),
         )?;
         Ok(n as usize)
+    }
+
+    /// Open heavy jobs on a computer, every project's: what its heavy slot
+    /// counts (H-334).
+    pub fn open_heavy_on(&self, machine: &str) -> anyhow::Result<usize> {
+        let mut stmt = self.conn.prepare(
+            "SELECT c.needs, c.run,
+                    (SELECT heavy FROM check_heavy h WHERE h.check_id = c.id)
+             FROM check_job j JOIN check_run c ON c.id = j.check_id
+             WHERE j.machine = ?1 AND j.ended_at IS NULL",
+        )?;
+        let rows = stmt.query_map(params![machine], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, Option<bool>>(2)?,
+            ))
+        })?;
+        let mut n = 0;
+        for row in rows {
+            let (needs, run, said) = row?;
+            let needs: Vec<String> = serde_json::from_str(&needs).unwrap_or_default();
+            n += usize::from(is_heavy(&needs_of(&needs, &run), said));
+        }
+        Ok(n)
     }
 
     /// A project's open jobs.

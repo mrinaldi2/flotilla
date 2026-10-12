@@ -1285,7 +1285,7 @@ The typed surface `hermes.pr.v1` (`proto/hermes/pr/v1/pr.proto`, contract `pr` 1
 **Checks (PR-5a, H-270).**
 - **Which checks:** each reported head queues the required checks of the base's `.hermes/checks.toml`, filtered by the paths the PR changes. A head's own `checks.toml` changes nothing, except as below.
 - **A PR that changes `checks.toml`** (H-311): when the head's file parses, "what the PR changes" is the head's file against the file at the merge-base, never against today's main, so main's own later edits aren't the PR's.
-  - A check the PR changes (name, run, needs, machine, paths or required) or adds runs the head's definition.
+  - A check the PR changes (name, run, needs, machine, paths, required or heavy) or adds runs the head's definition.
   - A check it removes doesn't run.
   - A check it leaves alone runs main's current definition.
   - A passing `.hermes/checks.toml` row names each kind plainly: `<name> runs its own definition`, `<name> added`, `<name> skipped: no longer required`, `<name> skipped: paths no longer match` (main's definition would run on this PR, the head's doesn't), `<name> removed`.
@@ -1300,6 +1300,7 @@ The typed surface `hermes.pr.v1` (`proto/hermes/pr/v1/pr.proto`, contract `pr` 1
 - **Linked computers:** the home asks with the peer request `check_run {project_id, job, url, sha, run}`. The computer clones from its own URL for that repository (it refuses one the linked project doesn't have, and refuses `at_capacity` under its disk floor, so the check waits) and answers at once. When the run ends it sends the event `check_result {job, result, note, log}`; the home accepts it only from the computer the job was routed to.
 - **`check_report` (MCP):** a bot a check was dispatched to may report `running` or `error` only. A `pass` or a `fail` over MCP is refused: they come only from the exit status.
 - **Load:** at most `checks.jobs_per_machine` (default 2) open check jobs per computer, every project's. No job starts on a computer with less than `checks.disk_floor_gb` (default 20) GB free; it waits instead.
+- **Heavy checks (H-334):** a check is heavy when it needs `cargo` (in `needs`, or `run` starts with it) or its `checks.toml` entry says `heavy = true`; `heavy = false` opts a cargo check out. A computer runs at most `checks.heavy_per_machine` (default 1) heavy check jobs at once, every project's, inside its overall cap. A heavy check whose computers all have the slot taken waits with `note` "queued: another heavy check (a Rust build) is running on <computer>". That is an ordinary wait, never unroutable, so it starts no Needs-you clock. A daemon older than H-334 refuses a `checks.toml` with `heavy` (unknown fields are refused), so the key is used only once every computer runs H-334.
 - **Re-runs:** `check_rerun {sha, name}` (MCP) for the lead or the PR's author, and for the owner over the `hermes.pr.v1` `check_rerun` request (H-273). An `error` is retried once automatically, including a job that ended without a result (the daemon restarted while it ran, or a linked computer sent nothing within 7 hours); a `fail` never is.
 
 ## Meetings

@@ -23,6 +23,7 @@ fn queued(name: &str) -> NewCheck {
         needs: vec!["cargo".into()],
         machine: None,
         required: true,
+        heavy: None,
         result: CheckResult::Queued,
         note: None,
     }

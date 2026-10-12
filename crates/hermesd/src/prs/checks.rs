@@ -78,6 +78,7 @@ pub(super) fn queue(policy: &Checks, changed: &[String]) -> Vec<NewCheck> {
             needs: c.needs.clone(),
             machine: c.machine.clone(),
             required: true,
+            heavy: c.heavy,
             result: CheckResult::Queued,
             note: None,
         })
@@ -91,6 +92,7 @@ pub(super) fn policy_check(result: CheckResult, note: &str) -> NewCheck {
         needs: Vec::new(),
         machine: None,
         required: true,
+        heavy: None,
         result,
         note: Some(note.to_string()),
     }

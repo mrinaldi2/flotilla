@@ -72,3 +72,14 @@ CREATE TABLE IF NOT EXISTS check_unroutable (
     since     TEXT NOT NULL
 );
 "#;
+
+/// `check_heavy` (H-334): a check's own `heavy = true|false` from
+/// `checks.toml`, when it says one. Unsaid, a check is heavy when it needs
+/// cargo. A computer runs one heavy check at a time. A table of its own, so
+/// running it again is safe.
+pub(super) const MIGRATION_CHECK_HEAVY: &str = r#"
+CREATE TABLE IF NOT EXISTS check_heavy (
+    check_id  TEXT PRIMARY KEY REFERENCES check_run(id) ON DELETE CASCADE,
+    heavy     INTEGER NOT NULL CHECK (heavy IN (0, 1))
+);
+"#;

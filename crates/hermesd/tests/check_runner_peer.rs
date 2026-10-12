@@ -69,6 +69,7 @@ async fn a_windows_check_runs_on_the_linked_windows_computer() {
         needs: vec!["cargo".into()],
         machine: Some("windows".into()),
         required: true,
+        heavy: None,
         result: CheckResult::Queued,
         note: None,
     };

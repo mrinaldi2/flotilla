@@ -109,6 +109,10 @@ pub struct Check {
     /// The changes it runs for; none means every change.
     #[serde(default)]
     pub paths: Vec<String>,
+    /// Takes a computer's one heavy slot (H-334). Unsaid: when it needs
+    /// cargo, by its `needs` or the program its `run` starts with.
+    #[serde(default)]
+    pub heavy: Option<bool>,
 }
 
 fn yes() -> bool {
