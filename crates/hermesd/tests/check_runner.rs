@@ -21,17 +21,21 @@ use hermesd::prs::check_rerun::{rerun, Asker};
 use hermesd::prs::check_route::DISK_FREE_GB;
 use serde_json::json;
 
+/// `unit` and `lint` run side by side on one computer: they test the
+/// runner, not the heavy slot (H-334), so they say they aren't heavy.
 const POLICY: &str = r#"
 [[check]]
 name = "unit"
 run = "git rev-parse HEAD"
 needs = ["cargo"]
+heavy = false
 paths = ["crates/**"]
 
 [[check]]
 name = "lint"
 run = "exit 3"
 needs = ["cargo"]
+heavy = false
 paths = ["crates/**"]
 
 [[check]]
