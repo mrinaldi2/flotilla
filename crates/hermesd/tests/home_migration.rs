@@ -8,6 +8,7 @@ use crate::common;
 use std::path::{Path, PathBuf};
 
 use common::peers::{pair, project};
+use common::transcripts::transcript_dir;
 use common::*;
 use hermesd::migrate_home::{self, Plan};
 use serde_json::json;
@@ -27,16 +28,6 @@ impl Machine {
     fn plan(&self) -> Plan {
         Plan::new(self.old_home(), self.new_home(), self.user.clone())
     }
-}
-
-/// Claude Code's name for a workspace's transcript dir.
-fn transcript_dir(user: &Path, workspace: &Path) -> PathBuf {
-    let key: String = workspace
-        .to_string_lossy()
-        .chars()
-        .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
-        .collect();
-    user.join(".claude/projects").join(key)
 }
 
 fn on_home(user: PathBuf, home: PathBuf) -> impl FnOnce(&mut hermesd::config::Config) {

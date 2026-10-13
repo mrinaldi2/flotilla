@@ -17,7 +17,8 @@ use hermesd::releases::machines;
 use serde_json::{json, Value};
 
 /// The `path` check echoes its PATH in the computer's shell: `sh -c` here,
-/// `cmd /C` on Windows, which prints `$PATH` as it is.
+/// `cmd /C` on Windows, which prints `$PATH` as it is. `cmd` has no `true`
+/// builtin, and `true.exe` is only on a PATH that has Git's `usr\bin`.
 #[cfg(not(windows))]
 const POLICY: &str = r#"
 [[check]]
@@ -41,7 +42,7 @@ paths = ["crates/**"]
 
 [[check]]
 name = "desktop"
-run = "true"
+run = "exit 0"
 needs = ["pnpm"]
 paths = ["crates/**"]
 "#;
