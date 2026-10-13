@@ -16,6 +16,22 @@ use crate::ws::Conn;
 
 impl Conn {
     pub(super) fn draft_request(&self, req: Request) -> Result<Response, Refusal> {
+        // Only the owner finalizes, discards, invites to or marks seen a
+        // draft (decision 5). The owner token is one a bot of the same user
+        // can read, so these take the app's ticket or a paired device, as
+        // every act of the owner's own does (`owner_auth`).
+        let owners_own = match &req {
+            Request::ItemInvite(_) | Request::ItemFinalize(_) | Request::ItemDiscard(_) => true,
+            Request::ItemDraftChanges(r) => r.mark_seen == Some(true),
+            _ => false,
+        };
+        if owners_own && self.owner_proof().is_none() {
+            return Err(refuse(
+                "forbidden",
+                "only the owner, from the app or a paired device, invites to, finalizes, \
+                 discards or marks seen a draft; not with the owner token",
+            ));
+        }
         let actor = self.actor();
         Ok(match req {
             Request::AttachmentUpload(r) => {

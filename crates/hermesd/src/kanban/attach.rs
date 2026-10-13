@@ -8,15 +8,14 @@
 //! `items/<item-id>/.uploads/<upload-id>`, then attach the upload. Nothing
 //! about an upload is kept in memory, so any connection may finish it.
 
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write as _};
 use std::path::{Path, PathBuf};
 
 use bus::contract::board as c;
-use sha2::{Digest, Sha256};
 
 use super::attachments::{
-    check_content, check_size, file_type, item_dir, local_path, safe_name, CHUNK_MAX,
+    check_content, check_item_total, check_size, file_type, item_dir, local_path, CHUNK_MAX,
 };
 use super::edit::Editor;
 use super::feed::ChangeKind;
@@ -25,12 +24,17 @@ use crate::app::AppState;
 use crate::db::NewAttachment;
 use crate::decisions::{invalid, not_found};
 
+mod store;
+
+use store::{doc_artifact, doc_url, open_confined, root, Stored};
+
 /// Where an attachment's content comes from.
 pub enum Source {
     /// A finished upload of the owner's apps.
     Upload(String),
-    /// A file of a bot's, already checked to be its own or the project's.
-    File(PathBuf),
+    /// A file of a bot's, in its own folder or the project's artifacts
+    /// (`roots`, canonical): checked again once it is open.
+    File { path: PathBuf, roots: Vec<PathBuf> },
     /// A project artifact, linked as a doc.
     Artifact(String),
     /// An external document, linked as a doc.
@@ -56,9 +60,10 @@ fn upload_path(artifacts: &Path, item_id: &str, upload_id: &str) -> anyhow::Resu
         valid,
         invalid("an upload id is 1 to 64 letters, digits, '-' or '_'")
     );
+    // Prefixed, so no id is a name Windows keeps for a device (`CON`, `NUL`).
     Ok(item_dir(artifacts, item_id)
         .join(".uploads")
-        .join(upload_id))
+        .join(format!("up-{upload_id}")))
 }
 
 impl Editor<'_> {
@@ -79,12 +84,20 @@ impl Editor<'_> {
             req.total > 0,
             invalid("an upload names its file's total size")
         );
-        let on_item = self.app.db.board_read(|t| t.attached_bytes(&req.item_id))?;
+        let on_item = self
+            .app
+            .db
+            .board_read(|t| t.stored_bytes(&req.item_id, ""))?;
         check_size(limits, ft, req.total, on_item)?;
         if req.offset == 0 {
             check_content(ft, &req.data[..req.data.len().min(16)])?;
             fs::create_dir_all(path.parent().expect("an upload has a folder"))?;
-            File::create(&path)?;
+            // A fresh file, never one a link put there to be written through.
+            fs::remove_file(&path).ok();
+            OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&path)?;
         }
         let mut file = OpenOptions::new()
             .write(true)
@@ -119,22 +132,32 @@ impl Editor<'_> {
                 let staged = upload_path(&artifacts, &req.id, &upload_id)?;
                 anyhow::ensure!(staged.is_file(), invalid(format!("no upload {upload_id}")));
                 let name = named.ok_or_else(|| invalid("name the uploaded file"))?;
-                let stored = self.store(&artifacts, &req.id, &staged, name)?;
+                let uploads = root(staged.parent().expect("an upload has a folder"));
+                let file = open_confined(&staged, &uploads)?;
+                let stored = self.store(&artifacts, &req.id, file, name)?;
                 fs::remove_file(&staged).ok();
                 stored
             }
-            Source::File(path) => {
+            Source::File { path, roots } => {
                 let own = path
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or_default();
-                self.store(&artifacts, &req.id, &path, named.unwrap_or(own))?
+                let file = open_confined(&path, &roots)?;
+                self.store(&artifacts, &req.id, file, named.unwrap_or(own))?
             }
             Source::Artifact(rel) => doc_artifact(&artifacts, &rel, named)?,
             Source::Url(url) => doc_url(&url, named)?,
         };
+        let limits = &self.app.cfg.attachments;
         self.published(ChangeKind::ItemUpserted, None, || {
             let att = self.app.db.board_tx(|t| {
+                // Checked again where it is written: two attaches at once
+                // can't both fit the item's cap.
+                if stored.kind != AttachmentKind::Doc {
+                    let on_item = t.stored_bytes(&req.id, &stored.path)?;
+                    check_item_total(limits, stored.bytes, on_item)?;
+                }
                 t.add_attachment(
                     &NewAttachment {
                         item_id: &req.id,
@@ -172,40 +195,19 @@ impl Editor<'_> {
         &self,
         artifacts: &Path,
         item_id: &str,
-        from: &Path,
+        from: fs::File,
         name: &str,
     ) -> anyhow::Result<Stored> {
-        let limits = &self.app.cfg.attachments;
-        let ft = file_type(limits, name)?;
-        let bytes = fs::metadata(from)?.len();
-        let on_item = self.app.db.board_read(|t| t.attached_bytes(item_id))?;
-        check_size(limits, ft, bytes, on_item)?;
-        let mut head = [0u8; 16];
-        let read = File::open(from)?.read(&mut head)?;
-        check_content(ft, &head[..read])?;
-        let sha256 = hash(from)?;
-        let name = safe_name(name);
-        let file_name = format!("{}-{name}", &sha256[..12]);
-        let dir = item_dir(artifacts, item_id);
-        fs::create_dir_all(&dir)?;
-        let to = dir.join(&file_name);
-        if !to.is_file() {
-            let partial = dir.join(format!(".{file_name}.part"));
-            fs::copy(from, &partial)?;
-            fs::rename(&partial, &to)?;
-        }
-        let rel = to
-            .strip_prefix(artifacts)
-            .map_err(|_| anyhow::anyhow!("an item's folder is in the artifacts"))?;
-        Ok(Stored {
-            kind: ft.kind,
+        let db = &self.app.db;
+        let on_item = |path: &str| db.board_read(|t| t.stored_bytes(item_id, path));
+        store::store(
+            &self.app.cfg.attachments,
+            artifacts,
+            item_id,
+            from,
             name,
-            mime: ft.mime,
-            bytes,
-            sha256,
-            path: slash_path(rel),
-            url: String::new(),
-        })
+            &on_item,
+        )
     }
 }
 
@@ -223,7 +225,7 @@ pub fn read_chunk(app: &AppState, req: &c::AttachmentRead) -> anyhow::Result<c::
     let artifacts = artifacts_of(app, &project_id)?;
     let path =
         local_path(&att, &artifacts).ok_or_else(|| invalid("a URL has no bytes here; open it"))?;
-    let mut file = File::open(&path)?;
+    let mut file = open_confined(&path, &root(&artifacts))?;
     let total = file.metadata()?.len();
     let limit = match req.limit {
         0 => CHUNK_MAX,
@@ -241,74 +243,18 @@ pub fn read_chunk(app: &AppState, req: &c::AttachmentRead) -> anyhow::Result<c::
     })
 }
 
-struct Stored {
-    kind: AttachmentKind,
-    name: String,
-    mime: &'static str,
-    bytes: u64,
-    sha256: String,
-    path: String,
-    url: String,
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::kanban::attachments::safe_name;
 
-fn hash(path: &Path) -> anyhow::Result<String> {
-    let mut file = File::open(path)?;
-    let mut sha = Sha256::new();
-    let mut buf = vec![0u8; 64 * 1024];
-    loop {
-        let n = file.read(&mut buf)?;
-        if n == 0 {
-            break;
+    #[test]
+    fn an_upload_id_is_never_a_windows_device_name() {
+        for id in ["CON", "nul", "COM1", "LPT9", "aux"] {
+            let path = upload_path(Path::new("/a"), "H-1", id).expect(id);
+            let name = path.file_name().unwrap().to_str().unwrap();
+            assert_eq!(safe_name(name), name, "{id}");
+            assert!(path.ends_with(Path::new("items/H-1/.uploads").join(name)));
         }
-        sha.update(&buf[..n]);
     }
-    Ok(hex::encode(sha.finalize()))
-}
-
-/// A relative path with `/` between its parts, on every platform.
-fn slash_path(rel: &Path) -> String {
-    rel.components()
-        .map(|c| c.as_os_str().to_string_lossy())
-        .collect::<Vec<_>>()
-        .join("/")
-}
-
-/// A project artifact, by its path in the artifacts folder.
-fn doc_artifact(artifacts: &Path, rel: &str, named: Option<&str>) -> anyhow::Result<Stored> {
-    let parts: Vec<&str> = rel.split(['/', '\\']).filter(|p| !p.is_empty()).collect();
-    anyhow::ensure!(
-        !parts.is_empty() && !parts.iter().any(|p| *p == ".." || *p == "."),
-        invalid("name an artifact by its path inside the artifacts folder")
-    );
-    let path = parts
-        .iter()
-        .fold(artifacts.to_path_buf(), |dir, p| dir.join(p));
-    anyhow::ensure!(path.is_file(), invalid(format!("no artifact {rel}")));
-    let name = named.unwrap_or(parts[parts.len() - 1]);
-    Ok(Stored {
-        kind: AttachmentKind::Doc,
-        name: name.to_string(),
-        mime: "",
-        bytes: fs::metadata(&path)?.len(),
-        sha256: String::new(),
-        path: parts.join("/"),
-        url: String::new(),
-    })
-}
-
-fn doc_url(url: &str, named: Option<&str>) -> anyhow::Result<Stored> {
-    let url = url.trim();
-    anyhow::ensure!(
-        url.starts_with("https://") || url.starts_with("http://"),
-        invalid("a linked document's URL starts with https:// or http://")
-    );
-    Ok(Stored {
-        kind: AttachmentKind::Doc,
-        name: named.unwrap_or(url).to_string(),
-        mime: "",
-        bytes: 0,
-        sha256: String::new(),
-        path: String::new(),
-        url: url.to_string(),
-    })
 }
