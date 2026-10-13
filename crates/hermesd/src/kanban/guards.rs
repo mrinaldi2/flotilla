@@ -285,8 +285,8 @@ fn refused(rule: Rule, item: &Item, who: &Who, ctx: &Context) -> Option<&'static
         ),
         Rule::Package => (who.has(Role::Devops), "DevOps"),
         Rule::Reject => (who.leads() || who.verifies(item), "a tester or the lead"),
-        // A spike or a chore without code closes on someone else's word
-        //: the lead or a reviewer, never the one who did it.
+        // A spike or a chore without code closes on someone else's word:
+        // the lead or a reviewer, never the one who did it.
         Rule::Finish => (
             (who.leads() || who.reviews(item, ctx)) && !assignee,
             "the lead or a reviewer who isn't the assignee",
