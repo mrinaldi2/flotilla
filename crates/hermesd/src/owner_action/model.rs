@@ -89,6 +89,16 @@ impl State {
     pub fn is_open(self) -> bool {
         self == State::Proposed
     }
+
+    /// How far along it is: proposed, running, then ended. A copy that
+    /// follows another never goes back a stage.
+    pub fn stage(self) -> u8 {
+        match self {
+            State::Proposed => 0,
+            State::Running => 1,
+            _ => 2,
+        }
+    }
 }
 
 /// A file the content relies on, hashed at proposal and again at run.
