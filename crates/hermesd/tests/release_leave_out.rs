@@ -8,11 +8,11 @@ mod common;
 use chrono::{Duration, Utc};
 use common::cuts::{checkout, cut, cuts, get, leave_out, main_tip, merged, numbers, DEVOPS};
 use common::WsClient;
-use hermesd::board::release::leave_out_cli::{revert_in, Plan};
-use hermesd::board::release::leave_out_gate::executor;
 use hermesd::pr_cli::{merge_in, Plan as MergePlan};
 use hermesd::prs::merge::answer;
 use hermesd::prs::queue;
+use hermesd::releases::leave_out_cli::{revert_in, Plan};
+use hermesd::releases::leave_out_gate::executor;
 use serde_json::json;
 
 fn items(release: &serde_json::Value) -> Vec<String> {

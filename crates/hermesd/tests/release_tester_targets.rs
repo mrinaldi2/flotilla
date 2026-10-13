@@ -13,8 +13,8 @@ use common::peer_board::board;
 use common::peers::{bot_named, wait_until};
 use common::WsClient;
 use hermesd::board::model::{Platform, ProjectRole, Role};
-use hermesd::board::release::model::{DeployAction, DeployResult, ReleaseStatus};
-use hermesd::board::release::{ios_repair, machines, testers_on};
+use hermesd::releases::model::{DeployAction, DeployResult, ReleaseStatus};
+use hermesd::releases::{ios_repair, machines, testers_on};
 use serde_json::json;
 
 /// The PC runs the desktop tester and iOS QA; the Mac holds the board.

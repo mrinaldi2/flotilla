@@ -14,9 +14,9 @@ use std::os::unix::process::CommandExt;
 
 use common::prs::{branch, give, head, set_policy, setup, setup_with, Repo};
 use hermesd::board::model::Role;
-use hermesd::board::release::machines;
 use hermesd::prs::check_jobs::{self, dispatch, SYSTEM_RUNNER};
 use hermesd::prs::check_model::{CheckResult, CheckRun, Report};
+use hermesd::releases::machines;
 use serde_json::json;
 
 /// `slow` starts a child that outlives its shell: every 0.2 s it rewrites

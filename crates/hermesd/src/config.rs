@@ -146,7 +146,7 @@ pub struct Config {
     /// Each bot's own browser. See [`crate::browser`].
     pub browser: crate::browser::BrowserConfig,
     /// Serving release builds on the tailnet (H-020 §6.6).
-    pub releases: crate::board::release::serve::ServeConfig,
+    pub releases: crate::releases::serve::ServeConfig,
     /// How bots prove who they are on the bus (H-044).
     pub auth: crate::bus_auth::AuthConfig,
     /// Pausing every project for an install, and the services it stops (H-117).
@@ -355,7 +355,7 @@ impl Config {
         } else {
             Config::default()
         };
-        crate::board::release::confine::check_at_load(&mut cfg);
+        crate::releases::confine::check_at_load(&mut cfg);
         // H-291 S3: 0 would stop every check as soon as it starts.
         anyhow::ensure!(
             cfg.checks.timeout_secs > 0,

@@ -7,8 +7,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::app::AppState;
-use crate::board::release::git_cache;
 use crate::decisions::forbidden;
+use crate::releases::git_cache;
 
 use super::{
     parse_checks, parse_reviewers, required_roles, Checks, ReviewRole, Reviewers, CHECKS_PATH,

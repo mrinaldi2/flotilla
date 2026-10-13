@@ -5,9 +5,9 @@
 
 use serde_json::{json, Value};
 
-use crate::board::release::model::Release;
-use crate::board::release::phone;
 use crate::decisions::{forbidden, not_found};
+use crate::releases::model::Release;
+use crate::releases::phone;
 
 use super::Conn;
 

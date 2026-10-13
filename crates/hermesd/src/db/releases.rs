@@ -4,7 +4,7 @@
 use bus::{new_id, now};
 use rusqlite::{params, Connection, OptionalExtension, Row};
 
-use crate::board::release::model::{
+use crate::releases::model::{
     DeployAction, DeployResult, Release, ReleaseBuild, ReleaseDeployment, ReleaseItem,
     ReleaseStatus, ReleaseTest, Smoke, Verdict,
 };

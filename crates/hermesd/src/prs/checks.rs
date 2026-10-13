@@ -12,10 +12,10 @@ use bus::contract::pr::CheckReport;
 
 use crate::app::AppState;
 use crate::board::policy::{base, parse_checks, Checks, CHECKS_PATH};
-use crate::board::release::{git_cache, machines};
 use crate::decisions::{conflict, forbidden, invalid, not_found};
 use crate::prs::check_log;
 use crate::prs::check_model::{CheckResult, CheckRun, NewCheck, Report};
+use crate::releases::{git_cache, machines};
 
 /// The checks a head must pass, and the tree it holds.
 #[derive(Debug, Clone, PartialEq)]

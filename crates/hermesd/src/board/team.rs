@@ -8,8 +8,8 @@ use bus::contract::board as c;
 
 use super::feed::{Change, ChangeKind};
 use super::model::{ProjectRole, Role};
-use super::release::machines::IOS_TEST;
 use crate::app::AppState;
+use crate::releases::machines::IOS_TEST;
 
 /// A bot of the project by id or name, stand-ins for a peer's bots included.
 pub fn project_bot(app: &AppState, project_id: &str, name_or_id: &str) -> anyhow::Result<String> {

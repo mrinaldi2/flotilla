@@ -11,9 +11,9 @@ use std::time::Duration;
 
 use common::prs::{branch, head, set_policy, setup, write, Repo};
 use common::repo::git;
-use hermesd::board::release::machines;
 use hermesd::prs::check_jobs::dispatch;
 use hermesd::prs::check_model::{CheckResult, CheckRun};
+use hermesd::releases::machines;
 use serde_json::json;
 
 /// `unit` always fails; `lint` is fine.

@@ -6,7 +6,7 @@ use bus::{new_id, now};
 use chrono::{DateTime, Utc};
 use rusqlite::{params, Connection};
 
-use crate::board::release::model::{PostInstallAc, ReleaseEvent, ReleaseStatus};
+use crate::releases::model::{PostInstallAc, ReleaseEvent, ReleaseStatus};
 
 use super::board::{from_json, parse_at};
 use super::board_tx::BoardTx;

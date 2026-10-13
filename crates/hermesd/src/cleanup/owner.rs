@@ -16,11 +16,11 @@ use serde_json::{json, Value};
 use super::model::{Job, JobState, Kind, Outcome};
 use super::run::{self, Target};
 use crate::app::AppState;
-use crate::board::release::machines;
 use crate::db::OwnerProof;
 use crate::decisions::{conflict, not_found};
 use crate::peer::refuse;
 use crate::prs::model::Pr;
+use crate::releases::machines;
 
 /// A held job asks the owner once it has been held this long, and a linked
 /// computer removes a tree for the home only once untouched this long.

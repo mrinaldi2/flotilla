@@ -18,17 +18,17 @@
 //!
 //! Like `release land`, this runs as DevOps' own process in its own
 //! checkout, never in the daemon, so it uses the release commands' git
-//! (`board::release::git`), not `SafeGit`, which guards the daemon's git on
+//! (`releases::git`), not `SafeGit`, which guards the daemon's git on
 //! bot-controlled paths (`prs/`).
 
 use std::path::Path;
 
 use serde_json::{json, Value};
 
-use crate::board::release::git::{self, git as run_git};
-use crate::board::release::land::ask;
 use crate::config::Config;
 use crate::prs::repo;
+use crate::releases::git::{self, git as run_git};
+use crate::releases::land::ask;
 
 const USAGE: &str = "usage: hermesd pr merge <number> [--dry-run]";
 

@@ -212,7 +212,7 @@ fn handshake(
     if let Some(id) = &device_id {
         let _ = app.db.touch_device(id);
         // What the phone says it runs, for display only (H-241).
-        if let Err(e) = crate::board::release::phone_version::note(&app.db, id, &req) {
+        if let Err(e) = crate::releases::phone_version::note(&app.db, id, &req) {
             tracing::warn!(device = %id, "couldn't keep the device's app version: {e:#}");
         }
     }

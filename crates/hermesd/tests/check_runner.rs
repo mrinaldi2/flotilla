@@ -14,11 +14,11 @@ use std::time::Duration;
 
 use common::prs::{branch, error, give, head, set_policy, setup, setup_with, Repo};
 use hermesd::board::model::Role;
-use hermesd::board::release::machines;
 use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
 use hermesd::prs::check_model::{CheckResult, CheckRun};
 use hermesd::prs::check_rerun::{rerun, Asker};
 use hermesd::prs::check_route::DISK_FREE_GB;
+use hermesd::releases::machines;
 use serde_json::json;
 
 /// `unit` and `lint` run side by side on one computer: they test the

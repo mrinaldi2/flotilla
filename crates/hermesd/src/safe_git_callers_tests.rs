@@ -12,7 +12,7 @@ const DIRECT_GIT: &[(&str, &str)] = &[
         "the helper reading core.autocrlf/core.eol from the system config, outside any repository",
     ),
     (
-        "board/release/git.rs",
+        "releases/git.rs",
         "the `hermesd release` CLI, run by DevOps in its own terminal and checkout",
     ),
     (
@@ -35,7 +35,7 @@ const OTHER_PROGRAMS: &[(&str, &str)] = &[
     ("holders.rs", "lsof, from /usr/sbin or /usr/bin"),
     ("holders_procs.rs", "lsof, from /usr/sbin or /usr/bin"),
     (
-        "board/release/install/apply.rs",
+        "releases/install/apply.rs",
         "the hermesd binary being installed",
     ),
     (
@@ -69,7 +69,7 @@ const OTHER_PROGRAMS: &[(&str, &str)] = &[
 const BOT_PATHS: &[&str] = &[
     "prs/",
     "worktree.rs",
-    "board/release/git_cache.rs",
+    "releases/git_cache.rs",
     "cleanup.rs",
     "cleanup/",
 ];

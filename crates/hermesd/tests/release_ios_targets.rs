@@ -196,9 +196,9 @@ async fn the_lead_keeps_the_ios_tester_and_a_dev_apart_in_either_order() {
 /// rehashes it, once, so the deploy there passes `check_frozen` (M1).
 #[tokio::test]
 async fn an_ios_package_frozen_on_desktop_computers_deploys_to_the_iphone_after_the_repair() {
-    use hermesd::board::release::ios_repair::repair_ios_deploy_targets;
-    use hermesd::board::release::model::ReleaseTargets;
-    use hermesd::board::release::{check_frozen, frozen_hash};
+    use hermesd::releases::ios_repair::repair_ios_deploy_targets;
+    use hermesd::releases::model::ReleaseTargets;
+    use hermesd::releases::{check_frozen, frozen_hash};
 
     let mut t = team(Platform::Ios).await;
     ios_qa_tests_ios(&mut t).await;

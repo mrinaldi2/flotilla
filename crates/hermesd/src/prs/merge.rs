@@ -23,11 +23,11 @@ use serde_json::{json, Value};
 use crate::actor::Actor;
 use crate::app::AppState;
 use crate::board::model::{ColumnCategory, Role};
-use crate::board::release::{daemon_move, git_cache, publish_moves};
 use crate::bot_permissions::Stored;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
 use crate::prs::model::{Pr, PrState};
 use crate::prs::{mergeable, repo, review};
+use crate::releases::{daemon_move, git_cache, publish_moves};
 
 const MERGE: &str = "hermes/pr_merge";
 const MERGED: &str = "hermes/pr_merged";
@@ -158,7 +158,7 @@ fn check(app: &Arc<AppState>, pr: &Pr) -> anyhow::Result<Value> {
     // The owner's revert merges unreviewed only as the daemon checked it
     // (H-272 M1).
     if super::owner::is_owners(pr) {
-        if let Err(e) = crate::board::release::leave_out_gate::check_revert(app, &cache, pr) {
+        if let Err(e) = crate::releases::leave_out_gate::check_revert(app, &cache, pr) {
             return refuse(app, pr, e.to_string());
         }
     }
@@ -330,7 +330,7 @@ fn merged(
     // A Leave out's revert re-cuts its release (H-272).
     let done = app.db.board_read(|t| t.pr_by_id(&pr.id))?;
     if let Some(done) = done {
-        if let Err(e) = crate::board::release::leave_out_gate::after_merge(app, &done) {
+        if let Err(e) = crate::releases::leave_out_gate::after_merge(app, &done) {
             tracing::warn!(pr = pr.number, error = %e, "the Leave out couldn't re-cut its release");
         }
     }

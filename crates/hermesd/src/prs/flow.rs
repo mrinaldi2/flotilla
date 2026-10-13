@@ -9,13 +9,13 @@ use std::sync::Arc;
 use crate::actor::Actor;
 use crate::app::AppState;
 use crate::board::model::{ColumnCategory, LinkKind};
-use crate::board::release::{daemon_move, machines, publish_moves};
 use crate::db::prs::{Head, NewPr};
 use crate::decisions::{conflict, forbidden, not_found};
 use crate::prs::checks;
 use crate::prs::model::{Pr, PrState};
 use crate::prs::repo::{self, Repo};
 use crate::prs::worktree;
+use crate::releases::{daemon_move, machines, publish_moves};
 
 /// What a bot asks to open.
 pub struct Open<'a> {

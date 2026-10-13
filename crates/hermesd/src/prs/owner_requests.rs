@@ -158,7 +158,7 @@ pub fn serve(
                 .flatten()
                 .filter_map(|n| n.as_u64().and_then(|n| u32::try_from(n).ok()))
                 .collect();
-            let out = crate::board::release::leave_out::request(
+            let out = crate::releases::leave_out::request(
                 app,
                 project,
                 release,

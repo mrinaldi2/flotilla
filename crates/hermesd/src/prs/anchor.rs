@@ -5,7 +5,7 @@
 
 use std::path::Path;
 
-use crate::board::release::git_cache::{self, Hunk};
+use crate::releases::git_cache::{self, Hunk};
 
 /// The new-side line for old line `line`, through `hunks` in order; `None`
 /// when a hunk replaced or removed it.

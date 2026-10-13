@@ -13,8 +13,8 @@ use serde_json::{json, Value};
 
 use super::sweep::{self, Plan, Swept};
 use crate::app::AppState;
-use crate::board::release::machines;
 use crate::peer::refuse;
+use crate::releases::machines;
 
 /// The peer request a linked computer makes for its sweep plan.
 pub const PLAN: &str = "cleanup_sweep_plan";

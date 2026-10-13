@@ -7,7 +7,7 @@ use std::process::Command;
 use super::super::tests::{CHECKS, REVIEWERS};
 use super::super::ReviewRole::{self, Architect, Ce, Owner};
 use super::read;
-use crate::board::release::git_cache;
+use crate::releases::git_cache;
 
 fn git(repo: &Path, args: &[&str]) {
     let out = Command::new("git")

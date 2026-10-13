@@ -6,8 +6,8 @@
 
 use super::model::Outcome;
 use crate::app::AppState;
-use crate::board::release::git_cache;
 use crate::prs::model::{Pr, PrState};
+use crate::releases::git_cache;
 
 /// Rule 1 for any PR: a merged one as [`verify_merge`]; a closed one only
 /// while no PR is open on its branch again (its commits are then kept by

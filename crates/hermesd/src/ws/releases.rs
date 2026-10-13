@@ -8,11 +8,11 @@ use serde_json::{json, Value};
 use bus::Capability;
 use chrono::{DateTime, Utc};
 
-use crate::board::release::lifecycle::{self, can_rule};
-use crate::board::release::machines;
-use crate::board::release::model::{parse_arg, Release, Verdict};
-use crate::board::release::rule::{rule, ItemVerdict};
 use crate::decisions::{invalid, not_found};
+use crate::releases::lifecycle::{self, can_rule};
+use crate::releases::machines;
+use crate::releases::model::{parse_arg, Release, Verdict};
+use crate::releases::rule::{rule, ItemVerdict};
 
 use super::Conn;
 
@@ -112,7 +112,7 @@ impl Conn {
     pub(super) fn release_json(&self, release: &Release) -> anyhow::Result<Value> {
         let approve = self.caps.contains(&Capability::Approve);
         let (can, on) = can_rule(&self.app, &self.owner(), approve, &release.project_id)?;
-        let mut v = crate::board::release::blockers::payload(&self.app, release);
+        let mut v = crate::releases::blockers::payload(&self.app, release);
         v["can_rule"] = json!(can);
         v["rule_on"] = json!(on);
         Ok(v)

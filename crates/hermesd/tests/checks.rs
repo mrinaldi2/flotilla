@@ -11,10 +11,10 @@ use std::path::Path;
 
 use common::prs::{branch, error, head, set_policy, setup, write};
 use common::repo::git;
-use hermesd::board::release::machines;
 use hermesd::prs::check_jobs::SYSTEM_RUNNER;
 use hermesd::prs::check_model::CheckResult;
 use hermesd::prs::checks::{dispatch, record, RunLog};
+use hermesd::releases::machines;
 use serde_json::{json, Value};
 
 const POLICY: &str = r#"

@@ -7,7 +7,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::board::release::git::github_https;
+use crate::releases::git::github_https;
 use crate::safe_git::SafeGit;
 
 /// The checkout, relative to the job's folder.

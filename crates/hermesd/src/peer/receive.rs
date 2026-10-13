@@ -163,12 +163,12 @@ pub(super) fn receive(
         // Where it installs: the home named this computer, or the iPhone. It
         // opens with the task (H-312), so no reader sees a target-less one.
         let target = match (release, spec.target.as_deref()) {
-            (Some(_), Some(target)) if crate::board::release::machines::is_ios_target(target) => {
+            (Some(_), Some(target)) if crate::releases::machines::is_ios_target(target) => {
                 Some(target.to_string())
             }
             (Some(_), Some(_)) => Some(
                 app.db
-                    .board_read(crate::board::release::machines::this_computer)?,
+                    .board_read(crate::releases::machines::this_computer)?,
             ),
             _ => None,
         };

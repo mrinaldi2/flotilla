@@ -2,7 +2,7 @@
 
 use super::releases::NewRelease;
 use super::Db;
-use crate::board::release::model::ReleaseEvent;
+use crate::releases::model::ReleaseEvent;
 
 /// A downgrade and reinstall can rewind `schema_version`: the releases
 /// migration then runs again over its own tables, and keeps their rows.

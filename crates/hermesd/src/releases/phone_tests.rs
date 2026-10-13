@@ -6,8 +6,8 @@ use std::path::{Path, PathBuf};
 use bus::contract::home::{InstallDevice, ReleaseInstall};
 
 use super::{installable, links, offer, page_html, serve};
-use crate::board::release::model::{ReleaseBuild, ReleaseStatus};
 use crate::config::Config;
+use crate::releases::model::{ReleaseBuild, ReleaseStatus};
 
 const BASE: &str = "https://mac.tail.ts.net/releases";
 

@@ -11,7 +11,6 @@ use crate::app::AppState;
 use crate::board::model::Role;
 use crate::board::policy::base as policy;
 use crate::board::policy::ReviewRole;
-use crate::board::release::git_cache;
 use crate::db::reviews::NewReview;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
 use crate::messaging::{self, daemon_sender, Dm};
@@ -19,6 +18,7 @@ use crate::prs::model::Pr;
 use crate::prs::owner::Shape;
 use crate::prs::repo;
 use crate::prs::review_model::{Finding, Review, Verdict};
+use crate::releases::git_cache;
 
 /// A bot's verdict, as `pr_review` carries it.
 pub struct Submit<'a> {

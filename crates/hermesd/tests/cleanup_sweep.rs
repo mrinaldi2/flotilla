@@ -26,7 +26,7 @@ fn real(path: &Path) -> String {
 fn job(r: &Repo, path: &Path) -> Option<Job> {
     let db = &r.pair.d.app.db;
     db.board_read(|t| {
-        let here = hermesd::board::release::machines::this_computer(t)?;
+        let here = hermesd::releases::machines::this_computer(t)?;
         t.sweep_job(&here, &real(path))
     })
     .unwrap()

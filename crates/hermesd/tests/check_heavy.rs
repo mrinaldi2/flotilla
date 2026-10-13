@@ -10,9 +10,9 @@ use std::time::Duration;
 
 use common::prs::{branch, give, head, set_policy, setup_with, Repo};
 use hermesd::board::model::Role;
-use hermesd::board::release::machines;
 use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
 use hermesd::prs::check_model::{CheckResult, CheckRun};
+use hermesd::releases::machines;
 use serde_json::json;
 
 /// Two heavy checks long enough to overlap, a cargo check that says it

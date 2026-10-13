@@ -133,7 +133,7 @@ impl Db {
         let elsewhere = self.board_read(|t| t.peer_names())?;
         Ok(rows.into_iter().find_map(|(release, bot, target)| {
             let target = target?;
-            let here = !crate::board::release::machines::is_ios_target(&target)
+            let here = !crate::releases::machines::is_ios_target(&target)
                 && !elsewhere.iter().any(|p| p.eq_ignore_ascii_case(&target));
             here.then_some((release, bot))
         }))

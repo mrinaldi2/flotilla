@@ -6,12 +6,12 @@
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::release::git_cache;
 use crate::prs::check_model::CheckResult;
 use crate::prs::model::Pr;
 use crate::prs::owner;
 use crate::prs::repo;
 use crate::prs::review_model::{Review, Verdict};
+use crate::releases::git_cache;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Blocker {

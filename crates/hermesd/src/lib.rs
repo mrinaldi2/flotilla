@@ -49,6 +49,7 @@ pub mod projectmgmt;
 pub mod prs;
 pub mod quiesce;
 pub mod redact;
+pub mod releases;
 pub mod resume;
 pub mod routine_validation;
 pub mod runtime;

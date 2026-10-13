@@ -13,7 +13,7 @@ use serde_json::{json, Value};
 
 use super::Conn;
 use crate::app::AppState;
-use crate::board::release::machines;
+use crate::releases::machines;
 
 /// The most ids one request may ask for.
 const MAX_IDS: usize = 200;

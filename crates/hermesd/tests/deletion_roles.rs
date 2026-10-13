@@ -67,7 +67,7 @@ async fn a_deleted_bot_loses_its_board_roles() {
     };
     assert!(roles_of(&tester) > 0);
     assert_eq!(
-        hermesd::board::release::testers_on(&d.app, &pid, "win-pc").unwrap(),
+        hermesd::releases::testers_on(&d.app, &pid, "win-pc").unwrap(),
         std::slice::from_ref(&tester)
     );
 
@@ -76,7 +76,7 @@ async fn a_deleted_bot_loses_its_board_roles() {
 
     assert_eq!(roles_of(&tester), 0, "its roles went with it");
     assert!(
-        hermesd::board::release::testers_on(&d.app, &pid, "win-pc")
+        hermesd::releases::testers_on(&d.app, &pid, "win-pc")
             .unwrap()
             .is_empty(),
         "no deploy goes to a deleted tester"

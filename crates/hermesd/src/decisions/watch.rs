@@ -50,7 +50,7 @@ fn resume_held(app: &Arc<AppState>) -> anyhow::Result<()> {
             continue;
         }
         // A held release package comes back with its decision (H-020 §6.2).
-        crate::board::release::lifecycle::on_decision_resumed(app, &decision.id)?;
+        crate::releases::lifecycle::on_decision_resumed(app, &decision.id)?;
         let refreshed = app
             .db
             .get_decision(&decision.id)?

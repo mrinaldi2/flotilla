@@ -11,7 +11,7 @@ use serde_json::{json, Value};
 
 use super::{rows, Built, Scope};
 use crate::app::AppState;
-use crate::board::release::model::Release;
+use crate::releases::model::Release;
 
 /// The rows, the WIP overrides shown beside them, and how many rows the
 /// projects home counts for them (H-161): the dashboard's header shows

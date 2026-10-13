@@ -11,9 +11,9 @@ use chrono::Utc;
 use common::prs::{branch, give, head, set_policy, setup, Repo};
 use common::WsClient;
 use hermesd::board::model::Role;
-use hermesd::board::release::machines;
 use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
 use hermesd::prs::check_model::{CheckResult, CheckRun};
+use hermesd::releases::machines;
 use serde_json::{json, Value};
 
 /// The `path` check echoes its PATH in the computer's shell: `sh -c` here,

@@ -153,7 +153,7 @@ async fn main() -> anyhow::Result<()> {
             return Ok(());
         }
         Some("release") => {
-            hermesd::board::release::cli::run(&cfg, &args[1..]).await?;
+            hermesd::releases::cli::run(&cfg, &args[1..]).await?;
             return Ok(());
         }
         Some("pr") => {

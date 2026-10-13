@@ -33,7 +33,7 @@ pub fn overview(app: &AppState, project_ids: &[String]) -> anyhow::Result<Projec
     let me = app.db.daemon_id()?;
     let computer = app
         .db
-        .board_read(crate::board::release::machines::this_computer)?;
+        .board_read(crate::releases::machines::this_computer)?;
     let asked: HashMap<String, Asked> = app
         .db
         .list_peers()?

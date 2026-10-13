@@ -13,8 +13,8 @@ use chrono::{DateTime, Duration, Utc};
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::release::machines;
 use crate::bot_permissions::guard::slug;
+use crate::releases::machines;
 
 /// Under this much free space a computer's Needs-you row appears.
 pub const LOW: u64 = 20_000_000_000;

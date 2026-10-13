@@ -12,8 +12,8 @@ use common::prs::{clone, commit, error};
 use common::releases::rule;
 use common::repo::git;
 use common::WsClient;
-use hermesd::board::release::tag::answer;
-use hermesd::board::release::tag_cli::{tag_in, Plan};
+use hermesd::releases::tag::answer;
+use hermesd::releases::tag_cli::{tag_in, Plan};
 use serde_json::json;
 
 /// AC1: the tip by default; a commit that isn't on main is refused.
@@ -186,7 +186,7 @@ async fn a_cut_release_goes_through_the_gate_and_is_tagged_after_approval() {
             .contains("only a release the owner approved"),
         "{early}"
     );
-    let land = hermesd::board::release::gates::serve(
+    let land = hermesd::releases::gates::serve(
         &app,
         &devops,
         &json!({"method": "hermes/release_land", "params": {"release_id": id}}),
