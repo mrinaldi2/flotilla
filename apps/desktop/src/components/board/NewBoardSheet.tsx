@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { FormEvent, ReactElement } from "react";
 import type { Board } from "../../protocol/gen/hermes/board/v1/board_pb";
 import { useEscapeKey } from "../../hooks/useEscapeKey";
+import { useReturnFocus } from "../../hooks/useReturnFocus";
 import { errText } from "../../util";
 import OverlayShell from "../overlay/OverlayShell";
 import { keyProblem, suggestKey } from "./boards";
@@ -126,6 +127,7 @@ export default function NewBoardSheet(props: NewBoardSheetProps): ReactElement {
   const [sending, setSending] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
   useEscapeKey(props.onCancel);
+  useReturnFocus();
   const named = name.trim() !== "";
   const key = typedKey ?? (named ? suggestKey(name) : "");
   const problem = named ? keyProblem(key, props.boards) : null;

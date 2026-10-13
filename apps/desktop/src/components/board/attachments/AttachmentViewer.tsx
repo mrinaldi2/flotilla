@@ -4,6 +4,7 @@
 import { X } from "lucide-react";
 import type { ReactElement } from "react";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
+import { useReturnFocus } from "../../../hooks/useReturnFocus";
 import type { BoardApi } from "../../../protocol/board";
 import type { ItemAttachment } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import { kindLabel, sizeWords } from "./attachments";
@@ -51,6 +52,7 @@ function Stage(props: {
 export default function AttachmentViewer(props: AttachmentViewerProps): ReactElement {
   const { attachment: a, onClose } = props;
   useEscapeKey(onClose);
+  useReturnFocus();
   const label = kindLabel(a);
   const size = a.kind === "doc" ? "" : ` · ${sizeWords(Number(a.bytes))}`;
   return (

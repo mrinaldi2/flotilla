@@ -125,5 +125,7 @@ describe("attachments in the drawer", () => {
     expect(await screen.findByRole("dialog", { name: "import-error.png" })).toBeInTheDocument();
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog", { name: "import-error.png" })).toBeNull();
+    // Focus goes back to the thumbnail that opened it.
+    expect(screen.getByRole("button", { name: "Open The error full size" })).toHaveFocus();
   });
 });
