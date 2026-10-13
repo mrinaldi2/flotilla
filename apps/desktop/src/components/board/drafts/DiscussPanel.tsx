@@ -33,7 +33,18 @@ export default function DiscussPanel(props: DiscussPanelProps): ReactElement {
     );
   };
   return (
-    <aside className="discuss-panel" aria-label={`${bot.name} about ${itemId}`}>
+    // The panel only keeps Esc from the drawer; its composer is the control.
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    <aside
+      className="discuss-panel"
+      aria-label={`${bot.name} about ${itemId}`}
+      onKeyDown={(event) => {
+        // Esc while writing to the bot keeps the chat and the drawer open.
+        if (event.key === "Escape") {
+          event.preventDefault();
+        }
+      }}
+    >
       <header className="drawer-head">
         <span className="drawer-type">
           <b>{bot.name}</b> · about <span className="mono">{itemId}</span>

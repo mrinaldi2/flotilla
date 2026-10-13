@@ -90,7 +90,14 @@ function useDrawerKeys(onClose: () => void, onStep?: (direction: -1 | 1) => void
         if (escapeIsTheDrawers(event)) {
           onClose();
         }
-      } else if (!typing && onStep && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+      } else if (
+        !typing &&
+        onStep &&
+        (event.key === "ArrowUp" || event.key === "ArrowDown") &&
+        // A menu or dialog over the drawer has the arrows.
+        !event.defaultPrevented &&
+        document.querySelector('[role="menu"], [role="dialog"]') === null
+      ) {
         event.preventDefault();
         onStep(event.key === "ArrowUp" ? -1 : 1);
       }

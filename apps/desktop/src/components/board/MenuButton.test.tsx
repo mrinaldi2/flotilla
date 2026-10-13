@@ -40,6 +40,15 @@ describe("a menu button", () => {
     expect(screen.getByRole("button", { name: "Boards" })).toHaveFocus();
   });
 
+  it("goes to the last item on ↑ when the menu itself has focus", async () => {
+    const user = userEvent.setup();
+    renderMenu();
+    await user.click(screen.getByRole("button", { name: "Boards" }));
+    screen.getByRole("menu").focus();
+    await user.keyboard("{ArrowUp}");
+    expect(screen.getAllByRole("menuitemradio")[2]).toHaveFocus();
+  });
+
   it("closes on Esc, on Tab and on a press outside", async () => {
     const user = userEvent.setup();
     renderMenu();

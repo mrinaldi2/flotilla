@@ -25,6 +25,9 @@ import { dataUrl, readAttachment, uploadAttachment } from "./transfer";
 
 const attachments = draftDetail().attachments;
 
+const storedFile = (id: string, path: string, bytes: bigint, removed = false) =>
+  create(ItemAttachmentSchema, { id, kind: "file", name: "a.pdf", path, bytes, removed });
+
 describe("what an item may carry", () => {
   it("refuses a type, a size or an item total at once, with the reason", () => {
     expect(refusalFor("shot.png", 1000, 0)).toBeNull();
@@ -53,8 +56,23 @@ describe("what an item may carry", () => {
     expect(kindLabel(create(ItemAttachmentSchema, { kind: "file", name: "notes" })).word).toBe(
       "file",
     );
-    // Detached files and docs don't count toward the cap.
+    // Docs don't count toward the cap; the fixture's detached image has no stored copy.
     expect(attachedBytes(attachments)).toBe(194 + 1_310_720);
+  });
+
+  it("counts what the item stores as the service does: detached files too, a copy once", () => {
+    const stored = [
+      storedFile("a", "items/RB-1/aa-a.pdf", 60n * 1024n * 1024n, true),
+      storedFile("b", "items/RB-1/bb-b.pdf", 30n * 1024n * 1024n),
+      storedFile("c", "items/RB-1/bb-b.pdf", 30n * 1024n * 1024n),
+    ];
+    expect(attachedBytes(stored)).toBe(90 * 1024 * 1024);
+    // So 20 MB more is refused here, before a byte is sent, as the service would.
+    expect(refusalFor("c.pdf", 20 * 1024 * 1024, attachedBytes(stored))).toMatch(/item would hold/);
+  });
+
+  it("refuses an empty file at once, which the service doesn't take", () => {
+    expect(refusalFor("empty.txt", 0, 0)).toMatch(/empty/);
   });
 
   it("reads attachment references in a description", () => {
@@ -93,7 +111,7 @@ describe("moving an attachment's bytes", () => {
       size: bytes.length,
       slice: (a: number, b: number) => new Blob([bytes.slice(a, b)]),
     };
-    await uploadAttachment(fake, "RB-20", "u", file, (n) => seen.push(n), "The log");
+    await uploadAttachment(fake, "RB-20", "u", file, (n) => seen.push(n), { caption: "The log" });
     expect(offsets).toEqual([0n, 524_288n, 1_048_576n]);
     expect(seen.at(-1)).toBe(1_200_000);
     const attach = fake.boardCalls.at(-1);

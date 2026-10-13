@@ -33,7 +33,7 @@ describe("a proposal before and after", () => {
     // Hidden columns (Cancelled) aren't in the strip.
     expect(names(d.before)).toEqual(["To do", "Doing", "QA", "Done"]);
     expect(names(d.after)).toEqual(["To do", "Doing", "Review (added)", "QA", "Done"]);
-    expect(d.rules).toEqual(["+ Has a link of kind pr", "Moved in by: The assignee"]);
+    expect(d.rules).toEqual(["+ adds: Has a link of kind pr", "Moved in by: The assignee"]);
     expect(d.notes).toEqual(["WIP limit 2"]);
   });
 
@@ -51,10 +51,10 @@ describe("a proposal before and after", () => {
     });
     expect(names(d.after)).toContain("QA (changed)");
     expect(d.rules).toEqual([
-      "+ Size at most M",
-      "− Has a link of kind pr",
-      "− mover: Roles tester",
-      "− from Doing",
+      "+ adds: Size at most M",
+      "− drops: Has a link of kind pr",
+      "− drops: mover: Roles tester",
+      "− drops: from Doing",
     ]);
   });
 

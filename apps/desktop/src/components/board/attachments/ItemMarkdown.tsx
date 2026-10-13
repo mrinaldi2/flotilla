@@ -1,7 +1,8 @@
 // An item's description (0.19.0): Markdown as bots and the owner write it,
 // with `![caption](attachment:<id>)` drawn as the item's own image. Its
 // bytes come from the board's home, so it is safe to show; an image that
-// is not attached, or was detached, is a placeholder. Every other image
+// is not attached, or was detached, is a placeholder, and a file or a
+// document named that way is a button that opens it. Every other image
 // and link stays inert text, as in any bot-written Markdown.
 
 import type { ReactElement } from "react";
@@ -10,7 +11,7 @@ import type { BoardApi } from "../../../protocol/board";
 import type { ItemAttachment } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import { useCardMarkdown } from "../../cards/cardMarkdown";
 import { SAFE_LINKS } from "../../control/Markdown";
-import { attachmentId } from "./attachments";
+import { attachmentId, kindLabel } from "./attachments";
 import AttachmentThumb, { MissingImage } from "./AttachmentThumb";
 
 interface ItemMarkdownProps {
@@ -30,6 +31,21 @@ export default function ItemMarkdown(props: ItemMarkdownProps): ReactElement {
     const found = props.attachments.find((a) => a.id === id);
     if (found === undefined) {
       return <MissingImage name={alt || "image"} />;
+    }
+    if (found.kind !== "image" && !found.removed) {
+      // A file or a document: named, never read as an image.
+      const label = kindLabel(found);
+      return (
+        <button
+          type="button"
+          className="chat-link attachment-inline-file"
+          aria-label={`Open ${found.name}`}
+          onClick={() => props.onOpen(found)}
+        >
+          <span aria-hidden="true">{label.glyph} </span>
+          {`${found.name} · ${label.word}`}
+        </button>
+      );
     }
     return (
       <AttachmentThumb api={props.api} attachment={found} alt={alt} inline onOpen={props.onOpen} />

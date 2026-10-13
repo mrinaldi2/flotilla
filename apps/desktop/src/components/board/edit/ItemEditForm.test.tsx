@@ -82,6 +82,19 @@ describe("the owner's edit form", () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 
+  it("says so when the assignee couldn't be set because the item changed", async () => {
+    const user = userEvent.setup();
+    const fake = new FakeDaemon().onBoard("itemAssign", () => ({
+      case: "edited",
+      value: create(EditResultSchema, { outcome: { case: "conflict", value: draftItem() } }),
+    }));
+    const onSaved = renderForm(fake);
+    await user.selectOptions(screen.getByRole("combobox", { name: "Assignee" }), "b1");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("changed while you edited it");
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
   it("refuses a blank title before sending, and places a pasted screenshot inline", async () => {
     const user = userEvent.setup();
     const fake = new FakeDaemon();

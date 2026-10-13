@@ -275,3 +275,118 @@ async fn the_owners_snapshot_carries_the_leads_open_proposal() {
         ("QA", &["assignee_set".to_string()][..])
     );
 }
+
+#[tokio::test]
+async fn undoing_an_attachment_takes_back_that_one_not_another_of_its_name() {
+    let (pair, mut bots) = project_with_bots(&["Lead"]).await;
+    let lead: &mut McpClient = &mut bots[0];
+    let d = &pair.d;
+    let db = &d.app.db;
+    let project_id = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
+    db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
+        .unwrap();
+    let mut owner = WsClient::connect(d).await;
+    let draft = done(
+        call(
+            &mut owner,
+            Request::ItemCreate(c::ItemCreate {
+                project_id: project_id.clone(),
+                r#type: c::ItemType::Feature as i32,
+                title: "Screenshots".into(),
+                draft: Some(true),
+                ..Default::default()
+            }),
+        )
+        .await,
+    );
+    let id = draft.id.clone();
+    call(
+        &mut owner,
+        Request::ItemInvite(c::ItemInvite {
+            id: id.clone(),
+            bot: Some(pair.ids[0].clone()),
+            ..Default::default()
+        }),
+    )
+    .await;
+    let project = db.get_project(&project_id).unwrap().unwrap();
+    let artifacts = hermesd::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
+    std::fs::create_dir_all(artifacts.join("v2")).unwrap();
+    std::fs::write(artifacts.join("spec.md"), "# Spec\n").unwrap();
+    std::fs::write(artifacts.join("v2/spec.md"), "# Spec, again\n").unwrap();
+    // The lead attaches spec.md; then the owner attaches another, of that name.
+    lead.call("item_attach", json!({"id": id, "artifact": "spec.md"}))
+        .await;
+    let by_lead = revision_of(&revisions(&mut owner, &id).await, "attachment");
+    call(
+        &mut owner,
+        Request::ItemAttach(c::ItemAttach {
+            id: id.clone(),
+            artifact: Some("v2/spec.md".into()),
+            name: Some("spec.md".into()),
+            ..Default::default()
+        }),
+    )
+    .await;
+    let before = item(&mut owner, &id).await;
+    let leads = |d: &c::ItemDetail| {
+        d.attachments
+            .iter()
+            .find(|a| a.added_by.starts_with("bot:"))
+            .cloned()
+            .expect("the lead's attachment")
+    };
+    let owners = |d: &c::ItemDetail| {
+        d.attachments
+            .iter()
+            .find(|a| a.added_by == "user")
+            .cloned()
+            .expect("the owner's attachment")
+    };
+    assert_eq!(
+        (leads(&before).name.as_str(), owners(&before).name.as_str()),
+        ("spec.md", "spec.md")
+    );
+
+    // Undoing the lead's change detaches the lead's file, not the owner's.
+    let version = before.item.unwrap().version;
+    undo(&mut owner, &id, version, by_lead).await;
+    let after = item(&mut owner, &id).await;
+    assert!(leads(&after).removed, "{:?}", after.attachments);
+    assert!(!owners(&after).removed, "{:?}", after.attachments);
+}
+
+#[tokio::test]
+async fn an_undo_of_no_such_revision_is_refused() {
+    let d = common::spawn_daemon().await;
+    let db = &d.app.db;
+    let p = db.create_project("Recipe Box", "recipe-box").unwrap();
+    db.ensure_board(&p.id, &db.daemon_id().unwrap(), None)
+        .unwrap();
+    let mut owner = WsClient::connect(&d).await;
+    let draft = done(
+        call(
+            &mut owner,
+            Request::ItemCreate(c::ItemCreate {
+                project_id: p.id.clone(),
+                r#type: c::ItemType::Feature as i32,
+                title: "Unit conversion".into(),
+                draft: Some(true),
+                ..Default::default()
+            }),
+        )
+        .await,
+    );
+    for revision in [0, -1, i64::MIN, i64::MAX] {
+        let reply = call(
+            &mut owner,
+            Request::ItemDraftUndo(c::ItemDraftUndo {
+                id: draft.id.clone(),
+                expected_version: draft.version,
+                revision,
+            }),
+        )
+        .await;
+        assert_eq!(error_code(reply), "not_found", "revision {revision}");
+    }
+}

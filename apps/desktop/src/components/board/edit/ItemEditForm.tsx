@@ -11,6 +11,7 @@ import { boardCall } from "../../../protocol/board";
 import type { Bot } from "../../../protocol/entities";
 import type { Item } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import { Priority, Size } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { EditResult } from "../../../protocol/gen/hermes/board/v1/requests_pb";
 import { errText } from "../../../util";
 import { typeLabel } from "../labels";
 import type { ItemForm } from "./itemEdit";
@@ -26,16 +27,26 @@ interface ItemEditFormProps {
   readonly onCancel: () => void;
 }
 
+/** Why an edit wasn't done, in words, or null when it was. */
+function notDone(item: Item, result: EditResult): string | null {
+  switch (result.outcome.case) {
+    case "done":
+      return null;
+    case "refused":
+      return result.outcome.value.unmet.map((u) => u.text).join(" ");
+    default:
+      return `${item.id} changed while you edited it. Cancel to see it as it is now.`;
+  }
+}
+
 async function save(api: BoardApi, item: Item, form: ItemForm): Promise<string | null> {
   const update = updateFor(item, form);
   let version = item.version;
   if (update !== null) {
     const result = await boardCall(api, { case: "itemUpdate", value: update }, "edited");
-    if (result.outcome.case === "refused") {
-      return result.outcome.value.unmet.map((u) => u.text).join(" ");
-    }
-    if (result.outcome.case !== "done") {
-      return `${item.id} changed while you edited it. Cancel to see it as it is now.`;
+    const refused = notDone(item, result);
+    if (refused !== null || result.outcome.case !== "done") {
+      return refused;
     }
     version = result.outcome.value.version;
   }
@@ -46,9 +57,7 @@ async function save(api: BoardApi, item: Item, form: ItemForm): Promise<string |
       { case: "itemAssign", value: { id: item.id, expectedVersion: version, bot } },
       "edited",
     );
-    if (result.outcome.case === "refused") {
-      return result.outcome.value.unmet.map((u) => u.text).join(" ");
-    }
+    return notDone(item, result);
   }
   return null;
 }
@@ -105,7 +114,19 @@ export default function ItemEditForm(props: ItemEditFormProps): ReactElement {
   };
 
   return (
-    <form className="item-edit" onSubmit={submit} aria-label={`Edit ${item.id}`}>
+    // The form only keeps Esc from the drawer; its fields are the controls.
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    <form
+      className="item-edit"
+      onSubmit={submit}
+      aria-label={`Edit ${item.id}`}
+      onKeyDown={(event) => {
+        // Esc doesn't close the drawer under an edit and lose it: Cancel does.
+        if (event.key === "Escape") {
+          event.preventDefault();
+        }
+      }}
+    >
       <label className="field">
         <span className="field-label">Title</span>
         <input

@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import type { FormEvent, ReactElement } from "react";
-import { useEscapeKey } from "../../../hooks/useEscapeKey";
+import { useDialogKeys } from "../../../hooks/useReturnFocus";
 import type { Board, BoardColumn } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import { ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import OverlayShell from "../../overlay/OverlayShell";
@@ -75,7 +75,7 @@ export function RemoveColumnDialog(props: {
 }): ReactElement {
   const { column, items } = props;
   const [to, setTo] = useState(props.others[0]?.key ?? "");
-  useEscapeKey(props.onCancel);
+  useDialogKeys(props.onCancel);
   const title = `Remove ${column.name}`;
   return (
     <OverlayShell label={title} onClose={props.onCancel}>
@@ -134,7 +134,8 @@ export default function ColumnsSection(props: ColumnsSectionProps): ReactElement
       <ol className="column-rows">
         {columns.map((column) => (
           <ColumnRow
-            key={`${column.key}:${column.name}:${column.wipLimit ?? ""}`}
+            // By key alone: a rename or a new limit keeps the row, and its focus.
+            key={column.key}
             column={column}
             columns={columns}
             custom={custom}

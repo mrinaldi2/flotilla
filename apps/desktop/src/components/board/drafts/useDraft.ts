@@ -73,7 +73,19 @@ export function useDraft(
         api,
         { case: "itemDraftChanges", value: { id: itemId, since: last.id - 1n, markSeen: true } },
         "draftChanges",
-      ).catch((failure: unknown) => setError(errText(failure)));
+      ).then(
+        (changes) => {
+          // Marking seen covers every change up to the newest, including one
+          // a bot made after the drawer read them: list it here, or the
+          // owner never sees it.
+          const later = unseenChanges(changes.revisions, last.id);
+          if (later.length > 0) {
+            setReviewing((listed) => [...(listed ?? []), ...later]);
+          }
+          return undefined;
+        },
+        (failure: unknown) => setError(errText(failure)),
+      );
     }
   }, [api, itemId, unseen]);
 

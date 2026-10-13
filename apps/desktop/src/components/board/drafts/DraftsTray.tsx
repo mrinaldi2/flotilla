@@ -72,7 +72,7 @@ export default function DraftsTray(props: DraftsTrayProps): ReactElement | null 
         const type = typeLabel(d.type);
         return {
           key: d.id,
-          label: `${type.glyph} ${d.id} ${d.title}`,
+          label: `${type.glyph} ${type.word} · ${d.id} ${d.title}`,
           note: who === "" ? "Not discussed yet" : `Discussing with ${who}`,
           onChoose: () => props.onOpen(d.id),
         };
