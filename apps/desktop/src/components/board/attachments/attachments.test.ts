@@ -53,8 +53,27 @@ describe("what an item may carry", () => {
     expect(kindLabel(create(ItemAttachmentSchema, { kind: "file", name: "notes" })).word).toBe(
       "file",
     );
-    // Detached files and docs don't count toward the cap.
+    // Docs don't count toward the cap; the fixture's detached image has no stored copy.
     expect(attachedBytes(attachments)).toBe(194 + 1_310_720);
+  });
+
+  it("counts what the item stores as the service does: detached files too, a copy once", () => {
+    const file = (id: string, path: string, bytes: bigint, removed = false) =>
+      create(ItemAttachmentSchema, { id, kind: "file", name: "a.pdf", path, bytes, removed });
+    const stored = [
+      file("a", "items/RB-1/aa-a.pdf", 60n * 1024n * 1024n, true),
+      file("b", "items/RB-1/bb-b.pdf", 30n * 1024n * 1024n),
+      file("c", "items/RB-1/bb-b.pdf", 30n * 1024n * 1024n),
+    ];
+    expect(attachedBytes(stored)).toBe(90 * 1024 * 1024);
+    // So 20 MB more is refused here, before a byte is sent, as the service would.
+    expect(refusalFor("c.pdf", 20 * 1024 * 1024, attachedBytes(stored))).toMatch(
+      /item would hold/,
+    );
+  });
+
+  it("refuses an empty file at once, which the service doesn't take", () => {
+    expect(refusalFor("empty.txt", 0, 0)).toMatch(/empty/);
   });
 
   it("reads attachment references in a description", () => {

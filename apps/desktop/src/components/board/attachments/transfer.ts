@@ -24,7 +24,7 @@ export async function uploadAttachment(
   caption?: string,
 ): Promise<ItemDetail> {
   let offset = 0;
-  // An empty file still sends one chunk, so the upload exists.
+  // An empty file is refused before it gets here (`refusalFor`).
   do {
     const end = Math.min(offset + CHUNK, file.size);
     // Chunks go in order: each one's offset is what the home has received.
