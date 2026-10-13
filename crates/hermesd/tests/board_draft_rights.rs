@@ -160,3 +160,33 @@ async fn a_draft_blocks_no_live_item() {
         .unwrap();
     assert!(blockers.is_empty(), "{blockers:?}");
 }
+
+#[tokio::test]
+async fn every_field_a_bot_changes_on_a_draft_is_a_revision() {
+    let (pair, mut bots) = project_with_bots(&["Lead", "Builder"]).await;
+    let project_id = project(&pair.d, &pair.ids);
+    let mut owner = WsClient::connect(&pair.d).await;
+    let epic = create(&mut owner, &project_id, "Importing", false).await;
+    let draft = create(&mut owner, &project_id, "Unit conversion", true).await;
+    call(&mut owner, invite(&draft.id, "Lead")).await;
+    bots[0]
+        .call(
+            "item_update",
+            json!({"id": draft.id, "expected_version": draft.version,
+                   "platforms": ["daemon"], "parent_id": epic.id}),
+        )
+        .await;
+    let db = &pair.d.app.db;
+    let fields: Vec<String> = db
+        .board_read(|t| t.draft_revisions(&draft.id, None))
+        .unwrap()
+        .into_iter()
+        .map(|r| r.field)
+        .collect();
+    assert!(
+        fields.contains(&"platforms".to_string()) && fields.contains(&"parent".to_string()),
+        "{fields:?}"
+    );
+    let unseen = db.board_read(|t| t.unseen_drafts(&project_id)).unwrap();
+    assert_eq!(unseen.len(), 1, "the owner is told");
+}
