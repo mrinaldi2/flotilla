@@ -4,7 +4,7 @@
 
 use crate::common;
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use bus::contract::board::{self as c, board_request::Request, board_response::Response};
 use common::board::*;
@@ -18,6 +18,8 @@ struct Draft {
     project_id: String,
     id: String,
     workspace: PathBuf,
+    // Read only by the symlink tests, which are Unix-only.
+    #[cfg_attr(not(unix), allow(dead_code))]
     artifacts: PathBuf,
 }
 
@@ -158,7 +160,8 @@ async fn a_link_out_of_the_project_is_neither_linked_nor_copied() {
 }
 
 /// The one staged upload of an item.
-fn staged_upload(artifacts: &Path, item: &str) -> PathBuf {
+#[cfg(unix)]
+fn staged_upload(artifacts: &std::path::Path, item: &str) -> PathBuf {
     let dir = artifacts.join("items").join(item).join(".uploads");
     let mut entries: Vec<PathBuf> = std::fs::read_dir(&dir)
         .unwrap()
