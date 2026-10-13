@@ -134,7 +134,8 @@ export default function ColumnsSection(props: ColumnsSectionProps): ReactElement
       <ol className="column-rows">
         {columns.map((column) => (
           <ColumnRow
-            key={`${column.key}:${column.name}:${column.wipLimit ?? ""}`}
+            // By key alone: a rename or a new limit keeps the row, and its focus.
+            key={column.key}
             column={column}
             columns={columns}
             custom={custom}

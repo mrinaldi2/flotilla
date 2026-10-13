@@ -112,6 +112,25 @@ describe("board settings", () => {
     expect(last()).toMatchObject({ value: { archived: true } });
   });
 
+  it("renames a column once on Enter, though focus then leaves it, and keeps its focus", async () => {
+    const user = userEvent.setup();
+    const { fake } = renderSettings("columns");
+    const name = screen.getByRole("textbox", { name: "Name of QA" });
+    await user.clear(name);
+    await user.type(name, "Testing{Enter}");
+    expect(name).toHaveFocus();
+    await user.tab();
+    await idle();
+    const renames = fake.boardCalls.filter((c) => c.case === "columnUpdate");
+    expect(renames).toHaveLength(1);
+    expect(renames[0]).toMatchObject({ value: { key: "rb-qa", name: "Testing" } });
+  });
+
+  it("names a column's visibility box for the column, whatever its state", () => {
+    renderSettings("columns");
+    expect(screen.getByRole("checkbox", { name: "Show QA" })).toBeChecked();
+  });
+
   it("changes a column's kind, limit, visibility and place, and adds one", async () => {
     const user = userEvent.setup();
     const { last } = renderSettings("columns");
@@ -122,7 +141,7 @@ describe("board settings", () => {
     await user.type(wip, "2{Enter}");
     await idle();
     expect(last()).toMatchObject({ value: { key: "rb-qa", wipLimit: 2 } });
-    await user.click(screen.getAllByRole("checkbox", { name: "Shown" })[2] ?? document.body);
+    await user.click(screen.getByRole("checkbox", { name: "Show QA" }));
     await idle();
     expect(last()).toMatchObject({ value: { key: "rb-qa", visible: false } });
     await user.click(screen.getByRole("button", { name: "Move QA left" }));
