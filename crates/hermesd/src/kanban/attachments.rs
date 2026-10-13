@@ -303,13 +303,35 @@ pub fn render_refs(description: &str, atts: &[ItemAttachment], artifacts: &Path)
 /// The attachments of an item as a task or a prompt lists them, one per
 /// line with its local path or URL; empty when there are none.
 pub fn listing(item_id: &str, atts: &[ItemAttachment], artifacts: &Path) -> String {
+    listing_with(item_id, atts, |a| {
+        local_path(a, artifacts)
+            .map(|p| p.display().to_string())
+            .unwrap_or_else(|| a.url.clone())
+    })
+}
+
+/// The listing for a bot on a linked computer (0.19.0 K6), which can't
+/// read this computer's paths: `item_get` gives it local copies.
+pub fn listing_elsewhere(item_id: &str, atts: &[ItemAttachment]) -> String {
+    listing_with(item_id, atts, |a| {
+        if a.url.is_empty() {
+            format!("item_get {item_id} gives you a copy")
+        } else {
+            a.url.clone()
+        }
+    })
+}
+
+fn listing_with(
+    item_id: &str,
+    atts: &[ItemAttachment],
+    at: impl Fn(&ItemAttachment) -> String,
+) -> String {
     let lines: Vec<String> = atts
         .iter()
         .filter(|a| !a.removed)
         .map(|a| {
-            let at = local_path(a, artifacts)
-                .map(|p| p.display().to_string())
-                .unwrap_or_else(|| a.url.clone());
+            let at = at(a);
             let caption = if a.caption.is_empty() {
                 String::new()
             } else {

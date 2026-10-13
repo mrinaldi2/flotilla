@@ -15,7 +15,9 @@ use crate::peer::board::home_name;
 use crate::peer::PeerError;
 
 use super::board::{is_board_tool, out};
+use super::board_remote_files as files;
 use super::caller;
+use crate::peer::compat::{many_boards, single_board_args};
 
 /// The tool's result when the bot's board lives on a peer, or `None` to
 /// handle it here as usual (this project has a board, or no link).
@@ -42,6 +44,28 @@ pub(super) async fn intercept(
     if name == "install_quiesce" {
         return Some(quiesce_here(app, &bot, &links, args).await);
     }
+    let home_link = links
+        .iter()
+        .find(|link| Some(&link.peer_id) == home.as_ref())
+        .cloned();
+    let mut args = args.clone();
+    // A home on 0.18 has one board and no attachments (0.19.0 K6).
+    if let Some(link) = home_link.as_ref().filter(|l| !many_boards(app, &l.peer_id)) {
+        if name == "board_list" {
+            return Some(board_list(app.board_mirror.get(&bot.project_id).as_ref()));
+        }
+        match single_board_args(&home_name(app, &link.peer_id), name, &args) {
+            Ok(single) => args = single,
+            Err(e) => return Some(Err(e)),
+        }
+    }
+    if name == "item_attach" && args["file"].as_str().is_some_and(|f| !f.trim().is_empty()) {
+        match files::attach(app, &bot, home_link.as_ref(), &args).await {
+            Ok(sent) => args = sent,
+            Err(e) => return Some(Err(e)),
+        }
+    }
+    let args = &args;
     // A PR's worktree is on this computer: checked here (H-285).
     let (args, worktree) = match crate::peer::pr_worktree::checked_here(app, &bot, name, args) {
         Ok(checked) => checked,
@@ -52,6 +76,12 @@ pub(super) async fn intercept(
         // How to run it here, with this computer's own binary.
         if let (Ok(answer), "install_release") = (&mut result, name) {
             super::releases::with_command(answer);
+        }
+        // An item's files, as copies on this computer.
+        if let (Ok(answer), "item_get" | "item_attach") = (&mut result, name) {
+            if let Some(link) = home_link.as_ref().or(links.first()) {
+                files::localize(app, link, answer).await;
+            }
         }
         return Some(result);
     }
@@ -146,6 +176,10 @@ fn offline(
     );
     let snapshot = &board.snapshot;
     match name {
+        "board_list" => board_list(Some(board)).map(|mut list| {
+            list["offline"] = json!(note);
+            list
+        }),
         "board_get" => {
             let columns = snapshot
                 .columns
@@ -202,6 +236,34 @@ fn offline(
             "The board lives on {home}, which is unreachable. Try again when it's back."
         ),
     }
+}
+
+/// The boards as last mirrored, each with its columns. A home on 0.18
+/// sends no board list: its one board stands alone.
+fn board_list(board: Option<&Mirrored>) -> anyhow::Result<Value> {
+    let Some(board) = board else {
+        anyhow::bail!("this project's board hasn't been fetched from its home yet");
+    };
+    let snapshot = &board.snapshot;
+    let columns = |id: &str| -> Vec<&c::BoardColumn> {
+        snapshot
+            .columns
+            .iter()
+            .filter(|col| col.board_id == id || snapshot.boards.is_empty())
+            .collect()
+    };
+    if snapshot.boards.is_empty() {
+        let key = snapshot.settings.as_ref().map(|s| s.key.clone());
+        let main = json!({"name": "Main", "key": key, "is_default": true});
+        return Ok(json!({ "boards": [{"board": main, "columns": out(columns(""))?}] }));
+    }
+    let boards = snapshot
+        .boards
+        .iter()
+        .filter(|b| !b.archived)
+        .map(|b| Ok(json!({ "board": out(b)?, "columns": out(columns(&b.id))? })))
+        .collect::<anyhow::Result<Vec<_>>>()?;
+    Ok(json!({ "boards": boards }))
 }
 
 fn cards_in<'a>(

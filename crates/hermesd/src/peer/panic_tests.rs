@@ -32,7 +32,7 @@ async fn a_peer_request_that_panics_answers_internal_and_the_link_goes_on() {
     let (out, mut from_link) = mpsc::unbounded_channel();
     let app = d.app.clone();
     let link =
-        tokio::spawn(async move { app.peers.serve(app.clone(), peer.id, inbound, out).await });
+        tokio::spawn(async move { app.peers.serve(app.clone(), peer.id, 2, inbound, out).await });
 
     to_link
         .send(json!({"type": "test_panic", "req_id": 1}))

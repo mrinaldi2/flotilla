@@ -345,13 +345,16 @@ fn apply(
         }
         _ => ChangeKind::ColumnsChanged,
     };
-    feed.publish(Change {
-        project_id,
-        kind,
-        item_id: "",
-        card: None,
-        from_column: None,
-    });
+    feed.publish_on(
+        Some(&board_id),
+        Change {
+            project_id,
+            kind,
+            item_id: "",
+            card: None,
+            from_column: None,
+        },
+    );
     Ok(board_id)
 }
 

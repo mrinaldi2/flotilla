@@ -41,14 +41,23 @@ pub(super) fn call(
             .filter(|s| !s.is_empty())
             .map(str::to_string)
     };
-    let source = match (given(&req.file), given(&req.artifact), given(&req.url)) {
-        (Some(file), None, None) => own_file(app, &me.bot, &file)?,
-        (None, Some(artifact), None) => Source::Artifact(artifact),
-        (None, None, Some(url)) => Source::Url(url),
+    // A linked computer's bot can't name a path here: its computer sends
+    // the bytes first, and the home names their upload (0.19.0 K6).
+    let linked = me.bot.is_linked();
+    let upload = given(&req.upload_id).filter(|_| linked);
+    let named = (given(&req.file), given(&req.artifact), given(&req.url));
+    let source = match (named, upload) {
+        ((Some(_), None, None), _) if linked => {
+            anyhow::bail!("a file on a linked computer is sent by that computer; update it")
+        }
+        ((Some(file), None, None), None) => own_file(app, &me.bot, &file)?,
+        ((None, Some(artifact), None), None) => Source::Artifact(artifact),
+        ((None, None, Some(url)), None) => Source::Url(url),
+        ((None, None, None), Some(upload)) => Source::Upload(upload),
         _ => anyhow::bail!("give one of 'file', 'artifact' or 'url'"),
     };
     anyhow::ensure!(
-        req.upload_id.is_none(),
+        linked || req.upload_id.is_none(),
         "'upload_id' is for the owner's apps; attach a 'file' instead"
     );
     let att = ed.attach(&req, source)?;

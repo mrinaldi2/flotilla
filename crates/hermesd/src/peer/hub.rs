@@ -71,6 +71,8 @@ struct Link {
     /// When this link came up. Anything recorded through it since, the peer
     /// knows about.
     since: chrono::DateTime<chrono::Utc>,
+    /// The kanban contract the peer said it speaks (0.19.0 K6).
+    kanban: u64,
 }
 
 #[derive(Clone, Default)]
@@ -83,6 +85,9 @@ pub struct PeerHub {
     pub terms: Arc<super::term::Terms>,
     /// Bot browsers watched for peers, and peers' bot browsers watched here.
     pub browsers: Arc<super::browser::Browsers>,
+    /// The kanban contract this daemon says it speaks; 0 is the current one.
+    /// Only tests speak an older one, to stand for a 0.18 computer.
+    own_kanban: Arc<AtomicU64>,
 }
 
 impl PeerHub {
@@ -92,6 +97,28 @@ impl PeerHub {
 
     pub fn is_online(&self, peer_id: &str) -> bool {
         self.lock().contains_key(peer_id)
+    }
+
+    /// The kanban contract this daemon speaks on its links (0.19.0 K6).
+    pub fn own_kanban(&self) -> u64 {
+        match self.own_kanban.load(Ordering::Relaxed) {
+            0 => super::compat::KANBAN_CONTRACT,
+            older => older,
+        }
+    }
+
+    /// Speak `contract` on the links made from now on, as a computer of
+    /// that version would.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn speak_kanban_for_tests(&self, contract: u64) {
+        self.own_kanban.store(contract, Ordering::Relaxed);
+    }
+
+    /// The kanban contract both ends of the live link to this peer speak:
+    /// the older of the two. 1 (one board, no board ids) when it is down.
+    pub fn kanban(&self, peer_id: &str) -> u64 {
+        let theirs = self.lock().get(peer_id).map_or(1, |link| link.kanban);
+        theirs.min(self.own_kanban())
     }
 
     /// When the live link to this peer came up.
@@ -182,6 +209,7 @@ impl PeerHub {
         &self,
         app: Arc<AppState>,
         peer_id: String,
+        kanban: u64,
         mut inbound: mpsc::UnboundedReceiver<Value>,
         out: mpsc::UnboundedSender<Value>,
     ) {
@@ -196,6 +224,7 @@ impl PeerHub {
                 generation,
                 closed: closed.clone(),
                 since: chrono::Utc::now(),
+                kanban,
             },
         );
         if let Some(old) = replaced {
