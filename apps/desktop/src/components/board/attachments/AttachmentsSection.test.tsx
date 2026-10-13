@@ -64,6 +64,39 @@ describe("attachments in the drawer", () => {
     );
   });
 
+  it("cancels an upload on its way: no more chunks, and nothing attached", async () => {
+    const user = userEvent.setup();
+    let release = (): void => undefined;
+    const client = boardsClient()
+      .onBoard(
+        "attachmentUpload",
+        (call) =>
+          new Promise((resolve) => {
+            release = () =>
+              resolve({
+                case: "upload",
+                value: create(UploadProgressSchema, {
+                  received:
+                    call.case === "attachmentUpload"
+                      ? (call.value.offset ?? 0n) + BigInt(call.value.data?.length ?? 0)
+                      : 0n,
+                }),
+              });
+          }),
+      )
+      .onBoard("itemAttach", () => ({ case: "item", value: draftDetail() }));
+    renderDrawer(client);
+    await screen.findByRole("region", { name: "Attachments" });
+    const big = new File([new Uint8Array(1_200_000)], "big.log");
+    await user.upload(screen.getByLabelText("Add files"), big);
+    await user.click(await screen.findByRole("button", { name: "Cancel uploading big.log" }));
+    release();
+    await vi.waitFor(() => expect(screen.queryByText("big.log")).toBeNull());
+    const uploads = client.boardCalls.filter((c) => c.case === "attachmentUpload");
+    expect(uploads).toHaveLength(1);
+    expect(client.boardCalls.some((c) => c.case === "itemAttach")).toBe(false);
+  });
+
   it("links a document by path or URL, and detaches one", async () => {
     const user = userEvent.setup();
     const client = boardsClient()

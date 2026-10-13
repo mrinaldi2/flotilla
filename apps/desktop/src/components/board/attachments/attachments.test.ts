@@ -112,7 +112,7 @@ describe("moving an attachment's bytes", () => {
       size: bytes.length,
       slice: (a: number, b: number) => new Blob([bytes.slice(a, b)]),
     };
-    await uploadAttachment(fake, "RB-20", "u", file, (n) => seen.push(n), "The log");
+    await uploadAttachment(fake, "RB-20", "u", file, (n) => seen.push(n), { caption: "The log" });
     expect(offsets).toEqual([0n, 524_288n, 1_048_576n]);
     expect(seen.at(-1)).toBe(1_200_000);
     const attach = fake.boardCalls.at(-1);

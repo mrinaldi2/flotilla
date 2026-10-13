@@ -16,6 +16,7 @@ export interface AttachmentActions {
   /** A project artifact path or a URL. */
   readonly onLink: (text: string) => Promise<void>;
   readonly onDetach: (attachment: ItemAttachment) => void;
+  /** Drops a refused upload from the list, or cancels one on its way. */
   readonly onDismiss: (uploadId: string) => void;
 }
 
@@ -165,14 +166,14 @@ export default function AttachmentsSection(props: AttachmentsSectionProps): Reac
                 </span>
               )}
             </span>
-            {u.refusal === null || actions === undefined ? null : (
+            {actions === undefined ? null : (
               <button
                 type="button"
                 className="btn btn-small"
-                aria-label={`Dismiss ${u.name}`}
+                aria-label={`${u.refusal === null ? "Cancel uploading" : "Dismiss"} ${u.name}`}
                 onClick={() => actions.onDismiss(u.id)}
               >
-                Dismiss
+                {u.refusal === null ? "Cancel" : "Dismiss"}
               </button>
             )}
           </li>
