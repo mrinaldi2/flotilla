@@ -3,7 +3,7 @@
 //! counts as unroutable, while a light check still runs beside the first.
 //! `heavy = false` in `checks.toml` lets a cargo check skip the slot.
 
-mod common;
+use crate::common;
 
 use std::collections::BTreeMap;
 use std::time::Duration;

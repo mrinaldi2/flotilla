@@ -2,7 +2,7 @@
 //! fixture in the project's artifacts, and the owner's WS request that
 //! `hermesd board import` sends. Never the real backlog.md.
 
-mod common;
+use crate::common;
 
 use common::tasks::{error_text, project_with_bots};
 use common::WsClient;

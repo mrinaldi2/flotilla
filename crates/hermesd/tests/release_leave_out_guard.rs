@@ -3,7 +3,7 @@
 //! on the main it named, and opens or merges nothing else; a later push
 //! makes it the pusher's change, reviewed like any other.
 
-mod common;
+use crate::common;
 
 use common::cuts::{checkout, cut, cuts, leave_out, merged, DEVOPS};
 use common::prs::{clone, commit};

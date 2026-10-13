@@ -4,7 +4,7 @@
 //! a computer won't take from another one (ARCH-R51 S1c) are refused one by
 //! one, each with where to set it instead, so the rest still apply.
 
-mod common;
+use crate::common;
 
 use bus::PermissionExtra;
 use common::grants::{comments, drop_link, extras, grant, said};

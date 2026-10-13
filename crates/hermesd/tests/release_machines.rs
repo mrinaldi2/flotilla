@@ -3,7 +3,7 @@
 //! for it (a tester here with no machine named reports for this computer),
 //! and the owner or lead can set the list instead.
 
-mod common;
+use crate::common;
 
 use common::board::connect_with;
 use common::tasks::{error_text, project_with_bots, Pair};

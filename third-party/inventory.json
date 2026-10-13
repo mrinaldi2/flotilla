@@ -5,11 +5,11 @@
   ],
   "inputs": {
     "Cargo.lock": "8057670399d13fd213d9deb1ac8cd4dbe0408de556f72ddaa5ea72c436fe04da",
-    "Cargo.toml": "bda87ee42f7252ef77f2f31a807e0a19993f9240d0ab00ec43c5a635f6c6d0be",
-    "crates/hermesd/Cargo.toml": "5e93b96a28fdb368b03dd9314e80450e5cc1be4a161b3d950ccdbecb182b273d",
+    "Cargo.toml": "0cb7b6155f18e1514110cdcd0afb89cbdf6e7e6a603c6793b8c62e1948bca973",
+    "crates/hermesd/Cargo.toml": "573f056d3438e2355112d44698aaa66048ba33ab42171f8e3865a8834fe69f6c",
     "crates/bus/Cargo.toml": "5819fe1a3e52f7e68addf67e02f42145ff216cdd1e406fdee53b06df4af938cc",
     "apps/desktop/src-tauri/Cargo.lock": "f0da1c3b4845ed9d58840072597103e1610d6f9b846013734d460913e19ac395",
-    "apps/desktop/src-tauri/Cargo.toml": "e44eb18b162d773f38e171bdea378c95b0250e4e724f2d6c36c463a4d95fcfee",
+    "apps/desktop/src-tauri/Cargo.toml": "a0e1ccc1f178da86d84e04a3a585bad40d7bbf3e1b481b4977b7f178cd2244e9",
     "apps/desktop/src-tauri/tauri.conf.json": "4e67bd012cbfabbae6a5cabb0460bb867029f48f7a74c9790b26ba696cfa4506",
     "apps/desktop/package.json": "50fc1cead8fce61570aee3bbd1bf626f2e052db4095f9e0558be33aeeb3fad5d",
     "apps/desktop/pnpm-lock.yaml": "d69d5d8452a548eb61481d44aa0e31adcfe4c35853b456fc85722bab287027d2",
@@ -61,7 +61,7 @@
   },
   "outputs": {
     "third-party/DAEMON_NOTICES.txt": "5af38698b5edbc10050803ea1f2645682cd990ddf0ef622a97d3e34b377ce997",
-    "third-party/DESKTOP_NOTICES.txt": "8310a3b841104707f970cc2757e80ff16b754c6d776119236d3543fc3388b41c",
+    "third-party/DESKTOP_NOTICES.txt": "1b90ef87630fdbeaedda9f7bfc7015950c343e956225cf05bcdf5d73fe142f7c",
     "apps/marketing/public/THIRD_PARTY_NOTICES.txt": "fe0e343d06cefa62f499f856b77f463d6ef41f7a42f2be4d9726895fc39657a8"
   },
   "packages": [
@@ -2729,6 +2729,22 @@
       },
       "source": "https://registry.npmjs.org/vitest/-/vitest-4.1.11.tgz",
       "notices": []
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "web-vitals",
+      "version": "5.3.0",
+      "license": "Apache-2.0",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/web-vitals/-/web-vitals-5.3.0.tgz",
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "bfdeded4040e05da31ca9b6239dc83bd23fa26ac8db87342a7ca4363f68916ff"
+        }
+      ]
     },
     {
       "ecosystem": "JavaScript",

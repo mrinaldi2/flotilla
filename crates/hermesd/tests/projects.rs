@@ -6,7 +6,7 @@
 //! directory looks fine until a bot restarts, and a skipped bot keeps running
 //! with a valid credential for a project the user believes is gone.
 
-mod common;
+use crate::common;
 
 use common::{spawn_daemon, TestDaemon, WsClient};
 use serde_json::{json, Value};

@@ -4,7 +4,7 @@
 
 #![cfg(unix)]
 
-mod common;
+use crate::common;
 
 use common::*;
 use hermesd::bus_auth::os::OsProcessTable;

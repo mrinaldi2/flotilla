@@ -3,7 +3,7 @@
 //! through its stand-in; its updates reach the other computer's clients; a
 //! pin is forwarded to the computers the project is linked with.
 
-mod common;
+use crate::common;
 
 use common::peer_board::board;
 use common::peers::wait_until;

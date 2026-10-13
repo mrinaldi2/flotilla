@@ -3,7 +3,7 @@
 //! setting come only from the app's ticket or a paired device; an owner
 //! must-fix sends the card back to Doing; the lead flags a PR for the owner.
 
-mod common;
+use crate::common;
 
 use common::prs::{approve, error, opened, pr, setup, Repo};
 use common::WsClient;

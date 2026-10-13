@@ -1,6 +1,6 @@
 //! The decision registry, as bots see it over MCP.
 
-mod common;
+use crate::common;
 
 use common::tasks::{
     drain_all, drain_until, error_text, project_with_bots, two_projects_one_bot_each,

@@ -3,7 +3,7 @@
 //! either; the marker they would write never appears. H-295 adds a clean
 //! filter for every file, with the index made racy so git re-hashes them.
 
-mod common;
+use crate::common;
 
 use std::path::Path;
 

@@ -2,7 +2,7 @@
 //! card, a nested one inherits its parent's, and a root sender's budget is
 //! per card under a ceiling across the project (ARCH-R57 M1, M3).
 
-mod common;
+use crate::common;
 
 use common::tasks::{error_text, project_with_bots_on};
 use common::team::{item, team};

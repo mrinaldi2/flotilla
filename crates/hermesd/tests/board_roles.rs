@@ -2,7 +2,7 @@
 //! gives the team's standard names their roles, and a bot without a role
 //! still reads the board.
 
-mod common;
+use crate::common;
 
 use bus::contract::board::{self as c, board_request::Request};
 use common::board::{call, snapshot};

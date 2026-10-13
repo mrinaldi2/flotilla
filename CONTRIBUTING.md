@@ -59,6 +59,16 @@ linting, tests and builds, the file-length check, and visual regression tests.
 It stops on the first failure. Native-shell checks run on the host platform;
 visual verification requires running Docker with Linux containers.
 
+The daemon's integration tests build as one program, `integration`. To run one
+file's tests, name the file as a module path:
+
+```sh
+cargo test -p hermesd --test integration board_import::
+```
+
+`owner_ticket_obs` and `quiesce_reap` are programs of their own, because each
+owns state that is per process.
+
 Visual baselines must be generated in the pinned CI container; use the
 repository's visual regression workflow when accepting
 intentional changes. Do not bypass hooks or checks to make a change pass.

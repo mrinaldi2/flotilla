@@ -2,7 +2,7 @@
 //! board tools, so a bot whose board lives on a peer reaches them through
 //! the B9 `board_call` path and acts there as its stand-in.
 
-mod common;
+use crate::common;
 
 use common::peer_board::board;
 use common::tasks::error_text;

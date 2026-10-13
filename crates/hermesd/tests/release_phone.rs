@@ -5,7 +5,7 @@
 //! ones a bot wrote on the build row (CE review of H-229, M1); only the app
 //! or a paired device sends one (M2).
 
-mod common;
+use crate::common;
 
 use std::io::ErrorKind;
 use std::net::TcpListener;

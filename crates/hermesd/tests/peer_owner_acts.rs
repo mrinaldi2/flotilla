@@ -4,7 +4,7 @@
 //! where to set the extras instead of sending them; a grant or a run frame
 //! that arrives anyway is refused, and nothing is granted or run.
 
-mod common;
+use crate::common;
 
 use common::grants::{comments, extras, grant, said, settled};
 use common::peers::team;

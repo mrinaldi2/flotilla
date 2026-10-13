@@ -4,7 +4,7 @@
 //! index that would fail silently if its triggers were wrong. Both are checked
 //! here against a database built by hand at an older schema version.
 
-mod legacy;
+use crate::legacy;
 
 use hermesd::db::{Db, DecisionFilter, NewDecision};
 use legacy::v2_database;

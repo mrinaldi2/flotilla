@@ -70,7 +70,11 @@ fn a_retired_workers_clone_scratch_and_worktrees_go() {
         .output()
         .expect("list");
     let listed = String::from_utf8_lossy(&listed.stdout);
-    assert!(!listed.contains("wt"), "the worktree is pruned: {listed}");
+    // Not `contains("wt")`: a random temp folder name can hold those letters.
+    assert!(
+        !listed.lines().any(|l| l.trim_end().ends_with("[w1]")),
+        "the worktree is pruned: {listed}"
+    );
 }
 
 #[test]

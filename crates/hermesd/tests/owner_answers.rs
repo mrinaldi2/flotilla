@@ -3,7 +3,7 @@
 //! owner thread, once. Other turns, and turns that already wrote to the
 //! owner, add nothing.
 
-mod common;
+use crate::common;
 
 use std::io::Write;
 use std::path::{Path, PathBuf};

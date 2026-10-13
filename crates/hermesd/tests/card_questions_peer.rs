@@ -4,7 +4,7 @@
 //! mirrors shows the owner's comment. The attention row names the comment
 //! that asked.
 
-mod common;
+use crate::common;
 
 use bus::contract::board::{self as c, board_request::Request, board_response::Response};
 use common::board::{call, response};

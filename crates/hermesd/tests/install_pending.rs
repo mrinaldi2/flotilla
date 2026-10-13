@@ -3,7 +3,7 @@
 //! desktop, so colima and VR stay allowed; and once a package is deployed,
 //! its installs nobody confirmed are called off, so no task keeps the flag.
 
-mod common;
+use crate::common;
 
 use common::ios_targets::{ios_qa_tests_ios, package, pass, team, DEVOPS, IOS_QA, TESTER_IMAC};
 use common::WsClient;

@@ -1,7 +1,8 @@
 //! Shared harness for the end-to-end tests: a real daemon instance backed by
 //! the deterministic runtime double, plus a small WebSocket client.
 //!
-//! Each integration binary compiles the whole harness but uses only part of it.
+//! Every integration test is a module of one program (`tests/main.rs`); each
+//! uses only part of this harness.
 
 #![allow(dead_code)]
 

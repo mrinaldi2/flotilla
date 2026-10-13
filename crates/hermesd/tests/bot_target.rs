@@ -1,7 +1,7 @@
 //! A bot's own Cargo target (H-029) is build output, not work: deleting the
 //! bot removes it, while its workspace is kept.
 
-mod common;
+use crate::common;
 
 use common::peers::wait_until;
 use common::{spawn_daemon, WsClient};

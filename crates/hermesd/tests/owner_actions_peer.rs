@@ -3,7 +3,7 @@
 //! the Mac executes that copy there, once, by its hash, with the output
 //! back on the Mac's card. A link that is down refuses at once.
 
-mod common;
+use crate::common;
 
 use common::peers::{paired_trusting, project, wait_until, Paired};
 use common::tasks::{drain_until, error_text};

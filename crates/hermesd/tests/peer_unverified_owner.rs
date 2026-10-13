@@ -4,7 +4,7 @@
 //! its turn's final text isn't posted to the owner as an answer (H-192), and
 //! clients are told which computer it came from instead of the owner.
 
-mod common;
+use crate::common;
 
 use std::io::Write;
 use std::path::PathBuf;

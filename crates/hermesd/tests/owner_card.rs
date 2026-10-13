@@ -3,7 +3,7 @@
 //! of another project, or a closed one, is refused; without one nothing
 //! changes.
 
-mod common;
+use crate::common;
 
 use common::board::{new_item, walk};
 use common::peers::project;

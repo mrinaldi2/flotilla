@@ -2,7 +2,7 @@
 //! control plane, followed live as it grows, with step detail, images and
 //! files on demand.
 
-mod common;
+use crate::common;
 
 use std::io::Write;
 use std::path::{Path, PathBuf};

@@ -5,7 +5,7 @@
 //! next PR needs an update with main, and once updated without conflict its
 //! approvals carry and its checks run again.
 
-mod common;
+use crate::common;
 
 use std::path::Path;
 

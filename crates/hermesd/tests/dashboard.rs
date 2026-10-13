@@ -2,7 +2,7 @@
 //! board strip with weekly counts that leave imported items out, releases,
 //! and the team with their current items.
 
-mod common;
+use crate::common;
 
 use common::board::{new_item, walk};
 use common::releases::releases;

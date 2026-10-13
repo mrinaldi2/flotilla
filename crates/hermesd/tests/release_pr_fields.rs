@@ -3,7 +3,7 @@
 //! They must be new keys, so a client reading today's release is unaffected,
 //! and the four of them must read back as the contract's message.
 
-mod common;
+use crate::common;
 
 use std::path::PathBuf;
 

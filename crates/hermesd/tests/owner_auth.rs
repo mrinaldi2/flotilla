@@ -5,7 +5,7 @@
 //! user can read, does none of them, and neither does a bot or a peer that
 //! can't vouch for its owner.
 
-mod common;
+use crate::common;
 
 use common::peers::{team, team_trusting, wait_until};
 use common::*;

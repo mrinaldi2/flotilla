@@ -3,7 +3,7 @@
 //! outcome artifact is linked, and the history names it. Features and bugs
 //! keep the release path, and a spike not yet started is told how to close.
 
-mod common;
+use crate::common;
 
 use common::tasks::error_text;
 use common::team::{get, item, team, version_of};

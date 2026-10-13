@@ -1,6 +1,6 @@
 //! Bus guardrails: reply budgets, terminal kinds and fan-out caps.
 
-mod common;
+use crate::common;
 
 use std::time::Duration;
 

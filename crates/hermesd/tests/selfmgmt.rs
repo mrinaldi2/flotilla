@@ -4,7 +4,7 @@
 //! guarantee: the population cap, the parentage rules, and the deletion
 //! teardown are the only things standing between a bot and the project.
 
-mod common;
+use crate::common;
 
 use common::{spawn_daemon, McpClient, TestDaemon, WsClient};
 use serde_json::{json, Value};

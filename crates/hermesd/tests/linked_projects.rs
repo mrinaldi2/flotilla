@@ -3,7 +3,7 @@
 //! linking, mirroring, unlinking and bots created across machines all run
 //! for real. See "Linked projects" in `docs/peer-bots.md`.
 
-mod common;
+use crate::common;
 
 use bus::TaskState;
 use common::peers::{bot_named, paired, project, wait_until, Paired};

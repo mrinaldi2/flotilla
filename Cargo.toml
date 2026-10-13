@@ -32,5 +32,10 @@ hex = "0.4"
 futures = "0.3"
 bytes = "1"
 
+# Tests and dev builds keep file and line numbers but not full debug info,
+# which made up most of every test executable.
+[profile.dev]
+debug = "line-tables-only"
+
 [profile.release]
 lto = "thin"

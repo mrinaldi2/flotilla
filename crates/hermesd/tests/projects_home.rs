@@ -3,7 +3,7 @@
 //! `attention_rows`, the same message over JSON and binary frames, grants,
 //! and `projects_overview_changed` pushed debounced.
 
-mod common;
+use crate::common;
 
 use std::time::{Duration, Instant};
 

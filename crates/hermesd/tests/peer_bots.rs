@@ -3,7 +3,7 @@
 //! double, so the whole path — pairing, linking, forwarding, task mirroring,
 //! artifact transfer — runs for real without a second machine.
 
-mod common;
+use crate::common;
 
 use std::time::Duration;
 

@@ -5,7 +5,7 @@
 //! bot at the shared `bots/` directory, so the daemon backfills it on open.
 //! These tests run the real migration against a populated v2 database.
 
-mod legacy;
+use crate::legacy;
 
 use bus::schema::MIGRATIONS;
 use hermesd::db::Db;

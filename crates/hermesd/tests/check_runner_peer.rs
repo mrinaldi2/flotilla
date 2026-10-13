@@ -5,7 +5,7 @@
 //! removed once run; the result, from the exit status, reaches the home.
 //! The hands-on run on win-pc is Tester Win's.
 
-mod common;
+use crate::common;
 
 use std::collections::BTreeMap;
 

@@ -1,7 +1,7 @@
 //! A worker whose session never connects: the watchdog gives up on it,
 //! cancels its task and frees its slot, so the queue keeps moving.
 
-mod common;
+use crate::common;
 
 use std::sync::Arc;
 use std::time::Duration;

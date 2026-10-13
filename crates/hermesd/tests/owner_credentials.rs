@@ -3,7 +3,7 @@
 //! drives no browser; a peer vouches only for its owner's own chat, and only
 //! for a forced resize its owner made.
 
-mod common;
+use crate::common;
 
 use common::peers::{team, team_trusting, wait_until};
 use common::*;

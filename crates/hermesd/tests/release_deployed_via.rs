@@ -2,7 +2,7 @@
 //! (H-121): a chain of approved, never-installed packages closes when a
 //! release built on top of them deploys; nothing else does.
 
-mod common;
+use crate::common;
 
 use std::process::Command;
 

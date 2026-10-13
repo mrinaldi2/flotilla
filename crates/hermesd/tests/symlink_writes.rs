@@ -7,7 +7,7 @@
 //! may make. A file link needs Developer Mode or admin there; without it a
 //! junction stands in at that name.
 
-mod common;
+use crate::common;
 
 use std::path::Path;
 

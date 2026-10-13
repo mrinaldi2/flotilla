@@ -1,7 +1,7 @@
 //! A linked bot's real chat, read across the peer link: the Mac's app asks
 //! its daemon, which asks the PC's daemon that runs the bot.
 
-mod common;
+use crate::common;
 
 use std::io::Write;
 

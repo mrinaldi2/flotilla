@@ -2,7 +2,7 @@
 //! with its card and where it is kept, or why it can't; projects carry their
 //! item prefix so a client knows `H-` from `UTF-`.
 
-mod common;
+use crate::common;
 
 use common::board::new_item;
 use common::peer_board::board;

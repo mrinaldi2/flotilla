@@ -8,7 +8,7 @@
 //! pass hands it on. Nominally that is within one `EVERY`; the bound is
 //! generous for a loaded computer.
 
-mod common;
+use crate::common;
 
 use std::time::{Duration, Instant};
 

@@ -3,7 +3,7 @@
 //! computer's last good part, marked with where to act on it. With a
 //! computer away its rows stay, and the dashboard says it may not be all.
 
-mod common;
+use crate::common;
 
 use std::time::Duration;
 

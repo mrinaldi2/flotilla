@@ -2,7 +2,7 @@
 //! computer can run is unroutable: it says so, routes once a probe reports
 //! the tool, and after an hour asks the owner and DevOps.
 
-mod common;
+use crate::common;
 
 use std::collections::BTreeMap;
 use std::time::Duration;

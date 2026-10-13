@@ -1,7 +1,7 @@
 //! Permission profiles (H-031) end to end: only the owner sets them, and a
 //! bot restarts with its generated settings and the profile's mode.
 
-mod common;
+use crate::common;
 
 use std::time::Duration;
 

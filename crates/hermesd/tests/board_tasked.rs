@@ -2,7 +2,7 @@
 //! open task from the board's lead or the owner. A dev's task grants
 //! nothing, and a done task no longer does.
 
-mod common;
+use crate::common;
 
 use common::tasks::error_text;
 use common::team::{item, team, version_of};

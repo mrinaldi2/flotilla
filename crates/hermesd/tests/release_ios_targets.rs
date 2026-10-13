@@ -3,7 +3,7 @@
 //! without touching the project's desktop list; desktop packages still need
 //! every desktop tester's computer.
 
-mod common;
+use crate::common;
 
 use common::ios_targets::{
     ios_qa_tests_ios, package, pass, team, DEVOPS, IOS_DEV, IOS_QA, LEAD, TESTER_IMAC,

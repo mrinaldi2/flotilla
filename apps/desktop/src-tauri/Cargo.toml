@@ -38,3 +38,7 @@ objc2-avf-audio = "0.3"
 # search order set at start (hardening.rs).
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.61", features = ["Win32_Foundation", "Win32_Media_Speech", "Win32_System_Com", "Win32_System_LibraryLoader"] }
+
+# Dev builds and tests keep file and line numbers, not full debug info.
+[profile.dev]
+debug = "line-tables-only"

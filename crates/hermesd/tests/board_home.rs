@@ -4,7 +4,7 @@
 //! daemon named in `home_daemon_id` serves it, and two projects that each
 //! have a board can't be linked.
 
-mod common;
+use crate::common;
 
 use bus::contract::board::{self as c, board_request::Request};
 use bus::contract::wire::envelope::Body;

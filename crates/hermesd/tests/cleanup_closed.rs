@@ -3,7 +3,7 @@
 //! waits 14 days, then DevOps' next merge run deletes it while it is still
 //! the head it closed at; opening a PR on the branch again cancels both.
 
-mod common;
+use crate::common;
 
 use std::path::Path;
 

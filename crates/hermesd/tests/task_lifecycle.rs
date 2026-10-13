@@ -1,7 +1,7 @@
 //! Ending a task: cancellation by the requester, deadline expiry, and the
 //! artifacts a result carries.
 
-mod common;
+use crate::common;
 
 use std::time::Duration;
 

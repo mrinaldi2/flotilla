@@ -2,7 +2,7 @@
 //! client runs it, once, exactly as shown, and everyone gets the redacted
 //! result.
 
-mod common;
+use crate::common;
 
 use std::time::Duration;
 

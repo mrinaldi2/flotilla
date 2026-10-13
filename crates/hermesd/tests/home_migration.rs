@@ -3,7 +3,7 @@
 //! Claude Code transcripts, is stopped, migrated to `~/.thehermes`, and comes
 //! back up with every bot, its history and the peer link intact.
 
-mod common;
+use crate::common;
 
 use std::path::{Path, PathBuf};
 

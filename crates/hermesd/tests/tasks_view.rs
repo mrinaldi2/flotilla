@@ -1,7 +1,7 @@
 //! The Tasks panel's view of a bot: what it was given, what it delegated,
 //! and how each ended.
 
-mod common;
+use crate::common;
 
 use common::tasks::{drain_until, project_with_bots};
 use common::*;

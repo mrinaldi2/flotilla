@@ -4,7 +4,7 @@
 //! the owner's Remove anyway on the Mac is run by the PC, which saves the
 //! tree's work again first. The hands-on run on win-pc is Tester Win's.
 
-mod common;
+use crate::common;
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;

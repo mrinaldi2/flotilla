@@ -4,7 +4,7 @@
 //! names the checks that ran from its head; it still needs architect, ce
 //! and the owner, as any policy change.
 
-mod common;
+use crate::common;
 
 use std::collections::BTreeMap;
 use std::time::Duration;

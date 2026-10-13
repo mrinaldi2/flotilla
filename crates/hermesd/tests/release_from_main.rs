@@ -5,7 +5,7 @@
 //! the gate (builds, freeze, ruling, deploy, rollback) runs on such a
 //! release end to end.
 
-mod common;
+use crate::common;
 
 use common::cuts::{checkout, cut, cuts, get, main_tip, merged, numbers, DEVOPS};
 use common::prs::{clone, commit, error};

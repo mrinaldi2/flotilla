@@ -2,7 +2,7 @@
 //! peer carries its card, a nested send there inherits it, and a root send
 //! off the board's home names a card the home checks.
 
-mod common;
+use crate::common;
 
 use common::peer_board::board;
 use common::tasks::{drain_until, error_text};

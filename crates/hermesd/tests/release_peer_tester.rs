@@ -3,7 +3,7 @@
 //! the mirrored board, lists the tools it forwards there, and its
 //! `release_test` is recorded on the home.
 
-mod common;
+use crate::common;
 
 use common::create_bot;
 use common::peer_board::board;

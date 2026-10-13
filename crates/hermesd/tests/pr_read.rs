@@ -3,7 +3,7 @@
 //! board's home; the pushes every PR change sends; the owner's `check_rerun`;
 //! and a linked computer's check log kept as opaque text.
 
-mod common;
+use crate::common;
 
 use std::collections::BTreeMap;
 use std::time::Duration;

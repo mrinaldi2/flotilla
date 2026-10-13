@@ -4,7 +4,7 @@
 //! "remote" is a bare repository on disk, and the test plays the worker's
 //! part in git. See `docs/workers.md`.
 
-mod common;
+use crate::common;
 
 use std::path::PathBuf;
 

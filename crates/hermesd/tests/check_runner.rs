@@ -6,7 +6,7 @@
 //! cap of jobs and none under the disk floor; an error is retried once, a
 //! fail never, and the owner, the lead or the author can ask for a re-run.
 
-mod common;
+use crate::common;
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;

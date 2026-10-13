@@ -4,7 +4,7 @@
 //! environment holds none.
 #![cfg(unix)]
 
-mod common;
+use crate::common;
 
 use std::process::Stdio;
 use std::time::Duration;

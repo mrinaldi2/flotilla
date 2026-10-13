@@ -4,7 +4,7 @@
 //! join the thread, resolving closes it, and an open `must` thread keeps the
 //! PR from merging.
 
-mod common;
+use crate::common;
 
 use common::prs::{commit, error, opened, pr, report, setup, Repo};
 use common::repo::git;

@@ -3,7 +3,7 @@
 //! pause outlasts a restart, resume brings everything back with each
 //! routine fired once, and a stuck pause resumes by itself.
 
-mod common;
+use crate::common;
 
 use bus::{OverlapPolicy, RoutineRunState, Trigger, WorkerState};
 use chrono::{Duration, Utc};

@@ -1,6 +1,6 @@
 //! The tag taxonomy over the control plane: the owner's half.
 
-mod common;
+use crate::common;
 
 use common::tasks::project_with_bots;
 use common::WsClient;

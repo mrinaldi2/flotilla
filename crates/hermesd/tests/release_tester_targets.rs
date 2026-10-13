@@ -5,7 +5,7 @@
 //! deploy on either closes an iOS package frozen with the other, and one
 //! already confirmed on `ios` is settled at boot.
 
-mod common;
+use crate::common;
 
 use common::create_bot;
 use common::ios_targets::{ios_qa_tests_ios, package, pass, team, DEVOPS, IOS_QA};

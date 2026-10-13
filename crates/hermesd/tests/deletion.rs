@@ -5,7 +5,7 @@
 //! named regression test here, because bots now call `delete_bot` themselves
 //! and nothing prompts a human first.
 
-mod common;
+use crate::common;
 
 use common::{spawn_daemon, spawn_daemon_with, McpClient, TestDaemon, WsClient};
 use serde_json::{json, Value};

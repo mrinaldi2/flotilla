@@ -3,7 +3,7 @@
 //! release's deploy task), what the pause reports, and how a booting daemon
 //! ends it.
 
-mod common;
+use crate::common;
 
 use bus::PermissionExtra;
 use chrono::{Duration, Utc};

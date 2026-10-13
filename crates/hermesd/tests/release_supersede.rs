@@ -5,7 +5,7 @@
 //! contains it and reached the computers it didn't. The lead and DevOps have
 //! the tool for the rest.
 
-mod common;
+use crate::common;
 
 use common::deployed_via::{git, via};
 use common::releases::Releases;

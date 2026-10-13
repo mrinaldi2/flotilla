@@ -2,7 +2,7 @@
 //! to the worker's own branch before it retires, and its parent is told
 //! where. See "Shared repository" in `docs/workers.md`.
 
-mod common;
+use crate::common;
 
 use common::peers::{bot_named, wait_until};
 use common::repo::{book, git};

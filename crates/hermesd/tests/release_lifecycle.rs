@@ -2,7 +2,7 @@
 //! mixed ruling or a failed deploy, the package hold, a paused rollout, the
 //! testing a package carries, and whether a connection may rule.
 
-mod common;
+use crate::common;
 
 use common::board::connect_with;
 use common::releases::{releases, rule};

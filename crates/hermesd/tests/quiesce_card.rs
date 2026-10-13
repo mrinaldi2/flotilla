@@ -4,7 +4,7 @@
 //! holder is `/bin/sleep` (WIN-CHK-7).
 #![cfg(unix)]
 
-mod common;
+use crate::common;
 
 use std::process::Command;
 

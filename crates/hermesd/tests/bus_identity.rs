@@ -4,7 +4,7 @@
 //! root, never from anything it sends. A stolen bearer token is worthless
 //! once bearers are refused.
 
-mod common;
+use crate::common;
 
 use common::proxy::Proxy;
 use common::*;

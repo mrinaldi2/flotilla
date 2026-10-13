@@ -3,7 +3,7 @@
 //! card's assignee and the lead as the owner's note on the card, and a
 //! dismissed question tells the bot that asked (H-211).
 
-mod common;
+use crate::common;
 
 use bus::contract::board::{self as c, board_request::Request, board_response::Response};
 use bus::MessageKind;

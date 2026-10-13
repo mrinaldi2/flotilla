@@ -2,7 +2,7 @@
 //! in protobuf envelopes, grants, guarded moves, and `board_event` pushes to
 //! the connections watching a project.
 
-mod common;
+use crate::common;
 
 use std::time::Duration;
 

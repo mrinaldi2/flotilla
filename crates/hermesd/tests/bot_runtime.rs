@@ -1,5 +1,5 @@
-mod common;
-mod legacy;
+use crate::common;
+use crate::legacy;
 
 use bus::BotRuntime;
 use common::{spawn_daemon, spawn_daemon_with, WsClient};

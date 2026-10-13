@@ -1,6 +1,6 @@
 //! Rulings a bot heard at its terminal and filed for the owner.
 
-mod common;
+use crate::common;
 
 use common::tasks::{drain_until, error_text, project_with_bots};
 use serde_json::json;
