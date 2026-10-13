@@ -57,8 +57,14 @@ async fn setup() -> Setup {
 }
 
 /// A shell the "PC" (this same test machine) runs: the target refuses a
-/// shell its OS doesn't have.
-const SHELL: &str = if cfg!(windows) { "powershell" } else { "zsh" };
+/// shell its OS doesn't have, and a Linux runner may not have zsh.
+const SHELL: &str = if cfg!(windows) {
+    "powershell"
+} else if cfg!(target_os = "macos") {
+    "zsh"
+} else {
+    "bash"
+};
 
 impl Setup {
     async fn propose_raw(&mut self, content: &str) -> Value {
