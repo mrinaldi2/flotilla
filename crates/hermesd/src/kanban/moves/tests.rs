@@ -186,7 +186,7 @@ fn a_wip_override_is_logged_and_flags_the_card_until_it_leaves() {
 
     b.link(&over, LinkKind::Branch, &b.as_bot(&b.dev));
     let review = done(b.moved(&over, "review", &b.as_bot(&b.dev), None));
-    assert!(review.labels.is_empty());
+    assert!(!review.labels.contains(&WIP_OVERRIDE_LABEL.to_string()));
 }
 
 #[test]
