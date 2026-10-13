@@ -31,6 +31,9 @@ pub struct SettingsInput<'a> {
     /// and resolved: only the daemon writes there (CE-010 M3).
     pub served: &'a [std::path::PathBuf],
     pub repo_url: Option<&'a str>,
+    /// The project's shared branch when it isn't `main`: denied like `main`.
+    /// Only a name the rule syntax can quote (`rule_quotable`).
+    pub protected_branch: Option<&'a str>,
     /// DevOps installs releases by hand; every other bot only through
     /// `hermesd release install` (B8).
     pub devops: bool,
@@ -86,6 +89,14 @@ pub fn generate(input: &SettingsInput<'_>) -> Value {
     // daemon-checked commands (`pr merge`, `release land`), which push from
     // their own process. These fail fast; the guard is the real check.
     deny.extend(MAIN_DENY.iter().map(|r| (*r).to_string()));
+    if let Some(branch) = input.protected_branch {
+        deny.extend(
+            MAIN_DENY
+                .iter()
+                .filter(|r| r.contains("main"))
+                .map(|r| r.replace("main", branch)),
+        );
+    }
     if input.extras.contains(&PermissionExtra::Publish) {
         // DevOps may run its scripts but never rewrite them.
         for script in ["serve.sh", "publish.sh"] {

@@ -1,7 +1,8 @@
 //! The guard's `git` and `gh` checks: no forced push or remote branch
-//! deletion in any spelling, and nothing reaches `main` unless the bot holds
-//! the `release_main` extra (CE-003 decision). Aliases are resolved first, so
-//! `git p` for `push --force` is judged as the push it is.
+//! deletion in any spelling, and nothing reaches `main`, or the project's own
+//! shared branch, unless the bot holds the `release_main` extra (CE-003
+//! decision). Aliases are resolved first, so `git p` for `push --force` is
+//! judged as the push it is.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -10,8 +11,22 @@ use super::paths::Scope;
 use super::GuardContext;
 use crate::bot_permissions::shell;
 
-/// The branch only a bot with `release_main` may push or merge to.
+/// The branch only a bot with `release_main` may push or merge to; the
+/// project's own shared branch (`GuardContext::protect`) is guarded alike.
 const MAIN: &str = "main";
+
+impl GuardContext {
+    fn protects(&self, branch: &str) -> bool {
+        branch == MAIN || self.protect.iter().any(|b| b == branch)
+    }
+
+    /// The protected branch one of `dirs` has checked out, if any.
+    fn on_protected(&self, dirs: &[PathBuf]) -> Option<String> {
+        dirs.iter()
+            .filter_map(|d| current_branch(d))
+            .find(|b| self.protects(b))
+    }
+}
 
 /// Subcommands git runs itself; anything else may be an alias.
 const BUILTINS: &[&str] = &[
@@ -230,7 +245,7 @@ fn push(args: &[String], dirs: &[PathBuf], ctx: &GuardContext) -> Option<String>
             return Some(DELETE.to_string());
         } else if w == "--all" || w == "--branches" {
             if !ctx.allow_main {
-                return Some(MAIN_DENIED.to_string());
+                return Some(denied(MAIN));
             }
         } else if let Some(cluster) = w
             .strip_prefix('-')
@@ -256,8 +271,10 @@ fn push(args: &[String], dirs: &[PathBuf], ctx: &GuardContext) -> Option<String>
     let mut refspecs = positional.into_iter().skip(1).peekable();
     if refspecs.peek().is_none() {
         // No refspec: git pushes the current branch.
-        return (!ctx.allow_main && dirs.iter().any(|d| on_main(d)))
-            .then(|| MAIN_DENIED.to_string());
+        if ctx.allow_main {
+            return None;
+        }
+        return ctx.on_protected(dirs).map(|b| denied(&b));
     }
     let mut skip = false;
     for spec in refspecs {
@@ -278,8 +295,16 @@ fn push(args: &[String], dirs: &[PathBuf], ctx: &GuardContext) -> Option<String>
         }
         let current = matches!(dst, "HEAD" | "@");
         let dst = dst.strip_prefix("refs/heads/").unwrap_or(dst);
-        if dst == MAIN || dst.contains('*') || (current && dirs.iter().any(|d| on_main(d))) {
-            return Some(MAIN_DENIED.to_string());
+        if dst.contains('*') {
+            return Some(denied(MAIN));
+        }
+        if ctx.protects(dst) {
+            return Some(denied(dst));
+        }
+        if current {
+            if let Some(branch) = ctx.on_protected(dirs) {
+                return Some(denied(&branch));
+            }
         }
     }
     None
@@ -287,30 +312,41 @@ fn push(args: &[String], dirs: &[PathBuf], ctx: &GuardContext) -> Option<String>
 
 const FORCED: &str = "forced pushes rewrite shared history; push normally or ask the owner";
 const DELETE: &str = "deleting a remote branch can't be undone by a bot; ask the owner";
-const MAIN_DENIED: &str = "nobody pushes or merges to main directly: push a feature branch and open a PR; main moves through `hermesd pr merge`";
 
-fn on_main(dir: &Path) -> bool {
-    Command::new("git")
+fn denied(branch: &str) -> String {
+    format!(
+        "nobody pushes or merges to {branch} directly: push a feature branch and open a PR; \
+         {branch} moves through `hermesd pr merge`"
+    )
+}
+
+fn current_branch(dir: &Path) -> Option<String> {
+    let out = Command::new("git")
         .arg("-C")
         .arg(dir)
         .args(["rev-parse", "--abbrev-ref", "HEAD"])
         .output()
-        .is_ok_and(|out| {
-            out.status.success() && String::from_utf8_lossy(&out.stdout).trim() == MAIN
-        })
+        .ok()?;
+    out.status
+        .success()
+        .then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
 }
 
-/// `gh pr merge` and the API's merge and ref endpoints land on `main`.
+/// `gh pr merge` and the API's merge and ref endpoints land on a protected
+/// branch.
 pub(super) fn gh(rest: &[String], ctx: &GuardContext) -> Option<String> {
     if ctx.allow_main {
         return None;
     }
     let merge = match rest.first().map(String::as_str) {
         Some("pr") => rest.get(1).is_some_and(|w| w == "merge"),
-        Some("api") => rest
-            .iter()
-            .any(|w| w.contains("/merge") || w.contains("refs/heads/main")),
+        Some("api") => rest.iter().any(|w| {
+            w.contains("/merge")
+                || std::iter::once(MAIN)
+                    .chain(ctx.protect.iter().map(String::as_str))
+                    .any(|b| w.contains(&format!("refs/heads/{b}")))
+        }),
         _ => false,
     };
-    merge.then(|| MAIN_DENIED.to_string())
+    merge.then(|| denied(MAIN))
 }

@@ -14,6 +14,7 @@ mod guard_h155_ce032;
 mod guard_install;
 mod guard_links;
 mod guard_powershell;
+mod guard_protect;
 mod guard_ps_derived;
 mod guard_targets;
 #[cfg(windows)]
@@ -30,6 +31,16 @@ pub(super) fn input_as(
     extras: &[PermissionExtra],
     devops: bool,
 ) -> Value {
+    input_on(profile, extras, devops, None)
+}
+
+/// `input_as` for a project whose shared branch is `protected_branch`.
+pub(super) fn input_on(
+    profile: PermissionProfile,
+    extras: &[PermissionExtra],
+    devops: bool,
+    protected_branch: Option<&str>,
+) -> Value {
     generate(&SettingsInput {
         profile,
         extras,
@@ -42,6 +53,7 @@ pub(super) fn input_as(
         trusted_paths: &[PathBuf::from("/Users/me/Developer")],
         served: &[PathBuf::from("/Users/me/.gravity/releases")],
         repo_url: Some("git@github.com:me/hermes.git"),
+        protected_branch,
         devops,
         port: 49777,
         guard_command: "'/bin/hermesd' guard".to_string(),
@@ -267,6 +279,7 @@ fn the_interim_settings_are_folded_in_and_not_passed_twice() {
             trusted_paths: &[],
             served: &[],
             repo_url: None,
+            protected_branch: None,
             devops: false,
             port: 1,
             guard_command: String::new(),
@@ -342,6 +355,7 @@ fn the_owners_trust_lines_survive_removing_the_interim_argument() {
             trusted_paths: &[],
             served: &[],
             repo_url: None,
+            protected_branch: None,
             devops: false,
             port: 1,
             guard_command: String::new(),

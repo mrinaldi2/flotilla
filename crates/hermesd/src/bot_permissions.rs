@@ -30,7 +30,8 @@ pub const SETTINGS_FILE: &str = "settings.gen.json";
 pub struct Stored {
     pub profile: PermissionProfile,
     pub extras: Vec<PermissionExtra>,
-    pub repo_url: Option<String>,
+    /// The project's shared repository and branch, when it has one.
+    pub repo: Option<bus::ProjectRepo>,
     /// The project's DevOps here: the one bot without the installer deny
     /// rules (B8).
     pub devops: bool,
@@ -64,13 +65,20 @@ impl Stored {
         Ok(Self {
             profile,
             extras: db.bot_permission_extras(&bot.id)?,
-            repo_url: db.project_repo(&bot.project_id)?.map(|r| r.url),
+            repo: db.project_repo(&bot.project_id)?,
             devops: db
                 .project_roles(&bot.project_id)?
                 .iter()
                 .any(|r| r.role == crate::board::model::Role::Devops && r.bot_id == bot.id),
         })
     }
+}
+
+/// A branch name a `Bash(…)` permission rule can hold as it is.
+pub(crate) fn rule_quotable(branch: &str) -> bool {
+    branch
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || "._/-".contains(c))
 }
 
 /// What the daemon knows when it starts one bot.
@@ -84,11 +92,19 @@ pub struct BotStart<'a> {
     pub bot_root: &'a Path,
     pub workspace: &'a Path,
     pub artifacts: Option<&'a Path>,
-    pub repo_url: Option<&'a str>,
+    pub repo: Option<&'a bus::ProjectRepo>,
     pub devops: bool,
 }
 
 impl BotStart<'_> {
+    /// The project's shared branch when it isn't `main`, which the guard and
+    /// the deny rules always protect.
+    fn protected_branch(&self) -> Option<&str> {
+        self.repo
+            .map(|r| r.branch.as_str())
+            .filter(|b| *b != "main")
+    }
+
     /// The trusted paths from config, with `~` expanded.
     pub fn trusted_paths(&self) -> Vec<PathBuf> {
         self.cfg
@@ -157,6 +173,10 @@ impl BotStart<'_> {
         {
             parts.push("--releases".to_string());
         }
+        if let Some(branch) = self.protected_branch() {
+            parts.push("--protect".to_string());
+            parts.push(quote(branch));
+        }
         if self.profile == PermissionProfile::Full {
             parts.push("--full".to_string());
         }
@@ -199,7 +219,9 @@ impl BotStart<'_> {
             artifacts: self.artifacts,
             trusted_paths: &trusted,
             served: &self.served_dirs(),
-            repo_url: self.repo_url,
+            repo_url: self.repo.map(|r| r.url.as_str()),
+            // A branch the rule syntax can't quote is left to the guard.
+            protected_branch: self.protected_branch().filter(|b| rule_quotable(b)),
             devops: self.devops,
             port: self.cfg.port,
             guard_command: self.guard_command(),

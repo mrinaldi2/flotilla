@@ -128,10 +128,11 @@ unreachable remote never holds up a spawn.
   workspace (`git clone --filter=blob:none --branch <branch> <url> repo`), or
   pulls if `repo/` is already there. It therefore begins from the latest
   pushed work, whichever machine pushed it.
-- **Before `complete_task`**, it commits, runs `git pull --rebase`, resolves
-  any conflicts itself, and pushes to the branch. If it still cannot push, it
-  pushes its own branch, `gravity/<name>-<id>`, instead. Its result names the
-  commit or the branch.
+- **Before `complete_task`**, it commits, runs `git pull --rebase` against the
+  project branch, resolves any conflicts itself, and pushes its own branch,
+  `gravity/<name>-<id>`. Nobody pushes to the project branch directly: the
+  guard protects it like `main`, and it moves only through a PR. The worker's
+  result names the branch and the commit.
 - **When a worker retires with work not on the remote** (it forgot to push,
   its push failed, or its task was cancelled or expired), the daemon on its
   machine commits what it left and pushes the worker's own branch. The
@@ -141,9 +142,9 @@ unreachable remote never holds up a spawn.
   This runs in the background. The worker is archived only after the note
   has left, so it never speaks once archived. A worker with nothing unpushed
   retires without a note, and nothing unfinished reaches the shared branch.
-- **Permanent bots** are told the repository's URL and branch. They keep
-  their own clone and `git pull` before starting and after each worker
-  reports.
+- **Permanent bots** are told the repository's URL and branch, and that a
+  worker's branch lands when a PR from it is merged. They keep their own clone
+  and `git fetch` before starting and after each worker reports.
 
 Each machine uses its own git credentials, the same ones the bots use in
 their terminals. The daemon's own git work (the save on retirement) runs
