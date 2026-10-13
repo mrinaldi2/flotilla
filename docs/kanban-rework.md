@@ -1,6 +1,6 @@
 # Kanban rework (0.19.0)
 
-Status: **proposal, awaiting owner approval** (#3). Nothing here is implemented yet.
+Status: **approved by the owner on 2026-10-13** (#3). Implementation is under way, one step PR at a time.
 App and linked-computer design: [kanban-rework-apps.md](kanban-rework-apps.md).
 
 ## Why
@@ -376,16 +376,27 @@ These are the next steps, each with its own plan:
   `scripts/dev.sh`, `serve/*.sh`, the cargo/pnpm-only trusted commands, and
   hard-coded `main` in the PR and release code.
 
-## Open questions for the owner
+## Decisions
 
-1. Is `owner_confirms` the right default for structure changes by the lead?
-2. Should all of a project's boards share one home computer? The proposal
-   says yes.
-3. Should a fact with no mapping on a board be ignored silently, or shown on the
-   card as "PR merged — no column mapped"? The proposal shows it on the card.
-4. Phone scope for 0.19.0: is reading, moving, quick add, drafts and approving
-   proposals enough, leaving board editing to the desktop?
-5. Should the lead also be allowed to finalize a draft the owner started, or
-   only the owner? The proposal says only the owner.
-6. Are the attachment caps right: 10 MB per image, 25 MB per file, 100 MB per
-   item?
+The owner approved the proposed answers to the open questions on 2026-10-13:
+
+1. Structure changes by the lead default to `owner_confirms`.
+2. All of a project's boards share one home computer.
+3. A fact with no column mapped on a board is shown on the card ("PR merged —
+   no column mapped").
+4. The phone covers reading, live sync, moving, quick add, drafts and approving
+   proposals. Board structure is edited on the desktop.
+5. Only the owner finalizes or discards a draft.
+6. Attachment caps: 10 MB per image, 25 MB per file, 100 MB per item. They are
+   configurable.
+
+## Rollout conditions
+
+- The app installs as it does today: the release workflow's DMG and Windows
+  installer, and `hermesd release install` for releases that bots deploy. No
+  step may change how an existing installation updates.
+- macOS, Windows and Linux stay supported. Code specific to one platform is
+  gated per platform, with a path for the others. The Windows tests and gates
+  run on every step.
+- `release-0.19.0-kanban-rework` is not merged into `main` until the owner
+  has had a bot on Windows compile and install the branch.
