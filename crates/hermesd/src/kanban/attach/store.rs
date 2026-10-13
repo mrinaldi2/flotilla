@@ -30,7 +30,7 @@ pub(super) struct Stored {
 /// path inside `roots` names now: a link swapped in after the caller looked
 /// at the path, to a file out of `roots`, is refused. `roots` are canonical.
 pub(crate) fn open_confined(path: &Path, roots: &[PathBuf]) -> anyhow::Result<File> {
-    let file = File::open(path).map_err(|_| invalid(format!("no file {}", path.display())))?;
+    let file = open_to_read(path).map_err(|_| invalid(format!("no file {}", path.display())))?;
     let real = path
         .canonicalize()
         .map_err(|_| invalid(format!("no file {}", path.display())))?;
@@ -54,6 +54,25 @@ pub(crate) fn open_confined(path: &Path, roots: &[PathBuf]) -> anyhow::Result<Fi
         ))
     );
     Ok(file)
+}
+
+/// Opens without waiting: a named pipe put where a file was expected would
+/// block the open until something writes to it, holding a worker for good.
+/// It opens at once instead, and is refused for not being a file. Regular
+/// files ignore the flag.
+#[cfg(unix)]
+fn open_to_read(path: &Path) -> std::io::Result<File> {
+    use std::os::unix::fs::OpenOptionsExt;
+    fs::OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NONBLOCK)
+        .open(path)
+}
+
+/// Windows has no named pipes among files: a plain open never waits.
+#[cfg(not(unix))]
+fn open_to_read(path: &Path) -> std::io::Result<File> {
+    File::open(path)
 }
 
 #[cfg(unix)]
@@ -261,6 +280,28 @@ mod tests {
             let refused = open_confined(&link, &roots).expect_err("a link out");
             assert!(refused.to_string().contains("outside"), "{refused}");
         }
+    }
+
+    /// A pipe named like a file must not hang the daemon: opening it to
+    /// read would wait for a writer that never comes (0.19.0 K6 review).
+    #[cfg(unix)]
+    #[test]
+    fn a_named_pipe_is_refused_without_waiting_for_a_writer() {
+        use std::os::unix::ffi::OsStrExt;
+        let dir = tempfile::tempdir().unwrap();
+        let pipe = dir.path().join("shot.png");
+        let c_path = std::ffi::CString::new(pipe.as_os_str().as_bytes()).unwrap();
+        assert_eq!(unsafe { libc::mkfifo(c_path.as_ptr(), 0o600) }, 0);
+        let roots = root(dir.path());
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let _ = tx.send(open_confined(&pipe, &roots).map(|_| ()));
+        });
+        let opened = rx
+            .recv_timeout(std::time::Duration::from_secs(5))
+            .expect("open_confined waited for a writer to the pipe");
+        let refused = opened.expect_err("a pipe is not a file");
+        assert!(refused.to_string().contains("not a file"), "{refused}");
     }
 
     #[test]
