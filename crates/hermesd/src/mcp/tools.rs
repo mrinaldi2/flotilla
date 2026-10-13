@@ -225,7 +225,7 @@ pub(super) fn send(
             let sender = bot_sender(&me);
             // The task carries its card's attachments (0.19.0 K4b).
             let body = match &card {
-                Some(card) => task_card::with_attachments(app, &me.project_id, card, body),
+                Some(card) => task_card::with_attachments(app, &me.project_id, card, body, &target),
                 None => body.to_string(),
             };
             let mut dm = Dm::new(&target.id, &sender, kind, &body);

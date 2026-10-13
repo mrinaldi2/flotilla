@@ -26,7 +26,8 @@ use crate::decisions::{invalid, not_found};
 
 mod store;
 
-use store::{doc_artifact, doc_url, open_confined, root, Stored};
+use store::{doc_artifact, doc_url, Stored};
+pub(crate) use store::{open_confined, root};
 
 /// Where an attachment's content comes from.
 pub enum Source {

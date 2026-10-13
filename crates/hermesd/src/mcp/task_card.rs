@@ -267,13 +267,23 @@ pub(super) fn attach(
 /// A task's body with its card's attachments listed after it, each with
 /// the path the assignee reads it at, so it starts from the screenshots and
 /// documents rather than a summary of them. Unchanged when the card has
-/// none, or lives on another computer.
-pub(super) fn with_attachments(app: &AppState, project_id: &str, card: &str, body: &str) -> String {
+/// none, or lives on another computer. A bot on a linked computer is told
+/// to read them with `item_get`, which copies them there.
+pub(super) fn with_attachments(
+    app: &AppState,
+    project_id: &str,
+    card: &str,
+    body: &str,
+    to: &Bot,
+) -> String {
     let listed = (|| -> anyhow::Result<String> {
         if app.db.item_project(card)?.as_deref() != Some(project_id) {
             return Ok(String::new());
         }
         let atts = app.db.board_read(|t| t.attachments(card))?;
+        if to.is_linked() {
+            return Ok(crate::kanban::attachments::listing_elsewhere(card, &atts));
+        }
         let artifacts = crate::kanban::attach::artifacts_of(app, project_id)?;
         Ok(crate::kanban::attachments::listing(card, &atts, &artifacts))
     })()

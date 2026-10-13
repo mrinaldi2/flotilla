@@ -29,7 +29,7 @@ pub(super) struct Stored {
 /// Open `path` to read it, but only when the file held open is the one a
 /// path inside `roots` names now: a link swapped in after the caller looked
 /// at the path, to a file out of `roots`, is refused. `roots` are canonical.
-pub(super) fn open_confined(path: &Path, roots: &[PathBuf]) -> anyhow::Result<File> {
+pub(crate) fn open_confined(path: &Path, roots: &[PathBuf]) -> anyhow::Result<File> {
     let file = File::open(path).map_err(|_| invalid(format!("no file {}", path.display())))?;
     let real = path
         .canonicalize()
@@ -71,7 +71,7 @@ fn same_file(a: &Metadata, b: &Metadata) -> bool {
 }
 
 /// A folder, canonical, for [`open_confined`]; none when it doesn't exist.
-pub(super) fn root(dir: &Path) -> Vec<PathBuf> {
+pub(crate) fn root(dir: &Path) -> Vec<PathBuf> {
     dir.canonicalize().into_iter().collect()
 }
 

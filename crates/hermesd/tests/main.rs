@@ -27,6 +27,7 @@ mod board_home;
 mod board_import;
 mod board_mcp;
 mod board_peer;
+mod board_peer_boards;
 mod board_peer_conflict;
 mod board_peer_drafts;
 mod board_post_install;
