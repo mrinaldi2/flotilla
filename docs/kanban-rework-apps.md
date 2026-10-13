@@ -74,13 +74,67 @@ A right-side panel, the same width as the item drawer, with four sections:
   (name, then kind). The column header menu offers rename, WIP limit, rules…,
   hide and remove.
 - **Creating items:** "+ New item" (toolbar, and at the foot of every `open`
-  column) opens a quick add: type, title, then Enter. The item drawer opens on
-  the new item.
+  column) opens the item drawer on a new **draft**; see the next section.
 - **The item drawer becomes editable:** title, description (markdown with the
-  template sections), acceptance criteria, assignee, priority, size, labels and
-  links. Each control appears only when the board has that field turned on.
+  template sections), acceptance criteria, assignee, priority, size, labels,
+  links and **attachments**. Each control appears only when the board has that
+  field turned on.
 - **Refusals:** shown as today (`RefusalPopover`), now listing the column's
   rules by name.
+
+### Drafts, attachments and "Discuss with a bot"
+
+```
+┌ Draft · RB-20 · not on the board yet ──────┐┌ Lead · about RB-20 ────────────┐
+│ Unit conversion (cups ↔ grams)             ││ you: the import breaks on this │
+│ ▲ Feature   Board: Main                    ││      site, see the screenshot  │
+│ Description                                ││ Lead: I added 3 criteria and a │
+│  ## User/problem …                         ││      spec, RB-20-spec.md.      │
+│ Attachments                                ││  ↻ updated the draft · 3 chng  │
+│  [img] import-error.png   [pdf] chart.pdf  ││                                │
+│  + Add file   + Link document              ││                                │
+│ [ Discuss with a bot ▾ Lead ]              ││ [ Message Lead…            ⏎ ] │
+│ ───────────────────────────────────────────││                                │
+│ 3 changes by Lead since you looked  Review ││                                │
+│ [ Discard ]          Column: To do ▾ [Finalize]                             │
+└────────────────────────────────────────────┘└────────────────────────────────┘
+```
+
+**Attachments**
+- Add one by dropping a file on the drawer, pasting an image into the
+  description, or using **+ Add file**.
+- **+ Link document** picks a project artifact or takes a URL.
+- Images show as thumbnails that open full size, and can sit inline in the
+  description. Files show their name, type and size.
+- A file over its cap, or of a type that isn't allowed, is refused at once and
+  the reason is shown on it.
+
+**Draft banner**
+- A draft's drawer is headed **Draft · not on the board yet**.
+- The footer holds **Discard**, the column to finalize into (the first `open`
+  column by default) and **Finalize**.
+- Finalize runs that column's entry rules. When they refuse, the unmet rules
+  are shown in place, as for any move.
+
+**Discuss with a bot**
+- The button sits under the description. Its menu picks the bot, with the lead
+  first.
+- It opens that bot's chat docked beside the drawer, pinned to the draft.
+  Every message is sent with the item id.
+- When the bot edits the draft, the chat shows a compact "↻ updated the
+  draft" row, and the drawer refreshes live.
+
+**Review changes**
+- The drawer counts the changes made since you last looked ("3 changes by Lead
+  since you looked"). **Review** lists each one: a field diff, an added
+  criterion, an attached or linked document. Each has its own **Undo**.
+- Finalize can be pressed with unreviewed changes left; doing so marks them
+  seen.
+
+**Drafts tray**
+- An open draft shows as a chip at the right of the board toolbar ("✎ 2
+  drafts"), which lists drafts with the bot each one is being discussed with.
+- A bot's draft update also adds a Needs you row: "Lead updated draft RB-20".
 
 ### Changes made by the lead
 
@@ -135,10 +189,21 @@ proposals.
   with their refusals already checked, the same check as the desktop's move
   menu. A reason or override field appears only when the rule needs one.
   Needs `control`.
-- **Quick add (+):** type, title and board column, which defaults to the first
-  `open` column. Needs `control`.
+- **New item (+):** creates a draft, which needs `control`. The form holds:
+  - title, type and board;
+  - description;
+  - **Attach**: Photo Library, Camera, a screenshot from the share sheet, or
+    Files;
+  - **Link document**: a project artifact or a URL.
+- **Discuss with a bot:** under the description. It opens the bot's existing
+  Chat screen with the draft pinned as a header card. The bot's draft updates
+  appear as rows in the chat and in Needs you.
+- **Review and finalize:** the draft screen lists the bot's changes, each with
+  Undo. **Finalize** asks for the column, the first `open` column by default.
+  **Discard** asks for a reason.
 - **Item view:** keeps comments, adds assignee and labels as read-only rows,
-  and keeps the acceptance criteria read-only.
+  shows attachments as thumbnails that open full screen, and keeps the
+  acceptance criteria read-only.
 - **Proposals:** board-structure proposals arrive in Needs you like other
   decisions, with the before/after column strip. Approving needs `approve` and
   Face ID, like release rulings today.
@@ -180,6 +245,13 @@ sequenceDiagram
 - **Notices** to a linked bot (a board changed, an item was moved) travel as
   ordinary bus messages over the peer link and use the existing delivery and
   retry path.
+- **Attachments** stay on the home.
+  - `item_get` from a linked computer returns the records.
+  - The bytes come on first read through `attachment_fetch`, into a local cache
+    keyed by `sha256`, under the same caps.
+  - An owner on a linked computer uploads through the home.
+- **Drafts and invitations** are on the home too. A linked bot invited to a
+  draft edits it through the same forwarded `board_call`.
 - **Home offline:** every board stays readable from its mirror. Writes are
   refused with "The board lives on <home>, which is unreachable". Mirrors still
   don't survive a restart; `board_home` still records which computer is home,
