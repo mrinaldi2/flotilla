@@ -12,6 +12,11 @@ use super::{changed, load};
 /// the target's latest (R3); the bot hears how it ended once.
 pub fn follow(app: &AppState, copy: &OwnerAction) -> anyhow::Result<OwnerAction> {
     let before = load(app, None, &copy.id)?;
+    // The target's updates and its replies can cross: a quick action's
+    // "succeeded" can arrive before the "running" its run request answered.
+    if copy.state.stage() < before.state.stage() {
+        return Ok(before);
+    }
     if !app.db.mirror_owner_action(copy)? {
         return Err(conflict(format!(
             "owner action {} differs from the linked computer's",
