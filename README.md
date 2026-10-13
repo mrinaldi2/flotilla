@@ -183,7 +183,10 @@ hermesd restore --from /path/to/dir --overwrite   # moves current db aside first
 ```
 
 Backups use SQLite's online backup API and include configuration manifests
-(project/bot config files) but never secrets or bot workspaces. Retention
+(project/bot config files) but never secrets or bot workspaces. Before a
+daemon migrates an older database it takes the same backup, into
+`backups/pre-migration-<timestamp>-schema-<from>-to-<to>`, and refuses to
+start if it can't; the newest three of those are kept. Retention
 pruning (messages, deliveries, routine runs; FTS index kept in sync) runs
 daily by default — see `[retention]` in `hermesd.toml`.
 
