@@ -1,7 +1,7 @@
 //! The build's identity, as `hermesd --version` and `/health` say it (H-114):
 //! whether this hermesd knows the owner's app, and how.
 
-mod common;
+use crate::common;
 
 use common::*;
 use hermesd::bus_auth::app_identity::identity_line;

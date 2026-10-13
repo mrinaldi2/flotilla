@@ -2,7 +2,7 @@
 //! ready once its blocker's work is reviewed and in Verify, not only once it
 //! is Done, which a feature reaches only when its release ships.
 
-mod common;
+use crate::common;
 
 use common::releases::releases;
 use common::tasks::error_text;

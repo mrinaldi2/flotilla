@@ -2,7 +2,7 @@
 //! conversation, the daemon starting) is told what its last session left
 //! unfinished, once, and keeps its work.
 
-mod common;
+use crate::common;
 
 use common::peers::{team, wait_until};
 use common::*;

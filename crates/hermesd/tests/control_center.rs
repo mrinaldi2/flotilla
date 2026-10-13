@@ -1,6 +1,6 @@
 //! The decision registry over the control plane: the owner's half.
 
-mod common;
+use crate::common;
 
 use common::tasks::{drain_until, project_with_bots};
 use common::{raw_hello, WsClient};

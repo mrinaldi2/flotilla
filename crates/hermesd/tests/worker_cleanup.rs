@@ -3,7 +3,7 @@
 //! shared Cargo target goes once the last worker has retired. Commits no
 //! remote has are bundled first (ARCH-R40).
 
-mod common;
+use crate::common;
 
 use common::peers::{bot_named, wait_until};
 use common::repo::{book, git};

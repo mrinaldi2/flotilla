@@ -3,7 +3,7 @@
 //! after its `project_attention_changed`, a peer answers only for projects
 //! linked with the caller, and a peer away leaves its last good part, marked.
 
-mod common;
+use crate::common;
 
 use bus::contract::home::{source::State, ProjectAttention, ProjectRow, ProjectsOverview};
 use common::peer_board::board;

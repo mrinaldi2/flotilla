@@ -1,7 +1,7 @@
 //! Conversations between bots: the pairs that have talked in a project, and
 //! each pair's messages in order, read from the two bots' DMs together.
 
-mod common;
+use crate::common;
 
 use common::tasks::project_with_bots;
 use common::*;

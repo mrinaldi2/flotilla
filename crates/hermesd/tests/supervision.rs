@@ -1,7 +1,7 @@
 //! Always-on supervision: nothing starts a bot by hand, and a session that
 //! goes away comes back on its own.
 
-mod common;
+use crate::common;
 
 use common::*;
 use serde_json::{json, Value};

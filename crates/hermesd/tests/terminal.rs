@@ -1,6 +1,6 @@
 //! Terminal replay on the wire: what an attach sends, and in how many frames.
 
-mod common;
+use crate::common;
 
 use common::*;
 use futures::StreamExt;

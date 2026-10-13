@@ -3,7 +3,7 @@
 //! rolled-back install doesn't count towards `all_done` (H-191 S2) now that
 //! `ios` and `iphone` are one target.
 
-mod common;
+use crate::common;
 
 use common::ios_targets::{ios_qa_tests_ios, package, pass, team, Team, DEVOPS, IOS_QA, LEAD};
 use common::tasks::error_text;

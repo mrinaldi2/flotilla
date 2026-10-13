@@ -1,6 +1,6 @@
 //! The Files tab says who made each file in a project's artifacts.
 
-mod common;
+use crate::common;
 
 use common::peers::{find, team};
 use common::tasks::drain_until;

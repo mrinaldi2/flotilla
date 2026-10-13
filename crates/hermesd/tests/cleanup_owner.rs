@@ -4,7 +4,7 @@
 //! and Keep leaves it; each computer's disk report names its free space and
 //! its bots' sizes, and under 20 GB free a Needs-you row offers Clean up.
 
-mod common;
+use crate::common;
 
 use chrono::{Duration, Utc};
 use common::cleanup::{job_at, linked, merged, step};

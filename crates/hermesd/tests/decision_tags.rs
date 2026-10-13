@@ -1,6 +1,6 @@
 //! Tags on decisions, as bots see them over MCP.
 
-mod common;
+use crate::common;
 
 use common::tasks::{error_text, project_with_bots, two_projects_one_bot_each};
 use serde_json::json;

@@ -2,7 +2,7 @@
 //! owner's Needs you (H-172), counted in its project's overview, until the
 //! prompt is answered.
 
-mod common;
+use crate::common;
 
 use bus::BotState;
 use common::peers::project;

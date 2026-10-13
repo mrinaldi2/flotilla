@@ -2,7 +2,7 @@
 //! its card (H-113): its version moved, and a mirror or open board that
 //! kept the old one would see its next write conflict.
 
-mod common;
+use crate::common;
 
 use bus::contract::board::{self as c, board_request::Request};
 use common::board::{call, next_push};

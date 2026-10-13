@@ -2,7 +2,7 @@
 //! into the Windows bot's terminal through the peer link, and several
 //! viewers there share one feed.
 
-mod common;
+use crate::common;
 
 use common::peers::{team_trusting, wait_until};
 use common::*;

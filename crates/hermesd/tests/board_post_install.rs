@@ -3,7 +3,7 @@
 //! ticked. The lead ticks with evidence; a move into Verify lists what is
 //! still unticked.
 
-mod common;
+use crate::common;
 
 use common::board::version;
 use common::releases::{releases, rule};

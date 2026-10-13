@@ -4,7 +4,7 @@
 //! The PC mirrors the board, its clients watch it move, and while the Mac is
 //! unreachable the board there is read-only.
 
-mod common;
+use crate::common;
 
 use bus::contract::board::{self as c, board_request::Request, board_response::Response};
 use bus::contract::wire::envelope::Body;

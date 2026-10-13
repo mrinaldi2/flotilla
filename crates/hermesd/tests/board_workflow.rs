@@ -4,7 +4,7 @@
 //! through it (a reviewer) may act on it without a role, a worker's task
 //! links to its item, and a bot that leaves hands its items to the lead.
 
-mod common;
+use crate::common;
 
 use bus::contract::board::{self as c, board_request::Request};
 use common::board::*;

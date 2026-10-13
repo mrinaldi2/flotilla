@@ -2,7 +2,7 @@
 //! retired when their task closes, and placed on a linked machine when this
 //! one is full. See `docs/workers.md`.
 
-mod common;
+use crate::common;
 
 use bus::WorkerState;
 use common::peers::{bot_named, pair, project, wait_until};

@@ -2,7 +2,7 @@
 //! clear, on the release's work card or its items, in the needs-you order;
 //! the work card set, or found by its REL title; and a push when it changes.
 
-mod common;
+use crate::common;
 
 use std::collections::HashMap;
 

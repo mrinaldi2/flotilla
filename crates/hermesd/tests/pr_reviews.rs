@@ -5,7 +5,7 @@
 //! change; it opens one review task per required role and closes it when the
 //! review comes in.
 
-mod common;
+use crate::common;
 
 use common::prs::{approve, clone, commit, error, give, move_main, opened, pr, report, setup};
 use common::repo::git;

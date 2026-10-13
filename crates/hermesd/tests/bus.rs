@@ -1,6 +1,6 @@
 //! MCP bot-to-bot tasks and crash recovery.
 
-mod common;
+use crate::common;
 
 use std::time::Duration;
 

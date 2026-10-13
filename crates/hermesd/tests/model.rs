@@ -5,7 +5,7 @@
 //! the user's back the moment anything restarted it. The daemon reads the
 //! model out of the session's transcript and pins it on the next start.
 
-mod common;
+use crate::common;
 
 use std::fs;
 use std::path::{Path, PathBuf};

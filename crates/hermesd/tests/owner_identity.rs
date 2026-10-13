@@ -4,7 +4,7 @@
 //! card. Bots get neither. The real signature check can't run in CI, so a
 //! double stands in for it, as the spec asks.
 
-mod common;
+use crate::common;
 
 use std::sync::Arc;
 use std::time::Duration;

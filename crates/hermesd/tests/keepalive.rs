@@ -3,7 +3,7 @@
 //! doing. A phone that drives into a tunnel no longer leaves its connection,
 //! and the browser screencast it watched, running until the OS gives up.
 
-mod common;
+use crate::common;
 
 use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;

@@ -3,7 +3,7 @@
 //! asks_owner` are owner_question rows until the owner answers or dismisses
 //! them, unread counts follow `owner_thread_read`, and a pin ranks first.
 
-mod common;
+use crate::common;
 
 use bus::contract::home::{
     home_request::Request, home_response::Response, HomeRequest, OwnerThreadGetRequest,

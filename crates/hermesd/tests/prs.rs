@@ -4,7 +4,7 @@
 //! is flagged and attributed to no one; only a verified worktree is
 //! recorded; closing unmerged sends the card back to Doing.
 
-mod common;
+use crate::common;
 
 use common::prs::{clone, commit, error, head, patch_id, setup};
 use common::repo::{git, remote};

@@ -3,7 +3,7 @@
 //! bot's clone registers is that bot's, judged by its roots. One pointed
 //! into another bot's workspace is held, never removed.
 
-mod common;
+use crate::common;
 
 use std::path::PathBuf;
 

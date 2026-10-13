@@ -2,7 +2,7 @@
 //! flagged (G4), routines name a card (G5), and a board known only through
 //! a linked home survives a restart (ARCH-R59 a).
 
-mod common;
+use crate::common;
 
 use bus::contract::home::AttentionKind;
 use bus::{BotState, DeliveryState, MAX_NOTE_BYTES};

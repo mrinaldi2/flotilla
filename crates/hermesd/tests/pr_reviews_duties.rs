@@ -2,7 +2,7 @@
 //! ARCH M1–M3): only the owner seats the security reviewer, a bot that ever
 //! pushed never reviews, and nobody reviews a branch that moved unreported.
 
-mod common;
+use crate::common;
 
 use common::prs::{approve, commit, error, give, opened, pr, setup};
 use common::repo::git;

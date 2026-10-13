@@ -2,7 +2,7 @@
 //! hook waits on `/hook/permission` until the owner answers the card, and the
 //! answer comes back as the hook's decision. Nothing defaults to yes.
 
-mod common;
+use crate::common;
 
 use common::*;
 use hermesd::approval::OwnerAnswer;

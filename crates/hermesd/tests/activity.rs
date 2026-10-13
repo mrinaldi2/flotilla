@@ -6,7 +6,7 @@
 //! that ends a turn fires before Claude Code has written the reply, so anything
 //! that reads on that signal alone gets the previous turn forever.
 
-mod common;
+use crate::common;
 
 use std::fs;
 use std::path::{Path, PathBuf};

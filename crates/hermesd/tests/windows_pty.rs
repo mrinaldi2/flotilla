@@ -1,5 +1,5 @@
 #![cfg(windows)]
-mod common;
+use crate::common;
 use std::time::Duration;
 
 use hermesd::runtime::pty::PtyAdapter;

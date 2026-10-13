@@ -3,7 +3,7 @@
 //! PC's app reads it through its own daemon in its own project, and gets the
 //! Mac's pushes there. The owner re-runs checks on the Mac (H-285 must-fix).
 
-mod common;
+use crate::common;
 
 use bus::contract::pr::{self as p, pr_push::Push, pr_response::Response};
 use common::peer_board::board;

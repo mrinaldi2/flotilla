@@ -6,7 +6,7 @@
 //! token is a file bots can read): the owner approves on the Mac or a phone. (A check run on the PC, AC3, is
 //! H-283's `check_runner_peer`.)
 
-mod common;
+use crate::common;
 
 use common::peer_board::{board, Board};
 use common::peers::{bot_named, wait_until};

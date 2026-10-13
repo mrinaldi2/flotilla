@@ -5,7 +5,7 @@
 //! reached through a link, is refused when it is reported and again right
 //! before the delete (AC3).
 
-mod common;
+use crate::common;
 
 use chrono::Utc;
 use common::cleanup::{job_at, jobs, linked, listed, main_clone, merged, notes, step, workspace};

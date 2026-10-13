@@ -3,7 +3,7 @@
 //! decided before the owner changed the bot on its own computer is refused
 //! there (M2), and one that can't be delivered within a day expires.
 
-mod common;
+use crate::common;
 
 use bus::PermissionExtra;
 use chrono::{Duration, Utc};

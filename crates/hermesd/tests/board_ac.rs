@@ -2,7 +2,7 @@
 //! with `item_update`, so an item created without them can still meet the
 //! Definition of Ready.
 
-mod common;
+use crate::common;
 
 use common::board::version;
 use common::tasks::{error_text, project_with_bots};

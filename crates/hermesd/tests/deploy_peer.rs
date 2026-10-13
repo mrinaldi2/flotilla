@@ -5,7 +5,7 @@
 //! - H-166: `install_quiesce` pauses the tester's computer, never the
 //!   board's home, and `install_release` says how to run the install there.
 
-mod common;
+use crate::common;
 
 use bus::{BotState, PermissionExtra};
 use chrono::{Duration, Utc};

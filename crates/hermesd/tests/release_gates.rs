@@ -3,7 +3,7 @@
 //! endpoint as the bot of the calling session. The extra × the role × the
 //! release's state × the one commit its builds record (ARCH-R52 M1).
 
-mod common;
+use crate::common;
 
 use bus::PermissionExtra;
 use common::releases::{releases, Releases};

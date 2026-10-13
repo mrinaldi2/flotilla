@@ -3,7 +3,7 @@
 //! only once the tree has ended. A daemon that restarts with a check still
 //! marked running here records it as an `error`, retried once.
 
-mod common;
+use crate::common;
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;

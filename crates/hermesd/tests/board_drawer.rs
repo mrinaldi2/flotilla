@@ -2,7 +2,7 @@
 //! written as the owner, pushed to watchers, and shows in the item's detail.
 //! Other edits stay refused until the drawer edits inline.
 
-mod common;
+use crate::common;
 
 use bus::contract::board::{self as c, board_request::Request, board_response::Response};
 use common::board::*;

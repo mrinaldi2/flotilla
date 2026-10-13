@@ -3,7 +3,7 @@
 //! and `hermesd pr merge` reads that again at the merge; an ordinary PR under
 //! `none` still doesn't wait for the owner.
 
-mod common;
+use crate::common;
 
 use bus::PermissionExtra;
 use chrono::{Duration, Utc};

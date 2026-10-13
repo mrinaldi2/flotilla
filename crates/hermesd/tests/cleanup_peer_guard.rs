@@ -2,7 +2,7 @@
 //! M1): only the project's board home may ask, and the computer checks
 //! itself that main holds the merged commit before it deletes anything.
 
-mod common;
+use crate::common;
 
 use std::path::PathBuf;
 use std::time::Duration;

@@ -4,7 +4,7 @@
 //! and a scratch daemon starts, links and writes nothing. Fixtures only: no
 //! real home is ever read here.
 
-mod common;
+use crate::common;
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};

@@ -5,7 +5,7 @@
 //! branch goes only while it is still the merged commit; a merge DevOps
 //! leaves for 30 min goes to it again and to the owner's Needs you.
 
-mod common;
+use crate::common;
 
 use std::path::{Path, PathBuf};
 

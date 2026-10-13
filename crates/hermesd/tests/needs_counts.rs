@@ -3,7 +3,7 @@
 //! from `crate::attention`, with a routine that names no card and a bot
 //! waiting on its approval.
 
-mod common;
+use crate::common;
 
 use bus::BotState;
 use common::tasks::project_with_bots;

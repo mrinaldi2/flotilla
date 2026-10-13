@@ -3,7 +3,7 @@
 //! with a live Allow button, granting owner power to a command it hides.
 #![cfg(unix)]
 
-mod common;
+use crate::common;
 
 use std::time::Duration;
 

@@ -2,7 +2,7 @@
 //! local endpoint as the calling bot. From outside any bot session, as a
 //! terminal or a script, it is refused before anything is fetched.
 
-mod common;
+use crate::common;
 
 use common::*;
 

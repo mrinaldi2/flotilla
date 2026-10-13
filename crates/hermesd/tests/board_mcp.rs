@@ -2,7 +2,7 @@
 //! from the contract with short enum names, guarded moves and refusals, and
 //! the bus tools' `item` links with task history.
 
-mod common;
+use crate::common;
 
 use common::board::version;
 use common::tasks::{error_text, project_with_bots};

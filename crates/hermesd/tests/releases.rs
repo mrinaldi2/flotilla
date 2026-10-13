@@ -3,7 +3,7 @@
 //! approval opens nothing, the owner rules over the WebSocket, and the
 //! package reaches the machine through its tester.
 
-mod common;
+use crate::common;
 
 use common::board::connect_with;
 use common::releases::Releases;

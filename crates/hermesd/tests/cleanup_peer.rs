@@ -4,7 +4,7 @@
 //! result reaches the home. A computer that isn't online isn't asked: its
 //! jobs wait for it. The hands-on run on win-pc is Tester Win's.
 
-mod common;
+use crate::common;
 
 use std::path::PathBuf;
 use std::time::Duration;

@@ -4,7 +4,7 @@
 //! (bundle and patch) and the tree held, and stays held: only the owner
 //! removes it (ruling 7629a873).
 
-mod common;
+use crate::common;
 
 use std::process::{Child, Command};
 

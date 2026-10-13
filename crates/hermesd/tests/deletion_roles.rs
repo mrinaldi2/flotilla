@@ -1,7 +1,7 @@
 //! A deleted bot's board roles (H-254), moved out of deletion.rs for the
 //! 400-line limit.
 
-mod common;
+use crate::common;
 
 use common::{spawn_daemon, McpClient, TestDaemon, WsClient};
 use serde_json::{json, Value};

@@ -3,7 +3,7 @@
 //! `install_release` refuses a served build that no longer matches its
 //! frozen sha256.
 
-mod common;
+use crate::common;
 
 use bus::PermissionExtra;
 use common::releases::{releases_on, rule};

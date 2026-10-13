@@ -1,7 +1,7 @@
 //! Routines end to end: scheduling, self-management over MCP, signals and
 //! cancellation.
 
-mod common;
+use crate::common;
 
 use common::*;
 use serde_json::json;

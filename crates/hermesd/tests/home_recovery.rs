@@ -4,7 +4,7 @@
 //! still open, and the app waited forever on that request and every later
 //! one: no projects, no bot opened.
 
-mod common;
+use crate::common;
 
 use common::tasks::project_with_bots;
 use common::*;

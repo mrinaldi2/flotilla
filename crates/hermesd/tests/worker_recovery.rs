@@ -1,6 +1,6 @@
 //! Recovering from the daemon stopping mid-placement, and deleting twice.
 
-mod common;
+use crate::common;
 
 use bus::WorkerState;
 use common::peers::{bot_named, project, wait_until};

@@ -3,7 +3,7 @@
 //! held, its bot told once; an orphan is only reported; main clones,
 //! release trees and trees on a branch with a live PR are never touched.
 
-mod common;
+use crate::common;
 
 use std::path::{Path, PathBuf};
 

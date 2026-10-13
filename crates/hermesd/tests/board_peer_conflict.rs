@@ -2,7 +2,7 @@
 //! (H-113), and every write at the home that moves an item's version is
 //! pushed, so the mirror never keeps a stale version.
 
-mod common;
+use crate::common;
 
 use common::peer_board::board;
 use common::peers::wait_until;

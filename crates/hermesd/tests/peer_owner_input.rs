@@ -4,7 +4,7 @@
 //! The bot's computer takes none of it whatever the frame says, the linked
 //! computer says where to do it instead, and watching still works.
 
-mod common;
+use crate::common;
 
 use common::devtools::{recording_devtools, start_browser};
 use common::peers::{team, team_trusting_on_the_pc, wait_until, Team};

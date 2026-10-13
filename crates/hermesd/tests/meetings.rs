@@ -3,7 +3,7 @@
 //! action items promoted to the board and linked back, and the dashboard's
 //! meetings and action items.
 
-mod common;
+use crate::common;
 
 use common::tasks::{drain_until, error_text};
 use common::team::team;

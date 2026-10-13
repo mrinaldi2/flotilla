@@ -3,7 +3,7 @@
 //! owner-authored PR through the normal queue, then the release is cut
 //! again; a later PR touching the same files is refused by name.
 
-mod common;
+use crate::common;
 
 use chrono::{Duration, Utc};
 use common::cuts::{checkout, cut, cuts, get, leave_out, main_tip, merged, numbers, DEVOPS};

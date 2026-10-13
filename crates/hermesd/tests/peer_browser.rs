@@ -2,7 +2,7 @@
 //! Windows bot's browser through the peer link, viewers there share one feed,
 //! and its browser log is read from its machine.
 
-mod common;
+use crate::common;
 
 use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;

@@ -1,6 +1,6 @@
 //! Runtime selection through the real bot-authenticated MCP endpoint.
 
-mod common;
+use crate::common;
 
 use bus::BotRuntime;
 use common::{spawn_daemon, spawn_daemon_with, McpClient, TestDaemon, WsClient};

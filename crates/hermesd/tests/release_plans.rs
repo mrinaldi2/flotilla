@@ -2,7 +2,7 @@
 //! contents are decided, shows each item's live status and how many are
 //! ready, and goes on to the unchanged B7 gate once every item is in Verify.
 
-mod common;
+use crate::common;
 
 use common::releases::{releases, Releases};
 use common::tasks::error_text;

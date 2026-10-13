@@ -1,6 +1,6 @@
 //! Handshake, user↔bot channel delivery, and lease-free terminal input.
 
-mod common;
+use crate::common;
 
 use common::*;
 use futures::{SinkExt, StreamExt};

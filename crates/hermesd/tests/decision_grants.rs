@@ -3,7 +3,7 @@
 //! Only a client that shows grants rules on one, pinning the grants it
 //! showed by their sha (ARCH-R51 M2).
 
-mod common;
+use crate::common;
 
 use bus::PermissionExtra;
 use common::peers::{team_trusting, wait_until};

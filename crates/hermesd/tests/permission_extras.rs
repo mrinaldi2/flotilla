@@ -3,7 +3,7 @@
 //! running as it was instead of restarting it for extras it never got, even
 //! when the refusal comes from the old CHECK (CE-008 F1).
 
-mod common;
+use crate::common;
 
 use std::time::Duration;
 

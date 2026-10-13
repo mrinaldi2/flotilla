@@ -2,7 +2,7 @@
 //! is configured with a browser of its own, and the app can watch it live.
 //! A fake DevTools endpoint stands in for Chrome, so no browser is needed.
 
-mod common;
+use crate::common;
 
 use std::cell::Cell;
 use std::sync::atomic::{AtomicUsize, Ordering};

@@ -5,7 +5,7 @@
 //! a pass counts for another commit with the same tree; each result keeps
 //! where it ran, the tools it used and its log.
 
-mod common;
+use crate::common;
 
 use std::path::Path;
 

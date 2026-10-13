@@ -1,7 +1,7 @@
 //! The served IPA's sha is cached by a stamp a swapped file can't keep
 //! (CE review of H-241, M1).
 
-mod common;
+use crate::common;
 
 use std::path::PathBuf;
 

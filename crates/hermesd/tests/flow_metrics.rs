@@ -2,7 +2,7 @@
 //! without the items the backlog import brought in; and on a linked
 //! computer, the home's numbers or where to look.
 
-mod common;
+use crate::common;
 
 use common::board::{new_item, walk};
 use common::peer_board::board;

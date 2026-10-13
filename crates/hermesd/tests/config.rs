@@ -1,6 +1,6 @@
 //! The `get_config` / `set_config` control-plane surface.
 
-mod common;
+use crate::common;
 
 use common::*;
 use futures::StreamExt;

@@ -1,6 +1,6 @@
 //! Device-scoped credentials, revocation and origin checks.
 
-mod common;
+use crate::common;
 
 use common::*;
 use futures::StreamExt;

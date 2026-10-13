@@ -2,7 +2,7 @@
 //! transcript, with a running background command's live output, here and from
 //! the other machine.
 
-mod common;
+use crate::common;
 
 use common::peers::team;
 use common::*;
