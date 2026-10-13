@@ -5,6 +5,7 @@
 
 use crate::common;
 
+use base64::Engine as _;
 use bus::contract::board::{self as c, board_request::Request, board_response::Response};
 use common::board::{call, response};
 use common::peer_board::{board_on, Board};
@@ -205,4 +206,42 @@ async fn the_home_opens_no_peer_path_and_serves_no_draft_or_other_project() {
     let unlinked = project(&mut b.p.win_client, "unlinked").await;
     let refused = ask(&b, fetch(&theirs.id, &unlinked)).await.unwrap_err();
     assert!(refused.contains("not_linked"), "{refused}");
+}
+
+/// What a linked computer stages on the home counts toward the item's cap,
+/// so starting uploads it never finishes can't fill the home's disk; one
+/// left untouched for a while is swept when it starts another.
+#[tokio::test]
+async fn a_linked_computer_stages_no_more_than_the_items_cap() {
+    let mac = computer(|cfg| cfg.attachments.item_mb = 1).await;
+    let win = computer(|_| {}).await;
+    let b = board_on(paired_from(mac, win).await).await;
+    let chunk = base64::engine::general_purpose::STANDARD.encode(screenshot(512 * 1024));
+    let start = || {
+        json!({
+            "type": "attachment_push", "project_id": b.win_app, "bot_id": b.tester_id,
+            "item_id": b.item, "name": "upload.png", "offset": 0, "total": 900 * 1024,
+            "data": chunk,
+        })
+    };
+    ask(&b, start()).await.expect("first");
+    ask(&b, start()).await.expect("second: 1 MB staged");
+    let refused = ask(&b, start()).await.unwrap_err();
+    assert!(refused.contains("at most 1 MB"), "{refused}");
+
+    let project = b.p.mac.app.db.get_project(&b.mac_app).unwrap().unwrap();
+    let artifacts = hermesd::paths::artifacts_dir(&b.p.mac.app.cfg, &project.dir_name);
+    let uploads = artifacts.join("items").join(&b.item).join(".uploads");
+    let staged: Vec<_> = std::fs::read_dir(&uploads)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .collect();
+    assert_eq!(staged.len(), 2, "{staged:?}");
+    let long_ago = std::time::SystemTime::now() - std::time::Duration::from_secs(3600);
+    for path in &staged {
+        let file = std::fs::File::options().write(true).open(path).unwrap();
+        file.set_modified(long_ago).unwrap();
+    }
+    ask(&b, start()).await.expect("abandoned uploads are swept");
+    assert_eq!(std::fs::read_dir(&uploads).unwrap().count(), 1);
 }
