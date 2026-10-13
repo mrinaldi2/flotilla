@@ -15,9 +15,41 @@ regexes = ['''^grav_5f2c9e4ab8d14c6f9a3e7d1b0c8f2a6e$''']
 [[allowlists]]
 description = "Synthetic Sec-WebSocket-Key in the Codex terminal fixture"
 condition = "AND"
-paths = ['''crates/hermesd/tests/fixtures/codex-websocket\.mjs$''']
+paths = ['''crates/(gravityd|hermesd)/tests/fixtures/codex-websocket\.mjs$''']
 regexTarget = "secret"
 regexes = ['''^Z3Jhdml0eS10ZXN0LWtleQ==$''']
+
+# The redaction tests feed made-up credentials to the masker to prove it hides
+# them. redact.rs held these tests before they moved to redact/tests.rs.
+[[allowlists]]
+description = "Synthetic credentials in the redaction tests"
+condition = "AND"
+targetRules = ["curl-auth-header", "curl-auth-user", "generic-api-key"]
+paths = ['''crates/hermesd/src/redact(/tests)?\.rs$''']
+regexTarget = "secret"
+regexes = [
+  '''^dXNlcjpwYXNz$''',
+  '''^admin:hunter2$''',
+  '''^ghp_0123456789abcdefghij0123456789abcd$''',
+]
+
+# The sample nonce from RFC 6455 section 1.3, not a credential.
+[[allowlists]]
+description = "RFC 6455 sample Sec-WebSocket-Key in the scratch safety test"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = ['''crates/hermesd/tests/scratch_safety\.rs$''']
+regexTarget = "secret"
+regexes = ['''^dGhlIHNhbXBsZSBub25jZQ==$''']
+
+# A sequential hex placeholder in a proposed shell command, not a credential.
+[[allowlists]]
+description = "Synthetic token in the owner actions test"
+condition = "AND"
+targetRules = ["generic-api-key"]
+paths = ['''crates/hermesd/tests/owner_actions\.rs$''']
+regexTarget = "secret"
+regexes = ['''^0123456789abcdef0123456789abcdef01$''']
 
 [[rules]]
 id = "linear-api-key"
