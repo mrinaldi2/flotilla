@@ -9,7 +9,7 @@ use bus::contract::board as c;
 use super::Conn;
 use crate::decisions::{invalid, not_found};
 use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
-use crate::kanban::model::ColumnCategory;
+use crate::kanban::model::{ColumnCategory, ItemState};
 
 /// The longest message text the card's comment quotes.
 const QUOTED_MAX: usize = 500;
@@ -45,6 +45,20 @@ impl Conn {
             let item = db
                 .board_read(|t| t.item(item_id))?
                 .ok_or_else(|| not_found(format!("no card {item_id}")))?;
+            // A draft is discussed with the bots invited to it (0.19.0 K4b).
+            if item.state != ItemState::Live {
+                let invited = db.board_read(|t| t.invited(item_id))?;
+                if item.state == ItemState::Discarded {
+                    return Err(invalid(format!("{item_id} was discarded")));
+                }
+                if !invited.contains(&bot.id) {
+                    return Err(invalid(format!(
+                        "{item_id} is a draft: invite {} to discuss it first",
+                        bot.name
+                    )));
+                }
+                return Ok(CardBoard::Here { project_id });
+            }
             let closed = db.board_columns(&project_id)?.iter().any(|col| {
                 col.key == item.column_key
                     && matches!(

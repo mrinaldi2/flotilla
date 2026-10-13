@@ -120,6 +120,8 @@ pub struct Config {
     /// How many tasks a bot may hold open per card and in all (H-125). Per
     /// computer: not synced to linked machines (ARCH-R59 c).
     pub tasks: TaskLimitsConfig,
+    /// What an item may carry (0.19.0 K4b): caps and the type allowlist.
+    pub attachments: crate::kanban::attachments::AttachmentLimits,
     /// Projects, by name, whose code goes through pull requests (H-286,
     /// cut-over H-279): their bots' prompts carry the PR section from their
     /// next start. Empty until cut-over; taking a name out rolls it back.
@@ -277,6 +279,7 @@ impl Default for Config {
             max_bots_per_project: 12,
             max_workers_per_project: bus::DEFAULT_MAX_WORKERS_PER_PROJECT,
             tasks: TaskLimitsConfig::default(),
+            attachments: Default::default(),
             pr_flow_projects: Vec::new(),
             permission_timeout_seconds: 600,
             resume_after_restart: true,

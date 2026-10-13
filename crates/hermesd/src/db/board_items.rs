@@ -8,7 +8,6 @@ use crate::kanban::model::{
     ItemPerson, ItemType, ItemVerification, Platform, Priority, Size,
 };
 use bus::now;
-use chrono::Duration;
 use rusqlite::{params, Connection, OptionalExtension};
 
 use super::board::{
@@ -80,7 +79,7 @@ pub(super) fn record(
 const ITEM_COLUMNS: &str = "id, seq, type, title, description, platforms, size, priority, rank, \
      column_key, category, blocked_by, blocked_reason, blocked_since, assignee, parent_id, \
      release_id, labels, created_by, created_at, updated_at, state_entered_at, done_at, version, \
-     board_id";
+     board_id, state";
 
 pub(super) fn item_in(conn: &Connection, id: &str) -> rusqlite::Result<Option<Item>> {
     let Some(mut item) = conn
@@ -121,6 +120,7 @@ pub(super) fn item_in(conn: &Connection, id: &str) -> rusqlite::Result<Option<It
                     state_entered_at: parse_at(r.get(21)?),
                     done_at: r.get::<_, Option<String>>(22)?.map(parse_at),
                     version: r.get(23)?,
+                    state: from_text(r.get(25)?)?,
                     acceptance_criteria: Vec::new(),
                     people: Vec::new(),
                     verifications: Vec::new(),
@@ -178,19 +178,25 @@ pub(super) fn item_in(conn: &Connection, id: &str) -> rusqlite::Result<Option<It
     Ok(Some(item))
 }
 
-/// Active columns flag an item that has sat in them too long.
-fn is_active(category: ColumnCategory) -> bool {
-    matches!(
-        category,
-        ColumnCategory::Ready
-            | ColumnCategory::Doing
-            | ColumnCategory::Review
-            | ColumnCategory::Verify
-    )
-}
-
 impl BoardTx<'_> {
     pub fn create_item(&self, new: &NewItem<'_>, actor: &Actor<'_>) -> anyhow::Result<Item> {
+        self.insert_item(new, actor, false)
+    }
+
+    /// A draft (0.19.0 K4b): it has its id, and the board's first open
+    /// column as a placeholder, but no column lists it until it is
+    /// finalized. Its `created` event names no column, so flow metrics
+    /// start at the finalize.
+    pub fn create_draft(&self, new: &NewItem<'_>, actor: &Actor<'_>) -> anyhow::Result<Item> {
+        self.insert_item(new, actor, true)
+    }
+
+    fn insert_item(
+        &self,
+        new: &NewItem<'_>,
+        actor: &Actor<'_>,
+        draft: bool,
+    ) -> anyhow::Result<Item> {
         let tx = self.conn;
         let settings = settings_in(tx, new.project_id)?
             .ok_or_else(|| anyhow::anyhow!("this project has no board"))?;
@@ -227,9 +233,10 @@ impl BoardTx<'_> {
             &format!(
                 "INSERT INTO item(id, project_id, seq, type, title, description, platforms, size,
                                   priority, rank, column_key, category, labels, parent_id,
-                                  created_by, created_at, updated_at, state_entered_at, board_id)
+                                  created_by, created_at, updated_at, state_entered_at, board_id,
+                                  state)
                  VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, '{}', ?12, ?13, ?14, ?15, ?15, ?15,
-                         ?16)",
+                         ?16, ?17)",
                 to_text(&ColumnCategory::Inbox)
             ),
             params![
@@ -248,7 +255,8 @@ impl BoardTx<'_> {
                 new.parent_id,
                 actor.as_stored(),
                 at,
-                board.id
+                board.id,
+                if draft { "draft" } else { "live" }
             ],
         )?;
         for (idx, text) in new.acceptance_criteria.iter().enumerate() {
@@ -264,7 +272,7 @@ impl BoardTx<'_> {
             Event {
                 kind: ItemEventKind::Created,
                 from: None,
-                to: Some(&inbox),
+                to: (!draft).then_some(inbox.as_str()),
                 field: None,
                 note: None,
             },
@@ -299,7 +307,7 @@ impl Db {
         filter: &str,
         arg: Option<&str>,
     ) -> anyhow::Result<Vec<ItemCard>> {
-        cards_in(&self.lock(), project_id, filter, arg)
+        super::board_cards::cards_in(&self.lock(), project_id, filter, arg)
     }
 
     /// An item's history, oldest first.
@@ -326,61 +334,4 @@ impl Db {
             .collect::<Result<_, _>>()?;
         Ok(rows)
     }
-}
-
-/// The cards of a project matching `filter` (SQL over `i`, the item, with
-/// `arg` as `?2`), in column then rank order.
-pub(super) fn cards_in(
-    conn: &Connection,
-    project_id: &str,
-    filter: &str,
-    arg: Option<&str>,
-) -> anyhow::Result<Vec<ItemCard>> {
-    let stale_after = settings_in(conn, project_id)?.map_or(24, |s| s.stale_after_hours);
-    let stale_before = now() - Duration::hours(i64::from(stale_after));
-    let sql = format!(
-        "SELECT i.id, i.type, i.title, i.priority, i.size, i.rank, i.column_key, i.assignee,
-                i.platforms, i.labels, i.blocked_since IS NOT NULL, i.category,
-                i.state_entered_at, i.version,
-                (SELECT count(*) FROM item_ac a WHERE a.item_id = i.id AND a.checked),
-                (SELECT count(*) FROM item_ac a WHERE a.item_id = i.id),
-                (SELECT max(at) FROM item_comment m WHERE m.item_id = i.id
-                    AND (m.author = 'user' OR m.author LIKE 'device:%')),
-                i.board_id
-         FROM item i JOIN board_column c ON c.project_id = i.project_id AND c.key = i.column_key
-         WHERE i.project_id = ?1 {filter}
-         ORDER BY c.ord, i.rank"
-    );
-    let mut stmt = conn.prepare(&sql)?;
-    let map = |r: &rusqlite::Row<'_>| -> rusqlite::Result<ItemCard> {
-        let category: ColumnCategory = from_text(r.get(11)?)?;
-        Ok(ItemCard {
-            id: r.get(0)?,
-            board_id: r.get::<_, Option<String>>(17)?.unwrap_or_default(),
-            item_type: from_text(r.get(1)?)?,
-            title: r.get(2)?,
-            priority: from_text(r.get(3)?)?,
-            size: r.get::<_, Option<String>>(4)?.map(from_text).transpose()?,
-            rank: r.get(5)?,
-            column_key: r.get(6)?,
-            assignee: r.get(7)?,
-            platforms: from_json_list(r.get(8)?)?,
-            labels: from_json(r.get(9)?)?,
-            blocked: r.get(10)?,
-            stale: is_active(category) && parse_at(r.get(12)?) < stale_before,
-            version: r.get(13)?,
-            ac_checked: r.get(14)?,
-            ac_total: r.get(15)?,
-            owner_commented_at: r.get::<_, Option<String>>(16)?.map(parse_at),
-        })
-    };
-    let cards = match arg {
-        Some(arg) => stmt
-            .query_map(params![project_id, arg], map)?
-            .collect::<Result<_, _>>()?,
-        None => stmt
-            .query_map(params![project_id], map)?
-            .collect::<Result<_, _>>()?,
-    };
-    Ok(cards)
 }

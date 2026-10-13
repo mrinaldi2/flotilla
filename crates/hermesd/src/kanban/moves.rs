@@ -71,64 +71,74 @@ pub(crate) fn load_in(
 /// A stale `expected_version` is a conflict before any guard runs, so
 /// refusals always describe the current card.
 pub fn item_move(db: &Db, req: &MoveRequest<'_>, actor: &Actor<'_>) -> anyhow::Result<Moved> {
-    db.board_tx(|t| {
-        let (item, project_id, who) = load_in(t, req.id, actor)?;
-        if item.version != req.expected_version {
-            return Ok(Moved::Conflict(Box::new(item)));
+    db.board_tx(|t| move_in(t, req, actor))
+}
+
+/// [`item_move`] inside the caller's transaction (a draft's finalize).
+pub(crate) fn move_in(
+    t: &BoardTx<'_>,
+    req: &MoveRequest<'_>,
+    actor: &Actor<'_>,
+) -> anyhow::Result<Moved> {
+    let (item, project_id, who) = load_in(t, req.id, actor)?;
+    if item.version != req.expected_version {
+        return Ok(Moved::Conflict(Box::new(item)));
+    }
+    if let Some(draft) = super::edit::not_live(&item) {
+        return Ok(Moved::Refused(vec![draft]));
+    }
+    let columns = board_columns(t, &item)?;
+    let Some(to) = columns.iter().find(|c| c.key == req.to) else {
+        let text = format!("This board has no column {}.", req.to);
+        return Ok(Moved::Refused(vec![unmet("move.column", text, None)]));
+    };
+    let ctx = t.move_context(&project_id, &item)?;
+    let mv = Move {
+        to,
+        reason: req.reason,
+        override_reason: req.override_reason,
+    };
+    let over = guards::over_limit(&item, to, &ctx).is_some() && who != Who::Daemon;
+    let (note, first) = if let Some(from) = custom_from(t, &item, &columns)? {
+        let refused = flow::evaluate(&item, from, &to.policy, &mv, &who, &ctx);
+        if !refused.is_empty() {
+            return Ok(Moved::Refused(refused));
         }
-        let columns = board_columns(t, &item)?;
-        let Some(to) = columns.iter().find(|c| c.key == req.to) else {
-            let text = format!("This board has no column {}.", req.to);
-            return Ok(Moved::Refused(vec![unmet("move.column", text, None)]));
-        };
-        let ctx = t.move_context(&project_id, &item)?;
-        let mv = Move {
-            to,
-            reason: req.reason,
-            override_reason: req.override_reason,
-        };
-        let over = guards::over_limit(&item, to, &ctx).is_some() && who != Who::Daemon;
-        let (note, first) = if let Some(from) = custom_from(t, &item, &columns)? {
-            let refused = flow::evaluate(&item, from, &to.policy, &mv, &who, &ctx);
-            if !refused.is_empty() {
-                return Ok(Moved::Refused(refused));
-            }
-            let first = flow::is_return(from, to);
-            (custom_note(&mv, over, first), first)
-        } else {
-            let refused = guards::evaluate(&item, &mv, &who, &ctx);
-            if !refused.is_empty() {
-                return Ok(Moved::Refused(refused));
-            }
-            let rule = guards::rule(item.category, to.category);
-            let escape = guards::closes_without_release(&item, &mv, &who, &ctx);
-            // A spike or a chore closed on its outcome names it in the history
-            // (H-154): the newest artifact linked, which the guard required.
-            let outcome = (rule == Rule::Finish && !escape)
-                .then(|| guards::outcome_link(&ctx))
-                .flatten();
-            (
-                note(rule, &mv, over, escape, outcome),
-                guards::is_return(rule),
-            )
-        };
-        Ok(
-            match t.move_item(
-                req.id,
-                req.expected_version,
-                &MoveTo {
-                    column: req.to,
-                    note: note.as_deref(),
-                    wip_override: over,
-                    first,
-                },
-                actor,
-            )? {
-                Write::Done(item) => Moved::Done(Box::new(item)),
-                Write::Conflict(current) => Moved::Conflict(current),
-            },
+        let first = flow::is_return(from, to);
+        (custom_note(&mv, over, first), first)
+    } else {
+        let refused = guards::evaluate(&item, &mv, &who, &ctx);
+        if !refused.is_empty() {
+            return Ok(Moved::Refused(refused));
+        }
+        let rule = guards::rule(item.category, to.category);
+        let escape = guards::closes_without_release(&item, &mv, &who, &ctx);
+        // A spike or a chore closed on its outcome names it in the history
+        // (H-154): the newest artifact linked, which the guard required.
+        let outcome = (rule == Rule::Finish && !escape)
+            .then(|| guards::outcome_link(&ctx))
+            .flatten();
+        (
+            note(rule, &mv, over, escape, outcome),
+            guards::is_return(rule),
         )
-    })
+    };
+    Ok(
+        match t.move_item(
+            req.id,
+            req.expected_version,
+            &MoveTo {
+                column: req.to,
+                note: note.as_deref(),
+                wip_override: over,
+                first,
+            },
+            actor,
+        )? {
+            Write::Done(item) => Moved::Done(Box::new(item)),
+            Write::Conflict(current) => Moved::Conflict(current),
+        },
+    )
 }
 
 /// What the move's history event says: the reason, the review verdict, any
@@ -219,8 +229,13 @@ pub fn item_move_check(
         let ctx = t.move_context(&project_id, &item)?;
         let columns = board_columns(t, &item)?;
         let from = custom_from(t, &item, &columns)?.cloned();
+        let draft = super::edit::not_live(&item);
         let mut out = Vec::new();
         for to in columns.iter().filter(|c| c.key != item.column_key) {
+            if let Some(draft) = &draft {
+                out.push((to.clone(), vec![draft.clone()]));
+                continue;
+            }
             let mv = Move {
                 to,
                 reason: None,

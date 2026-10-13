@@ -5,7 +5,7 @@
 //! link instead of writing it to a local session, and the peer stores it as if
 //! the sender were one of its own. See `docs/peer-bots.md`.
 
-mod artifacts;
+pub(crate) mod artifacts;
 pub mod board;
 mod board_home;
 mod board_ids;

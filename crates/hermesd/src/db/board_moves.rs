@@ -63,7 +63,8 @@ impl BoardTx<'_> {
         Ok(rows)
     }
 
-    /// How full each column of the project is, `item` itself left out.
+    /// How full each column of the project is, `item` itself and drafts left
+    /// out.
     fn column_loads(
         &self,
         project_id: &str,
@@ -73,7 +74,7 @@ impl BoardTx<'_> {
         let rows = conn
             .prepare(
                 "SELECT column_key, count(*), coalesce(sum(assignee IS ?3), 0) FROM item
-                 WHERE project_id = ?1 AND id != ?2 GROUP BY column_key",
+                 WHERE project_id = ?1 AND id != ?2 AND state = 'live' GROUP BY column_key",
             )?
             .query_map(params![project_id, item.id, item.assignee], |r| {
                 Ok((

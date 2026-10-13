@@ -102,6 +102,8 @@ pub(super) const BOARD_TOOLS: &[BoardTool] = &[
     tool("item_comment", "ItemAddComment", Audience::Member),
     tool("item_link", "ItemAddLink", Audience::Member),
     tool("item_unlink", "ItemRemoveLink", Audience::Member),
+    tool("item_attach", "ItemAttach", Audience::Member),
+    tool("item_detach", "ItemDetach", Audience::Member),
     tool("item_block", "ItemBlock", Audience::Member),
     tool("item_unblock", "ItemUnblock", Audience::Member),
     tool("item_assign", "ItemAssign", Audience::Lead),
@@ -202,14 +204,9 @@ pub(super) fn all_tools() -> impl Iterator<Item = &'static BoardTool> {
 }
 
 /// The `tools/list` entries for a bot with these roles.
-/// Tools a bot may use on an item it works on, its board roles aside: the
-/// assignee (a worker) or a bot tasked through the item (H-099).
-pub(super) const OWN_ITEM_TOOLS: [&str; 4] =
-    ["item_move", "item_move_check", "item_link", "item_comment"];
-
 pub(super) fn board_tool_list(roles: &[Role]) -> Vec<Value> {
     all_tools()
-        .filter(|t| t.audience.admits(roles) || OWN_ITEM_TOOLS.contains(&t.name))
+        .filter(|t| t.audience.admits(roles) || super::board_drafts::listed_for_all(t.name))
         .map(|t| {
             let schema = message_schema(t.message);
             let mut properties: Map<String, Value> = schema["properties"]

@@ -43,7 +43,8 @@ pub(crate) fn weight(kind: AttentionKind) -> u32 {
         | AttentionKind::BotWaiting
         | AttentionKind::OffBoard
         | AttentionKind::OwnerQuestion
-        | AttentionKind::CleanupHeld => 1,
+        | AttentionKind::CleanupHeld
+        | AttentionKind::DraftUpdated => 1,
         // A decision's weight is its priority's (`decision_weight`).
         AttentionKind::Decision => 1,
         AttentionKind::Unspecified => 0,
