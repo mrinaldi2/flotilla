@@ -33,6 +33,7 @@ async fn draft() -> (TestDaemon, McpClient, WsClient, Draft) {
     let project_id = lead.project_id.clone();
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&db, &project_id);
     let mut owner = WsClient::connect(&d).await;
     let reply = call(
         &mut owner,

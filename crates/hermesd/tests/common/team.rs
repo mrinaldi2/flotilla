@@ -3,7 +3,7 @@
 
 use hermesd::actor::Actor;
 use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Platform, Priority};
+use hermesd::kanban::model::{ItemType, Priority};
 use serde_json::json;
 
 use super::tasks::{project_with_bots, Pair};
@@ -19,6 +19,7 @@ pub async fn team(names: &[&str]) -> (Pair, Vec<McpClient>, String) {
     db.set_project_lead(&project, Some(&pair.ids[0])).unwrap();
     db.ensure_board(&project, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&db, &project);
     (pair, bots, project)
 }
 
@@ -33,10 +34,9 @@ pub fn item(pair: &Pair, project: &str, column: &str, assignee: Option<&str>) ->
                 item_type: ItemType::Feature,
                 title: "Workflow",
                 description: "",
-                platforms: &[Platform::Daemon],
                 size: None,
                 priority: Priority::P1,
-                labels: &[],
+                labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
             },

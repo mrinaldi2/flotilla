@@ -16,6 +16,7 @@ fn project(d: &TestDaemon, ids: &[String]) -> String {
     db.set_project_lead(&project_id, Some(&ids[0])).unwrap();
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&db, &project_id);
     project_id
 }
 
@@ -178,7 +179,7 @@ async fn every_field_a_bot_changes_on_a_draft_is_a_revision() {
         .call(
             "item_update",
             json!({"id": draft.id, "expected_version": draft.version,
-                   "platforms": ["daemon"], "parent_id": epic.id}),
+                   "labels": ["platform:daemon"], "parent_id": epic.id}),
         )
         .await;
     let db = &pair.d.app.db;
@@ -189,7 +190,7 @@ async fn every_field_a_bot_changes_on_a_draft_is_a_revision() {
         .map(|r| r.field)
         .collect();
     assert!(
-        fields.contains(&"platforms".to_string()) && fields.contains(&"parent".to_string()),
+        fields.contains(&"labels".to_string()) && fields.contains(&"parent".to_string()),
         "{fields:?}"
     );
     let unseen = db.board_read(|t| t.unseen_drafts(&project_id)).unwrap();

@@ -1,21 +1,20 @@
 //! The board tools' manifest and argument decoding, built on the contract
-//! (ADR-001, H-020 §1.6). Each tool's `inputSchema` is the JSON Schema
+//! (ADR-001). Each tool's `inputSchema` is the JSON Schema
 //! generated from its `*Request` message, with enum fields listing the short
 //! names bots use ("doing", "reviewer.arch"). Arguments go back to proto3 JSON
 //! and decode through pbjson; output enums are rewritten to the short names,
 //! so a bot's context never carries `COLUMN_CATEGORY_` prefixes.
 
-use std::collections::HashMap;
 use std::sync::OnceLock;
 
 use bus::contract::board::MESSAGE_SCHEMAS;
 use serde::de::DeserializeOwned;
 use serde_json::{json, Map, Value};
 
-use crate::kanban::contract::{all_spellings, spellings};
+use crate::kanban::contract::spellings;
 use crate::kanban::model::Role;
 
-/// Who sees a board tool in `tools/list` (H-020 §1.6, H-037).
+/// Who sees a board tool in `tools/list`.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum Audience {
     /// Every bot in the project, with a board role or not: the reads.
@@ -27,9 +26,9 @@ pub(super) enum Audience {
     Devops,
     /// Deploy reports: the tester carrying it out, or DevOps.
     TesterOrDevops,
-    /// Acceptance checks: a tester, or the lead with evidence (H-116).
+    /// Acceptance checks: a tester, or the lead with evidence.
     TesterOrLead,
-    /// Planning a release's contents (H-137): the lead, or DevOps.
+    /// Planning a release's contents: the lead, or DevOps.
     LeadOrDevops,
 }
 
@@ -153,7 +152,9 @@ impl Audience {
 
 /// An enum's short and wire names: the board's, or the pull requests'.
 fn enum_names(enum_name: &str) -> Option<Vec<(&'static str, &'static str)>> {
-    spellings(enum_name).or_else(|| crate::prs::spellings(enum_name))
+    spellings(enum_name)
+        .or_else(|| crate::prs::spellings(enum_name))
+        .or_else(|| crate::compat018::spellings(enum_name))
 }
 
 fn schemas() -> &'static Map<String, Value> {
@@ -213,10 +214,10 @@ pub(super) fn board_tool_list(roles: &[Role]) -> Vec<Value> {
                 .as_object()
                 .into_iter()
                 .flatten()
-                .filter(|(name, _)| *name != "project_id")
+                .filter(|(name, _)| *name != "project_id" && !deprecated(t.message, name))
                 .map(|(name, s)| (name.clone(), public(s)))
                 .collect();
-            // A bot's question on the card (H-128 D6); handled before the board.
+            // A bot's question on the card; handled before the board.
             if t.name == "item_comment" {
                 properties.insert(
                     "asks_owner".into(),
@@ -323,54 +324,7 @@ pub(super) fn decode<T: DeserializeOwned>(
     serde_json::from_value(Value::Object(wire)).map_err(|e| anyhow::anyhow!("bad arguments: {e}"))
 }
 
-/// proto3 JSON's lowerCamelCase field names back to the proto's own, which
-/// are also the argument names.
-fn snake(key: &str) -> String {
-    let mut out = String::with_capacity(key.len() + 4);
-    for ch in key.chars() {
-        if ch.is_ascii_uppercase() {
-            out.push('_');
-            out.push(ch.to_ascii_lowercase());
-        } else {
-            out.push(ch);
-        }
-    }
-    out
-}
-
-/// Contract output for a bot: field names as in the proto (`column_key`),
-/// and wire enum names become the short ones.
-pub(super) fn friendly(mut value: Value) -> Value {
-    static SHORT: OnceLock<HashMap<&'static str, &'static str>> = OnceLock::new();
-    let short = SHORT.get_or_init(|| {
-        all_spellings()
-            .into_iter()
-            .map(|(short, wire)| (wire, short))
-            .collect()
-    });
-    fn walk(v: &mut Value, short: &HashMap<&'static str, &'static str>) {
-        match v {
-            Value::String(s) => {
-                if let Some(name) = short.get(s.as_str()) {
-                    *s = (*name).to_string();
-                }
-            }
-            Value::Array(items) => items.iter_mut().for_each(|i| walk(i, short)),
-            Value::Object(map) => {
-                *map = std::mem::take(map)
-                    .into_iter()
-                    .map(|(key, mut value)| {
-                        walk(&mut value, short);
-                        (snake(&key), value)
-                    })
-                    .collect();
-            }
-            _ => {}
-        }
-    }
-    walk(&mut value, short);
-    value
-}
+pub(super) use super::board_output::friendly;
 
 #[cfg(test)]
 #[path = "board_schema_tests.rs"]
@@ -378,7 +332,7 @@ mod tests;
 
 /// Plain proto3 fields a tool takes as optional. Their wire cardinality stays
 /// as it shipped (buf breaking), and an empty value means "left out":
-/// `ReleaseTest.machine`, the tester's one computer (H-115).
+/// `ReleaseTest.machine`, the tester's one computer.
 const OPTIONAL: &[(&str, &str)] = &[
     ("ReleaseTest", "machine"),
     ("PrReview", "summary"),
@@ -391,4 +345,16 @@ const OPTIONAL: &[(&str, &str)] = &[
 
 fn leave_out(message: &str, field: &str) -> bool {
     OPTIONAL.contains(&(message, field))
+}
+
+/// Fields kept on the wire for 0.18 callers (`compat018`), which a bot is
+/// not shown but a forwarded 0.18 call may still send.
+const DEPRECATED: &[(&str, &str)] = &[
+    ("ItemCreate", "platforms"),
+    ("ItemUpdate", "platforms"),
+    ("ItemQuery", "platforms"),
+];
+
+fn deprecated(message: &str, field: &str) -> bool {
+    DEPRECATED.contains(&(message, field))
 }

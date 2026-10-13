@@ -1,4 +1,4 @@
-//! The move guards (H-017 §3): one pure function that says what stands
+//! The move guards: one pure function that says what stands
 //! between an item and a column. `moves::item_move` runs it before it commits
 //! and `moves::item_move_check` runs it for every column, so the UI shows
 //! these texts and never re-implements a rule. Nothing here reads storage:
@@ -12,15 +12,14 @@ pub(crate) use conditions::section_filled;
 pub use conditions::{check_template, open_post_install, DOR_FIELDS};
 
 use super::model::{
-    BoardColumn, ColumnCategory as Cat, Item, ItemLink, LinkKind, PersonRole, Platform, Role,
-    Unmet, WipScope,
+    BoardColumn, ColumnCategory as Cat, Item, ItemLink, LinkKind, PersonRole, Role, Unmet, WipScope,
 };
 
 /// The label a card carries while it sits over a WIP limit by override.
 pub const WIP_OVERRIDE_LABEL: &str = "wip-override";
 
 /// The override a returned item gets automatically when it puts its
-/// assignee over the limit (H-017 rev 2.1 §1.3).
+/// assignee over the limit.
 pub const RETURNED_OVER_WIP: &str = "returned: rework over WIP";
 
 /// Who is acting, as the guards see it.
@@ -55,7 +54,7 @@ impl Who {
 
     /// A reviewer named on the item, or any reviewer when none is named. A
     /// bot tasked through the item (a linked task) is named too, its
-    /// assignee aside (H-099).
+    /// assignee aside.
     fn reviews(&self, item: &Item, ctx: &Context) -> bool {
         let tasked = matches!(self, Who::Bot { id, .. } if ctx.task_holders.contains(id))
             && !self.is(item.assignee.as_deref());
@@ -98,7 +97,8 @@ pub struct Context {
     pub blockers: Vec<Blocker>,
     /// The Definition of Ready fields of the item's template.
     pub ready: Vec<String>,
-    pub required_machines: BTreeMap<Platform, Vec<String>>,
+    /// The machines that must pass an item carrying the label, by label.
+    pub required_machines: BTreeMap<String, Vec<String>>,
     pub load: BTreeMap<String, ColumnLoad>,
     /// The version of the open release package the item is in, if any.
     pub open_package: Option<String>,
@@ -118,7 +118,7 @@ impl Context {
 }
 
 /// The outcome a spike or a chore without code closes on: its newest
-/// artifact link (H-154).
+/// artifact link.
 pub fn outcome_link(ctx: &Context) -> Option<&str> {
     ctx.links
         .iter()
@@ -134,7 +134,7 @@ pub struct Move<'a> {
     pub override_reason: Option<&'a str>,
 }
 
-/// The H-017 §3 row a move falls under.
+/// The release-gated row a move falls under.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Rule {
     /// Inbox → Ready.
@@ -286,7 +286,7 @@ fn refused(rule: Rule, item: &Item, who: &Who, ctx: &Context) -> Option<&'static
         Rule::Package => (who.has(Role::Devops), "DevOps"),
         Rule::Reject => (who.leads() || who.verifies(item), "a tester or the lead"),
         // A spike or a chore without code closes on someone else's word
-        // (H-154, ARCH-R62 M2): the lead or a reviewer, never the one who did it.
+        //: the lead or a reviewer, never the one who did it.
         Rule::Finish => (
             (who.leads() || who.reviews(item, ctx)) && !assignee,
             "the lead or a reviewer who isn't the assignee",

@@ -12,7 +12,7 @@ use crate::actor::Actor;
 use crate::app::AppState;
 use crate::kanban::contract::model_list;
 use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
-use crate::kanban::model::{Item, ItemType, Platform, Priority, Role, Unmet};
+use crate::kanban::model::{Item, ItemType, Priority, Role, Unmet};
 use crate::kanban::moves::{item_move as move_item, item_move_check, MoveRequest, Moved};
 
 use super::board_drafts::OWN_ITEM_TOOLS;
@@ -313,15 +313,16 @@ fn item_query(app: &Arc<AppState>, me: &Me, req: c::ItemQuery) -> anyhow::Result
         .as_deref()
         .map(|a| bot_id(app, me, a))
         .transpose()?;
+    let labels = crate::compat018::query_labels(&req);
     let types = model_list(req.types, ItemType::from_wire)?;
     let priorities = model_list(req.priorities, Priority::from_wire)?;
-    let platforms = model_list(req.platforms, Platform::from_wire)?;
+
     let cards: Vec<c::ItemCard> = cards
         .into_iter()
         .filter(|card| req.column_keys.is_empty() || req.column_keys.contains(&card.column_key))
         .filter(|card| types.is_empty() || types.contains(&card.item_type))
         .filter(|card| priorities.is_empty() || priorities.contains(&card.priority))
-        .filter(|card| platforms.is_empty() || platforms.iter().any(|p| card.platforms.contains(p)))
+        .filter(|card| crate::kanban::labels::matches_any(&card.labels, &labels))
         .filter(|card| assignee.is_none() || card.assignee == assignee)
         .filter(|card| req.blocked.is_none_or(|b| card.blocked == b))
         .map(c::ItemCard::from)

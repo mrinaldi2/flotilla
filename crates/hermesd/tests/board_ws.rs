@@ -13,7 +13,7 @@ use common::board::*;
 use common::*;
 use hermesd::actor::Actor;
 use hermesd::db::NewItem;
-use hermesd::kanban::model::{ItemType, Platform, Priority};
+use hermesd::kanban::model::{ItemType, Priority};
 use serde_json::json;
 
 #[tokio::test]
@@ -49,10 +49,9 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
                 item_type: ItemType::Feature,
                 title: "Board over WS",
                 description: "",
-                platforms: &[Platform::Daemon],
                 size: None,
                 priority: Priority::P1,
-                labels: &[],
+                labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
             },

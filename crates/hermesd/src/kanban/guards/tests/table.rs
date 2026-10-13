@@ -1,4 +1,4 @@
-//! The H-017 §3 table: one row per rule, with a case that passes, the change
+//! The release-gated table: one row per rule, with a case that passes, the change
 //! that breaks it and the codes that change must produce. Every row also
 //! checks that a bot with no role on the item is turned away.
 
@@ -24,9 +24,9 @@ const ROWS: &[Row] = &[
             c.who = bot("lead", LEAD);
             c.ctx.ready = [
                 "acceptance_criteria",
-                "platforms",
+                "label:platform",
                 "size",
-                "spec_link_for_ui_or_daemon",
+                "spec_link:platform:desktop,platform:ios,platform:daemon",
             ]
             .map(String::from)
             .to_vec();
@@ -47,13 +47,13 @@ const ROWS: &[Row] = &[
         },
         expect: &[
             "dor.acceptance_criteria",
-            "dor.spec_link_for_ui_or_daemon",
+            "dor.spec_link",
             "dor.size",
             "dor.blocked_by",
         ],
     },
     Row {
-        rule: "Inbox → Ready: a blocker in Verify or later no longer blocks (H-287)",
+        rule: "Inbox → Ready: a blocker in Verify or later no longer blocks",
         from: Cat::Inbox,
         to: Cat::Ready,
         ok: |c| {
@@ -158,7 +158,7 @@ const ROWS: &[Row] = &[
         expect: &["review.author"],
     },
     Row {
-        rule: "Review → Verify: a card with a PR moves when its PRs merge (H-284)",
+        rule: "Review → Verify: a card with a PR moves when its PRs merge",
         from: Cat::Review,
         to: Cat::Verify,
         ok: |c| {
@@ -206,7 +206,7 @@ const ROWS: &[Row] = &[
             c.who = bot("ops", &[Role::Devops]);
             c.ctx
                 .required_machines
-                .insert(Platform::Daemon, vec!["mac".into(), "win".into()]);
+                .insert("platform:daemon".into(), vec!["mac".into(), "win".into()]);
             c.item.release_id = Some("R-1".into());
             for (machine, result) in [
                 ("mac", VerificationResult::Fail),

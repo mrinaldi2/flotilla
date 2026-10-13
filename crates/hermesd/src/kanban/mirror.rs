@@ -1,4 +1,4 @@
-//! Boards whose home is a peer (B9, H-020 §1.3). A linked project's board
+//! Boards whose home is a peer. A linked project's board
 //! lives on one daemon; the others keep its last snapshot here, in their own
 //! ids, kept current by the home's `board_event` relay. They serve reads from
 //! it, so it is also the read-only board while the home is unreachable. It

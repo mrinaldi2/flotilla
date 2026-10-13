@@ -1,6 +1,6 @@
 //! What a new board starts from (0.19.0 K3): data, not code paths. Simple
 //! and Software are custom boards ruled by their columns; Release-gated is
-//! the H-017 flow every board had before 0.19. Everything can be changed
+//! the flow every board had before 0.19. Everything can be changed
 //! afterwards.
 
 use std::collections::BTreeMap;
@@ -168,7 +168,7 @@ impl Preset {
         }
     }
 
-    /// The category each column has: a release-gated board keeps the H-017
+    /// The category each column has: a release-gated board keeps the
     /// categories its guards key on.
     pub fn categories(self) -> Vec<ColumnCategory> {
         match self {

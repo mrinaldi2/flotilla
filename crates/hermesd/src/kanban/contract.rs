@@ -101,12 +101,6 @@ map_enum!(ItemType {
     Spike,
     Chore
 });
-map_enum!(Platform {
-    Desktop,
-    Ios,
-    Daemon,
-    Infra
-});
 map_enum!(Size { S, M, L });
 map_enum!(Priority { P0, P1, P2, P3 });
 map_enum!(PersonRole { Reviewer, Verifier });
@@ -178,7 +172,6 @@ spellings!(
     WipScope,
     Role,
     ItemType,
-    Platform,
     Size,
     Priority,
     PersonRole,
@@ -206,10 +199,6 @@ pub(crate) fn maybe_at(
     field: &'static str,
 ) -> Result<Option<DateTime<Utc>>, MapError> {
     value.map(|t| at(Some(t), field)).transpose()
-}
-
-pub(crate) fn wire_list<E: Into<i32>>(values: Vec<E>) -> Vec<i32> {
-    values.into_iter().map(Into::into).collect()
 }
 
 pub(crate) fn model_list<E>(

@@ -178,7 +178,6 @@ pub fn promote(
                 item_type: ItemType::Chore,
                 title: &title,
                 description: "",
-                platforms: &[],
                 size: None,
                 priority: Priority::P2,
                 labels: &[],

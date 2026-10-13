@@ -48,7 +48,7 @@ pub(super) fn decision_tools() -> Vec<Value> {
                 "on_behalf_of": {"type": "string", "description": "Bot name whose work waits on this"},
                 "source_task_id": {"type": "string"},
                 "supersedes": {"type": "string", "description": "Decision id this replaces because the facts changed"},
-                "item": {"type": "string", "description": "Board item this decision is for (e.g. H-017); linked there"}
+                "item": {"type": "string", "description": "Board item this decision is for (e.g. RB-12); linked there"}
             }),
             vec!["title", "body"],
         ),

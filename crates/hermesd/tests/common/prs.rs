@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use hermesd::actor::Actor;
 use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
+use hermesd::kanban::model::{ItemType, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 use super::repo::{git, remote};
@@ -46,6 +46,7 @@ pub async fn setup_with(tweak: impl FnOnce(&mut hermesd::config::Config)) -> Rep
     let project = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     db.ensure_board(&project, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&db, &project);
     db.set_project_role(&ProjectRole {
         project_id: project.clone(),
         role: Role::Dev,
@@ -83,10 +84,9 @@ impl Repo {
                     item_type: ItemType::Feature,
                     title,
                     description: "",
-                    platforms: &[Platform::Daemon],
                     size: None,
                     priority: Priority::P1,
-                    labels: &[],
+                    labels: &["platform:daemon".to_string()],
                     parent_id: None,
                     acceptance_criteria: &[],
                 },

@@ -1,10 +1,11 @@
-//! The conditions of each H-017 §3 row, after the actor check.
+//! The conditions of each release-gated row, after the actor check.
 
 use std::collections::BTreeSet;
 
 use super::{has_text, unmet, Context, Move, Rule, Who};
+use crate::kanban::labels;
 use crate::kanban::model::{
-    ColumnCategory as Cat, Item, ItemType, LinkKind, Platform, Size, Unmet, VerificationResult,
+    ColumnCategory as Cat, Item, ItemType, LinkKind, Size, Unmet, VerificationResult,
 };
 
 pub(super) fn conditions(
@@ -60,7 +61,7 @@ pub(super) fn conditions(
                     Some("Link the branch."),
                 ));
             }
-            // A PR carries its change note (H-261 §6.6).
+            // A PR carries its change note.
             if !ctx.has_link(&[LinkKind::Artifact, LinkKind::Pr]) {
                 out.push(unmet(
                     "review.change_note",
@@ -71,7 +72,7 @@ pub(super) fn conditions(
         }
         Rule::Approve => {
             // A card with a pull request reaches Verify when its PRs merge,
-            // by the daemon's move (H-284, H-261 §5.3).
+            // by the daemon's move.
             if ctx.has_link(&[LinkKind::Pr]) {
                 out.push(unmet(
                     "review.merged_by_pr",
@@ -105,9 +106,8 @@ pub(super) fn conditions(
 }
 
 /// A spike, or a chore, that has never had a branch or PR linked: the work
-/// that closes on its outcome rather than in a release (H-154). Code linked
-/// once, even since unlinked or before a retype, keeps the release path
-/// (ARCH-R62 M1).
+/// that closes on its outcome rather than in a release. Code linked once,
+/// even since unlinked or before a retype, keeps the release path.
 pub(super) fn closes_on_outcome(item: &Item, ctx: &Context) -> bool {
     let had_code = ctx.ever_had_code || ctx.has_link(&[LinkKind::Branch, LinkKind::Pr]);
     matches!(item.item_type, ItemType::Spike | ItemType::Chore) && !had_code
@@ -150,12 +150,16 @@ pub(super) fn finish(item: &Item, ctx: &Context) -> Vec<Unmet> {
     out
 }
 
-/// The Definition of Ready fields a template may require.
+/// The Definition of Ready fields a template may require. Two take a
+/// parameter after a colon: `label:<group>`, a label of that group, and
+/// `spec_link:<label>,<label>`, a design or spec linked when the item
+/// carries one of those labels (any item, without them).
 pub const DOR_FIELDS: &[&str] = &[
     "acceptance_criteria",
-    "platforms",
+    "label:<group>",
     "size",
-    "spec_link_for_ui_or_daemon",
+    "spec_link",
+    "spec_link:<label>,…",
     "steps_to_reproduce",
     "expected_actual",
     "question",
@@ -172,7 +176,7 @@ pub fn check_template(body: &serde_json::Value) -> Result<(), String> {
         .into_iter()
         .flatten()
         .map(|f| f.as_str().unwrap_or("(not a string)"))
-        .filter(|f| !DOR_FIELDS.contains(f))
+        .filter(|f| !known_field(f))
         .collect();
     if unknown.is_empty() {
         Ok(())
@@ -184,48 +188,61 @@ pub fn check_template(body: &serde_json::Value) -> Result<(), String> {
     }
 }
 
+/// A field `check_template` lets through: a plain one, or a parameterised
+/// one with its parameter.
+fn known_field(field: &str) -> bool {
+    match field.split_once(':') {
+        Some(("label", group)) => !group.is_empty() && !group.contains(':'),
+        Some(("spec_link", scope)) => scope.split(',').all(|l| labels::split(l).is_some()),
+        Some(_) => false,
+        None => DOR_FIELDS.contains(&field) && field != "label",
+    }
+}
+
 /// Inbox → Ready: the template's DoR fields, size not L, blockers done.
 fn definition_of_ready(item: &Item, ctx: &Context, out: &mut Vec<Unmet>) {
     let section = |heading: &str| section_filled(&item.description, heading);
     for field in &ctx.ready {
-        let (missing, text) = match field.as_str() {
+        let (name, param) = field.split_once(':').unwrap_or((field.as_str(), ""));
+        let (missing, text): (bool, std::borrow::Cow<'static, str>) = match name {
             "acceptance_criteria" => (
                 item.acceptance_criteria.is_empty(),
-                "Add at least one acceptance criterion.",
+                "Add at least one acceptance criterion.".into(),
             ),
-            "platforms" => (item.platforms.is_empty(), "Pick its platforms."),
-            "size" => (item.size.is_none(), "Size it."),
-            "spec_link_for_ui_or_daemon" => (
-                item.platforms
-                    .iter()
-                    .any(|p| matches!(p, Platform::Desktop | Platform::Ios | Platform::Daemon))
+            "label" if !param.is_empty() => (
+                !labels::has_group(&item.labels, param),
+                format!("Pick its {param}s.").into(),
+            ),
+            "size" => (item.size.is_none(), "Size it.".into()),
+            "spec_link" => (
+                (param.is_empty() || param.split(',').any(|l| item.labels.iter().any(|i| i == l)))
                     && !ctx.has_link(&[LinkKind::Artifact])
                     && !section("Design/spec link"),
-                "Link the design or spec.",
+                "Link the design or spec.".into(),
             ),
             "steps_to_reproduce" => (
                 !section("Steps to reproduce"),
-                "Fill in the steps to reproduce.",
+                "Fill in the steps to reproduce.".into(),
             ),
             "expected_actual" => (
                 !section("Expected") || !section("Actual"),
-                "Fill in what was expected and what happened.",
+                "Fill in what was expected and what happened.".into(),
             ),
-            "question" => (!section("Question"), "State the question to answer."),
-            "timebox" => (!section("Timebox"), "Set the timebox."),
-            "goal" => (!section("Goal"), "State the goal."),
+            "question" => (!section("Question"), "State the question to answer.".into()),
+            "timebox" => (!section("Timebox"), "Set the timebox.".into()),
+            "goal" => (!section("Goal"), "State the goal.".into()),
             "description" => (
                 item.description
                     .lines()
                     .all(|l| l.trim().is_empty() || l.starts_with('#') || is_hint(l)),
-                "Describe what and why.",
+                "Describe what and why.".into(),
             ),
             // `check_template` refuses unknown fields at upsert; one stored
             // before that (or by a newer build) blocks nothing.
-            _ => (false, ""),
+            _ => (false, "".into()),
         };
         if missing {
-            out.push(unmet(&format!("dor.{field}"), text, None));
+            out.push(unmet(&format!("dor.{name}"), text, None));
         }
     }
     if item.size == Some(Size::L) {
@@ -237,7 +254,7 @@ fn definition_of_ready(item: &Item, ctx: &Context, out: &mut Vec<Unmet>) {
     }
     // A blocker counts as cleared once its work is reviewed and in Verify:
     // features reach Done only when their release ships, so waiting for Done
-    // would deadlock cards stacked in one release (H-287).
+    // would deadlock cards stacked in one release.
     let cleared = |c: Cat| matches!(c, Cat::Verify | Cat::Approval | Cat::Deploying | Cat::Done);
     for blocker in ctx.blockers.iter().filter(|b| !cleared(b.category)) {
         out.push(unmet(
@@ -299,7 +316,7 @@ fn independent_review(item: &Item, who: &Who, ctx: &Context, out: &mut Vec<Unmet
 }
 
 /// Verify → Owner testing: required machines passed, AC checked (those
-/// provable only after install wait for it, H-116), packaged.
+/// provable only after install wait for it), packaged.
 fn ready_to_package(item: &Item, ctx: &Context, out: &mut Vec<Unmet>) {
     let open = item
         .acceptance_criteria
@@ -314,9 +331,9 @@ fn ready_to_package(item: &Item, ctx: &Context, out: &mut Vec<Unmet>) {
         ));
     }
     let machines: BTreeSet<&String> = item
-        .platforms
+        .labels
         .iter()
-        .filter_map(|p| ctx.required_machines.get(p))
+        .filter_map(|l| ctx.required_machines.get(l))
         .flatten()
         .collect();
     for machine in machines {
@@ -343,7 +360,7 @@ fn ready_to_package(item: &Item, ctx: &Context, out: &mut Vec<Unmet>) {
 }
 
 /// The acceptance criteria provable only after install that aren't checked
-/// yet (H-116): nothing reaches Done while one is open.
+/// yet: nothing reaches Done while one is open.
 pub fn open_post_install(item: &Item) -> Vec<&crate::kanban::model::AcceptanceCriterion> {
     item.acceptance_criteria
         .iter()
@@ -351,7 +368,7 @@ pub fn open_post_install(item: &Item) -> Vec<&crate::kanban::model::AcceptanceCr
         .collect()
 }
 
-/// Any move into Done (H-116).
+/// Any move into Done.
 pub(super) fn post_install_done(item: &Item, out: &mut Vec<Unmet>) {
     let open = open_post_install(item);
     if !open.is_empty() {

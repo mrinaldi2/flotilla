@@ -43,7 +43,6 @@ fn item(in_column: &str) -> Item {
         item_type: ItemType::Feature,
         title: "Tags".into(),
         description: String::new(),
-        platforms: Vec::new(),
         size: Some(Size::S),
         priority: Priority::P2,
         rank: "a".into(),

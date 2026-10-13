@@ -14,12 +14,9 @@ use crate::actor::Actor;
 use crate::app::AppState;
 use crate::db::{BoardTx, ItemEdit, NewItem, Write};
 use crate::decisions::invalid;
-use crate::kanban::contract::model_list;
 use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 use crate::kanban::guards::{self, unmet, Who};
-use crate::kanban::model::{
-    Item, ItemLink, ItemState, ItemType, LinkKind, Platform, Priority, Size, Unmet,
-};
+use crate::kanban::model::{Item, ItemLink, ItemState, ItemType, LinkKind, Priority, Size, Unmet};
 use crate::kanban::moves::load_in;
 
 mod more;
@@ -163,21 +160,20 @@ impl Editor<'_> {
         if let Some(parent) = req.parent_id.as_deref().filter(|p| !p.is_empty()) {
             self.own_item(parent)?;
         }
-        let platforms = model_list(req.platforms.clone(), Platform::from_wire)?;
+        let labels = crate::compat018::create_labels(req);
         let new = NewItem {
             project_id: self.project_id,
             board_id: req.board_id.as_deref().filter(|b| !b.is_empty()),
             item_type: ItemType::from_wire(req.r#type)?,
             title: req.title.trim(),
             description: req.description.as_deref().unwrap_or_default(),
-            platforms: &platforms,
             size: req.size.map(Size::from_wire).transpose()?,
             priority: req
                 .priority
                 .map(Priority::from_wire)
                 .transpose()?
                 .unwrap_or(Priority::P2),
-            labels: &req.labels,
+            labels: &labels,
             parent_id: req.parent_id.as_deref().filter(|p| !p.is_empty()),
             acceptance_criteria: &req.acceptance_criteria,
         };
@@ -195,11 +191,7 @@ impl Editor<'_> {
         if let Some(parent) = req.parent_id.as_deref().filter(|p| !p.is_empty()) {
             self.own_item(parent)?;
         }
-        let platforms = req
-            .platforms
-            .as_ref()
-            .map(|l| model_list(l.values.clone(), Platform::from_wire))
-            .transpose()?;
+        let group = crate::compat018::update_group(req);
         let priority = req.priority.map(Priority::from_wire).transpose()?;
         let criteria: Option<Vec<String>> = req
             .acceptance_criteria
@@ -220,10 +212,10 @@ impl Editor<'_> {
         let edit = ItemEdit {
             title: req.title.as_deref(),
             description: req.description.as_deref(),
-            platforms: platforms.as_deref(),
             size: req.size.map(Size::from_wire).transpose()?.map(Some),
             priority,
             labels: req.labels.as_ref().map(|l| l.values.as_slice()),
+            group: group.as_ref().map(|(g, values)| (*g, values.as_slice())),
             acceptance_criteria: criteria.as_deref(),
             // An empty parent clears it.
             parent_id: req
@@ -238,9 +230,9 @@ impl Editor<'_> {
             if item.state == ItemState::Draft {
                 return Vec::new();
             }
-            // Raising to P0 is the lead's or the owner's call (H-017 §3).
+            // Raising to P0 is the lead's or the owner's call.
             let to_p0 = priority == Some(Priority::P0) && item.priority != Priority::P0;
-            // So is changing an item's type, e.g. feature → epic (H-099).
+            // So is changing an item's type, e.g. feature → epic.
             let retyped = retype.is_some_and(|t| t != item.item_type);
             let mut unmet = if to_p0 || retyped {
                 guards::check_lead(who)

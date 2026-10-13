@@ -87,6 +87,7 @@ async fn the_owner_undoes_a_bots_changes_to_a_draft_one_at_a_time() {
     db.set_project_lead(&project_id, Some(&lead_id)).unwrap();
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&db, &project_id);
     let recipes = db
         .create_board(&project_id, "Recipes", "RB", Preset::Simple)
         .unwrap();
@@ -234,6 +235,7 @@ async fn the_owners_snapshot_carries_the_leads_open_proposal() {
     db.set_project_lead(&p.id, Some(&lead.id)).unwrap();
     db.ensure_board(&p.id, &db.daemon_id().unwrap(), None)
         .unwrap();
+    crate::common::roles::by_name(&db, &p.id);
     let rs = db
         .create_board(&p.id, "Research", "RS", Preset::Software)
         .unwrap();

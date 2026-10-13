@@ -1,4 +1,4 @@
-//! Guard tests: the H-017 §3 table (`table`), then the finer points of WIP,
+//! Guard tests: the release-gated table (`table`), then the finer points of WIP,
 //! reviewers, DoR sections and the rules outside moves.
 use chrono::Utc;
 
@@ -64,7 +64,6 @@ fn item(category: Cat) -> Item {
         item_type: ItemType::Feature,
         title: "A thing".into(),
         description: "## User/problem\n\nIt hurts.\n".into(),
-        platforms: vec![Platform::Daemon],
         size: Some(Size::M),
         priority: Priority::P2,
         rank: "a".into(),
@@ -74,7 +73,8 @@ fn item(category: Cat) -> Item {
         assignee: Some("dev".into()),
         parent_id: None,
         release_id: None,
-        labels: Vec::new(),
+        // Where the change lands, which says who verifies it.
+        labels: vec!["platform:daemon".into()],
         acceptance_criteria: vec![AcceptanceCriterion {
             idx: 0,
             text: "works".into(),
@@ -259,7 +259,7 @@ fn only_the_owner_closes_verify_without_a_release_and_never_a_released_item() {
     c.who = Who::Owner;
     c.item.release_id = Some("R-1".into());
     assert_eq!(run(&c, Cat::Done), ["done.flow", "done.outcome"]);
-    // The lead may close spikes and code-free chores (H-154), not features.
+    // The lead may close spikes and code-free chores, not features.
     c.who = bot("lead", LEAD);
     assert_eq!(run(&c, Cat::Done), ["done.flow", "done.outcome"]);
     // The escape is out of Verify only.
@@ -290,7 +290,7 @@ fn the_owner_does_not_close_an_item_in_an_open_package() {
 
 #[test]
 fn the_lead_or_another_reviewer_closes_a_spike_on_its_outcome() {
-    // H-154: answered spikes and code-free chores reach Done without a
+    // Answered spikes and code-free chores reach Done without a
     // release, on the word of someone other than whoever did the work.
     let mut c = case(Cat::Verify);
     c.item.item_type = ItemType::Spike;

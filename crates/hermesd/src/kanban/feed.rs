@@ -1,4 +1,4 @@
-//! Board pushes (H-020 §1.5): every committed board change is published
+//! Board pushes: every committed board change is published
 //! here with the next number of its project's sequence, and the WS adapter
 //! forwards it to the connections watching that project.
 //!
@@ -174,9 +174,9 @@ mod tests {
         let mut rx = feed.subscribe();
         assert_eq!(feed.seq("p1"), 0);
         let mut w = feed.writer();
-        assert_eq!(w.publish(change("p1", "H-001")), 1);
+        assert_eq!(w.publish(change("p1", "RB-001")), 1);
         assert_eq!(w.publish(change("p2", "X-001")), 1);
-        assert_eq!(w.publish(change("p1", "H-002")), 2);
+        assert_eq!(w.publish(change("p1", "RB-002")), 2);
         drop(w);
         assert_eq!((feed.seq("p1"), feed.seq("p2")), (2, 1));
         let got: Vec<(String, u64)> = (0..3)
@@ -188,9 +188,9 @@ mod tests {
         assert_eq!(
             got,
             [
-                ("H-001".into(), 1),
+                ("RB-001".into(), 1),
                 ("X-001".into(), 1),
-                ("H-002".into(), 2)
+                ("RB-002".into(), 2)
             ]
         );
     }
@@ -204,7 +204,7 @@ mod tests {
             std::thread::spawn(move || feed.seq("p"))
         };
         std::thread::sleep(std::time::Duration::from_millis(20));
-        w.publish(change("p", "H-001"));
+        w.publish(change("p", "RB-001"));
         drop(w);
         assert_eq!(reader.join().expect("reader"), 1);
     }

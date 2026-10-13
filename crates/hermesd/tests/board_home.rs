@@ -145,6 +145,7 @@ async fn a_board_homed_elsewhere_is_refused_naming_its_home() {
     let imac = d.app.db.create_peer("imac", None).unwrap();
     d.app.db.bind_peer_daemon(&imac.id, "d-imac").unwrap();
     d.app.db.ensure_board(&project_id, "d-imac", None).unwrap();
+    crate::common::roles::by_name(&d.app.db, &project_id);
     for request in [board_get(&project_id), board_enable(&project_id)] {
         let Body::Error(e) = call(&mut owner, request).await else {
             panic!("expected a refusal");

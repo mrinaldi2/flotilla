@@ -27,12 +27,14 @@ async fn bots_add_and_edit_acceptance_criteria_to_meet_the_dor() {
         .db
         .ensure_board(&project, "d-test", Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&pair.d.app.db, &project);
 
     // Created without criteria, it can't be refined...
     let created = lead
         .call(
             "item_create",
-            json!({"type": "feature", "title": "No AC", "platforms": ["infra"], "size": "S"}),
+            json!({"type": "feature", "title": "No AC", "size": "S",
+                   "description": "## Design/spec link\n\nartifacts/no-ac.md\n"}),
         )
         .await;
     let id = created["item"]["id"].as_str().unwrap().to_string();

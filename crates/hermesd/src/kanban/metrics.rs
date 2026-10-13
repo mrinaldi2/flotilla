@@ -1,6 +1,6 @@
-//! Flow metrics from the board's history (B11, H-020 §4, H-018 widget
-//! "Flow"). Computed in Rust from each item's moves, so every number is a
-//! pure function of the events and can be tested as one:
+//! Flow metrics from the board's history, for the "Flow" widget. Computed
+//! in Rust from each item's moves, so every number is a pure function of
+//! the events and can be tested as one:
 //! - throughput: items reaching Done, in the range and per week for 8 weeks;
 //! - cycle time: from first entering Doing to Done, p50 and p85, overall and
 //!   per in-progress column (time spent in each);

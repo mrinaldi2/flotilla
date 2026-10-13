@@ -108,6 +108,7 @@ async fn the_per_card_limit_follows_the_config() {
     let project = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     db.ensure_board(&project, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&db, &project);
     let card = item(&pair, &project, "ready", None);
     task_id(&task(&mut bots[0], "a", Some(&card)).await);
     let raw = task(&mut bots[0], "b", Some(&card)).await;

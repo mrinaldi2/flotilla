@@ -9,7 +9,7 @@ use common::board::*;
 use common::*;
 use hermesd::actor::Actor;
 use hermesd::db::NewItem;
-use hermesd::kanban::model::{ItemType, Platform, Priority};
+use hermesd::kanban::model::{ItemType, Priority};
 
 fn comment(id: &str, body: &str) -> Request {
     Request::ItemComment(c::ItemAddComment {
@@ -45,10 +45,9 @@ async fn the_owner_comments_from_the_drawer() {
                 item_type: ItemType::Feature,
                 title: "Drawer",
                 description: "",
-                platforms: &[Platform::Desktop],
                 size: None,
                 priority: Priority::P2,
-                labels: &[],
+                labels: &["platform:desktop".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
             },

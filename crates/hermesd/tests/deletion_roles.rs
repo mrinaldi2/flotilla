@@ -51,6 +51,7 @@ async fn a_deleted_bot_loses_its_board_roles() {
         .id;
     db.ensure_board(&pid, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&db, &pid);
     db.set_project_role(&ProjectRole {
         project_id: pid.clone(),
         role: Role::Tester,

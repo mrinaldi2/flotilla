@@ -6,7 +6,7 @@ use bus::now;
 use chrono::Duration;
 use rusqlite::Connection;
 
-use super::board::{from_json, from_json_list, from_text, parse_at, settings_in};
+use super::board::{from_json, from_text, parse_at, settings_in};
 use crate::kanban::model::{ColumnCategory, ItemCard};
 
 /// Active columns flag an item that has sat in them too long.
@@ -64,7 +64,7 @@ fn cards_with(
     let stale_before = now() - Duration::hours(i64::from(stale_after));
     let sql = format!(
         "SELECT i.id, i.type, i.title, i.priority, i.size, i.rank, i.column_key, i.assignee,
-                i.platforms, i.labels, i.blocked_since IS NOT NULL, i.category,
+                i.labels, i.blocked_since IS NOT NULL, i.category,
                 i.state_entered_at, i.version,
                 (SELECT count(*) FROM item_ac a WHERE a.item_id = i.id AND a.checked),
                 (SELECT count(*) FROM item_ac a WHERE a.item_id = i.id),
@@ -77,11 +77,11 @@ fn cards_with(
     );
     let mut stmt = conn.prepare(&sql)?;
     let map = |r: &rusqlite::Row<'_>| -> rusqlite::Result<ItemCard> {
-        let category: ColumnCategory = from_text(r.get(11)?)?;
-        let draft: bool = r.get(18)?;
+        let category: ColumnCategory = from_text(r.get(10)?)?;
+        let draft: bool = r.get(17)?;
         Ok(ItemCard {
             id: r.get(0)?,
-            board_id: r.get::<_, Option<String>>(17)?.unwrap_or_default(),
+            board_id: r.get::<_, Option<String>>(16)?.unwrap_or_default(),
             item_type: from_text(r.get(1)?)?,
             title: r.get(2)?,
             priority: from_text(r.get(3)?)?,
@@ -89,15 +89,14 @@ fn cards_with(
             rank: r.get(5)?,
             column_key: r.get(6)?,
             assignee: r.get(7)?,
-            platforms: from_json_list(r.get(8)?)?,
-            labels: from_json(r.get(9)?)?,
-            blocked: r.get(10)?,
+            labels: from_json(r.get(8)?)?,
+            blocked: r.get(9)?,
             // A draft is in no column, so it never goes stale.
-            stale: !draft && is_active(category) && parse_at(r.get(12)?) < stale_before,
-            version: r.get(13)?,
-            ac_checked: r.get(14)?,
-            ac_total: r.get(15)?,
-            owner_commented_at: r.get::<_, Option<String>>(16)?.map(parse_at),
+            stale: !draft && is_active(category) && parse_at(r.get(11)?) < stale_before,
+            version: r.get(12)?,
+            ac_checked: r.get(13)?,
+            ac_total: r.get(14)?,
+            owner_commented_at: r.get::<_, Option<String>>(15)?.map(parse_at),
             draft,
         })
     };

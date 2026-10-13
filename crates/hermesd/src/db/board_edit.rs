@@ -4,13 +4,11 @@
 //! the guards that decide whether a move is allowed belong to the service
 //! layer above (B3), which calls these once they pass.
 
-use crate::kanban::model::{
-    ColumnCategory, Item, ItemEventKind, ItemType, Platform, Priority, Size,
-};
+use crate::kanban::model::{ColumnCategory, Item, ItemEventKind, ItemType, Priority, Size};
 use bus::now;
 use rusqlite::{params, Connection, OptionalExtension};
 
-use super::board::{from_text, to_json_list, to_text};
+use super::board::{from_text, to_text};
 use super::board_items::{item_in, record, Event, Write};
 use super::board_notes::replace_ac;
 use super::board_ranks::{rank_first, rank_last};
@@ -24,10 +22,12 @@ use crate::kanban::rank;
 pub struct ItemEdit<'a> {
     pub title: Option<&'a str>,
     pub description: Option<&'a str>,
-    pub platforms: Option<&'a [Platform]>,
     pub size: Option<Option<Size>>,
     pub priority: Option<Priority>,
     pub labels: Option<&'a [String]>,
+    /// One label group's values, replacing that group's labels (in `labels`
+    /// when it is given, else in the item's).
+    pub group: Option<(&'a str, &'a [String])>,
     pub parent_id: Option<Option<&'a str>>,
     pub item_type: Option<ItemType>,
     /// The whole list; a criterion whose text stays keeps its check.
@@ -122,14 +122,6 @@ impl BoardTx<'_> {
                 // The text itself is in the item; history says that it changed.
                 edited(tx, id, actor, "description", "", "")?;
             }
-            if let Some(platforms) = edit.platforms.filter(|p| *p != before.platforms.as_slice()) {
-                let (from, to) = (to_json_list(&before.platforms), to_json_list(platforms));
-                tx.execute(
-                    "UPDATE item SET platforms = ?2 WHERE id = ?1",
-                    params![id, to],
-                )?;
-                edited(tx, id, actor, "platforms", &from, &to)?;
-            }
             if let Some(size) = edit.size.filter(|s| *s != before.size) {
                 let text = |s: Option<Size>| s.map(|s| to_text(&s)).unwrap_or_default();
                 tx.execute(
@@ -166,10 +158,18 @@ impl BoardTx<'_> {
                     item_type.as_str(),
                 )?;
             }
-            if let Some(labels) = edit.labels.filter(|l| *l != before.labels.as_slice()) {
+            let labels = match (edit.labels, edit.group) {
+                (labels, Some((group, values))) => Some(crate::kanban::labels::replace_group(
+                    labels.unwrap_or(&before.labels),
+                    group,
+                    values,
+                )),
+                (labels, None) => labels.map(<[String]>::to_vec),
+            };
+            if let Some(labels) = labels.filter(|l| *l != before.labels) {
                 let (from, to) = (
                     serde_json::to_string(&before.labels)?,
-                    serde_json::to_string(labels)?,
+                    serde_json::to_string(&labels)?,
                 );
                 tx.execute("UPDATE item SET labels = ?2 WHERE id = ?1", params![id, to])?;
                 edited(tx, id, actor, "labels", &from, &to)?;

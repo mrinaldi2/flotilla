@@ -21,13 +21,13 @@ pub(super) fn tools() -> Vec<Value> {
              your answer to their message. They read it in the app, not your terminal. \
              At most {BODY_MAX} bytes; put long content in an artifact and send its path. \
              asks: true makes it a question that waits in the owner's Needs-you list until \
-             they answer you. item: the card it is about (e.g. H-017); it is also \
+             they answer you. item: the card it is about (e.g. RB-12); it is also \
              commented there."
         ),
         json!({
             "body": {"type": "string"},
             "asks": {"type": "boolean", "description": "A question for the owner (default false)"},
-            "item": {"type": "string", "description": "Board item it is about, e.g. H-017"}
+            "item": {"type": "string", "description": "Board item it is about, e.g. RB-12"}
         }),
         vec!["body"],
     )]

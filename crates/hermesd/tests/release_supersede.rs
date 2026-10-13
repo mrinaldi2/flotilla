@@ -38,7 +38,7 @@ async fn a_deploy_supersedes_the_older_unruled_packages_of_its_platform() {
     let db = &r.pair.d.app.db;
     let ios_item = db.get_item(&items[1]).unwrap().unwrap();
     let edit = hermesd::db::ItemEdit {
-        platforms: Some(&[hermesd::kanban::model::Platform::Ios]),
+        labels: Some(&["platform:ios".to_string()]),
         ..hermesd::db::ItemEdit::default()
     };
     db.update_item(

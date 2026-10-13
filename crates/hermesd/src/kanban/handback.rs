@@ -1,4 +1,4 @@
-//! Items left behind (H-099): a bot that leaves the team, a worker whose
+//! Items left behind: a bot that leaves the team, a worker whose
 //! task closed included, hands its board items to the project's lead, who
 //! reassigns them or moves them on. A card never stays with a bot that can't
 //! act on it.

@@ -10,7 +10,7 @@ use common::tasks::{error_text, project_with_bots, Pair};
 use common::{token_str, McpClient, WsClient};
 use hermesd::actor::Actor;
 use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
+use hermesd::kanban::model::{ItemType, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 /// Team Lead, DevOps, a Tester here (no machine named) and Tester iMac,
@@ -29,6 +29,7 @@ async fn gate() -> Gate {
     let project = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     db.ensure_board(&project, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&db, &project);
     db.set_project_lead(&project, Some(&pair.ids[0])).unwrap();
     for (bot, machine) in [(2, None), (3, Some("imac"))] {
         db.set_project_role(&ProjectRole {
@@ -47,10 +48,9 @@ async fn gate() -> Gate {
                 item_type: ItemType::Feature,
                 title: "Per computer",
                 description: "",
-                platforms: &[Platform::Desktop],
                 size: None,
                 priority: Priority::P1,
-                labels: &[],
+                labels: &["platform:desktop".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
             },

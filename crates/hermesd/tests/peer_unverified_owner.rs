@@ -85,6 +85,7 @@ async fn an_unverified_chat_answers_no_question_the_bot_asked() {
     let project_id = db.get_bot(&windev).unwrap().unwrap().project_id;
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&db, &project_id);
     db.set_project_role(&ProjectRole {
         project_id: project_id.clone(),
         role: Role::Lead,
