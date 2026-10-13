@@ -2,7 +2,7 @@
 // verification, people, parent) and Links grouped by kind (H-018 §3.6).
 // Activity lives in DrawerActivity.
 
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import type { ItemLink } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import {
   LinkKind,
@@ -23,6 +23,10 @@ const VERIFIED: Readonly<Record<VerificationResult, string>> = {
 export function Overview(props: {
   readonly detail: ItemDetail;
   readonly who: (actor: string) => string;
+  /** The description as drawn with its inline images; plain Markdown without. */
+  readonly description?: ReactNode;
+  /** Below the description: attachments, and a draft's "Discuss with a bot". */
+  readonly after?: ReactNode;
 }): ReactElement {
   const item = props.detail.item;
   if (item === undefined) {
@@ -34,10 +38,11 @@ export function Overview(props: {
   return (
     <div className="drawer-overview">
       {item.description.trim() ? (
-        <Markdown>{item.description}</Markdown>
+        (props.description ?? <Markdown>{item.description}</Markdown>)
       ) : (
         <p className="drawer-empty">No description.</p>
       )}
+      {props.after}
       <h4>
         Acceptance criteria {ac.length ? `${ac.filter((c) => c.checked).length}/${ac.length}` : ""}
       </h4>

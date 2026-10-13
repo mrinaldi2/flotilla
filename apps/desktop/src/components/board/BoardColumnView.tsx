@@ -27,6 +27,8 @@ interface BoardColumnViewProps extends DropHandlers {
   readonly onCollapse?: () => void;
   /** The owner's limit editor; absent for anyone else. */
   readonly onSetLimit?: (limit: number | undefined) => Promise<void>;
+  /** "+ New item" at the foot of an open column (0.19.0): a new draft. */
+  readonly onNewItem?: () => void;
   readonly children: ReactNode;
 }
 
@@ -169,7 +171,19 @@ export default function BoardColumnView(props: BoardColumnViewProps): ReactEleme
         )}
         {drop.kind === "refused" ? <p className="board-column-chip">{drop.chip}</p> : null}
       </header>
-      <div className="board-column-cards">{props.children}</div>
+      <div className="board-column-cards">
+        {props.children}
+        {props.onNewItem === undefined ? null : (
+          <button
+            type="button"
+            className="board-column-new"
+            aria-label={`New item in ${column.name}`}
+            onClick={props.onNewItem}
+          >
+            + New item
+          </button>
+        )}
+      </div>
     </section>
   );
 }

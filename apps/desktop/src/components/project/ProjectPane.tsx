@@ -225,6 +225,12 @@ function TabView({ ctx }: { readonly ctx: TabContext }): ReactElement {
           canControl={canControl}
           addToast={ctx.addToast}
           openItem={daemon.selection.kind === "project" ? daemon.selection.item : undefined}
+          openBoard={daemon.selection.kind === "project" ? daemon.selection.board : undefined}
+          initial={
+            daemon.selection.kind === "project" && daemon.selection.boardSettings === true
+              ? { settings: "columns" }
+              : undefined
+          }
         />
       );
     case "prs":

@@ -1,7 +1,7 @@
 // The item drawer's fixed parts (H-018 §3.6): the header with Move to…, the
 // state stepper, the meta line and the next step.
 
-import { X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import type { ReactElement } from "react";
 import type { BoardColumn, Item } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import { Priority, Size } from "../../../protocol/gen/hermes/board/v1/board_pb";
@@ -13,7 +13,11 @@ import { STEPS, age } from "./drawerText";
 export function DrawerHeader(props: {
   readonly itemId: string;
   readonly item: Item | undefined;
+  /** A draft: "Draft · RB-20 · not on the board yet". */
+  readonly draft?: boolean;
   readonly onMove?: (anchor: Anchor) => void;
+  /** The owner's edit form; absent where the item can't be edited. */
+  readonly onEdit?: () => void;
   readonly onClose: () => void;
   /** The card shown before this one, when the drawer has one (UX-035 §4). */
   readonly back?: { readonly id: string; readonly onBack: () => void };
@@ -33,9 +37,21 @@ export function DrawerHeader(props: {
           ‹ Back
         </button>
       ) : null}
-      <span className="drawer-type">
-        {type ? `${type.glyph} ${type.word}` : ""} · <span className="mono">{props.itemId}</span>
-      </span>
+      {props.draft === true ? (
+        <span className="drawer-type drawer-draft-head">
+          <span aria-hidden="true">✎ </span>
+          <b>Draft</b> · <span className="mono">{props.itemId}</span> · not on the board yet
+        </span>
+      ) : (
+        <span className="drawer-type">
+          {type ? `${type.glyph} ${type.word}` : ""} · <span className="mono">{props.itemId}</span>
+        </span>
+      )}
+      {props.onEdit ? (
+        <button type="button" className="btn btn-small" onClick={props.onEdit}>
+          <Pencil size={12} aria-hidden="true" /> Edit
+        </button>
+      ) : null}
       {move ? (
         <button
           type="button"

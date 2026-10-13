@@ -4,20 +4,29 @@
 // closes it; ↑/↓ move to the neighbouring card when the board offers them.
 // Focus lands on the title once the item loads, so a screen reader reads it
 // (UX-012); the caller returns it on close.
+//
+// 0.19.0: the owner edits the item here, and attaches files (a drop on the
+// drawer, a paste into the description, "+ Add file") and documents. A
+// draft is headed "Draft · not on the board yet", with Discuss with a bot,
+// its changes to review, and Discard / Finalize at the foot.
 
 import { useEffect, useRef, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { escapeIsTheDrawers } from "../../../hooks/useDrawerEscape";
+import type { DaemonApi } from "../../../protocol/api";
 import type { BoardApi } from "../../../protocol/board";
 import type { Bot } from "../../../protocol/entities";
-import type { BoardColumn } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { ItemEventKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import type { ItemDetail } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import type { BoardColumn, ItemAttachment } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import AttachmentsSection from "../attachments/AttachmentsSection";
+import AttachmentViewer from "../attachments/AttachmentViewer";
+import ItemMarkdown from "../attachments/ItemMarkdown";
+import { useDrawerAttachments } from "../attachments/useDrawerAttachments";
+import { useDraftDrawer } from "../drafts/useDraftDrawer";
+import ItemEditForm from "../edit/ItemEditForm";
 import type { Anchor } from "../useBoardMoves";
 import { DrawerHeader, MetaLine, NextStepView, Stepper } from "./DrawerParts";
-import { Activity } from "./DrawerActivity";
-import type { PostComment } from "./DrawerActivity";
-import { Links, Overview } from "./DrawerTabs";
+import { DrawerTabs } from "./DrawerTabsView";
+import type { Tab } from "./DrawerTabsView";
 import { nextStep } from "./drawerText";
 import { useItemDetail } from "./useItemDetail";
 
@@ -30,6 +39,8 @@ export interface ItemDrawerProps {
   readonly bots: readonly Bot[];
   /** Whether this connection may comment (the control grant). */
   readonly canComment: boolean;
+  /** Whether it may edit the item and its attachments; as `canComment` when unset. */
+  readonly canEdit?: boolean;
   readonly onClose: () => void;
   /** Opens "Move to…" below the button; absent where moves aren't offered. */
   readonly onMove?: (anchor: Anchor) => void;
@@ -45,9 +56,17 @@ export interface ItemDrawerProps {
   readonly back?: { readonly id: string; readonly onBack: () => void };
   /** Below everything (a `drawer-foot`): "Open on the board" off the board. */
   readonly footer?: ReactNode;
+  /** For a draft's docked chat ("Discuss with a bot"). */
+  readonly client?: DaemonApi;
+  readonly connected?: boolean;
+  /** The project's lead, first in "Discuss with a bot". */
+  readonly leadId?: string;
+  /** A draft was finalized or discarded: what happened, in words. */
+  readonly onDraftDone?: (message: string) => void;
+  /** Stories: open in the edit form, or with a bot's chat docked. */
+  readonly initialEdit?: boolean;
+  readonly initialDiscuss?: string;
 }
-
-type Tab = "overview" | "links" | "activity";
 
 /** "bot:<id>", "user", "device:…": who did something, in words. */
 function whoNamer(bots: readonly Bot[]): (actor: string) => string {
@@ -65,7 +84,9 @@ function useDrawerKeys(onClose: () => void, onStep?: (direction: -1 | 1) => void
     const onKey = (event: KeyboardEvent): void => {
       const typing =
         event.target instanceof HTMLElement &&
-        (event.target.tagName === "TEXTAREA" || event.target.tagName === "INPUT");
+        (event.target.tagName === "TEXTAREA" ||
+          event.target.tagName === "INPUT" ||
+          event.target.tagName === "SELECT");
       if (event.key === "Escape") {
         // A menu or dialog over the drawer takes its own Esc first.
         if (escapeIsTheDrawers(event)) {
@@ -83,13 +104,39 @@ function useDrawerKeys(onClose: () => void, onStep?: (direction: -1 | 1) => void
 
 export default function ItemDrawer(props: ItemDrawerProps): ReactElement {
   const { api, itemId, columns, bots } = props;
-  const { detail, check, error, comment } = useItemDetail(api, itemId, props.version);
-  useDrawerKeys(props.onClose, props.onStep);
+  const { detail, check, error, comment, setDetail, reload } = useItemDetail(
+    api,
+    itemId,
+    props.version,
+  );
+  const [editing, setEditing] = useState(props.initialEdit === true);
+  const [viewing, setViewing] = useState<ItemAttachment | null>(null);
+  const editable = props.canEdit ?? props.canComment;
   const who = whoNamer(bots);
   const columnName = (key: string): string => columns.find((c) => c.key === key)?.name ?? key;
   const item = detail?.item;
-  const column = columns.find((c) => c.key === item?.columnKey);
+  const attachments = detail?.attachments ?? [];
+  const files = useDrawerAttachments(api, itemId, attachments, setDetail);
   const now = props.now ?? Date.now;
+  const draft = useDraftDrawer({
+    api,
+    client: editable ? props.client : undefined,
+    itemId,
+    item,
+    detail,
+    bots,
+    leadId: props.leadId,
+    columns: columns.filter((c) => c.boardId === "" || c.boardId === item?.boardId),
+    who,
+    connected: props.connected ?? true,
+    reload,
+    setDetail,
+    onDone: props.onDraftDone,
+    now: now(),
+    initialDiscuss: props.initialDiscuss,
+  });
+  useDrawerKeys(props.onClose, editing ? undefined : props.onStep);
+  const column = columns.find((c) => c.key === item?.columnKey);
   const title = useRef<HTMLHeadingElement>(null);
   const loaded = item !== undefined;
   // Callers key the drawer by item, so ↑/↓ mounts it afresh and this runs again.
@@ -99,12 +146,46 @@ export default function ItemDrawer(props: ItemDrawerProps): ReactElement {
     }
   }, [loaded]);
 
+  const overview = {
+    description:
+      item === undefined ? null : (
+        <ItemMarkdown
+          api={api}
+          text={item.description}
+          attachments={attachments}
+          onOpen={setViewing}
+        />
+      ),
+    after: (
+      <>
+        {draft.after}
+        <AttachmentsSection
+          api={api}
+          attachments={attachments}
+          uploads={files.uploads}
+          actions={editable ? files.actions : undefined}
+          onOpen={setViewing}
+        />
+      </>
+    ),
+  };
+  const done = (): void => {
+    setEditing(false);
+    reload();
+  };
+
   return (
-    <aside className="item-drawer" aria-label={`Item ${itemId}`}>
+    <aside
+      className={`item-drawer${draft.isDraft ? " item-drawer-draft" : ""}`}
+      aria-label={draft.isDraft ? `Draft ${itemId}` : `Item ${itemId}`}
+      {...(editable ? files.dropTarget : {})}
+    >
       <DrawerHeader
         itemId={itemId}
         item={item}
-        onMove={props.onMove}
+        draft={draft.isDraft}
+        onMove={draft.isDraft ? undefined : props.onMove}
+        onEdit={editable && item !== undefined && !editing ? () => setEditing(true) : undefined}
         onClose={props.onClose}
         back={props.back}
       />
@@ -117,73 +198,45 @@ export default function ItemDrawer(props: ItemDrawerProps): ReactElement {
           <h2 className="drawer-title" tabIndex={-1} ref={title}>
             {item.title}
           </h2>
-          <Stepper column={column} />
-          <MetaLine item={item} column={column} who={who} now={now()} />
-          <NextStepView
-            step={nextStep(columns, column, check)}
-            assignee={item.assignee ? who(`bot:${item.assignee}`) : null}
-          />
+          {draft.isDraft ? null : (
+            <>
+              <Stepper column={column} />
+              <MetaLine item={item} column={column} who={who} now={now()} />
+              <NextStepView
+                step={nextStep(columns, column, check)}
+                assignee={item.assignee ? who(`bot:${item.assignee}`) : null}
+              />
+            </>
+          )}
           {props.children}
-          {detail ? (
+          {draft.review}
+          {editing ? (
+            <ItemEditForm
+              api={api}
+              item={item}
+              bots={bots}
+              onPasteImage={files.pasteImage}
+              onSaved={done}
+              onCancel={done}
+            />
+          ) : detail ? (
             <DrawerTabs
               detail={detail}
               initialTab={props.initialTab}
               who={who}
               columnName={columnName}
               onComment={props.canComment ? comment : undefined}
+              overview={overview}
             />
           ) : null}
         </div>
       )}
-      {props.footer}
+      {draft.isDraft ? draft.footer : props.footer}
+      {draft.side}
+      {draft.overlay}
+      {viewing === null ? null : (
+        <AttachmentViewer api={api} attachment={viewing} onClose={() => setViewing(null)} />
+      )}
     </aside>
-  );
-}
-
-function DrawerTabs(props: {
-  readonly detail: ItemDetail;
-  readonly initialTab: Tab | undefined;
-  readonly who: (actor: string) => string;
-  readonly columnName: (key: string) => string;
-  readonly onComment?: PostComment;
-}): ReactElement {
-  const { detail, who } = props;
-  const [tab, setTab] = useState<Tab>(props.initialTab ?? "overview");
-  // What Activity lists: each comment once, not again as its history event.
-  const moves = detail.history.filter((e) => e.kind !== ItemEventKind.COMMENTED).length;
-  const tabs: readonly (readonly [Tab, string])[] = [
-    ["overview", "Overview"],
-    ["links", `Links ${detail.links.length}`],
-    ["activity", `Activity ${moves + detail.comments.length}`],
-  ];
-  return (
-    <>
-      <div className="drawer-tabs" role="tablist" aria-label="Item">
-        {tabs.map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={tab === id}
-            className={tab === id ? "on" : ""}
-            onClick={() => setTab(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <div role="tabpanel">
-        {tab === "overview" ? <Overview detail={detail} who={who} /> : null}
-        {tab === "links" ? <Links links={detail.links} /> : null}
-        {tab === "activity" ? (
-          <Activity
-            detail={detail}
-            who={who}
-            columnName={props.columnName}
-            onComment={props.onComment}
-          />
-        ) : null}
-      </div>
-    </>
   );
 }
