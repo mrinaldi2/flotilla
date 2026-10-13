@@ -10,7 +10,8 @@ use crate::actor::Actor;
 use crate::app::AppState;
 use crate::db::prs::{Head, NewPr};
 use crate::decisions::{conflict, forbidden, not_found};
-use crate::kanban::api::{publish_moves, system_move};
+use crate::kanban::api::{publish_moves, report_fact};
+use crate::kanban::facts::Fact;
 use crate::kanban::model::{ColumnCategory, LinkKind};
 use crate::prs::checks;
 use crate::prs::model::{Pr, PrState};
@@ -140,17 +141,9 @@ pub fn open(app: &Arc<AppState>, bot: &bus::Bot, req: &Open<'_>) -> anyhow::Resu
             &actor,
         )?;
         let note = format!("PR #{} opened", pr.number);
-        let moved = system_move(
-            t,
-            project,
-            &item.id,
-            ColumnCategory::Review,
-            &note,
-            false,
-            &actor,
-        )?
-        .map(|from| vec![(item.id.clone(), from)])
-        .unwrap_or_default();
+        let moved = report_fact(t, project, &item.id, Fact::PrOpened, &note, false, &actor)?
+            .map(|from| vec![(item.id.clone(), from)])
+            .unwrap_or_default();
         Ok((pr, moved))
     })?;
     publish_moves(app, &mut feed, project, &moved);
@@ -253,11 +246,11 @@ pub fn close(
             .ok_or_else(|| conflict(format!("PR #{number} isn't open any more")))?;
         t.close_pr(&pr, reason)?;
         let note = format!("PR #{number} closed: {reason}");
-        let moved = system_move(
+        let moved = report_fact(
             t,
             project,
             &pr.item_id,
-            ColumnCategory::Doing,
+            Fact::PrClosed,
             &note,
             true,
             &bot_actor(bot),

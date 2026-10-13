@@ -15,8 +15,8 @@ use crate::app::AppState;
 use crate::db::reviews::NewReview;
 use crate::db::OwnerProof;
 use crate::decisions::{conflict, invalid, not_found};
-use crate::kanban::api::{publish_moves, system_move};
-use crate::kanban::model::ColumnCategory;
+use crate::kanban::api::{publish_moves, report_fact};
+use crate::kanban::facts::Fact;
 use crate::prs::model::Pr;
 use crate::prs::review_model::{Finding, Review, Verdict};
 
@@ -171,11 +171,11 @@ pub fn submit(
         })?;
         let moved = if verdict == Verdict::ChangesRequested {
             let note = format!("the owner asked for changes on PR #{number}");
-            system_move(
+            report_fact(
                 t,
                 project,
                 &pr.item_id,
-                ColumnCategory::Doing,
+                Fact::PrChangesRequested,
                 &note,
                 true,
                 &Actor::User,

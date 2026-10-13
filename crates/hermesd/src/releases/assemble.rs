@@ -18,7 +18,8 @@ use super::machines;
 use super::model::{Release, ReleaseBuild, ReleaseStatus};
 use super::package::{check_tested, decision_body};
 use super::{frozen_hash, load, Caller};
-use crate::kanban::api::{publish_moves, publish_touched, system_move};
+use crate::kanban::api::{publish_moves, publish_touched, report_fact};
+use crate::kanban::facts::Fact;
 
 pub struct NewPackage<'a> {
     pub name: &'a str,
@@ -249,11 +250,11 @@ pub fn submit(app: &Arc<AppState>, me: &Caller<'_>, release_id: &str) -> anyhow:
         let note = format!("submitted in release {}", release.name);
         let mut moved = Vec::new();
         for ri in &release.items {
-            let from = system_move(
+            let from = report_fact(
                 t,
                 project,
                 &ri.item_id,
-                ColumnCategory::Approval,
+                Fact::ReleaseSubmitted,
                 &note,
                 false,
                 &actor,
@@ -356,11 +357,11 @@ fn unsubmit(
                 continue;
             }
             let note = "the release decision could not be raised";
-            let from = system_move(
+            let from = report_fact(
                 t,
                 project,
                 &ri.item_id,
-                ColumnCategory::Verify,
+                Fact::ReleaseWithdrawn,
                 note,
                 false,
                 &actor,

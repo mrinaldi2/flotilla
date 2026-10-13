@@ -23,6 +23,7 @@ fn card(r: &Releases, title: &str) -> String {
         .create_item(
             &NewItem {
                 project_id: &r.project,
+                board_id: None,
                 item_type: ItemType::Chore,
                 title,
                 description: "",

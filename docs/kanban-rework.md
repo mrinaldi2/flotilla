@@ -203,19 +203,52 @@ gives it no other board rights.
 The discussion belongs to the bot's chat, not to Kanban. Kanban records a
 `thread` link on the item, so the drawer can open the conversation again.
 
+### Board flows (as built in K3)
+
+A board's `flow` decides how moves are judged:
+
+- **Custom:** the target column's `movers`, `allowed_from` and entry `rules`
+  from the library above, then its WIP limit. Simple and Software boards use
+  it.
+- **Release-gated:** the H-017 flow every board had before 0.19, kept as one
+  built-in flow with the existing guards and their refusal texts unchanged.
+  Existing boards migrate to it, and its test table still passes. Its rules
+  depend on the source column, the item's type, its link history and its
+  release state, so they stay one flow rather than being broken into column
+  rules.
+
+Facts reach both flows through `kanban::api::report_fact`:
+
+- A release-gated board moves the item the way 0.18 did, by category.
+- A custom board uses its `automations`, which map a fact name to a column
+  key. A fact with no column mapped is kept in `item_fact`, so the card can
+  show it.
+- Facts so far:
+  - `pr.opened`, `pr.merged`, `pr.closed`, `pr.changes_requested`;
+  - `release.submitted`, `.withdrawn`, `.approved`, `.held`, `.rework`,
+    `.deployed`, `.deploy_failed`, `.left_out_reverted`.
+
+Column keys stay unique per project. A board created when the project already
+has the plain keys gets them prefixed with its own key (`rs-review`), and its
+automations and allowed sources are rewritten to match.
+
 ### Presets
 
 A board is created from a preset and edited afterwards. Presets are data, not
-code:
+code (`kanban/presets.rs`):
 
-- **Simple:** To do (open) → Doing (active, WIP 3) → Done.
-- **Software:** Inbox → Ready (`fields_filled`, `ac_present`) → Doing
-  (`assignee_set`, WIP 1 per assignee) → Review (`link(pr)`) → Done.
-  - Automations: `pr.opened` → Review; `pr.merged` → Done;
-    `pr.closed` → Doing.
-- **Release-gated:** today's flow for teams that want it. It adds Verify,
-  Awaiting owner (`movers: system`) and Deploying (`movers: system`), with
-  release automations. Existing boards migrate to this preset.
+- **Simple (custom):** To do (open) → Doing (active, WIP 3) → Done, plus a
+  hidden Cancelled column (lead, with a reason).
+- **Software (custom):**
+  - Inbox, then Ready: the lead moves items in; `ac_present`, `size_at_most(M)`
+    and `blockers_done` apply.
+  - Doing: the lead or the assignee moves items in; `assignee_set` applies,
+    with a WIP limit of 1 per assignee.
+  - Review: the assignee moves items in, only from Doing; `link(pr)` applies.
+  - Done: the lead.
+  - Automations: `pr.opened` → Review; `pr.merged` → Done; `pr.closed` and
+    `pr.changes_requested` → Doing.
+- **Release-gated:** the H-017 flow and columns.
 
 ### Who changes structure
 
@@ -330,7 +363,7 @@ branch is reviewed as one PR into `main` at the end.
 | K0 | Fix: workers were told `git push origin HEAD:{branch}`, which the main-push deny always refuses when the branch is `main`. Workers now push their own branch and name it in their result, and the guard and deny rules protect the project's configured branch as well as `main`. | A worker's push lands on its own branch; a push to a project's `develop` is refused like one to `main`. |
 | K1 | Module split with no behaviour change: `board/` becomes `kanban/`; `releases/` and `meetings/` move out, and the review policy moves under `prs/`. Add the `kanban::api` port (`system_move`, `link`, `comment`, `create`) for every card change other modules make. Facts replace `system_move` callers in K3. | Every existing test passes unchanged. |
 | K2 | Schema: the `board` table (every existing board becomes its project's default board, "Main", keeping its key), `board_id` on columns, items and templates, and column `kind`. Item numbers stay one sequence per project and column keys stay unique per project, so `item` is not rebuilt. The migration is safe to run again: the runner skips an `ADD COLUMN` whose column exists. Platforms become labels in K3, together with the rules that read them; per-board reads arrive with the board API in K4. | The migration test on a copy of a real 0.18 database keeps every item, link and event. |
-| K3 | Rule library, movers, automations, predicates. The Release-gated preset reproduces today's guards. | The guard test table passes against the preset. |
+| K3 | The rule library, movers, allowed sources and WIP/returns for custom boards (`kanban/flow.rs`). Board `flow` (`custom` or `release_gated`) and `automations`. Facts (`kanban/facts.rs`) replace every `system_move` call in releases and PRs. Presets as data. Release-gated boards keep the H-017 guards as one built-in flow. Platforms become labels in K8, with the release-gated rules that read them. | The guard test table passes unchanged on release-gated boards. A custom board's moves and facts follow its columns. |
 | K4 | Board management over MCP and WebSocket, structure policy, decisions for proposals, board events, bot notices, stale-version refusals, generated prompt section. | A lead bot creates and edits a board end to end on the double runtime. |
 | K4b | Attachments (store, caps, upload, `item_attach`, inline images) and drafts (state, invite, draft revisions, finalize and discard, the Needs you row). | A bot invited to a draft reads a screenshot, edits the draft and links a doc. The owner sees each change and finalizes it. |
 | K5 | Desktop UI (apps doc), including attachments, the Drafts tray, "Discuss with a bot" and draft review. | Ladle stories and visual baselines exist for every new view. |

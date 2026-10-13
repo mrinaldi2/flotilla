@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 
 pub use ac::{check_ac, check_ac_edit, flag_ac, needs_evidence};
 use conditions::conditions;
+pub(crate) use conditions::section_filled;
 pub use conditions::{check_template, open_post_install, DOR_FIELDS};
 
 use super::model::{
@@ -34,11 +35,11 @@ pub enum Who {
 }
 
 impl Who {
-    fn has(&self, role: Role) -> bool {
+    pub(crate) fn has(&self, role: Role) -> bool {
         matches!(self, Who::Bot { roles, .. } if roles.contains(&role))
     }
 
-    fn is(&self, bot_id: Option<&str>) -> bool {
+    pub(crate) fn is(&self, bot_id: Option<&str>) -> bool {
         matches!(self, Who::Bot { id, .. } if Some(id.as_str()) == bot_id)
     }
 
@@ -70,7 +71,7 @@ impl Who {
         self.has(Role::Tester) || self.named(item, PersonRole::Verifier) == Some(true)
     }
 
-    fn leads(&self) -> bool {
+    pub(crate) fn leads(&self) -> bool {
         matches!(self, Who::Owner) || self.has(Role::Lead)
     }
 }
@@ -111,7 +112,7 @@ pub struct Context {
 }
 
 impl Context {
-    fn has_link(&self, kinds: &[LinkKind]) -> bool {
+    pub(crate) fn has_link(&self, kinds: &[LinkKind]) -> bool {
         self.links.iter().any(|l| kinds.contains(&l.kind))
     }
 }
@@ -259,7 +260,7 @@ pub fn evaluate(item: &Item, mv: &Move<'_>, who: &Who, ctx: &Context) -> Vec<Unm
         conditions::post_install_done(item, &mut out);
     }
     if !is_return(rule) {
-        out.extend(wip(item, mv, who, ctx));
+        out.extend(wip_unmet(item, mv, who, ctx));
     }
     out
 }
@@ -310,7 +311,7 @@ pub fn over_limit(item: &Item, to: &BoardColumn, ctx: &Context) -> Option<(u32, 
 }
 
 /// Over a WIP limit is refused unless the lead or the owner gives a reason.
-fn wip(item: &Item, mv: &Move<'_>, who: &Who, ctx: &Context) -> Option<Unmet> {
+pub(crate) fn wip_unmet(item: &Item, mv: &Move<'_>, who: &Who, ctx: &Context) -> Option<Unmet> {
     let (limit, whose) = over_limit(item, mv.to, ctx)?;
     if who.leads() && has_text(mv.override_reason) {
         return None;

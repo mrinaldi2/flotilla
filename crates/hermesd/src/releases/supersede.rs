@@ -30,13 +30,13 @@ use serde_json::json;
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::kanban::model::ColumnCategory;
 
 use super::deployed_via::{close_via, reaches, reaches_and_contains, ruled_open};
 use super::load;
 use super::machines::is_ios_package;
 use super::model::{Release, ReleaseEvent, ReleaseStatus};
-use crate::kanban::api::{publish_moves, publish_touched, system_move};
+use crate::kanban::api::{publish_moves, publish_touched, report_fact};
+use crate::kanban::facts::Fact;
 
 /// Not ruled on yet: the owner still has it to decide.
 fn unruled_open(status: ReleaseStatus) -> bool {
@@ -135,11 +135,11 @@ fn supersede(
             if !held_here {
                 continue;
             }
-            let from = system_move(
+            let from = report_fact(
                 t,
                 project,
                 &ri.item_id,
-                ColumnCategory::Verify,
+                Fact::ReleaseWithdrawn,
                 &note,
                 false,
                 actor,

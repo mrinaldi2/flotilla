@@ -182,6 +182,13 @@ board roles allow, and a refusal lists every unmet guard with its fix.
 the task or decision is linked to the item, artifacts land on it, and a task's
 completion, cancellation or expiry is written to the item's history.
 
+A board's `flow` is `custom` (the target column's movers, allowed sources and
+entry rules from a fixed library decide; `kanban::flow`) or `release_gated`
+(the H-017 guards). Releases and PRs report facts (`pr.merged`,
+`release.approved`) through `kanban::api::report_fact`. A release-gated board
+moves the item by category, and a custom board uses its automations or keeps
+the fact on the card.
+
 Releases, PRs and meetings don't write board tables themselves. They move,
 link, comment on and create cards through `kanban::api`, and Kanban never calls
 into them. See [the kanban rework](kanban-rework.md) for where this boundary is

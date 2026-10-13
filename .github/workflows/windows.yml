@@ -39,7 +39,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cargo clippy --locked --workspace --all-targets -- -D warnings
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          cargo test --locked --workspace --all-targets
+          cargo test --locked --workspace --all-targets --no-fail-fast
       # tauri-build only needs the sidecar to exist; the shell's tests never run it.
       - name: Stage debug daemon sidecar
         run: |

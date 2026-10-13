@@ -16,7 +16,6 @@ use serde_json::json;
 use crate::actor::Actor;
 use crate::app::AppState;
 use crate::db::Db;
-use crate::kanban::model::ColumnCategory;
 
 use super::deploy::all_done;
 use super::machines::{is_ios_package, is_ios_target, IOS_DEVICE};
@@ -25,7 +24,8 @@ use super::model::{
 };
 use super::post_install::post_install_checked;
 use super::{check_frozen, frozen_hash};
-use crate::kanban::api::{publish_moves, system_move};
+use crate::kanban::api::{publish_moves, report_fact};
+use crate::kanban::facts::Fact;
 
 /// Whether `release` is one to repair: an iOS package submitted, not over,
 /// not deploying yet, still as frozen, whose deploy targets nobody set and
@@ -98,11 +98,11 @@ pub fn settle_ios_deploys(app: &Arc<AppState>) -> anyhow::Result<Vec<String>> {
                 t.set_release_status(&release.id, ReleaseStatus::Deployed)?;
                 let note = format!("release {} deployed", release.name);
                 for ri in &release.items {
-                    let from = system_move(
+                    let from = report_fact(
                         t,
                         project,
                         &ri.item_id,
-                        ColumnCategory::Done,
+                        Fact::ReleaseDeployed,
                         &note,
                         false,
                         &actor,

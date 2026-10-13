@@ -43,6 +43,7 @@ async fn gate() -> Gate {
         .create_item(
             &NewItem {
                 project_id: &project,
+                board_id: None,
                 item_type: ItemType::Feature,
                 title: "Per computer",
                 description: "",

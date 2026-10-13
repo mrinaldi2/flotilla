@@ -138,6 +138,7 @@ pub fn new_item(db: &Db, project: &str, title: &str, priority: Priority) -> (Str
         .create_item(
             &NewItem {
                 project_id: project,
+                board_id: None,
                 item_type: ItemType::Feature,
                 title,
                 description: "",

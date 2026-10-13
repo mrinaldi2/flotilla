@@ -97,6 +97,7 @@ fn create(app: &Arc<AppState>, me: &Me, req: c::ItemCreate) -> anyhow::Result<Va
         let item = app.db.create_item(
             &NewItem {
                 project_id: &me.bot.project_id,
+                board_id: None,
                 item_type: ItemType::from_wire(req.r#type)?,
                 title: req.title.trim(),
                 description: req.description.as_deref().unwrap_or_default(),

@@ -24,7 +24,8 @@ use crate::actor::Actor;
 use crate::app::AppState;
 use crate::bot_permissions::Stored;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
-use crate::kanban::api::{publish_moves, system_move};
+use crate::kanban::api::{publish_moves, report_fact};
+use crate::kanban::facts::Fact;
 use crate::kanban::model::{ColumnCategory, Role};
 use crate::prs::model::{Pr, PrState};
 use crate::prs::{mergeable, repo, review};
@@ -313,11 +314,11 @@ fn merged(
             return Ok((waiting, Vec::new()));
         }
         let note = format!("PR #{} merged", pr.number);
-        let moved = system_move(
+        let moved = report_fact(
             t,
             &pr.project_id,
             &pr.item_id,
-            ColumnCategory::Verify,
+            Fact::PrMerged,
             &note,
             false,
             &actor,

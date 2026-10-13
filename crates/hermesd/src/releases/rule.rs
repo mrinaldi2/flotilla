@@ -15,7 +15,8 @@ use crate::kanban::model::ColumnCategory;
 
 use super::check_frozen;
 use super::model::{Release, ReleaseStatus, Verdict};
-use crate::kanban::api::{publish_moves, publish_touched, system_move};
+use crate::kanban::api::{publish_moves, publish_touched, report_fact};
+use crate::kanban::facts::Fact;
 
 pub struct ItemVerdict {
     pub item_id: String,
@@ -127,7 +128,12 @@ pub fn rule(
             if let Some(n) = v.note.as_deref().map(str::trim).filter(|n| !n.is_empty()) {
                 note.push_str(&format!(": {n}"));
             }
-            let from = system_move(t, &project, &v.item_id, to, &note, first, actor)?;
+            let fact = match to {
+                ColumnCategory::Deploying => Fact::ReleaseApproved,
+                ColumnCategory::Ready => Fact::ReleaseHeld,
+                _ => Fact::ReleaseRework,
+            };
+            let from = report_fact(t, &project, &v.item_id, fact, &note, first, actor)?;
             moved.extend(from.map(|f| (v.item_id.clone(), f)));
             if to != ColumnCategory::Deploying && t.set_item_release(&v.item_id, None, actor)? {
                 touched.push(v.item_id.clone());

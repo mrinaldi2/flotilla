@@ -46,6 +46,7 @@ impl Board {
             .create_item(
                 &NewItem {
                     project_id: &self.project,
+                    board_id: None,
                     item_type: ItemType::Feature,
                     title,
                     description: "",

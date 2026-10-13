@@ -28,6 +28,7 @@ pub(super) fn board() -> (Db, String) {
 pub(super) fn new_item<'a>(project_id: &'a str, title: &'a str) -> NewItem<'a> {
     NewItem {
         project_id,
+        board_id: None,
         item_type: ItemType::Feature,
         title,
         description: "",

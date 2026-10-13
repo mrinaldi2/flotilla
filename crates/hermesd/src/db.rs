@@ -35,6 +35,9 @@ pub use workers::NewWorker;
 pub mod agent_talk;
 mod board;
 mod board_edit;
+mod board_flow;
+#[cfg(test)]
+mod board_flow_tests;
 mod board_import;
 #[cfg(test)]
 mod board_import_tests;

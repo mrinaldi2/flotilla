@@ -11,6 +11,7 @@ fn card(db: &Db, project: &str, title: &str) -> String {
     db.create_item(
         &NewItem {
             project_id: project,
+            board_id: None,
             item_type: ItemType::Feature,
             title,
             description: "",

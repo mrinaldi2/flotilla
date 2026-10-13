@@ -19,7 +19,8 @@ use super::machines;
 use super::model::{DeployAction, DeployResult, Release, ReleaseStatus, Smoke, Verdict};
 use super::post_install::post_install_checked;
 use super::{check_frozen, load, testers_on, Caller};
-use crate::kanban::api::{publish_moves, publish_touched, system_move};
+use crate::kanban::api::{publish_moves, publish_touched, report_fact};
+use crate::kanban::facts::Fact;
 
 /// The gate, checked at call time (H-020 §2.4): a settled, unrelayed owner
 /// or device ruling, an unchanged package, and only shipped items.
@@ -307,7 +308,8 @@ pub fn confirm(
         let (mut moved, mut touched) = (Vec::new(), Vec::new());
         if let Some(to) = to {
             for ri in &release.items {
-                let from = system_move(t, project, &ri.item_id, to, &note, false, &actor)?;
+                let fact = Fact::deploy(to == ColumnCategory::Done);
+                let from = report_fact(t, project, &ri.item_id, fact, &note, false, &actor)?;
                 moved.extend(from.map(|f| (ri.item_id.clone(), f)));
                 // Back in Verify, an item is free to go into a fixed package
                 // (ARCH-R23 F3).

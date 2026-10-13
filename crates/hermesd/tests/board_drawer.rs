@@ -41,6 +41,7 @@ async fn the_owner_comments_from_the_drawer() {
         .create_item(
             &NewItem {
                 project_id: &project_id,
+                board_id: None,
                 item_type: ItemType::Feature,
                 title: "Drawer",
                 description: "",

@@ -56,6 +56,7 @@ pub async fn board() -> Board {
         .create_item(
             &NewItem {
                 project_id: &mac_app,
+                board_id: None,
                 item_type: ItemType::Feature,
                 title: "Peer board",
                 description: "",
