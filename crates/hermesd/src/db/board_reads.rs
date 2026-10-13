@@ -9,7 +9,7 @@ use crate::kanban::model::{
 };
 
 use super::board::{from_text, parse_at, settings_in};
-use super::board_items::cards_in;
+use super::board_cards::{card_in, cards_in, draft_cards_in};
 use super::board_tx::BoardTx;
 
 /// A whole board, as `board_get` returns it.
@@ -34,14 +34,12 @@ impl BoardTx<'_> {
         }))
     }
 
-    /// One item's card, as a board push carries it.
+    /// One item's card, as a board push carries it: live or draft.
     pub fn card(&self, id: &str) -> anyhow::Result<Option<ItemCard>> {
         let Some(project_id) = self.item_project(id)? else {
             return Ok(None);
         };
-        Ok(cards_in(self.conn, &project_id, "AND i.id = ?2", Some(id))?
-            .into_iter()
-            .next())
+        card_in(self.conn, &project_id, id)
     }
 
     /// An item's comments, oldest first.
@@ -115,5 +113,10 @@ impl BoardTx<'_> {
 
     pub fn cards(&self, project_id: &str) -> anyhow::Result<Vec<ItemCard>> {
         cards_in(self.conn, project_id, "", None)
+    }
+
+    /// The project's drafts, for the owner's drafts tray.
+    pub fn draft_cards(&self, project_id: &str) -> anyhow::Result<Vec<ItemCard>> {
+        draft_cards_in(self.conn, project_id)
     }
 }

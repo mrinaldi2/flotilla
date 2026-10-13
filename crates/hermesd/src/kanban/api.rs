@@ -11,7 +11,9 @@ use crate::decisions::{conflict, not_found};
 use crate::kanban::facts::Fact;
 use crate::kanban::feed::{card_after_commit, Change, ChangeKind, FeedWriter};
 use crate::kanban::guards::{self, Move, Who};
-use crate::kanban::model::{BoardColumn, BoardFlow, Item, ItemComment, ItemLink, LinkKind};
+use crate::kanban::model::{
+    BoardColumn, BoardFlow, Item, ItemComment, ItemLink, ItemState, LinkKind,
+};
 
 /// Report a fact about an item and let its board decide where it goes
 /// (0.19.0 K3). A release-gated board moves it the way 0.18 did; a custom
@@ -31,6 +33,11 @@ pub fn report_fact(
     let item = t
         .item(item_id)?
         .ok_or_else(|| not_found(format!("no item {item_id}")))?;
+    // A draft is on no column yet: the fact stays on it.
+    if item.state != ItemState::Live {
+        t.record_fact(item_id, fact.name(), Some(note), actor)?;
+        return Ok(None);
+    }
     let board = t.board(&item.board_id)?;
     let columns: Vec<BoardColumn> = t
         .columns(project_id)?

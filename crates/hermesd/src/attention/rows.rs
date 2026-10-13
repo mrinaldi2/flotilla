@@ -116,6 +116,7 @@ pub(crate) fn rows(
     }
     if scope.home {
         p0_items(app, &mut b)?;
+        drafts_updated(app, &mut b)?;
     }
     if scope.local {
         owner_actions(app, &mut b)?;
@@ -255,6 +256,27 @@ fn p0_items(app: &AppState, b: &mut Builder<'_>) -> anyhow::Result<()> {
             "column_key": card.column_key, "assignee": card.assignee,
         });
         b.push(part, weight(AttentionKind::P0Item), Some(legacy));
+    }
+    Ok(())
+}
+
+/// Drafts a bot changed since the owner last looked (0.19.0 K4b): "Lead
+/// updated draft RB-020". Looking at its changes clears the row.
+fn drafts_updated(app: &AppState, b: &mut Builder<'_>) -> anyhow::Result<()> {
+    for draft in app.db.board_read(|t| t.unseen_drafts(b.project_id))? {
+        let bot_id = draft.actor.strip_prefix("bot:").unwrap_or(&draft.actor);
+        let who = app
+            .db
+            .get_bot(bot_id)?
+            .map_or_else(|| "A bot".to_string(), |bot| bot.name);
+        let part = Part {
+            kind: AttentionKind::DraftUpdated,
+            target_id: draft.item_id.clone(),
+            title: format!("{who} updated draft {}: {}", draft.item_id, draft.title),
+            created_at: draft.at,
+            target: Some(Target::ItemId(draft.item_id)),
+        };
+        b.push(part, weight(AttentionKind::DraftUpdated), None);
     }
     Ok(())
 }

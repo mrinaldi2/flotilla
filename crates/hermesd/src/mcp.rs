@@ -14,8 +14,10 @@ use serde_json::{json, Value};
 use crate::app::AppState;
 
 mod board;
+mod board_attach;
 pub use board::Conflict;
 mod board_comments;
+mod board_drafts;
 mod board_edit;
 mod board_import;
 mod board_listing;

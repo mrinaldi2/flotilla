@@ -71,6 +71,7 @@ fn item(in_column: &str) -> Item {
         state_entered_at: now,
         done_at: None,
         version: 1,
+        state: crate::kanban::model::ItemState::Live,
     }
 }
 

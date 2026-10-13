@@ -18,7 +18,7 @@ use serde_json::{json, Value};
 
 use crate::app::AppState;
 use crate::kanban::feed::ChangeKind;
-use crate::kanban::model::{ColumnCategory, Role};
+use crate::kanban::model::{ColumnCategory, ItemState, Role};
 use crate::peer::PeerError;
 
 use super::caller;
@@ -104,6 +104,12 @@ pub(super) fn local_item(app: &AppState, me: &Bot, id: &str) -> anyhow::Result<S
         .get_item(id)?
         .filter(|_| app.db.item_project(id).ok().flatten().as_ref() == Some(&me.project_id))
         .ok_or_else(|| anyhow::anyhow!("no item {id} in this project"))?;
+    if item.state != ItemState::Live {
+        anyhow::bail!(
+            "refusing send: item {id} is a draft, not on the board — work on it once the \
+             owner finalizes it, or pick an open card"
+        );
+    }
     if matches!(
         item.category,
         ColumnCategory::Done | ColumnCategory::Cancelled
@@ -256,4 +262,24 @@ pub(super) fn attach(
         app.db.link_task_item(task_id, card, &actor)?;
         Ok(((), card.to_string()))
     })
+}
+
+/// A task's body with its card's attachments listed after it, each with
+/// the path the assignee reads it at, so it starts from the screenshots and
+/// documents rather than a summary of them. Unchanged when the card has
+/// none, or lives on another computer.
+pub(super) fn with_attachments(app: &AppState, project_id: &str, card: &str, body: &str) -> String {
+    let listed = (|| -> anyhow::Result<String> {
+        if app.db.item_project(card)?.as_deref() != Some(project_id) {
+            return Ok(String::new());
+        }
+        let atts = app.db.board_read(|t| t.attachments(card))?;
+        let artifacts = crate::kanban::attach::artifacts_of(app, project_id)?;
+        Ok(crate::kanban::attachments::listing(card, &atts, &artifacts))
+    })()
+    .unwrap_or_else(|e| {
+        tracing::warn!(card, error = %e, "card attachments not listed on the task");
+        String::new()
+    });
+    format!("{body}{listed}")
 }

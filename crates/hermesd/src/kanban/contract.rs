@@ -124,7 +124,8 @@ map_enum!(LinkKind {
     Meeting,
     ItemBlocks,
     ItemRelates,
-    ItemDuplicates
+    ItemDuplicates,
+    Thread
 });
 map_enum!(ItemEventKind {
     Created,

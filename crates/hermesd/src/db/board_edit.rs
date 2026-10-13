@@ -104,7 +104,8 @@ impl BoardTx<'_> {
         edit: &ItemEdit<'_>,
         actor: &Actor<'_>,
     ) -> anyhow::Result<Write<Item>> {
-        versioned(self.conn, id, expected, |tx| {
+        let draft = item_in(self.conn, id)?;
+        let write = versioned(self.conn, id, expected, |tx| {
             let before = item_in(tx, id)?.expect("claimed");
             if let Some(title) = edit.title.filter(|t| *t != before.title) {
                 tx.execute(
@@ -191,7 +192,9 @@ impl BoardTx<'_> {
                 )?;
             }
             Ok(())
-        })
+        })?;
+        super::board_drafts::revised(self.conn, draft.as_ref(), &write, actor)?;
+        Ok(write)
     }
 
     /// Put an item into another column, last in its rank order. Entering a
@@ -277,57 +280,6 @@ impl BoardTx<'_> {
                     note: None,
                 },
             )?;
-            Ok(())
-        })
-    }
-
-    /// Block an item (`Some((by, reason))`) or unblock it (`None`).
-    pub fn block_item(
-        &self,
-        id: &str,
-        expected: u64,
-        block: Option<(Option<&str>, &str)>,
-        actor: &Actor<'_>,
-    ) -> anyhow::Result<Write<Item>> {
-        versioned(self.conn, id, expected, |tx| {
-            match block {
-                Some((by, reason)) => {
-                    tx.execute(
-                        "UPDATE item SET blocked_by = ?2, blocked_reason = ?3, blocked_since = ?4 WHERE id = ?1",
-                        params![id, by, reason, ts(now())],
-                    )?;
-                    record(
-                        tx,
-                        id,
-                        actor,
-                        Event {
-                            kind: ItemEventKind::Blocked,
-                            from: None,
-                            to: by.or(Some("blocked")),
-                            field: None,
-                            note: Some(reason),
-                        },
-                    )?;
-                }
-                None => {
-                    tx.execute(
-                        "UPDATE item SET blocked_by = NULL, blocked_reason = NULL, blocked_since = NULL WHERE id = ?1",
-                        params![id],
-                    )?;
-                    record(
-                        tx,
-                        id,
-                        actor,
-                        Event {
-                            kind: ItemEventKind::Blocked,
-                            from: Some("blocked"),
-                            to: None,
-                            field: None,
-                            note: None,
-                        },
-                    )?;
-                }
-            }
             Ok(())
         })
     }

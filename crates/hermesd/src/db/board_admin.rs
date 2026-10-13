@@ -219,9 +219,21 @@ impl BoardTx<'_> {
             rest.iter().any(|c| c.kind == ColumnKind::Open),
             invalid("a board needs an open column for new items")
         );
+        // A draft or a discarded one only holds the column as a placeholder:
+        // it moves to another open column with no history of a move.
+        if let Some(open) = rest.iter().find(|c| c.kind == ColumnKind::Open) {
+            self.conn.execute(
+                "UPDATE item SET column_key = ?3, category = ?4
+                 WHERE board_id = ?1 AND column_key = ?2 AND state != 'live'",
+                params![board.id, col.key, open.key, open.category.as_str()],
+            )?;
+        }
         let items: Vec<(String, u64)> = self
             .conn
-            .prepare("SELECT id, version FROM item WHERE board_id = ?1 AND column_key = ?2")?
+            .prepare(
+                "SELECT id, version FROM item
+                 WHERE board_id = ?1 AND column_key = ?2 AND state = 'live'",
+            )?
             .query_map(params![board.id, col.key], |r| Ok((r.get(0)?, r.get(1)?)))?
             .collect::<Result<_, _>>()?;
         if !items.is_empty() {

@@ -7,7 +7,9 @@ import { CONTRACTS } from "./contracts";
 import {
   BoardColumnSchema,
   BoardSettingsSchema,
+  DraftRevisionSchema,
   file_hermes_board_v1_board,
+  ItemAttachmentSchema,
   ItemCardSchema,
   ItemCommentSchema,
   ItemEventSchema,
@@ -51,12 +53,14 @@ const FIXTURES = join(process.cwd(), "..", "..", "crates", "bus", "fixtures", "b
 const MESSAGES = join(FIXTURES, "messages");
 
 const ENTITIES: Readonly<Record<string, DescMessage>> = {
+  attachment: ItemAttachmentSchema,
   card: ItemCardSchema,
   column: BoardColumnSchema,
   comment: ItemCommentSchema,
   event: ItemEventSchema,
   item: ItemSchema,
   link: ItemLinkSchema,
+  revision: DraftRevisionSchema,
   role: ProjectRoleSchema,
   settings: BoardSettingsSchema,
   template: TemplateSchema,
