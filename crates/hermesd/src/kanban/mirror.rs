@@ -23,11 +23,21 @@ pub struct Mirrored {
 #[derive(Clone, Default)]
 pub struct BoardMirror {
     boards: Arc<Mutex<HashMap<String, Mirrored>>>,
+    /// Local project id → its fetches' turn (0.19.0 K6).
+    turns: Arc<Mutex<HashMap<String, Arc<tokio::sync::Mutex<()>>>>>,
 }
 
 impl BoardMirror {
     fn lock(&self) -> MutexGuard<'_, HashMap<String, Mirrored>> {
         self.boards.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    /// Whose turn it is to fetch the project's boards: one fetch at a time,
+    /// each asking only once the one before it has landed. Two at once
+    /// could land in either order, an older snapshot over a newer one.
+    pub fn fetch_turn(&self, project_id: &str) -> Arc<tokio::sync::Mutex<()>> {
+        let mut turns = self.turns.lock().unwrap_or_else(|e| e.into_inner());
+        turns.entry(project_id.to_string()).or_default().clone()
     }
 
     pub fn get(&self, project_id: &str) -> Option<Mirrored> {
@@ -163,6 +173,17 @@ mod tests {
         assert_eq!(mirror.project_of("H-1").as_deref(), Some("p"));
         assert!(mirror.remove_card("p", "H-1"));
         assert_eq!(mirror.project_of("H-1"), None);
+    }
+
+    #[tokio::test]
+    async fn a_projects_fetches_take_turns() {
+        let mirror = BoardMirror::default();
+        let turn = mirror.fetch_turn("p");
+        let held = turn.lock().await;
+        assert!(mirror.fetch_turn("p").try_lock().is_err(), "the next waits");
+        assert!(mirror.fetch_turn("q").try_lock().is_ok(), "another project");
+        drop(held);
+        assert!(mirror.fetch_turn("p").try_lock().is_ok());
     }
 
     #[test]

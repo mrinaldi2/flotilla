@@ -49,8 +49,12 @@ pub(super) async fn intercept(
         .find(|link| Some(&link.peer_id) == home.as_ref())
         .cloned();
     let mut args = args.clone();
-    // A home on 0.18 has one board and no attachments (0.19.0 K6).
-    if let Some(link) = home_link.as_ref().filter(|l| !many_boards(app, &l.peer_id)) {
+    // A home on 0.18 has one board and no attachments (0.19.0 K6). Only a
+    // live link says which version the home runs: one that is down is the
+    // read-only board below, not an older home.
+    let older_home =
+        |l: &&bus::ProjectLink| app.peers.is_online(&l.peer_id) && !many_boards(app, &l.peer_id);
+    if let Some(link) = home_link.as_ref().filter(older_home) {
         if name == "board_list" {
             return Some(board_list(app.board_mirror.get(&bot.project_id).as_ref()));
         }
@@ -59,7 +63,11 @@ pub(super) async fn intercept(
             Err(e) => return Some(Err(e)),
         }
     }
-    if name == "item_attach" && args["file"].as_str().is_some_and(|f| !f.trim().is_empty()) {
+    let home_down = home_link
+        .as_ref()
+        .is_some_and(|l| !app.peers.is_online(&l.peer_id));
+    let file = args["file"].as_str().is_some_and(|f| !f.trim().is_empty());
+    if name == "item_attach" && file && !home_down {
         match files::attach(app, &bot, home_link.as_ref(), &args).await {
             Ok(sent) => args = sent,
             Err(e) => return Some(Err(e)),

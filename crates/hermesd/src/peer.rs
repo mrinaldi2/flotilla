@@ -21,6 +21,7 @@ mod hub;
 mod inbound;
 pub mod links;
 pub mod mirror;
+mod outgoing;
 pub mod owner_actions;
 pub mod owner_trust;
 #[cfg(test)]

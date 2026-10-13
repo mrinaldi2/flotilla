@@ -205,6 +205,27 @@ async fn the_board_is_read_only_while_its_home_is_down() {
         text,
         "The board lives on mac, which is unreachable. Try again when it's back."
     );
+    // A home that is down is not a home on 0.18: no "update it" for the
+    // tools 0.19 added, and the board list says it is as last seen.
+    for (tool, args) in [
+        ("column_add", json!({"key": "qa", "name": "QA"})),
+        (
+            "item_attach",
+            json!({"id": b.item, "url": "https://example.com/a"}),
+        ),
+        ("item_attach", json!({"id": b.item, "file": "shot.png"})),
+    ] {
+        let refused = b.tester.call_raw(tool, args).await;
+        let text = refused["content"][0]["text"].as_str().unwrap_or_default();
+        assert!(text.contains("unreachable"), "{tool}: {refused}");
+    }
+    let listed = b.tester.call("board_list", json!({})).await;
+    assert!(
+        listed["offline"]
+            .as_str()
+            .is_some_and(|n| n.contains("read-only")),
+        "{listed}"
+    );
     let body = call(
         &mut b.p.win_client,
         Request::ItemGet(c::ItemGet { id: b.item.clone() }),

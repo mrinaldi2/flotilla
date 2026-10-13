@@ -75,7 +75,8 @@ pub(super) async fn attach(
 
 /// Points the attachments of an `item_get` (or the one of an
 /// `item_attach`) at local copies, and the description's references with
-/// them. One that can't be copied here loses the home's path and says why.
+/// them. One that can't be copied here loses the home's path and says why,
+/// and the description names it `attachment:<id>` again.
 pub(super) async fn localize(app: &AppState, link: &ProjectLink, result: &mut Value) {
     let home = crate::peer::board::home_name(app, &link.peer_id);
     let item_cap = app.cfg.attachments.item_mb * 1024 * 1024;
@@ -122,6 +123,11 @@ pub(super) async fn localize(app: &AppState, link: &ProjectLink, result: &mut Va
                 att["path"] = json!(path);
             }
             Err(why) => {
+                // The description names it as the home does, not by a path
+                // that means nothing here; the attachment's note says why.
+                if !old.is_empty() {
+                    moved.push((old, format!("attachment:{}", text("id"))));
+                }
                 att["path"] = json!("");
                 if !why.is_empty() {
                     att["note"] = json!(why);
