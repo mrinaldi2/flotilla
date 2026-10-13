@@ -15,6 +15,7 @@ use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 use tokio_tungstenite::tungstenite::Message as TungMessage;
 
+use super::outgoing::Outgoing;
 use crate::app::AppState;
 
 /// Version of the frames exchanged on a peer link.
@@ -72,10 +73,15 @@ async fn accept(app: Arc<AppState>, socket: WebSocket) {
     }
 
     let (in_tx, in_rx) = mpsc::unbounded_channel();
-    let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Value>();
+    let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Outgoing>();
     let writer = tokio::spawn(async move {
-        while let Some(frame) = out_rx.recv().await {
-            if sink.send(WsMessage::Text(frame.to_string())).await.is_err() {
+        // Each frame, and any slot it holds, is let go once it is sent.
+        while let Some(next) = out_rx.recv().await {
+            if sink
+                .send(WsMessage::Text(next.frame.to_string()))
+                .await
+                .is_err()
+            {
                 break;
             }
         }
@@ -216,11 +222,11 @@ async fn dial(app: &Arc<AppState>, peer_id: &str, url: &str, token: &str) -> any
     );
 
     let (in_tx, in_rx) = mpsc::unbounded_channel();
-    let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Value>();
+    let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Outgoing>();
     let writer = tokio::spawn(async move {
-        while let Some(frame) = out_rx.recv().await {
+        while let Some(next) = out_rx.recv().await {
             if sink
-                .send(TungMessage::Text(frame.to_string()))
+                .send(TungMessage::Text(next.frame.to_string()))
                 .await
                 .is_err()
             {

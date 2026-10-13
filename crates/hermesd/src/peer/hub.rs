@@ -10,6 +10,7 @@ use futures::FutureExt;
 use serde_json::{json, Value};
 use tokio::sync::{mpsc, oneshot, Notify};
 
+use super::outgoing::{answer_later, file_slots, Out};
 use crate::app::AppState;
 use crate::contain;
 use crate::events::Push;
@@ -62,7 +63,7 @@ impl std::error::Error for PeerError {}
 type Pending = Arc<Mutex<HashMap<u64, oneshot::Sender<Value>>>>;
 
 struct Link {
-    out: mpsc::UnboundedSender<Value>,
+    out: Out,
     pending: Pending,
     /// Distinguishes this link from a newer one for the same peer, so the old
     /// one closing does not unregister its replacement.
@@ -129,7 +130,7 @@ impl PeerHub {
     /// Sends an event frame: no `req_id`, and no answer expected.
     pub fn notify(&self, peer_id: &str, frame: Value) {
         if let Some(link) = self.lock().get(peer_id) {
-            let _ = link.out.send(frame);
+            let _ = link.out.send(frame.into());
         }
     }
 
@@ -173,7 +174,7 @@ impl PeerHub {
         let (tx, rx) = oneshot::channel();
         lock_pending(&pending).insert(req_id, tx);
         frame["req_id"] = json!(req_id);
-        if out.send(frame).is_err() {
+        if out.send(frame.into()).is_err() {
             lock_pending(&pending).remove(&req_id);
             return Err(PeerError::Offline);
         }
@@ -211,10 +212,11 @@ impl PeerHub {
         peer_id: String,
         kanban: u64,
         mut inbound: mpsc::UnboundedReceiver<Value>,
-        out: mpsc::UnboundedSender<Value>,
+        out: Out,
     ) {
         let generation = self.counter.fetch_add(1, Ordering::Relaxed);
         let pending: Pending = Arc::default();
+        let file_slots = file_slots();
         let closed = Arc::new(Notify::new());
         let replaced = self.lock().insert(
             peer_id.clone(),
@@ -306,12 +308,9 @@ impl PeerHub {
                 }
                 // Handled off the read loop, so one slow request (a result with
                 // artifacts to write) does not hold up the responses behind it.
-                let app = app.clone();
-                let peer_id = peer_id.clone();
-                let out = out.clone();
-                tokio::task::spawn_blocking(move || {
-                    let _ = out.send(answer(&app, &peer_id, &frame));
-                });
+                let (app, peer_id) = (app.clone(), peer_id.clone());
+                let answer = move |frame: &Value| answer(&app, &peer_id, frame);
+                answer_later(&file_slots, out.clone(), frame, answer);
             }
         };
         if let Err(panic) = std::panic::AssertUnwindSafe(read).catch_unwind().await {
