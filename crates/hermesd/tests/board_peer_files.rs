@@ -100,7 +100,20 @@ async fn a_linked_bot_attaches_its_own_file_by_sending_it_under_the_caps() {
         &screenshot(2 << 20),
     )
     .await;
+    let item = b.tester.call("item_get", json!({"id": b.item})).await;
+    let shown = format!("![big](attachment:{})", big.id);
+    let edited = b
+        .tester
+        .call(
+            "item_update",
+            json!({"id": b.item, "expected_version": item["item"]["version"],
+                   "description": shown}),
+        )
+        .await;
+    assert!(edited["item"].is_object(), "{edited}");
     let got = b.tester.call("item_get", json!({"id": b.item})).await;
+    // Not a path on the Mac: the reference the note explains.
+    assert_eq!(got["item"]["description"], shown, "{got}");
     let listed = got["attachments"].as_array().expect("attachments");
     let over = listed.iter().find(|a| a["id"] == big.id).expect("listed");
     assert_eq!(over["path"], "");
