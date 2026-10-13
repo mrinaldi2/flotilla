@@ -109,3 +109,72 @@ fn an_older_board_migrates_into_the_default_board_and_runs_again() {
         assert_eq!(db.get_item(&id).unwrap().unwrap().board_id, main.id, "{id}");
     }
 }
+
+/// Migration 67 rebuilds `item_link` for the `thread` kind: from a 0.18
+/// table (no `thread` in its CHECK) every link keeps its id, the rebuild
+/// runs again unchanged, and new links number on.
+#[test]
+fn the_link_rebuild_keeps_every_link_and_runs_again() {
+    let (db, p) = board();
+    let item = db.create_item(&new_item(&p, "Linked"), &OWNER).unwrap();
+    for target in ["feat-a", "feat-b"] {
+        db.board_tx(|t| crate::kanban::api::link(t, &item.id, LinkKind::Branch, target, None, &OWNER))
+            .unwrap();
+    }
+    let links = |db: &Db| -> Vec<(i64, String, String)> {
+        let conn = db.lock();
+        let mut stmt = conn
+            .prepare("SELECT id, kind, ref FROM item_link ORDER BY id")
+            .unwrap();
+        stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect()
+    };
+    // Back to the 0.18 table, whose CHECK has no `thread`.
+    db.lock()
+        .execute_batch(
+            "CREATE TABLE item_link_old AS SELECT * FROM item_link;
+             DROP TABLE item_link;
+             CREATE TABLE item_link (
+                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                 item_id TEXT NOT NULL REFERENCES item(id),
+                 kind TEXT NOT NULL CHECK(kind IN ('task', 'decision', 'artifact', 'branch',
+                     'pr', 'meeting', 'item:blocks', 'item:relates', 'item:duplicates')),
+                 ref TEXT NOT NULL, label TEXT, created_by TEXT NOT NULL, at TEXT NOT NULL,
+                 UNIQUE (item_id, kind, ref));
+             INSERT INTO item_link SELECT * FROM item_link_old;
+             DROP TABLE item_link_old;",
+        )
+        .unwrap();
+    let before = links(&db);
+    assert_eq!(before.len(), 2);
+    let ours = bus::schema::MIGRATIONS
+        .iter()
+        .position(|m| m.contains("CREATE TABLE item_link_next"))
+        .expect("the drafts migration");
+    for _ in 0..2 {
+        db.lock()
+            .execute(
+                "UPDATE meta SET value = ?1 WHERE key = 'schema_version'",
+                [ours.to_string()],
+            )
+            .unwrap();
+        db.migrate().unwrap();
+        assert_eq!(links(&db), before);
+    }
+    db.board_tx(|t| t.add_item_link(&item.id, LinkKind::Thread, "bot-1", Some("Lead"), &OWNER))
+        .unwrap();
+    let after = links(&db);
+    assert_eq!(after.len(), 3);
+    assert!(after[2].0 > before[1].0, "{after:?}");
+    let unique: i64 = db
+        .lock()
+        .query_row(
+            "SELECT count(*) FROM pragma_index_list('item_link') WHERE \"unique\" = 1",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(unique, 1, "the (item, kind, ref) key is kept");
+}
