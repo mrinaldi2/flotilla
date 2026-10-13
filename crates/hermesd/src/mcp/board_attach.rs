@@ -2,7 +2,7 @@
 //! file of its own or of the project's artifacts (copied in under the
 //! caps), links an artifact or a URL as a doc, or detaches one.
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 
 use bus::contract::board as c;
@@ -42,7 +42,7 @@ pub(super) fn call(
             .map(str::to_string)
     };
     let source = match (given(&req.file), given(&req.artifact), given(&req.url)) {
-        (Some(file), None, None) => Source::File(own_file(app, &me.bot, &file)?),
+        (Some(file), None, None) => own_file(app, &me.bot, &file)?,
         (None, Some(artifact), None) => Source::Artifact(artifact),
         (None, None, Some(url)) => Source::Url(url),
         _ => anyhow::bail!("give one of 'file', 'artifact' or 'url'"),
@@ -57,18 +57,18 @@ pub(super) fn call(
 }
 
 /// A file the bot may hand over: in its own folder or the project's
-/// artifacts, after links are resolved.
-fn own_file(app: &Arc<AppState>, bot: &bus::Bot, file: &str) -> anyhow::Result<PathBuf> {
+/// artifacts, after links are resolved. The attach checks again once the
+/// file is open, so a link swapped in meanwhile is refused too.
+fn own_file(app: &Arc<AppState>, bot: &bus::Bot, file: &str) -> anyhow::Result<Source> {
     let path = Path::new(&bot.workspace_path).join(file);
     let path = path
         .canonicalize()
         .map_err(|_| anyhow::anyhow!("no file {file}"))?;
+    let roots = allowed_roots(app, bot);
     anyhow::ensure!(
-        allowed_roots(app, bot)
-            .iter()
-            .any(|root| path.starts_with(root)),
+        roots.iter().any(|root| path.starts_with(root)),
         "{file} is outside your workspace and the project's artifacts"
     );
     anyhow::ensure!(path.is_file(), "{file} is not a file");
-    Ok(path)
+    Ok(Source::File { path, roots })
 }

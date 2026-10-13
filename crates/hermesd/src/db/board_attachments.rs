@@ -149,12 +149,16 @@ impl BoardTx<'_> {
         Ok(attachment_in(self.conn, id)?)
     }
 
-    /// The bytes an item's attached files hold, detached ones left out.
-    pub fn attached_bytes(&self, item_id: &str) -> anyhow::Result<u64> {
+    /// The bytes an item's files take in its folder, `besides` (a stored
+    /// path, or empty) aside. A detached file counts, since its bytes are
+    /// kept for the history; a file attached twice counts once.
+    pub fn stored_bytes(&self, item_id: &str, besides: &str) -> anyhow::Result<u64> {
         Ok(self.conn.query_row(
-            "SELECT coalesce(sum(bytes), 0) FROM item_attachment
-             WHERE item_id = ?1 AND removed_at IS NULL AND kind != 'doc'",
-            params![item_id],
+            "SELECT coalesce(sum(bytes), 0) FROM (
+                 SELECT max(bytes) AS bytes FROM item_attachment
+                 WHERE item_id = ?1 AND kind != 'doc' AND path != '' AND path != ?2
+                 GROUP BY path)",
+            params![item_id, besides],
             |r| r.get(0),
         )?)
     }
