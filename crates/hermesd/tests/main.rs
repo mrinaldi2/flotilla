@@ -93,6 +93,7 @@ mod home_recovery;
 mod inbox_registration;
 mod install_pending;
 mod item_cards;
+mod k9_acceptance;
 mod keepalive;
 mod linked_projects;
 mod mcp_runtime;
