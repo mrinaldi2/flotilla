@@ -131,6 +131,78 @@ Each rule's refusal text is generic and is generated from its parameters.
 - **Size, priority and acceptance criteria:** stay generic, but each one can
   be turned off per board.
 
+### Attachments and linked documents
+
+An item carries the material a bot needs to do the work, not just text.
+
+`item_attachment(id, item_id, kind, name, mime, bytes, sha256, path | url,
+caption, added_by, at)`
+
+- **Kinds:**
+  - `image`: screenshots and photos;
+  - `file`: PDF, Markdown, text, logs;
+  - `doc`: a link to a project artifact, or an external URL.
+- **Storage:** files are stored in the project's existing artifact store under
+  `items/<item-id>/`, so they get the same retention and backup as other
+  artifacts. Kanban stores only the record.
+- **Limits:** a type allowlist (png, jpg, heic converted to jpg, webp, gif,
+  pdf, md, txt, log) and caps of 10 MB per image, 25 MB per file and 100 MB per
+  item. Both are configurable.
+- **In the description:** images can appear inline as
+  `![caption](attachment:<id>)`. An attachment that is removed shows as a
+  placeholder, never as a broken link.
+- **What bots get:** `item_get` lists every attachment with a local path the
+  bot can read. Claude Code reads images directly. A task delegated with
+  `item:` carries the list too, so the assignee starts from the screenshots and
+  documents, not a summary of them.
+- **Untrusted content:** attachments are content to read. The prompt's board
+  section says so, as it already does for notes, and a bot never follows
+  instructions inside an attachment.
+- **Linked computers:** bytes stay on the home. A bot elsewhere gets them
+  through the `attachment_fetch` peer frame into a local cache keyed by
+  `sha256`, under the same caps.
+
+### Drafts: discuss an item before it exists
+
+An item can start as a **draft**, so that the owner can work it out with a bot
+before it reaches the board.
+
+`item.state` is `draft | live`. A draft:
+
+- **Has its id from the start** (`RB-20`), so the conversation can name it.
+- **Sits in no column.** It doesn't count for WIP, staleness or metrics, and
+  `board_get` and `item_query` leave it out.
+- **Can't be moved.** `item_move` refuses it with "Finalize the draft first".
+- **Is visible only to the owner and to the bots invited to discuss it.**
+
+The flow, from the desktop or the phone:
+
+1. The owner creates the item, with a title, type, description and any
+   screenshots or documents. It is saved as a draft.
+2. **Discuss with a bot** (under the description) picks a bot, the lead by
+   default. It opens that bot's chat pinned to the draft.
+   - Messages go as `send_user_message{item_id}`, which exists today.
+   - The bot receives the draft, its attachments and the board's template for
+     the type.
+3. While invited, the bot may use these tools on the draft:
+   - `item_update`: title, description, acceptance criteria, type, size,
+     labels;
+   - `item_attach` / `item_detach`;
+   - `item_link`, for example an artifact it wrote.
+   - Each change is recorded as a draft revision with its author.
+4. The owner comes back to the draft from the board's Drafts tray or a Needs
+   you row ("Lead updated draft RB-20"). The review shows every change since
+   the owner last looked, with per-change undo.
+5. **Finalize** sets the draft `live` in the column the owner picks (the first
+   `open` column by default). The column's entry rules then apply as for any
+   new item. **Discard** cancels the draft and keeps its history.
+
+Only the owner finalizes or discards. A bot can't finalize, and inviting a bot
+gives it no other board rights.
+
+The discussion belongs to the bot's chat, not to Kanban. Kanban records a
+`thread` link on the item, so the drawer can open the conversation again.
+
 ### Presets
 
 A board is created from a preset and edited afterwards. Presets are data, not
@@ -184,6 +256,12 @@ with a notice. Every structure change is a board event in the board's history.
 
 - The item tools are unchanged, except that `item_create` takes `board?`, which
   defaults to the default board.
+- New item tools:
+  - `item_attach(item, artifact | url | file)` and `item_detach`, for members,
+    and for the bot invited to a draft;
+  - `item_get` also returns `attachments[]` and `state`;
+  - `item_update`, `item_attach` and `item_link` accept a draft only from a bot
+    invited to discuss it.
 - Release, PR and meeting tools leave the board dispatcher. They no longer
   require a board to exist or use board roles; they use project roles.
 
@@ -192,6 +270,13 @@ with a notice. Every structure change is a board event in the board's history.
 - A new `hermes.kanban.v1` package mirrors the MCP set for the owner.
 - It also serves the item edits that are refused over WebSocket today:
   create, update, assign, rank, link, block and checking acceptance criteria.
+- Drafts and attachments:
+  - `item_create{draft: true}`;
+  - `item_invite(item, bot)`;
+  - `item_finalize(item, column?)` and `item_discard(item, reason)`, which need
+    `control`;
+  - `item_draft_changes(item, since)`;
+  - attachment upload as chunked binary frames, then `item_attach`.
 - Pushes:
   - `BOARD_ADDED`, `BOARD_CHANGED`, `BOARD_ARCHIVED`, `COLUMNS_CHANGED` (now
     emitted on every structure change), `ITEM_*`;
@@ -227,6 +312,10 @@ The migration is one-way, runs at daemon start, and is preceded by an automatic
 6. Store `project_role.role` as free text, with no `CHECK`. Remove name-based
    role guessing; roles come from the preset and from the owner.
 7. Leave `required_machines` with Releases, keyed by label.
+8. Add `item.state` (every existing item becomes `live`), plus the
+   `item_attachment` and `item_draft_invite` tables.
+   - Existing `artifact` links stay links.
+   - Nothing is converted into attachments.
 
 The Release-gated preset must pass the current guard test table before any
 other change lands. That proves the migration keeps existing boards working.
@@ -243,9 +332,10 @@ branch is reviewed as one PR into `main` at the end.
 | K2 | Schema: `board` table, `board_id` everywhere, column `kind`, migration, labels. | The migration test on a copy of a real 0.18 database keeps every item, link and event. |
 | K3 | Rule library, movers, automations, predicates. The Release-gated preset reproduces today's guards. | The guard test table passes against the preset. |
 | K4 | Board management over MCP and WebSocket, structure policy, decisions for proposals, board events, bot notices, stale-version refusals, generated prompt section. | A lead bot creates and edits a board end to end on the double runtime. |
-| K5 | Desktop UI (apps doc). | Ladle stories and visual baselines exist for every new view. |
-| K6 | Linked computers: a mirror per board, `board_id` in peer frames, a 0.18 peer compatibility path. | A bot on a linked computer edits a board homed on another computer. |
-| K7 | Phone app (separate repository): vendored `kanban.v1`, board picker, live sync, move, quick add, approving proposals. | Works against a 0.19 daemon and still reads a 0.18 one. |
+| K4b | Attachments (store, caps, upload, `item_attach`, inline images) and drafts (state, invite, draft revisions, finalize and discard, the Needs you row). | A bot invited to a draft reads a screenshot, edits the draft and links a doc. The owner sees each change and finalizes it. |
+| K5 | Desktop UI (apps doc), including attachments, the Drafts tray, "Discuss with a bot" and draft review. | Ladle stories and visual baselines exist for every new view. |
+| K6 | Linked computers: a mirror per board, `board_id` in peer frames, `attachment_fetch`, a 0.18 peer compatibility path. | A bot on a linked computer edits a board homed on another computer and reads an item's screenshot. |
+| K7 | Phone app (separate repository): vendored `kanban.v1`, board picker, live sync, move, quick add with photos and screenshots, "Discuss with a bot", draft review and finalize, approving proposals. | Works against a 0.19 daemon and still reads a 0.18 one. |
 | K8 | Remove what was specific to this repository: the Platform enum, `spec_link_for_ui_or_daemon`, `H-017` examples, name-based role guessing, iOS-only machine constants in Kanban. | A search for these terms in `crates/hermesd/src/kanban` finds nothing. |
 | K9 | Acceptance on a **fresh test project unrelated to this app**, on this computer and one linked computer. | See below. |
 
@@ -257,12 +347,18 @@ branch is reviewed as one PR into `main` at the end.
    proposal in Needs you.
 3. The owner adds a "QA" column by hand in the desktop app. The lead is
    notified and its next `board_get` shows the column.
-4. Items flow To do → Doing → QA → Done. A refusal names the missing rule.
-5. A second board, "Research", is created from the phone app's approval of a
+4. On the phone, the owner creates a draft with a screenshot and taps
+   **Discuss with a bot**.
+   - The lead adds acceptance criteria and links a spec it writes.
+   - On the desktop, the owner reviews the lead's changes, undoes one and
+     finalizes the item.
+   - The assignee's task lists the screenshot and the spec.
+5. Items flow To do → Doing → QA → Done. A refusal names the missing rule.
+6. A second board, "Research", is created from the phone app's approval of a
    proposal.
-6. A bot on a linked computer moves an item. Reads still work while the home
+7. A bot on a linked computer moves an item. Reads still work while the home
    computer is offline; writes are refused with the home's name.
-7. Nothing in the project mentions desktop, iOS, daemon or releases.
+8. Nothing in the project mentions desktop, iOS, daemon or releases.
 
 ## Out of scope for 0.19.0
 
@@ -287,5 +383,9 @@ These are the next steps, each with its own plan:
    says yes.
 3. Should a fact with no mapping on a board be ignored silently, or shown on the
    card as "PR merged — no column mapped"? The proposal shows it on the card.
-4. Phone scope for 0.19.0: is reading, moving, quick add and approving proposals
-   enough, leaving board editing to the desktop?
+4. Phone scope for 0.19.0: is reading, moving, quick add, drafts and approving
+   proposals enough, leaving board editing to the desktop?
+5. Should the lead also be allowed to finalize a draft the owner started, or
+   only the owner? The proposal says only the owner.
+6. Are the attachment caps right: 10 MB per image, 25 MB per file, 100 MB per
+   item?
