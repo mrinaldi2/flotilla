@@ -14,7 +14,7 @@ use chrono::{DateTime, Duration, Utc};
 use common::prs::{approve, clone, commit, error, give, move_main, opened, setup, Repo};
 use common::repo::{git, remote};
 use common::WsClient;
-use hermesd::board::model::Role;
+use hermesd::kanban::model::Role;
 use hermesd::pr_cli::{merge_in, Plan};
 use hermesd::prs::merge::answer;
 use hermesd::prs::queue;
@@ -177,7 +177,7 @@ async fn devops_with_the_extra_fast_forwards_main_to_the_head() {
     commit(&author, "later.txt", "later\n");
     git(&author, &["push", "-q", "origin", "H-1-search"]);
     let moved = tip(&r.origin, "refs/heads/H-1-search").unwrap();
-    assert!(hermesd::board::release::git::delete_branch(&tree, "H-1-search", &head).is_err());
+    assert!(hermesd::releases::git::delete_branch(&tree, "H-1-search", &head).is_err());
     assert_eq!(tip(&r.origin, "refs/heads/H-1-search").unwrap(), moved);
 }
 

@@ -13,8 +13,8 @@ use bus::Peer;
 use super::PeerEntry;
 use crate::app::AppState;
 use crate::attention::{self, cut, key, timestamp};
-use crate::board::model::{BoardColumn, ColumnCategory, ItemCard};
 use crate::db::Db;
+use crate::kanban::model::{BoardColumn, ColumnCategory, ItemCard};
 
 /// The most Doing cards a row lists.
 const DOING_SHOWN: usize = 3;
@@ -33,7 +33,7 @@ pub fn overview(app: &AppState, project_ids: &[String]) -> anyhow::Result<Projec
     let me = app.db.daemon_id()?;
     let computer = app
         .db
-        .board_read(crate::board::release::machines::this_computer)?;
+        .board_read(crate::releases::machines::this_computer)?;
     let asked: HashMap<String, Asked> = app
         .db
         .list_peers()?

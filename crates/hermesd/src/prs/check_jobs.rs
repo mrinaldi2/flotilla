@@ -19,13 +19,13 @@ use serde_json::json;
 use tokio::sync::Notify;
 
 use crate::app::AppState;
-use crate::board::release::machines;
 use crate::check_exec::{self, Outcome, Spec};
 use crate::prs::check_checkout;
 use crate::prs::check_model::{CheckResult, CheckRun, Report};
 use crate::prs::check_route::{is_heavy, needs_of, route, Limits, Machine, Route};
 use crate::prs::checks::{self, short, RunLog};
 use crate::prs::repo;
+use crate::releases::machines;
 
 /// The runner every check is dispatched to: the daemon itself. Not a bot,
 /// so nothing can message it, and never a PR's author or pusher.

@@ -11,7 +11,7 @@ use rusqlite::{Connection, TransactionBehavior};
 
 use crate::prs::feed::PrChange;
 
-use crate::board::model::{Item, ItemComment, ItemLink, LinkKind};
+use crate::kanban::model::{Item, ItemComment, ItemLink, LinkKind};
 
 use super::{Actor, Db, ItemEdit, MoveTo, NewItem, Write};
 

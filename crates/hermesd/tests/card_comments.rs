@@ -11,8 +11,8 @@ use common::board::{call, new_item, response};
 use common::tasks::project_with_bots;
 use common::*;
 use hermesd::actor::Actor;
-use hermesd::board::model::Priority;
 use hermesd::db::Db;
+use hermesd::kanban::model::Priority;
 use serde_json::json;
 
 const LEAD: usize = 0;

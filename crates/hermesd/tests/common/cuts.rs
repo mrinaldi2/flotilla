@@ -6,8 +6,8 @@ use std::path::{Path, PathBuf};
 
 use bus::PermissionExtra;
 use hermesd::actor::Actor;
-use hermesd::board::model::{ProjectRole, Role};
 use hermesd::db::MoveTo;
+use hermesd::kanban::model::{ProjectRole, Role};
 use serde_json::{json, Value};
 
 use super::prs::{clone, commit, give, setup, Repo};

@@ -9,12 +9,12 @@ use serde_json::{json, Value};
 use super::legacy::{relayed_row, relayed_ruling};
 use super::{decision_weight, row_id, timestamp, title, weight, Built};
 use crate::app::AppState;
-use crate::board::model::{ColumnCategory, Priority};
-use crate::board::release::confine;
-use crate::board::release::model::{Release, ReleaseStatus};
 use crate::db::DecisionFilter;
 use crate::decisions::authority::is_relayed;
+use crate::kanban::model::{ColumnCategory, Priority};
 use crate::owner_action::model::State as ActionState;
+use crate::releases::confine;
+use crate::releases::model::{Release, ReleaseStatus};
 
 /// Which of a project's rows a computer builds.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

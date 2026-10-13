@@ -13,7 +13,7 @@ use chrono::{Duration, Utc};
 use common::prs::{approve, clone, commit, give, opened, pr, setup, Repo};
 use common::repo::git;
 use common::WsClient;
-use hermesd::board::model::Role;
+use hermesd::kanban::model::Role;
 use hermesd::prs::check_jobs::SYSTEM_RUNNER;
 use hermesd::prs::check_model::CheckResult;
 use hermesd::prs::checks::RunLog;

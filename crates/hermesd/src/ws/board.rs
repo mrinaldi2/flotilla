@@ -1,7 +1,7 @@
 //! The board's WS surface (H-020 §1.5): typed `BoardRequest`s in binary
 //! frames, served by the board service with the connection's grants, and
 //! `board_event` pushes to the connections watching a project. The adapter
-//! holds no rule: moves go through `board::moves`, reads through one
+//! holds no rule: moves go through `kanban::moves`, reads through one
 //! `board_read` snapshot each.
 
 use std::collections::HashSet;
@@ -16,9 +16,9 @@ use tokio::task::JoinHandle;
 use super::binary;
 use super::Conn;
 use crate::actor::Actor;
-use crate::board::feed::{card_after_commit, BoardChange, BoardFeed, Change, ChangeKind};
-use crate::board::moves::{self, MoveRequest, Moved};
-use crate::board::team;
+use crate::kanban::feed::{card_after_commit, BoardChange, BoardFeed, Change, ChangeKind};
+use crate::kanban::moves::{self, MoveRequest, Moved};
+use crate::kanban::team;
 
 mod edits;
 mod enable;

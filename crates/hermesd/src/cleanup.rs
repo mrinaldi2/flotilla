@@ -35,8 +35,8 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 
 use crate::app::AppState;
-use crate::board::release::machines;
 use crate::prs::model::Pr;
+use crate::releases::machines;
 use batch::{Batch, Discovered, Work};
 pub use merged::{ready, verify_merge};
 use model::{human_bytes, Job, JobState, Kind, NewJob, Outcome};

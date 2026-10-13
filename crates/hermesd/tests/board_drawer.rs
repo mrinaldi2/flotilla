@@ -8,8 +8,8 @@ use bus::contract::board::{self as c, board_request::Request, board_response::Re
 use common::board::*;
 use common::*;
 use hermesd::actor::Actor;
-use hermesd::board::model::{ItemType, Platform, Priority};
 use hermesd::db::NewItem;
+use hermesd::kanban::model::{ItemType, Platform, Priority};
 
 fn comment(id: &str, body: &str) -> Request {
     Request::ItemComment(c::ItemAddComment {

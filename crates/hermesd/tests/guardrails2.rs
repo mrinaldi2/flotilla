@@ -268,8 +268,8 @@ async fn a_lead_reading_a_result_of_a_carded_task_is_on_the_board() {
 
 #[tokio::test]
 async fn a_tester_on_a_deploy_task_is_on_the_board() {
-    use hermesd::board::release::model::DeployAction;
     use hermesd::messaging::{daemon_sender, send_dm, Dm};
+    use hermesd::releases::model::DeployAction;
 
     let mut r = common::releases::releases(1).await;
     let app = r.pair.d.app.clone();

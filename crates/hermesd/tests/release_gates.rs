@@ -8,7 +8,7 @@ mod common;
 use bus::PermissionExtra;
 use common::releases::{releases, Releases};
 use common::*;
-use hermesd::board::release::gates::serve;
+use hermesd::releases::gates::serve;
 use serde_json::{json, Value};
 
 const C1: &str = "1111111111111111111111111111111111111111";

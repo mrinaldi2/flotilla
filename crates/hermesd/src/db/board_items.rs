@@ -3,7 +3,7 @@
 //! event in the same transaction. Reads assemble the contract's `Item` and
 //! `ItemCard`.
 
-use crate::board::model::{
+use crate::kanban::model::{
     AcceptanceCriterion, Blocked, ColumnCategory, Item, ItemCard, ItemEvent, ItemEventKind,
     ItemPerson, ItemType, ItemVerification, Platform, Priority, Size,
 };
@@ -17,7 +17,7 @@ use super::board::{
 };
 use super::board_tx::BoardTx;
 use super::{ts, Actor, Db};
-use crate::board::{defaults, rank};
+use crate::kanban::{defaults, rank};
 
 /// The outcome of a versioned write: done, or refused because someone else
 /// changed the record first, with what it is now.

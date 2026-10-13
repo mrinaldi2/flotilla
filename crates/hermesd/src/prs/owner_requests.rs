@@ -11,9 +11,9 @@ use std::sync::Arc;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::policy::base;
 use crate::db::OwnerProof;
 use crate::prs::owner::{self, Mode, Settings};
+use crate::prs::policy::base;
 use crate::prs::review_model::{Finding, Verdict};
 
 fn number(req: &Value) -> anyhow::Result<u32> {
@@ -158,7 +158,7 @@ pub fn serve(
                 .flatten()
                 .filter_map(|n| n.as_u64().and_then(|n| u32::try_from(n).ok()))
                 .collect();
-            let out = crate::board::release::leave_out::request(
+            let out = crate::releases::leave_out::request(
                 app,
                 project,
                 release,

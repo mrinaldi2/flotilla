@@ -36,7 +36,7 @@ async fn the_mirror_follows_every_version_the_home_writes() {
     let item = mac.app.db.get_item(&b.item).unwrap().expect("item");
     // A write outside the tools, as a retiring bot's handback does.
     let bot = mac.app.db.get_bot(&b.stand_in).unwrap().expect("stand-in");
-    hermesd::board::handback::items_to_lead(&mac.app, &bot, &Actor::User).expect("handback");
+    hermesd::kanban::handback::items_to_lead(&mac.app, &bot, &Actor::User).expect("handback");
     let now = mac.app.db.get_item(&b.item).unwrap().expect("item").version;
     assert!(now > item.version);
     let win_app = b.win_app.clone();

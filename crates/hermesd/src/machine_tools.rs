@@ -13,8 +13,8 @@ use std::time::{Duration, Instant};
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::release::machines;
 use crate::prs::check_route::{DISK_FREE_GB, OS};
+use crate::releases::machines;
 
 /// The tools probed, and the flag that prints each one's version.
 pub const TOOLS: [(&str, &str); 7] = [

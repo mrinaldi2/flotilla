@@ -13,7 +13,7 @@ use std::net::TcpListener;
 use common::release_phone::{ours, published, set_status};
 use common::releases::Releases;
 use common::WsClient;
-use hermesd::board::release::model::ReleaseStatus;
+use hermesd::releases::model::ReleaseStatus;
 use serde_json::{json, Value};
 
 #[tokio::test]

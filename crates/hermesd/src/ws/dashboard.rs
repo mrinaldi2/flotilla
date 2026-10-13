@@ -15,7 +15,7 @@ use chrono::{Duration, Utc};
 use serde_json::{json, Value};
 
 use super::Conn;
-use crate::board::model::{ColumnCategory, ItemCard};
+use crate::kanban::model::{ColumnCategory, ItemCard};
 
 /// The window "this week" covers: the last seven days, as of the read.
 const WEEK_DAYS: i64 = 7;
@@ -130,7 +130,7 @@ impl Conn {
             .collect::<anyhow::Result<Vec<_>>>()?;
         // Meetings live with the board, on its home (H-102).
         let (meetings, action_items) = if local {
-            crate::board::meetings::dashboard(&self.app, project_id)?
+            crate::meetings::dashboard(&self.app, project_id)?
         } else {
             (json!([]), json!([]))
         };
@@ -194,7 +194,7 @@ fn linked_needs(
 fn mirrored(
     app: &crate::app::AppState,
     project_id: &str,
-) -> (Vec<crate::board::model::BoardColumn>, Vec<ItemCard>) {
+) -> (Vec<crate::kanban::model::BoardColumn>, Vec<ItemCard>) {
     let Some(board) = app.board_mirror.get(project_id) else {
         return (Vec::new(), Vec::new());
     };

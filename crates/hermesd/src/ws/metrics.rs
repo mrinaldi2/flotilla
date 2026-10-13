@@ -13,7 +13,7 @@ use serde_json::{json, Value};
 
 use super::Conn;
 use crate::app::AppState;
-use crate::board::metrics::{compute, Column};
+use crate::kanban::metrics::{compute, Column};
 
 /// Days a range covers.
 fn range_days(range: Option<&str>) -> anyhow::Result<i64> {

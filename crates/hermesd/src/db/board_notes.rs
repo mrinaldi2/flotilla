@@ -2,7 +2,7 @@
 //! links aren't versioned: two people may comment at once, and linking the
 //! same thing twice is harmless. Each still records its history event.
 
-use crate::board::model::{Item, ItemComment, ItemEventKind, ItemLink, LinkKind};
+use crate::kanban::model::{Item, ItemComment, ItemEventKind, ItemLink, LinkKind};
 use bus::{new_id, now};
 use rusqlite::{params, Connection};
 

@@ -48,7 +48,7 @@ pub(super) fn serve(app: &Arc<AppState>, peer: &Peer, frame: &Value) -> anyhow::
     if kind != "review_settings_get" && !trusted(app) {
         let home = app
             .db
-            .board_read(crate::board::release::machines::this_computer)?;
+            .board_read(crate::releases::machines::this_computer)?;
         return Err(refuse("forbidden", approve_elsewhere(&home)));
     }
     let proof = match frame

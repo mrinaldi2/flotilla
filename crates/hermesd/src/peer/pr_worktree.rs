@@ -12,9 +12,9 @@ use bus::{Bot, Peer, ProjectLink};
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::release::machines;
 use crate::prs::model::PrWorktree;
 use crate::prs::{repo, worktree};
+use crate::releases::machines;
 
 /// The tools that carry a worktree.
 fn carries(tool: &str) -> bool {

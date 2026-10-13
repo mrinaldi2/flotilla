@@ -6,7 +6,7 @@
 use bus::{now, TaskState};
 use rusqlite::{params, Connection, OptionalExtension};
 
-use crate::board::model::{ItemEventKind, LinkKind};
+use crate::kanban::model::{ItemEventKind, LinkKind};
 
 use super::board::to_text;
 use super::{ts, Actor, Db};

@@ -83,9 +83,9 @@ pub struct AppState {
     /// The temporary-worker queue's wake-up and placement lock.
     pub workers: crate::workers::Workers,
     /// Board changes, numbered per project, for the clients watching them.
-    pub board: crate::board::feed::BoardFeed,
+    pub board: crate::kanban::feed::BoardFeed,
     /// Boards whose home is a peer, as last seen (B9).
-    pub board_mirror: crate::board::mirror::BoardMirror,
+    pub board_mirror: crate::kanban::mirror::BoardMirror,
     /// The projects home's peer answers and liveness (H-128).
     pub overview: crate::overview::Overview,
     /// Bots that used a bearer token, and when (H-044 phase 1).
@@ -93,7 +93,7 @@ pub struct AppState {
     /// The owner's one-time tickets and the app check behind them (H-044 T4).
     pub owner: crate::bus_auth::owner::Owner,
     /// Paired devices connected now, for Send to phone (H-229).
-    pub live_devices: crate::board::release::phone::LiveDevices,
+    pub live_devices: crate::releases::phone::LiveDevices,
     pub started_at: Instant,
     /// Wall-clock start, kept alongside the monotonic `started_at` purely so
     /// [`AppState::stale_build`] can compare it against a file mtime.
@@ -148,8 +148,8 @@ impl AppState {
             approvals: crate::approval::Approvals::default(),
             browsers: crate::browser::streams::BrowserStreams::default(),
             workers: crate::workers::Workers::default(),
-            board: crate::board::feed::BoardFeed::default(),
-            board_mirror: crate::board::mirror::BoardMirror::default(),
+            board: crate::kanban::feed::BoardFeed::default(),
+            board_mirror: crate::kanban::mirror::BoardMirror::default(),
             overview: crate::overview::Overview::default(),
             bearers: crate::bus_auth::BearerLog::default(),
             owner: crate::bus_auth::owner::Owner::new(&cfg_home),

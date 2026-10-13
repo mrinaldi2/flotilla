@@ -8,9 +8,9 @@ use bus::contract::board as c;
 use bus::MessageKind;
 
 use crate::app::AppState;
-use crate::board::contract::maybe_at;
-use crate::board::model::ColumnCategory;
 use crate::db::OwnerQuestion;
+use crate::kanban::contract::maybe_at;
+use crate::kanban::model::ColumnCategory;
 use crate::messaging;
 
 /// Whether the owner has answered `q` on its card, or the card is closed.

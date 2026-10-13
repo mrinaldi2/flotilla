@@ -5,7 +5,7 @@
 
 use rusqlite::{params, OptionalExtension};
 
-use crate::board::model::ItemComment;
+use crate::kanban::model::ItemComment;
 
 use super::{ts, Db};
 

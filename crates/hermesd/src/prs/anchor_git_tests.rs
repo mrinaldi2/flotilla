@@ -4,7 +4,7 @@
 
 use std::path::Path;
 
-use crate::board::release::git_cache::{self, Hunk};
+use crate::releases::git_cache::{self, Hunk};
 use crate::safe_git::canonical;
 use crate::safe_git::tests::plain;
 

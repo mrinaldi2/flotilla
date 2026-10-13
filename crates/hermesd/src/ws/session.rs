@@ -118,7 +118,7 @@ async fn serve(
     // install offers go to its own connections only.
     let _presence = device_id
         .as_deref()
-        .map(|id| crate::board::release::phone::Presence::enter(&app, id));
+        .map(|id| crate::releases::phone::Presence::enter(&app, id));
     let push_device = device_id.clone();
     let mut push_task = AbortOnDrop(tokio::spawn(async move {
         loop {

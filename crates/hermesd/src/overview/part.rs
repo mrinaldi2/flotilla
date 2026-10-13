@@ -9,8 +9,8 @@ use serde_json::Value;
 
 use crate::app::AppState;
 use crate::attention::{self, cut, timestamp, Scope};
-use crate::board::model::ColumnCategory;
-use crate::board::release::model::{Release, ReleaseStatus};
+use crate::kanban::model::ColumnCategory;
+use crate::releases::model::{Release, ReleaseStatus};
 
 /// The longest meeting summary a row carries.
 const SUMMARY_MAX: usize = 200;
@@ -93,7 +93,7 @@ fn current_release(app: &AppState, project_id: &str) -> anyhow::Result<Option<Re
         })
         .count();
     // Shown, never a gate: a failure reads as nothing waiting.
-    let waiting = crate::board::release::blockers::owner_blockers(app, release)
+    let waiting = crate::releases::blockers::owner_blockers(app, release)
         .map(|b| b.len())
         .unwrap_or_default();
     Ok(Some(brief(release, done, waiting)))

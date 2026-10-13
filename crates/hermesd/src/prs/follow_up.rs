@@ -6,9 +6,9 @@ use std::sync::Arc;
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::{ItemType, LinkKind, Priority, Role};
 use crate::db::NewItem;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
+use crate::kanban::model::{ItemType, LinkKind, Priority, Role};
 
 /// `pr_follow_up`: the reviewer, the PR's author or the lead files finding
 /// `index` of review `review_id` as an Inbox card; returns its id.
@@ -67,7 +67,8 @@ pub fn file(
     };
     let mut findings = review.findings.clone();
     let item = app.db.board_tx(|t| {
-        let item = t.create_item(
+        let item = crate::kanban::api::create(
+            t,
             &NewItem {
                 project_id: project,
                 item_type: ItemType::Chore,
@@ -82,7 +83,14 @@ pub fn file(
             },
             &actor,
         )?;
-        t.add_item_link(&item.id, LinkKind::ItemRelates, &pr.item_id, None, &actor)?;
+        crate::kanban::api::link(
+            t,
+            &item.id,
+            LinkKind::ItemRelates,
+            &pr.item_id,
+            None,
+            &actor,
+        )?;
         findings[index].follow_up_item_id = Some(item.id.clone());
         t.set_review_findings(&review.id, &findings)?;
         Ok(item)

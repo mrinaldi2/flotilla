@@ -7,7 +7,7 @@ use bus::contract::board as c;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::import::service::{run, summary};
+use crate::kanban::import::service::{run, summary};
 
 use super::board::{out, Me};
 

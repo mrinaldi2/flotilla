@@ -63,8 +63,8 @@ pub(super) fn owner_driven(kind: &str) -> bool {
 
 impl Conn {
     /// The owner as a role assigner, proved or on the owner token.
-    pub(super) fn assigner(&self) -> crate::board::team::Assigner<'static> {
-        crate::board::team::Assigner::Owner {
+    pub(super) fn assigner(&self) -> crate::kanban::team::Assigner<'static> {
+        crate::kanban::team::Assigner::Owner {
             proved: self.owner_proof().is_some(),
         }
     }

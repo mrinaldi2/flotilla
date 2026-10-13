@@ -1,7 +1,7 @@
 //! Board storage: seeding, the id sequence, ranks, versioned writes, history
 //! and search.
 
-use crate::board::model::*;
+use crate::kanban::model::*;
 
 use super::board_edit::ItemEdit;
 use super::board_items::{NewItem, Write};

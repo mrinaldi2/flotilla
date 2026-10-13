@@ -8,10 +8,10 @@ mod common;
 use common::cuts::{checkout, cut, cuts, leave_out, merged, DEVOPS};
 use common::prs::{clone, commit};
 use common::repo::git;
-use hermesd::board::release::leave_out_cli::{revert_in, Plan};
-use hermesd::board::release::leave_out_gate::executor;
 use hermesd::prs::merge::answer;
 use hermesd::prs::queue;
+use hermesd::releases::leave_out_cli::{revert_in, Plan};
+use hermesd::releases::leave_out_gate::executor;
 use serde_json::{json, Value};
 
 /// The release 0.18.0 of two merged PRs, the first left out: returns the

@@ -7,8 +7,8 @@ mod common;
 use common::releases::releases;
 use common::tasks::error_text;
 use hermesd::actor::Actor;
-use hermesd::board::model::{ItemType, Platform, Priority, Size};
 use hermesd::db::{MoveTo, NewItem};
+use hermesd::kanban::model::{ItemType, Platform, Priority, Size};
 use serde_json::json;
 
 #[tokio::test]

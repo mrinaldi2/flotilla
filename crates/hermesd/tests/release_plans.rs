@@ -8,8 +8,8 @@ use common::releases::{releases, Releases};
 use common::tasks::error_text;
 use common::WsClient;
 use hermesd::actor::Actor;
-use hermesd::board::model::{ItemType, Platform, Priority};
 use hermesd::db::{MoveTo, NewItem};
+use hermesd::kanban::model::{ItemType, Platform, Priority};
 use serde_json::{json, Value};
 
 /// A new item left where `create_item` puts it (not in Verify).

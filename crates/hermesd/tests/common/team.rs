@@ -2,8 +2,8 @@
 //! the board workflow tests (H-099).
 
 use hermesd::actor::Actor;
-use hermesd::board::model::{ItemType, Platform, Priority};
 use hermesd::db::{MoveTo, NewItem};
+use hermesd::kanban::model::{ItemType, Platform, Priority};
 use serde_json::json;
 
 use super::tasks::{project_with_bots, Pair};

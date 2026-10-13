@@ -2,8 +2,8 @@
 //! tester on machine "mac", and items already in Verify.
 
 use hermesd::actor::Actor;
-use hermesd::board::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use hermesd::db::{MoveTo, NewItem};
+use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 use super::tasks::{project_with_bots_on, Pair};

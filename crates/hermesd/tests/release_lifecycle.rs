@@ -227,7 +227,7 @@ async fn the_owner_holds_a_package_and_it_comes_back() {
     // The reminder comes due: the decision sweep resumes it, and the
     // package waits for the owner again.
     assert!(d.app.db.try_resume(decision_id).unwrap());
-    hermesd::board::release::lifecycle::on_decision_resumed(&d.app, decision_id).unwrap();
+    hermesd::releases::lifecycle::on_decision_resumed(&d.app, decision_id).unwrap();
     let back = owner
         .request(json!({"type": "get_release", "release_id": id}))
         .await;

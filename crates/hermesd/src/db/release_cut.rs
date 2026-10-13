@@ -4,7 +4,7 @@
 use bus::{new_id, now};
 use rusqlite::{params, Connection, OptionalExtension};
 
-use crate::board::release::model::{Cut, CutPr};
+use crate::releases::model::{Cut, CutPr};
 
 use super::board_tx::BoardTx;
 use super::ts;

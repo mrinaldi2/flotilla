@@ -6,9 +6,9 @@
 use bus::now;
 use rusqlite::{params, Connection, OptionalExtension};
 
-use crate::board::model::ColumnCategory;
-use crate::board::release::machines;
-use crate::board::release::model::{PlanItem, Release, ReleaseStatus};
+use crate::kanban::model::ColumnCategory;
+use crate::releases::machines;
+use crate::releases::model::{PlanItem, Release, ReleaseStatus};
 
 use super::board_items::item_in;
 use super::board_tx::BoardTx;

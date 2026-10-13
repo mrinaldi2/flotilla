@@ -13,8 +13,8 @@ use std::time::Duration;
 use common::board::new_item;
 use common::peers::{team, wait_until, Team};
 use common::*;
-use hermesd::board::model::{Priority, ProjectRole, Role};
 use hermesd::db::OwnerVia;
+use hermesd::kanban::model::{Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 /// The PC's name for the Mac.

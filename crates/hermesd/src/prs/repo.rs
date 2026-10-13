@@ -5,8 +5,8 @@
 use std::path::PathBuf;
 
 use crate::app::AppState;
-use crate::board::release::git::github_https;
-use crate::board::release::git_cache;
+use crate::releases::git::github_https;
+use crate::releases::git_cache;
 
 /// A repository a project's PRs live in.
 pub struct Repo {

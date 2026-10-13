@@ -8,17 +8,17 @@ use bus::{MessageKind, TaskState, DEFAULT_TASK_DEADLINE_HOURS};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::Role;
-use crate::board::policy::base as policy;
-use crate::board::policy::ReviewRole;
-use crate::board::release::git_cache;
 use crate::db::reviews::NewReview;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
+use crate::kanban::model::Role;
 use crate::messaging::{self, daemon_sender, Dm};
 use crate::prs::model::Pr;
 use crate::prs::owner::Shape;
+use crate::prs::policy::base as policy;
+use crate::prs::policy::ReviewRole;
 use crate::prs::repo;
 use crate::prs::review_model::{Finding, Review, Verdict};
+use crate::releases::git_cache;
 
 /// A bot's verdict, as `pr_review` carries it.
 pub struct Submit<'a> {
@@ -182,10 +182,10 @@ pub fn needs(app: &AppState, pr: &Pr) -> anyhow::Result<(Vec<ReviewRole>, Shape)
     let base = policy::read(&cache, &pr.base_sha)?;
     let changed = git_cache::changed_paths(&cache, &pr.base_sha, &pr.head_sha)?;
     // Read from the paths alone, so a broken reviewers.toml can't hide it.
-    let policy = crate::board::policy::touches_policy(&changed);
+    let policy = crate::prs::policy::touches_policy(&changed);
     let shape = match &base.reviewers {
         Ok(reviewers) => {
-            let areas = crate::board::policy::matched_areas(reviewers, &changed);
+            let areas = crate::prs::policy::matched_areas(reviewers, &changed);
             Shape {
                 security: policy || areas.iter().any(|a| a.roles.contains(&ReviewRole::Ce)),
                 areas: areas.iter().map(|a| a.name.clone()).collect(),

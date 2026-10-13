@@ -7,11 +7,11 @@
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::release::git_cache;
 use crate::db::comments::{Comment, NewComment};
 use crate::decisions::{forbidden, invalid, not_found};
 use crate::prs::model::Pr;
 use crate::prs::{anchor, repo};
+use crate::releases::git_cache;
 
 /// What a comment says, from the owner's WS or a bot's tool.
 pub struct Write<'a> {

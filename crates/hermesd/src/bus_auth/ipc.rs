@@ -160,19 +160,17 @@ pub(super) async fn serve_connection<S>(
         let reply = match super::hook::serve(&app, bot_id, &request).await {
             Some(reply) => Some(reply),
             // `hermesd release land` / `build-installer` (H-117 X2, X3).
-            None => match crate::board::release::gates::serve(&app, bot_id, &request) {
+            None => match crate::releases::gates::serve(&app, bot_id, &request) {
                 Some(reply) => Some(reply),
                 // `hermesd pr merge` (H-284).
                 None => match crate::prs::merge::serve(&app, bot_id, &request).await {
                     Some(reply) => Some(reply),
                     // `hermesd release tag` / `leave-out` (H-272).
-                    None => match crate::board::release::tag::serve(&app, bot_id, &request).await {
+                    None => match crate::releases::tag::serve(&app, bot_id, &request).await {
                         Some(reply) => Some(reply),
                         None => {
-                            match crate::board::release::leave_out_gate::serve(
-                                &app, bot_id, &request,
-                            )
-                            .await
+                            match crate::releases::leave_out_gate::serve(&app, bot_id, &request)
+                                .await
                             {
                                 Some(reply) => Some(reply),
                                 None => crate::mcp::rpc_response(&app, bot_id, &request).await,

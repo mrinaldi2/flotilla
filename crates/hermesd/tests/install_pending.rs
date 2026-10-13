@@ -7,7 +7,7 @@ mod common;
 
 use common::ios_targets::{ios_qa_tests_ios, package, pass, team, DEVOPS, IOS_QA, TESTER_IMAC};
 use common::WsClient;
-use hermesd::board::model::Platform;
+use hermesd::kanban::model::Platform;
 use hermesd::quiesce::pending;
 use serde_json::{json, Value};
 

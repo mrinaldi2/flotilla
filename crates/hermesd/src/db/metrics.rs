@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 use rusqlite::params;
 
 use super::{parse_ts, ts, Db};
-use crate::board::import::NOT_IMPORTED_SQL;
-use crate::board::metrics::Entry;
+use crate::kanban::import::NOT_IMPORTED_SQL;
+use crate::kanban::metrics::Entry;
 
 impl Db {
     /// Each item's creation and moves, oldest first.

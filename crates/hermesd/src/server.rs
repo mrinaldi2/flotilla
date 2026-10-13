@@ -87,12 +87,12 @@ pub fn spawn_workers(app: &Arc<AppState>) {
 
     // iOS packages frozen with desktop deploy targets before H-176 deploy
     // to the iPhone; a no-op once none is left.
-    if let Err(e) = crate::board::release::ios_repair::repair_ios_deploy_targets(&app.db) {
+    if let Err(e) = crate::releases::ios_repair::repair_ios_deploy_targets(&app.db) {
         tracing::warn!(error = %e, "iOS deploy target repair failed");
     }
     // `ios` and `iphone` are one target (H-231): an iOS package confirmed on
     // `ios` while it waited for `iphone` is deployed.
-    if let Err(e) = crate::board::release::ios_repair::settle_ios_deploys(app) {
+    if let Err(e) = crate::releases::ios_repair::settle_ios_deploys(app) {
         tracing::warn!(error = %e, "iOS deploy settle failed");
     }
 
@@ -137,7 +137,7 @@ pub fn spawn_workers(app: &Arc<AppState>) {
     crate::decisions::grants_peer::spawn_sweep(app.clone());
     crate::overview::spawn(app.clone());
     if !app.cfg.release_watch_by_hand {
-        crate::board::release::blockers_watch::spawn(app.clone());
+        crate::releases::blockers_watch::spawn(app.clone());
     }
     crate::prs::watch::spawn(app.clone());
     crate::cleanup::spawn(app.clone());

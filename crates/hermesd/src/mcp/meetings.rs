@@ -10,13 +10,13 @@ use bus::contract::board as c;
 use serde_json::{json, Map, Value};
 
 use crate::app::AppState;
-use crate::board::meetings::actions::{self, ActionEdit, NewAction};
-use crate::board::meetings::model::MeetingType;
-use crate::board::meetings::run::{self, AdHoc, Close, Contribute};
-use crate::board::meetings::series::{self, SeriesEdit};
-use crate::board::meetings::{self as meetings, Party};
-use crate::board::model::Role;
 use crate::decisions::invalid;
+use crate::kanban::model::Role;
+use crate::meetings::actions::{self, ActionEdit, NewAction};
+use crate::meetings::model::MeetingType;
+use crate::meetings::run::{self, AdHoc, Close, Contribute};
+use crate::meetings::series::{self, SeriesEdit};
+use crate::meetings::{self as meetings, Party};
 
 use super::board_schema::{decode, shared, tool, Audience, BoardTool};
 

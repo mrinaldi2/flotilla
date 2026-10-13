@@ -12,11 +12,11 @@ use serde_json::{json, Value};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::ColumnCategory;
-use crate::board::release::{daemon_move, publish_moves};
 use crate::db::reviews::NewReview;
 use crate::db::OwnerProof;
 use crate::decisions::{conflict, invalid, not_found};
+use crate::kanban::api::{publish_moves, system_move};
+use crate::kanban::model::ColumnCategory;
 use crate::prs::model::Pr;
 use crate::prs::review_model::{Finding, Review, Verdict};
 
@@ -171,7 +171,7 @@ pub fn submit(
         })?;
         let moved = if verdict == Verdict::ChangesRequested {
             let note = format!("the owner asked for changes on PR #{number}");
-            daemon_move(
+            system_move(
                 t,
                 project,
                 &pr.item_id,

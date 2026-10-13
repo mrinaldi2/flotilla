@@ -50,6 +50,10 @@ flowchart LR
 | Runtime adapters | Start, probe, input, resize, and terminate sessions | [crates/hermesd/src/runtime/mod.rs:1](../crates/hermesd/src/runtime/mod.rs#L1) |
 | Delivery worker | Lease queued messages, deliver, retry, report failures | [crates/hermesd/src/delivery.rs:1](../crates/hermesd/src/delivery.rs#L1) |
 | Scheduler | Scheduled occurrences, signals, run completion, retries | [crates/hermesd/src/scheduler.rs:1](../crates/hermesd/src/scheduler.rs#L1) |
+| Kanban | Boards, columns, items, moves and their guards; `kanban::api` is the port other modules change cards through | [crates/hermesd/src/kanban.rs:1](../crates/hermesd/src/kanban.rs#L1) |
+| Releases | Release packages, the owner's ruling, deploys and installs | [crates/hermesd/src/releases.rs:1](../crates/hermesd/src/releases.rs#L1) |
+| PRs | The daemon's PRs, reviews, checks, merge queue and review policy | [crates/hermesd/src/prs.rs:1](../crates/hermesd/src/prs.rs#L1) |
+| Meetings | Meeting series, occurrences, contributions and action items | [crates/hermesd/src/meetings.rs:1](../crates/hermesd/src/meetings.rs#L1) |
 | Desktop frontend | Project and bot views, terminal rendering, connection state | [apps/desktop/src/App.tsx:1](../apps/desktop/src/App.tsx#L1) |
 | Native shell | Local daemon installation, native window controls, updates | [apps/desktop/src-tauri/src/lib.rs:1](../apps/desktop/src-tauri/src/lib.rs#L1) |
 
@@ -162,7 +166,7 @@ answer for the owner. See the [protocol](protocol.md#the-decision-registry).
 ## Board
 
 A project's backlog lives on its board (H-017): items move through columns
-whose categories the guards key on. One pure function, `board::guards`,
+whose categories the guards key on. One pure function, `kanban::guards`,
 decides every move, and each guarded change runs as one `BEGIN IMMEDIATE`
 transaction (`Db::board_tx`) that reads the item, the caller's roles and the
 column loads, checks the version, runs the guard and writes, so nothing changes
@@ -175,6 +179,11 @@ board roles allow, and a refusal lists every unmet guard with its fix.
 `send_message(kind=task)`, `raise_decision` and `complete_task` take an `item`:
 the task or decision is linked to the item, artifacts land on it, and a task's
 completion, cancellation or expiry is written to the item's history.
+
+Releases, PRs and meetings don't write board tables themselves. They move,
+link, comment on and create cards through `kanban::api`, and Kanban never calls
+into them. See [the kanban rework](kanban-rework.md) for where this boundary is
+heading.
 
 ## Routines and signals
 

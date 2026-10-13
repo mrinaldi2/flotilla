@@ -69,7 +69,7 @@ impl Stored {
             devops: db
                 .project_roles(&bot.project_id)?
                 .iter()
-                .any(|r| r.role == crate::board::model::Role::Devops && r.bot_id == bot.id),
+                .any(|r| r.role == crate::kanban::model::Role::Devops && r.bot_id == bot.id),
         })
     }
 }
@@ -120,9 +120,9 @@ impl BotStart<'_> {
     /// The served release builds and their staging folder, as configured
     /// and, where they exist, resolved.
     pub fn served_dirs(&self) -> Vec<PathBuf> {
-        let root = crate::board::release::serve::served_root(self.cfg);
+        let root = crate::releases::serve::served_root(self.cfg);
         let mut dirs = Vec::new();
-        for dir in [crate::board::release::confine::staging_for(&root), root] {
+        for dir in [crate::releases::confine::staging_for(&root), root] {
             let real = dir.canonicalize().ok().filter(|real| *real != dir);
             dirs.push(dir);
             dirs.extend(real);

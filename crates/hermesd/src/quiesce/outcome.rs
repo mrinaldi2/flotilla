@@ -14,9 +14,9 @@ use chrono::Utc;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
-use crate::board::release::model::ReleaseEvent;
 use crate::db::Quiesce;
+use crate::kanban::model::Role;
+use crate::releases::model::ReleaseEvent;
 
 /// One line of what a pause did.
 pub fn summary(report: &Value) -> String {
@@ -126,7 +126,7 @@ pub fn file_sha256(path: &std::path::Path) -> anyhow::Result<String> {
 /// At daemon start: ends an install's open pause (see the module docs).
 pub fn on_boot(app: &Arc<AppState>) {
     // An install whose rollback failed too left word for the owner.
-    crate::board::release::install::rollback_notice::report(app);
+    crate::releases::install::rollback_notice::report(app);
     let Ok(Some(q)) = app.db.open_quiesce() else {
         return;
     };

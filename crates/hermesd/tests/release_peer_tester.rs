@@ -10,9 +10,9 @@ use common::peer_board::board;
 use common::peers::{bot_named, wait_until};
 use common::McpClient;
 use hermesd::actor::Actor;
-use hermesd::board::feed::{Change, ChangeKind};
-use hermesd::board::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use hermesd::db::{MoveTo, NewItem};
+use hermesd::kanban::feed::{Change, ChangeKind};
+use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 const RELEASE_TOOLS: [&str; 3] = ["release_test", "install_release", "deploy_confirm"];

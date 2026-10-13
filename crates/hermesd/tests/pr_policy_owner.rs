@@ -10,7 +10,7 @@ use chrono::{Duration, Utc};
 use common::prs::{approve, give, opened, pr, setup, write, Repo};
 use common::repo::git;
 use common::WsClient;
-use hermesd::board::model::Role;
+use hermesd::kanban::model::Role;
 use hermesd::prs::merge::answer;
 use hermesd::prs::owner::Shape;
 use hermesd::prs::queue;

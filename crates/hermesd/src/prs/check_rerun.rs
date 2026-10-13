@@ -100,7 +100,7 @@ fn settle(t: &crate::db::BoardTx<'_>, run: &CheckRun) -> anyhow::Result<()> {
 pub fn reconcile(app: &AppState, project: &str) -> anyhow::Result<()> {
     let here = app
         .db
-        .board_read(crate::board::release::machines::this_computer)?;
+        .board_read(crate::releases::machines::this_computer)?;
     let patience = chrono::Duration::from_std(check_exec::DEADLINE)? + chrono::Duration::hours(1);
     for job in app.db.board_read(|t| t.open_jobs(project))? {
         let why = if job.machine == here {

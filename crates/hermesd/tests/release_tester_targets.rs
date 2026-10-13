@@ -12,9 +12,9 @@ use common::ios_targets::{ios_qa_tests_ios, package, pass, team, DEVOPS, IOS_QA}
 use common::peer_board::board;
 use common::peers::{bot_named, wait_until};
 use common::WsClient;
-use hermesd::board::model::{Platform, ProjectRole, Role};
-use hermesd::board::release::model::{DeployAction, DeployResult, ReleaseStatus};
-use hermesd::board::release::{ios_repair, machines, testers_on};
+use hermesd::kanban::model::{Platform, ProjectRole, Role};
+use hermesd::releases::model::{DeployAction, DeployResult, ReleaseStatus};
+use hermesd::releases::{ios_repair, machines, testers_on};
 use serde_json::json;
 
 /// The PC runs the desktop tester and iOS QA; the Mac holds the board.

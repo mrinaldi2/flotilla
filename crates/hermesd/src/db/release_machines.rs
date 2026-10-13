@@ -4,7 +4,7 @@
 
 use rusqlite::{params, OptionalExtension};
 
-use crate::board::release::model::ReleaseTargets;
+use crate::releases::model::ReleaseTargets;
 
 use super::board_tx::BoardTx;
 use super::ts;
@@ -220,8 +220,8 @@ impl BoardTx<'_> {
 
 #[cfg(test)]
 mod tests {
-    use crate::board::model::{ProjectRole, Role};
     use crate::db::Db;
+    use crate::kanban::model::{ProjectRole, Role};
 
     /// ARCH-R55 S2: a linked tester tests on its peer whatever its role
     /// says; a tester here can't claim a linked computer's name.
@@ -295,7 +295,7 @@ mod tests {
         db.archive_bot(&ids[2], "user").unwrap();
 
         let got = db
-            .board_read(|t| crate::board::release::machines::testers(t, &p.id))
+            .board_read(|t| crate::releases::machines::testers(t, &p.id))
             .unwrap();
         assert_eq!(
             got,

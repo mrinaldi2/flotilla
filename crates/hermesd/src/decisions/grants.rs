@@ -165,7 +165,7 @@ pub fn serve_grant(app: &AppState, peer_id: &str, frame: &Value) -> anyhow::Resu
     if !crate::peer::owner_trust::trusted(app) {
         let here = app
             .db
-            .board_read(crate::board::release::machines::this_computer)?;
+            .board_read(crate::releases::machines::this_computer)?;
         return Err(crate::peer::refuse(
             "forbidden",
             crate::peer::owner_trust::approve_elsewhere(&here),

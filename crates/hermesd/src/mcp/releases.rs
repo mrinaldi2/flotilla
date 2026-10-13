@@ -8,15 +8,15 @@ use bus::contract::board as c;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
-use crate::board::release::assemble::{self, NewPackage};
-use crate::board::release::model::{DeployResult, ReleaseBuild, Smoke};
-use crate::board::release::publish::{self, Publish};
-use crate::board::release::{
+use crate::db::NewReleaseTest;
+use crate::kanban::model::Role;
+use crate::releases::assemble::{self, NewPackage};
+use crate::releases::model::{DeployResult, ReleaseBuild, Smoke};
+use crate::releases::publish::{self, Publish};
+use crate::releases::{
     blockers, cancel, cut, deploy, deployed_via, lifecycle, load, machines, model::parse_arg,
     package, plan, Caller,
 };
-use crate::db::NewReleaseTest;
 
 use super::board_schema::{decode, shared, tool, Audience, BoardTool};
 
@@ -85,8 +85,8 @@ pub(super) fn call(
     let project = bot.project_id.as_str();
     // Never `owner_blockers` to a bot: they name other bots' permission
     // prompts and the owner's questions (ARCH M1). Owner clients only.
-    let payload = |r: &crate::board::release::model::Release| r.to_json();
-    let released = |r: crate::board::release::model::Release| Ok(json!({ "release": payload(&r) }));
+    let payload = |r: &crate::releases::model::Release| r.to_json();
+    let released = |r: crate::releases::model::Release| Ok(json!({ "release": payload(&r) }));
     match name {
         "release_list" => {
             let _: c::ReleaseList = decode("ReleaseList", args, project)?;

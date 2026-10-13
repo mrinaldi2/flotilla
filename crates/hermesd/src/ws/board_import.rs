@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use super::Conn;
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::import::service::{run, summary};
+use crate::kanban::import::service::{run, summary};
 
 impl Conn {
     pub(super) fn board_import(&self, req_id: &Value, req: &Value) -> anyhow::Result<()> {

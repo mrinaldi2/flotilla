@@ -10,7 +10,7 @@ use bus::Bot;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::mirror::Mirrored;
+use crate::kanban::mirror::Mirrored;
 use crate::peer::board::home_name;
 use crate::peer::PeerError;
 

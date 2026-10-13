@@ -1,6 +1,6 @@
 //! The migration's CHECK lists against the contract enums.
 
-use crate::board::model::*;
+use crate::kanban::model::*;
 
 use super::board::to_text;
 use super::board_items::NewItem;

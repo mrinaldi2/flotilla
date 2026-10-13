@@ -20,10 +20,10 @@ use chrono::{Duration, Utc};
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
-use crate::board::release::{deploy, quiesce_gate, Caller};
 use crate::bot_permissions::Stored;
 use crate::decisions::{forbidden, invalid};
+use crate::kanban::model::Role;
+use crate::releases::{deploy, quiesce_gate, Caller};
 
 use super::PauseRequest;
 
@@ -58,14 +58,10 @@ pub fn may_pause(app: &AppState, bot: &Bot) -> anyhow::Result<()> {
 
 /// The version this computer will run: its build's, from the gate.
 fn version_here(answer: &Value) -> Option<String> {
-    let builds = crate::board::release::install::builds(answer);
-    crate::board::release::install::for_this_computer(
-        &builds,
-        cfg!(target_os = "macos"),
-        cfg!(windows),
-    )
-    .first()
-    .map(|b| b.version.clone())
+    let builds = crate::releases::install::builds(answer);
+    crate::releases::install::for_this_computer(&builds, cfg!(target_os = "macos"), cfg!(windows))
+        .first()
+        .map(|b| b.version.clone())
 }
 
 /// The open pause, when it is this bot's install of `release_id`.

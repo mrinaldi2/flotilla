@@ -24,9 +24,9 @@ use bus::{Bot, BotState, MessageKind, Project};
 use chrono::{DateTime, Duration, Utc};
 
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::chat::model::{ChatItem, ChatTurn, Trigger};
 use crate::events::Push;
+use crate::kanban::model::Role;
 use crate::messaging::{self, daemon_sender, Dm};
 
 /// How long a bot works off the board before it is flagged.

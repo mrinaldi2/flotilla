@@ -4,8 +4,8 @@
 use std::path::{Path, PathBuf};
 
 use hermesd::actor::Actor;
-use hermesd::board::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use hermesd::db::{MoveTo, NewItem};
+use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 use super::repo::{git, remote};

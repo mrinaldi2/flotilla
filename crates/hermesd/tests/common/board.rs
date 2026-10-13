@@ -13,8 +13,8 @@ use serde_json::json;
 use tokio_tungstenite::tungstenite::Message as WsMsg;
 
 use hermesd::actor::Actor;
-use hermesd::board::model::{ItemType, Platform, Priority};
 use hermesd::db::{Db, MoveTo, NewItem, Write};
+use hermesd::kanban::model::{ItemType, Platform, Priority};
 
 use super::{TestDaemon, WsClient};
 

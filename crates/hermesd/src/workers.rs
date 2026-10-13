@@ -118,7 +118,7 @@ pub(crate) fn link_item(
         .db
         .item_links(&item_id)?
         .iter()
-        .any(|l| l.kind == crate::board::model::LinkKind::Task && l.target == task_id);
+        .any(|l| l.kind == crate::kanban::model::LinkKind::Task && l.target == task_id);
     if linked {
         return Ok(());
     }
@@ -128,11 +128,11 @@ pub(crate) fn link_item(
     };
     let mut feed = app.board.writer();
     app.db.link_task_item(task_id, &item_id, &actor)?;
-    feed.publish(crate::board::feed::Change {
+    feed.publish(crate::kanban::feed::Change {
         project_id: &worker.project_id,
-        kind: crate::board::feed::ChangeKind::ItemUpserted,
+        kind: crate::kanban::feed::ChangeKind::ItemUpserted,
         item_id: &item_id,
-        card: crate::board::feed::card_after_commit(&app.db, &item_id),
+        card: crate::kanban::feed::card_after_commit(&app.db, &item_id),
         from_column: None,
     });
     Ok(())

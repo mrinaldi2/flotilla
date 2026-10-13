@@ -7,12 +7,12 @@
 
 use serde_json::{json, Value};
 
-use crate::board::meetings::actions::{self, ActionEdit};
-use crate::board::meetings::run::{self, Contribute};
-use crate::board::meetings::series::{self, SeriesEdit};
-use crate::board::meetings::{self as meetings, Party};
 use crate::decisions::{forbidden, invalid};
 use crate::mcp::meetings::meeting_type;
+use crate::meetings::actions::{self, ActionEdit};
+use crate::meetings::run::{self, Contribute};
+use crate::meetings::series::{self, SeriesEdit};
+use crate::meetings::{self as meetings, Party};
 
 use super::Conn;
 

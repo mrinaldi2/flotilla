@@ -17,8 +17,8 @@ use bus::{Bot, Task};
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::feed::ChangeKind;
-use crate::board::model::{ColumnCategory, Role};
+use crate::kanban::feed::ChangeKind;
+use crate::kanban::model::{ColumnCategory, Role};
 use crate::peer::PeerError;
 
 use super::caller;

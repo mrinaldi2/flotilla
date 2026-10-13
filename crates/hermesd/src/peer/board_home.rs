@@ -14,7 +14,7 @@ use tokio::sync::broadcast::error::RecvError;
 
 use super::{board_ids, refuse};
 use crate::app::AppState;
-use crate::board::feed::{BoardChange, ChangeKind};
+use crate::kanban::feed::{BoardChange, ChangeKind};
 
 /// The project of this daemon that `frame.project_id`, the peer's own, is
 /// linked to, with a board whose home is here.

@@ -16,7 +16,7 @@ use bus::PermissionExtra;
 use chrono::Utc;
 use common::prs::{approve, give, opened, setup_with};
 use common::WsClient;
-use hermesd::board::model::Role;
+use hermesd::kanban::model::Role;
 use hermesd::prs::queue::{EVERY, WINDOW};
 use serde_json::json;
 

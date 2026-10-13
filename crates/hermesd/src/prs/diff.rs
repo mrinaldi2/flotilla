@@ -10,10 +10,10 @@ use std::path::Path;
 use bus::contract::pr as p;
 
 use crate::app::AppState;
-use crate::board::release::git_cache;
 use crate::decisions::invalid;
 use crate::prs::model::Pr;
 use crate::prs::repo;
+use crate::releases::git_cache;
 
 /// The most diff text one answer carries.
 pub const MAX_DIFF_BYTES: usize = 2 * 1024 * 1024;

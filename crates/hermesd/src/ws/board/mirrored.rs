@@ -7,7 +7,7 @@ use bus::contract::board::{self as c, board_request::Request};
 
 use super::reads::query_cards;
 use super::{refuse, Refusal};
-use crate::board::model as m;
+use crate::kanban::model as m;
 use crate::peer::board::home_name;
 use crate::ws::Conn;
 

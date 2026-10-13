@@ -10,7 +10,7 @@ use bus::contract::board::{self as c, board_request::Request};
 use bus::contract::wire::envelope::Body;
 use common::board::*;
 use common::*;
-use hermesd::board::defaults::COLUMNS;
+use hermesd::kanban::defaults::COLUMNS;
 use serde_json::{json, Value};
 
 fn board_get(project_id: &str) -> Request {
