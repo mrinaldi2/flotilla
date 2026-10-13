@@ -114,7 +114,17 @@ export default function ItemEditForm(props: ItemEditFormProps): ReactElement {
   };
 
   return (
-    <form className="item-edit" onSubmit={submit} aria-label={`Edit ${item.id}`}>
+    <form
+      className="item-edit"
+      onSubmit={submit}
+      aria-label={`Edit ${item.id}`}
+      onKeyDown={(event) => {
+        // Esc doesn't close the drawer under an edit and lose it: Cancel does.
+        if (event.key === "Escape") {
+          event.preventDefault();
+        }
+      }}
+    >
       <label className="field">
         <span className="field-label">Title</span>
         <input

@@ -44,7 +44,17 @@ function LinkForm(props: {
       );
   };
   return (
-    <form className="attachment-link-form" onSubmit={submit}>
+    <form
+      className="attachment-link-form"
+      onSubmit={submit}
+      onKeyDown={(event) => {
+        // Esc closes this form, not the drawer it is in.
+        if (event.key === "Escape") {
+          event.preventDefault();
+          props.onDone();
+        }
+      }}
+    >
       <input
         type="text"
         aria-label="Artifact path or URL"

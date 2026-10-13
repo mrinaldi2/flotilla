@@ -33,7 +33,16 @@ export default function DiscussPanel(props: DiscussPanelProps): ReactElement {
     );
   };
   return (
-    <aside className="discuss-panel" aria-label={`${bot.name} about ${itemId}`}>
+    <aside
+      className="discuss-panel"
+      aria-label={`${bot.name} about ${itemId}`}
+      onKeyDown={(event) => {
+        // Esc while writing to the bot keeps the chat and the drawer open.
+        if (event.key === "Escape") {
+          event.preventDefault();
+        }
+      }}
+    >
       <header className="drawer-head">
         <span className="drawer-type">
           <b>{bot.name}</b> · about <span className="mono">{itemId}</span>
