@@ -43,7 +43,9 @@ async fn a_linked_computer_reads_no_draft_from_the_home() {
         })
         .unwrap();
     let peers = &b.p.win.app.peers;
-    let live = peers.request(&b.p.win_peer_id, read(&b.win_app, &b.item)).await;
+    let live = peers
+        .request(&b.p.win_peer_id, read(&b.win_app, &b.item))
+        .await;
     assert!(live.is_ok(), "{live:?}");
     let refused = peers
         .request(&b.p.win_peer_id, read(&b.win_app, &draft.id))

@@ -84,14 +84,20 @@ impl Editor<'_> {
             req.total > 0,
             invalid("an upload names its file's total size")
         );
-        let on_item = self.app.db.board_read(|t| t.stored_bytes(&req.item_id, ""))?;
+        let on_item = self
+            .app
+            .db
+            .board_read(|t| t.stored_bytes(&req.item_id, ""))?;
         check_size(limits, ft, req.total, on_item)?;
         if req.offset == 0 {
             check_content(ft, &req.data[..req.data.len().min(16)])?;
             fs::create_dir_all(path.parent().expect("an upload has a folder"))?;
             // A fresh file, never one a link put there to be written through.
             fs::remove_file(&path).ok();
-            OpenOptions::new().write(true).create_new(true).open(&path)?;
+            OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&path)?;
         }
         let mut file = OpenOptions::new()
             .write(true)

@@ -42,7 +42,10 @@ pub(super) fn open_confined(path: &Path, roots: &[PathBuf]) -> anyhow::Result<Fi
         ))
     );
     let held = file.metadata()?;
-    anyhow::ensure!(held.is_file(), invalid(format!("{} is not a file", path.display())));
+    anyhow::ensure!(
+        held.is_file(),
+        invalid(format!("{} is not a file", path.display()))
+    );
     anyhow::ensure!(
         same_file(&held, &fs::metadata(&real)?),
         invalid(format!(
@@ -109,9 +112,8 @@ pub(super) fn store(
         .strip_prefix(artifacts)
         .map_err(|_| anyhow::anyhow!("an item's folder is in the artifacts"))?;
     let path = slash_path(rel);
-    let fits = stored_on_item(&path).and_then(|on_item| {
-        super::super::attachments::check_item_total(limits, bytes, on_item)
-    });
+    let fits = stored_on_item(&path)
+        .and_then(|on_item| super::super::attachments::check_item_total(limits, bytes, on_item));
     if let Err(e) = fits {
         fs::remove_file(&partial).ok();
         return Err(e);

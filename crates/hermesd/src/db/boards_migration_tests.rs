@@ -118,8 +118,10 @@ fn the_link_rebuild_keeps_every_link_and_runs_again() {
     let (db, p) = board();
     let item = db.create_item(&new_item(&p, "Linked"), &OWNER).unwrap();
     for target in ["feat-a", "feat-b"] {
-        db.board_tx(|t| crate::kanban::api::link(t, &item.id, LinkKind::Branch, target, None, &OWNER))
-            .unwrap();
+        db.board_tx(|t| {
+            crate::kanban::api::link(t, &item.id, LinkKind::Branch, target, None, &OWNER)
+        })
+        .unwrap();
     }
     let links = |db: &Db| -> Vec<(i64, String, String)> {
         let conn = db.lock();

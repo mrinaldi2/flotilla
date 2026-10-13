@@ -80,7 +80,10 @@ async fn attached(lead: &mut McpClient, id: &str, file: &str) -> String {
     let reply = lead
         .call("item_attach", json!({"id": id, "file": file}))
         .await;
-    reply["attachment"]["id"].as_str().expect("an id").to_string()
+    reply["attachment"]["id"]
+        .as_str()
+        .expect("an id")
+        .to_string()
 }
 
 #[tokio::test]
