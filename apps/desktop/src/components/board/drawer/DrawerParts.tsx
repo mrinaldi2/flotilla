@@ -8,7 +8,7 @@ import { Priority, Size } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import { platformWord, typeLabel } from "../labels";
 import type { Anchor } from "../useBoardMoves";
 import type { NextStep } from "./drawerText";
-import { STEPS, age } from "./drawerText";
+import { age, flowOf } from "./drawerText";
 
 export function DrawerHeader(props: {
   readonly itemId: string;
@@ -83,14 +83,17 @@ function stepGlyph(index: number, reached: number): string {
   return index < reached ? "●" : "○";
 }
 
-/** The canonical steps, the current one filled; words, not colour. */
-export function Stepper({ column }: { readonly column: BoardColumn | undefined }): ReactElement {
-  const reached = STEPS.findIndex((s) => s.category === column?.category);
+/** The item's path, the current step filled; words, not colour. */
+export function Stepper(props: {
+  readonly columns: readonly BoardColumn[];
+  readonly column: BoardColumn | undefined;
+}): ReactElement {
+  const { steps, reached } = flowOf(props.columns, props.column);
   return (
     <ol className="drawer-stepper" aria-label="Where it stands">
-      {STEPS.map((s, index) => (
+      {steps.map((s, index) => (
         <li
-          key={s.word}
+          key={s.key}
           className={index === reached ? "now" : index < reached ? "past" : ""}
           aria-current={index === reached ? "step" : undefined}
         >

@@ -27,7 +27,7 @@ function LiveHead(props: {
   const column = columns.find((c) => c.key === item.columnKey);
   return (
     <>
-      <Stepper column={column} />
+      <Stepper columns={columns} column={column} />
       <MetaLine item={item} column={column} who={who} now={props.now} />
       <NextStepView
         step={nextStep(columns, column, props.check)}
