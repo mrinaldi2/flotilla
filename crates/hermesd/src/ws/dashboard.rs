@@ -130,7 +130,7 @@ impl Conn {
             .collect::<anyhow::Result<Vec<_>>>()?;
         // Meetings live with the board, on its home (H-102).
         let (meetings, action_items) = if local {
-            crate::board::meetings::dashboard(&self.app, project_id)?
+            crate::meetings::dashboard(&self.app, project_id)?
         } else {
             (json!([]), json!([]))
         };

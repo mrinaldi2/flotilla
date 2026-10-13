@@ -7,9 +7,9 @@ mod common;
 use common::peer_board::board;
 use common::tasks::error_text;
 use hermesd::actor::Actor;
-use hermesd::board::meetings::run::{self, AdHoc};
-use hermesd::board::meetings::series::{self, SeriesEdit};
-use hermesd::board::meetings::Party;
+use hermesd::meetings::run::{self, AdHoc};
+use hermesd::meetings::series::{self, SeriesEdit};
+use hermesd::meetings::Party;
 use serde_json::json;
 
 #[tokio::test]

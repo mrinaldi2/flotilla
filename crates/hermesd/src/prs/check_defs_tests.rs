@@ -2,8 +2,8 @@
 //! `checks.toml`, and how the PR's row names it (CE M1, S3).
 
 use super::with_head_defs;
-use crate::board::policy::{parse_checks, Checks};
 use crate::prs::check_model::{CheckResult, NewCheck};
+use crate::prs::policy::{parse_checks, Checks};
 
 const MAIN: &str = r#"
 [[check]]

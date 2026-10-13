@@ -11,9 +11,9 @@ use std::sync::Arc;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::policy::base;
 use crate::db::OwnerProof;
 use crate::prs::owner::{self, Mode, Settings};
+use crate::prs::policy::base;
 use crate::prs::review_model::{Finding, Verdict};
 
 fn number(req: &Value) -> anyhow::Result<u32> {

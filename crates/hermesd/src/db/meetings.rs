@@ -5,9 +5,7 @@ use chrono::{DateTime, Utc};
 use rusqlite::{params, Connection, OptionalExtension, Row};
 use serde_json::Value;
 
-use crate::board::meetings::model::{
-    ActionItem, Attendee, Contribution, Meeting, MeetingStatus, Series,
-};
+use crate::meetings::model::{ActionItem, Attendee, Contribution, Meeting, MeetingStatus, Series};
 
 use super::board::{from_json, from_text, parse_at, to_text};
 use super::board_tx::BoardTx;

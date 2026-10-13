@@ -33,6 +33,7 @@ pub mod holders;
 pub mod home;
 pub mod machine_tools;
 pub mod mcp;
+pub mod meetings;
 pub mod messaging;
 pub mod migrate_home;
 pub mod model;

@@ -15,7 +15,7 @@
 //!
 //! Such a PR always needs architect, ce and the owner (a policy change).
 
-use crate::board::policy::{Check, Checks};
+use crate::prs::policy::{Check, Checks};
 
 use super::check_model::{CheckResult, NewCheck};
 use super::checks::{policy_check, queue};
