@@ -114,6 +114,8 @@ export default function ItemEditForm(props: ItemEditFormProps): ReactElement {
   };
 
   return (
+    // The form only keeps Esc from the drawer; its fields are the controls.
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <form
       className="item-edit"
       onSubmit={submit}

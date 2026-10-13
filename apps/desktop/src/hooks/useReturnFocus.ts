@@ -3,6 +3,7 @@
 // unless focus has already gone somewhere else meanwhile.
 
 import { useEffect, useState } from "react";
+import { useEscapeKey } from "./useEscapeKey";
 
 export function useReturnFocus(): void {
   // Read while rendering, before the dialog's own autofocus takes focus.
@@ -18,4 +19,10 @@ export function useReturnFocus(): void {
     },
     [opener],
   );
+}
+
+/** A dialog's keys: Esc cancels it, and focus goes back to its opener. */
+export function useDialogKeys(onCancel: () => void): void {
+  useEscapeKey(onCancel);
+  useReturnFocus();
 }

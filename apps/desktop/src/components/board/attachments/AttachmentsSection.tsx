@@ -44,17 +44,7 @@ function LinkForm(props: {
       );
   };
   return (
-    <form
-      className="attachment-link-form"
-      onSubmit={submit}
-      onKeyDown={(event) => {
-        // Esc closes this form, not the drawer it is in.
-        if (event.key === "Escape") {
-          event.preventDefault();
-          props.onDone();
-        }
-      }}
-    >
+    <form className="attachment-link-form" onSubmit={submit}>
       <input
         type="text"
         aria-label="Artifact path or URL"
@@ -62,6 +52,13 @@ function LinkForm(props: {
         value={text}
         autoFocus
         onChange={(e) => setText(e.target.value)}
+        onKeyDown={(event) => {
+          // Esc closes this form, not the drawer it is in.
+          if (event.key === "Escape") {
+            event.preventDefault();
+            props.onDone();
+          }
+        }}
       />
       <button type="submit" className="btn btn-small" disabled={text.trim() === ""}>
         Link

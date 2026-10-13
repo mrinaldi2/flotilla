@@ -82,6 +82,7 @@ export function useDraft(
           if (later.length > 0) {
             setReviewing((listed) => [...(listed ?? []), ...later]);
           }
+          return undefined;
         },
         (failure: unknown) => setError(errText(failure)),
       );

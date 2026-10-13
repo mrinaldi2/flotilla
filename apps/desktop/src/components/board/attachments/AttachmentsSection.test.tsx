@@ -8,6 +8,8 @@ import { boardsClient, STORY_BOTS } from "../../../test/boardStory";
 import { recipeColumns } from "../../../test/boardsFixtures";
 import ItemDrawer from "../drawer/ItemDrawer";
 
+const noop = (): void => undefined;
+
 function renderDrawer(client = boardsClient()) {
   render(
     <ItemDrawer
@@ -66,7 +68,7 @@ describe("attachments in the drawer", () => {
 
   it("cancels an upload on its way: no more chunks, and nothing attached", async () => {
     const user = userEvent.setup();
-    let release = (): void => undefined;
+    let release: () => void = noop;
     const client = boardsClient()
       .onBoard(
         "attachmentUpload",

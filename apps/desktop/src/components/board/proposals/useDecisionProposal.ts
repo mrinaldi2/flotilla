@@ -34,7 +34,7 @@ export interface DecisionProposal {
  * project's board read, since `board_get` starts a board where there is
  * none, and Decisions must not do that for every project it shows.
  */
-export function mayBeProposal(decision: Decision): boolean {
+function mayBeProposal(decision: Decision): boolean {
   return decision.kind === "question" && /\bProposal [\w-]+\.$/.test(decision.body.trim());
 }
 

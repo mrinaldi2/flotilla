@@ -95,6 +95,11 @@ function escape(event: KeyboardEvent, d: ControlKeyDeps): void {
   }
 }
 
+/** A button in the reading pane (a release's or a proposal's Approve) takes its own ↩. */
+function inReader(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(".cc-reader button") !== null;
+}
+
 /** ↑↓ / j k through the current list; ↩ opens the highlighted row. */
 function navigate(event: KeyboardEvent, d: ControlKeyDeps): boolean {
   if (["ArrowDown", "j", "ArrowUp", "k"].includes(event.key)) {
@@ -110,9 +115,7 @@ function navigate(event: KeyboardEvent, d: ControlKeyDeps): boolean {
     return true;
   }
   if (event.key === "Enter") {
-    // A button in the reading pane (a release's or a proposal's Approve)
-    // takes its own ↩.
-    if (event.target instanceof Element && event.target.closest(".cc-reader button") !== null) {
+    if (inReader(event.target)) {
       return true;
     }
     // Without this the focused tab or row button is clicked as well, which on

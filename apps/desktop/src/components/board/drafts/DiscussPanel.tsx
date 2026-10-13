@@ -33,6 +33,8 @@ export default function DiscussPanel(props: DiscussPanelProps): ReactElement {
     );
   };
   return (
+    // The panel only keeps Esc from the drawer; its composer is the control.
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <aside
       className="discuss-panel"
       aria-label={`${bot.name} about ${itemId}`}

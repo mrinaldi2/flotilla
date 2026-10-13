@@ -5,8 +5,7 @@
 
 import { useState } from "react";
 import type { FormEvent, ReactElement } from "react";
-import { useEscapeKey } from "../../../hooks/useEscapeKey";
-import { useReturnFocus } from "../../../hooks/useReturnFocus";
+import { useDialogKeys } from "../../../hooks/useReturnFocus";
 import type {
   BoardColumn,
   DraftRevision,
@@ -160,8 +159,7 @@ export function DiscardDialog(props: {
   readonly onCancel: () => void;
 }): ReactElement {
   const [reason, setReason] = useState("");
-  useEscapeKey(props.onCancel);
-  useReturnFocus();
+  useDialogKeys(props.onCancel);
   const title = `Discard the draft ${props.itemId}`;
   const submit = (event: FormEvent): void => {
     event.preventDefault();

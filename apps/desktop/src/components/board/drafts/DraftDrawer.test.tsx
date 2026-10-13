@@ -8,12 +8,7 @@ import {
   MoveResultSchema,
 } from "../../../protocol/gen/hermes/board/v1/requests_pb";
 import { unmet } from "../../../test/boardFixtures";
-import {
-  draftChanges,
-  draftDetail,
-  draftItem,
-  recipeColumns,
-} from "../../../test/boardsFixtures";
+import { draftChanges, draftDetail, draftItem, recipeColumns } from "../../../test/boardsFixtures";
 import { boardsClient, STORY_BOTS } from "../../../test/boardStory";
 import * as fx from "../../../test/fixtures";
 import ItemDrawer from "../drawer/ItemDrawer";
