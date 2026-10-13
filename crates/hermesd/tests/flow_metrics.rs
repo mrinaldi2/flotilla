@@ -29,7 +29,7 @@ async fn flow_counts_this_ranges_work_without_the_import() {
     let project = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     db.ensure_board(&project, &db.daemon_id().unwrap(), None)
         .unwrap();
-    crate::common::roles::by_name(&db, &project);
+    crate::common::roles::by_name(db, &project);
     let mut owner = WsClient::connect(&pair.d).await;
     let imported = owner
         .request(json!({"type": "board_import", "markdown": BACKLOG, "project": "p"}))

@@ -29,7 +29,7 @@ async fn cards_on_this_computer_come_back_with_where_they_are_kept() {
     let db = &d.app.db;
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
-    crate::common::roles::by_name(&db, &project_id);
+    crate::common::roles::by_name(db, &project_id);
     let (card, _) = new_item(db, &project_id, "Card links", Priority::P1);
 
     let listed = owner.request(json!({"type": "list_projects"})).await;

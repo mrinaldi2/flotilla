@@ -68,7 +68,7 @@ async fn a_bot_without_a_role_lists_the_reads_and_its_own_items_tools() {
     let project_id = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("P"))
         .unwrap();
-    crate::common::roles::by_name(&db, &project_id);
+    crate::common::roles::by_name(db, &project_id);
     let [dev, writer] = &mut bots[..] else {
         unreachable!()
     };

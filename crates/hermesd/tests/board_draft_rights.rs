@@ -16,7 +16,7 @@ fn project(d: &TestDaemon, ids: &[String]) -> String {
     db.set_project_lead(&project_id, Some(&ids[0])).unwrap();
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
-    crate::common::roles::by_name(&db, &project_id);
+    crate::common::roles::by_name(db, &project_id);
     project_id
 }
 

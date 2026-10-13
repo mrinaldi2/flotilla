@@ -20,7 +20,7 @@ async fn a_message_on_a_card_carries_it_and_comments_on_it() {
     let project_id = db.get_bot(&bot).unwrap().unwrap().project_id;
     let me = db.daemon_id().unwrap();
     db.ensure_board(&project_id, &me, Some("H")).unwrap();
-    crate::common::roles::by_name(&db, &project_id);
+    crate::common::roles::by_name(db, &project_id);
     let (card, _) = new_item(db, &project_id, "Projects home", Priority::P1);
     let mut owner = WsClient::connect(&pair.d).await;
 
@@ -55,7 +55,7 @@ async fn a_message_on_a_card_carries_it_and_comments_on_it() {
     // Another project's card is refused, and nothing is sent.
     let other = project(&mut owner, "other").await;
     db.ensure_board(&other, &me, Some("O")).unwrap();
-    crate::common::roles::by_name(&db, &other);
+    crate::common::roles::by_name(db, &other);
     let (theirs, _) = new_item(db, &other, "Not yours", Priority::P1);
     let refused = owner.request(send(Some(&theirs), "Do this")).await;
     assert_eq!(refused["type"], "error", "{refused}");

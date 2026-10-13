@@ -29,7 +29,7 @@ async fn gate() -> Gate {
     let project = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     db.ensure_board(&project, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
-    crate::common::roles::by_name(&db, &project);
+    crate::common::roles::by_name(db, &project);
     db.set_project_lead(&project, Some(&pair.ids[0])).unwrap();
     for (bot, machine) in [(2, None), (3, Some("imac"))] {
         db.set_project_role(&ProjectRole {

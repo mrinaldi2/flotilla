@@ -207,7 +207,7 @@ async fn the_home_opens_no_peer_path_and_serves_no_draft_or_other_project() {
     let db = &b.p.mac.app.db;
     db.ensure_board(&other, &db.daemon_id().unwrap(), Some("X"))
         .unwrap();
-    crate::common::roles::by_name(&db, &other);
+    crate::common::roles::by_name(db, &other);
     let (item, _) = common::board::new_item(
         db,
         &other,

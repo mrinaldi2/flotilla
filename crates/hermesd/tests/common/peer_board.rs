@@ -49,7 +49,7 @@ pub async fn board_on(mut p: Paired) -> Board {
     let db = &mac.app.db;
     db.ensure_board(&mac_app, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
-    crate::common::roles::by_name(&db, &mac_app);
+    crate::common::roles::by_name(db, &mac_app);
     db.set_project_role(&ProjectRole {
         project_id: mac_app.clone(),
         role: Role::Tester,

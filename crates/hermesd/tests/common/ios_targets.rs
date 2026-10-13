@@ -38,7 +38,7 @@ pub async fn team(platform: &str) -> Team {
     let project = db.get_bot(&pair.ids[LEAD]).unwrap().unwrap().project_id;
     db.ensure_board(&project, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
-    crate::common::roles::by_name(&db, &project);
+    crate::common::roles::by_name(db, &project);
     db.set_project_lead(&project, Some(&pair.ids[LEAD]))
         .unwrap();
     db.set_project_role(&ProjectRole {

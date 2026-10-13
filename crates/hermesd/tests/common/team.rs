@@ -19,7 +19,7 @@ pub async fn team(names: &[&str]) -> (Pair, Vec<McpClient>, String) {
     db.set_project_lead(&project, Some(&pair.ids[0])).unwrap();
     db.ensure_board(&project, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
-    crate::common::roles::by_name(&db, &project);
+    crate::common::roles::by_name(db, &project);
     (pair, bots, project)
 }
 

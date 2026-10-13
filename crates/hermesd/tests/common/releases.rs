@@ -28,7 +28,7 @@ pub async fn releases_on(d: super::TestDaemon, items: usize) -> Releases {
     let project = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     db.ensure_board(&project, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
-    crate::common::roles::by_name(&db, &project);
+    crate::common::roles::by_name(db, &project);
     db.set_project_role(&ProjectRole {
         project_id: project.clone(),
         role: Role::Tester,

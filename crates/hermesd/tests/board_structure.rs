@@ -176,7 +176,7 @@ async fn a_leads_change_waits_for_the_owner_unless_the_board_is_lead_free() {
     db.set_project_lead(&p.id, Some(&lead.id)).expect("lead");
     db.ensure_board(&p.id, &db.daemon_id().expect("id"), None)
         .expect("board");
-    crate::common::roles::by_name(&db, &p.id);
+    crate::common::roles::by_name(db, &p.id);
     let rs = db
         .create_board(&p.id, "Research", "RS", Preset::Software)
         .expect("board");

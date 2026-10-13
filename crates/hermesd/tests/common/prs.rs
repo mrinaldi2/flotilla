@@ -46,7 +46,7 @@ pub async fn setup_with(tweak: impl FnOnce(&mut hermesd::config::Config)) -> Rep
     let project = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     db.ensure_board(&project, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
-    crate::common::roles::by_name(&db, &project);
+    crate::common::roles::by_name(db, &project);
     db.set_project_role(&ProjectRole {
         project_id: project.clone(),
         role: Role::Dev,
