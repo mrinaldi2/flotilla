@@ -57,7 +57,7 @@ async fn no_review_while_the_branch_moved_unreported() {
 /// the lead never gives itself a reviewer role.
 #[tokio::test]
 async fn only_the_owner_seats_the_security_reviewer() {
-    use hermesd::kanban::team::{set_role, Assigner};
+    use hermesd::project_roles::{set_role, Assigner};
     let mut r = setup().await;
     let lead = r.bots[0]
         .call_raw(

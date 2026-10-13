@@ -1,8 +1,9 @@
-//! What a new board starts with: the default columns (H-017 §1.3, names from
-//! the glossary), the item-type templates (H-017 §2.1) and a first guess at
-//! the project's roles. All of it is editable afterwards.
+//! What a new release-gated board starts with: the default columns (names
+//! from the glossary) and the item-type templates. Roles are not guessed:
+//! the project's lead leads, and the owner or the lead gives the others.
+//! All of it is editable afterwards.
 
-use super::model::{ColumnCategory, ItemType, Role, WipScope};
+use super::model::{ColumnCategory, ItemType, WipScope};
 use serde_json::{json, Value};
 
 pub struct DefaultColumn {
@@ -43,7 +44,7 @@ pub const COLUMNS: &[DefaultColumn] = &[
         "ready",
         "Ready",
         ColumnCategory::Ready,
-        // A queue, not work in progress (H-099).
+        // A queue, not work in progress.
         None,
         WipScope::Column,
     ),
@@ -93,14 +94,16 @@ pub const COLUMNS: &[DefaultColumn] = &[
 ];
 
 /// Description sections per item type, and the fields the Definition of
-/// Ready requires before the item may leave the inbox.
+/// Ready requires before the item may leave the inbox. A feature needs its
+/// design or spec linked; a board that sorts items by a label group can
+/// also require one of its labels (`label:<group>`).
 pub fn item_templates() -> Vec<(ItemType, Value)> {
     vec![
         (
             ItemType::Feature,
             json!({
                 "sections": ["User/problem", "Proposed behaviour", "Out of scope", "Design/spec link"],
-                "ready": ["acceptance_criteria", "platforms", "size", "spec_link_for_ui_or_daemon"],
+                "ready": ["acceptance_criteria", "size", "spec_link"],
                 "flow": "full"
             }),
         ),
@@ -109,7 +112,7 @@ pub fn item_templates() -> Vec<(ItemType, Value)> {
             json!({
                 "sections": ["Steps to reproduce", "Expected", "Actual", "Machine/version",
                              "Logs/screenshots", "Severity"],
-                "ready": ["steps_to_reproduce", "expected_actual", "acceptance_criteria", "platforms"],
+                "ready": ["steps_to_reproduce", "expected_actual", "acceptance_criteria"],
                 "flow": "full"
             }),
         ),
@@ -125,7 +128,7 @@ pub fn item_templates() -> Vec<(ItemType, Value)> {
             ItemType::Chore,
             json!({
                 "sections": ["What and why", "Risk", "Rollback"],
-                "ready": ["description", "platforms"],
+                "ready": ["description"],
                 "flow": "full_if_code"
             }),
         ),
@@ -171,37 +174,6 @@ pub fn key_for(project_name: &str) -> String {
     }
 }
 
-/// The role a new board gives a bot from its name (H-037): the team's
-/// standard names, case-insensitive, and testers by prefix ("Tester",
-/// "Tester Win"). Any other name gets no role; the lead or owner sets roles
-/// properly.
-pub fn guess_role(bot_name: &str) -> Option<Role> {
-    let name = bot_name.trim().to_lowercase();
-    match name.as_str() {
-        "team lead" => Some(Role::Lead),
-        "scrum master" => Some(Role::Coach),
-        "devops" => Some(Role::Devops),
-        "architect" => Some(Role::ReviewerArch),
-        // Context Engineer reviews security work (H-099), in its own role
-        // since PRs require it by area (H-261 §2.1, H-268).
-        "context engineer" => Some(Role::ReviewerCe),
-        "ux designer" => Some(Role::ReviewerUx),
-        "desktop dev" | "ios dev" => Some(Role::Dev),
-        _ if name.starts_with("tester") => Some(Role::Tester),
-        _ => None,
-    }
-}
-
-/// A bot's seeded role: the project's lead leads, everyone else as
-/// `guess_role` says.
-pub fn seed_role(bot_name: &str, is_project_lead: bool) -> Option<Role> {
-    if is_project_lead {
-        Some(Role::Lead)
-    } else {
-        guess_role(bot_name)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -212,25 +184,6 @@ mod tests {
         assert_eq!(key_for("gravity"), "G");
         assert_eq!(key_for("my_app 2"), "MA");
         assert_eq!(key_for("42"), "B");
-    }
-
-    #[test]
-    fn roles_are_guessed_from_names() {
-        assert_eq!(guess_role("Team Lead"), Some(Role::Lead));
-        assert_eq!(guess_role("team lead"), Some(Role::Lead));
-        assert_eq!(guess_role("Scrum Master"), Some(Role::Coach));
-        assert_eq!(guess_role("DevOps"), Some(Role::Devops));
-        assert_eq!(guess_role("Architect"), Some(Role::ReviewerArch));
-        assert_eq!(guess_role("UX Designer"), Some(Role::ReviewerUx));
-        assert_eq!(guess_role("Tester"), Some(Role::Tester));
-        assert_eq!(guess_role("Tester Win"), Some(Role::Tester));
-        assert_eq!(guess_role("Desktop Dev"), Some(Role::Dev));
-        assert_eq!(guess_role("iOS Dev"), Some(Role::Dev));
-        // Context Engineer reviews security work (H-099, H-268).
-        assert_eq!(guess_role("Context Engineer"), Some(Role::ReviewerCe));
-        assert_eq!(guess_role("Lead Writer"), None);
-        assert_eq!(guess_role("Writer"), None);
-        assert_eq!(seed_role("Writer", true), Some(Role::Lead));
     }
 
     #[test]

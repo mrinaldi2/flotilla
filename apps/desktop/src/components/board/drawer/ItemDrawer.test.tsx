@@ -56,7 +56,9 @@ describe("ItemDrawer", () => {
     ).toBeInTheDocument();
     const stepper = within(drawer).getByRole("list", { name: "Where it stands" });
     expect(within(stepper).getByText(/Doing/)).toHaveAttribute("aria-current", "step");
-    expect(drawer).toHaveTextContent("Doing for 31h · Desktop Dev · P1 · M · desktop daemon");
+    expect(drawer).toHaveTextContent(
+      "Doing for 31h · Desktop Dev · P1 · M · platform:desktop, platform:daemon",
+    );
     const next = await within(drawer).findByRole("region", { name: "Next step" });
     expect(next).toHaveTextContent("To reach Review:");
     expect(next).toHaveTextContent("✗ No change note is linked. Link the change-note artifact.");

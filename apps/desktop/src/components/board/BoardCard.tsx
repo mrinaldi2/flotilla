@@ -3,7 +3,8 @@ import type { DragEvent, KeyboardEvent, ReactElement } from "react";
 import type { Bot } from "../../protocol/entities";
 import type { ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
 import BotAvatar from "../BotAvatar";
-import { platformWord, typeLabel, urgentPriority } from "./labels";
+import { labelGroupOf, labelWord } from "./labelGroups";
+import { typeLabel, urgentPriority } from "./labels";
 import type { Anchor } from "./useBoardMoves";
 
 /** The label the daemon adds when the lead overrode a WIP limit. */
@@ -20,6 +21,8 @@ interface BoardCardProps {
   readonly onDragStart: (card: ItemCard) => void;
   readonly onDragEnd: () => void;
   readonly dragging: boolean;
+  /** The label groups whose labels show as chips: the board's own. */
+  readonly chipGroups?: ReadonlySet<string>;
 }
 
 function assigneeName(card: ItemCard, assignee: Bot | undefined): string | null {
@@ -74,6 +77,8 @@ export default function BoardCard(props: BoardCardProps): ReactElement {
       onOpenMoveMenu(card, anchorBelow(event.currentTarget));
     }
   };
+
+  const chips = card.labels.filter((label) => props.chipGroups?.has(labelGroupOf(label)) ?? false);
 
   const onDragStart = (event: DragEvent<HTMLElement>): void => {
     event.dataTransfer.effectAllowed = "move";
@@ -140,11 +145,11 @@ export default function BoardCard(props: BoardCardProps): ReactElement {
         )}
       </div>
       <div className="board-card-title">{card.title}</div>
-      {card.platforms.length === 0 ? null : (
+      {chips.length === 0 ? null : (
         <div className="board-card-chips">
-          {card.platforms.map((platform) => (
-            <span key={platform} className="board-chip">
-              {platformWord(platform)}
+          {chips.map((label) => (
+            <span key={label} className="board-chip" title={label}>
+              {labelWord(label)}
             </span>
           ))}
         </div>

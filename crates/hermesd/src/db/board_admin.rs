@@ -2,8 +2,9 @@
 //! automations, each change checked against the board `version` the caller
 //! read. Who may make a change is `kanban::admin`'s call; this applies it.
 //!
-//! A release-gated board keeps its H-017 columns: it can be renamed and its
-//! columns renamed, reordered, hidden or given a WIP limit, nothing more.
+//! A release-gated board keeps its columns: it can be renamed, given label
+//! groups, and its columns renamed, reordered, hidden or given a WIP limit,
+//! nothing more.
 
 use bus::contract::board as c;
 use bus::now;
@@ -16,6 +17,7 @@ use super::{ts, Actor, MoveTo, Write};
 use crate::decisions::{conflict, invalid, not_found};
 use crate::kanban::facts::Fact;
 use crate::kanban::flow::tokens;
+use crate::kanban::labels;
 use crate::kanban::model::{Board, BoardColumn, BoardFlow, ColumnKind, StructurePolicy};
 use crate::kanban::presets::category_of;
 
@@ -62,6 +64,14 @@ impl BoardTx<'_> {
             self.conn.execute(
                 "UPDATE board SET description = ?2 WHERE id = ?1",
                 params![board.id, description],
+            )?;
+        }
+        if let Some(groups) = &req.label_groups {
+            let groups = labels::checked(groups.values.iter().cloned().map(Into::into).collect())
+                .map_err(invalid)?;
+            self.conn.execute(
+                "UPDATE board SET label_groups = ?2 WHERE id = ?1",
+                params![board.id, serde_json::to_string(&groups)?],
             )?;
         }
         if let Some(policy) = &req.structure_policy {

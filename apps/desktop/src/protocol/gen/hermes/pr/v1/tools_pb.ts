@@ -27,7 +27,7 @@ export const file_hermes_pr_v1_tools: GenFile = /*@__PURE__*/
  */
 export type PrOpen = Message<"hermes.pr.v1.PrOpen"> & {
   /**
-   * the card, e.g. "H-265"
+   * the card, e.g. "RB-12"
    *
    * @generated from field: string item = 1;
    */

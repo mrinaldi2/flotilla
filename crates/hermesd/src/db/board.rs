@@ -6,7 +6,7 @@
 use std::collections::BTreeMap;
 
 use crate::kanban::model::{
-    BoardColumn, BoardSettings, Platform, ProjectRole, Role, Template, TemplateKind, TextValue,
+    BoardColumn, BoardSettings, ProjectRole, Role, Template, TemplateKind, TextValue,
 };
 use bus::now;
 use rusqlite::{params, Connection, OptionalExtension};
@@ -35,34 +35,8 @@ pub(super) fn from_text<T: TextValue>(text: String) -> rusqlite::Result<T> {
     T::from_text(&text).ok_or_else(|| bad_text(&text))
 }
 
-/// A list of value-set members as a JSON array of their stored spellings.
-pub(super) fn to_json_list<T: TextValue>(values: &[T]) -> String {
-    serde_json::to_string(&values.iter().map(|v| v.as_text()).collect::<Vec<_>>())
-        .expect("strings serialise")
-}
-
-pub(super) fn from_json_list<T: TextValue>(text: String) -> rusqlite::Result<Vec<T>> {
-    from_json::<Vec<String>>(text)?
-        .iter()
-        .map(|t| T::from_text(t).ok_or_else(|| bad_text(t)))
-        .collect()
-}
-
-fn machines_to_json(machines: &BTreeMap<Platform, Vec<String>>) -> String {
-    let named: BTreeMap<&str, &Vec<String>> =
-        machines.iter().map(|(p, m)| (p.as_text(), m)).collect();
-    serde_json::to_string(&named).expect("strings serialise")
-}
-
-fn machines_from_json(text: String) -> rusqlite::Result<BTreeMap<Platform, Vec<String>>> {
-    from_json::<BTreeMap<String, Vec<String>>>(text)?
-        .into_iter()
-        .map(|(p, m)| {
-            Platform::from_text(&p)
-                .map(|p| (p, m))
-                .ok_or_else(|| bad_text(&p))
-        })
-        .collect()
+fn machines_to_json(machines: &BTreeMap<String, Vec<String>>) -> String {
+    serde_json::to_string(machines).expect("strings serialise")
 }
 
 pub(super) fn from_json<T: DeserializeOwned>(text: String) -> rusqlite::Result<T> {
@@ -80,7 +54,7 @@ fn settings_from_row(r: &rusqlite::Row<'_>) -> rusqlite::Result<BoardSettings> {
         key: r.get(1)?,
         next_seq: r.get(2)?,
         stale_after_hours: r.get(3)?,
-        required_machines: machines_from_json(r.get(4)?)?,
+        required_machines: from_json(r.get(4)?)?,
         home_daemon_id: r.get(5)?,
         version: r.get(6)?,
     })
@@ -104,8 +78,8 @@ impl Db {
     }
 
     /// Enable the board for a project, or return the existing one unchanged.
-    /// A new board gets the default columns, the item-type templates and a
-    /// first guess at roles from the project's lead and its bots' names.
+    /// A new board gets the default columns, the item-type templates and the
+    /// project's lead as its lead.
     pub fn ensure_board(
         &self,
         project_id: &str,
@@ -167,28 +141,14 @@ impl Db {
                 params![project_id, to_text(&item_type), body.to_string(), at],
             )?;
         }
-        // A tester verifies on the machine it runs on: a linked bot's peer.
-        let bots: Vec<(String, String, Option<String>)> = tx
-            .prepare(
-                "SELECT bot.id, bot.name, peer.name FROM bot
-                 LEFT JOIN peer ON peer.id = bot.peer_id
-                 WHERE bot.project_id = ?1 AND bot.deleted_at IS NULL",
-            )?
-            .query_map(params![project_id], |r| {
-                Ok((r.get(0)?, r.get(1)?, r.get(2)?))
-            })?
-            .collect::<Result<_, _>>()?;
-        for (bot_id, name, peer) in bots {
-            let is_lead = lead_bot_id.as_deref() == Some(bot_id.as_str());
-            if let Some(role) = defaults::seed_role(&name, is_lead) {
-                let machine = peer.filter(|_| role == Role::Tester);
-                tx.execute(
-                    "INSERT OR IGNORE INTO project_role(project_id, role, bot_id, machine)
-                     VALUES (?1, ?2, ?3, ?4)",
-                    params![project_id, to_text(&role), bot_id, machine],
-                )?;
-            }
-        }
+        // The project's lead leads the board; every other role is given
+        // explicitly, by the owner or the lead (`role_set`).
+        tx.execute(
+            "INSERT OR IGNORE INTO project_role(project_id, role, bot_id)
+             SELECT ?1, ?2, id FROM bot
+             WHERE id = ?3 AND project_id = ?1 AND deleted_at IS NULL",
+            params![project_id, to_text(&Role::Lead), lead_bot_id],
+        )?;
         let settings = settings_in(&tx, project_id)?.expect("just inserted");
         tx.commit()?;
         Ok(settings)
@@ -275,7 +235,7 @@ impl Db {
         project_id: &str,
         expected_version: u64,
         stale_after_hours: Option<u32>,
-        required_machines: Option<&BTreeMap<Platform, Vec<String>>>,
+        required_machines: Option<&BTreeMap<String, Vec<String>>>,
     ) -> anyhow::Result<super::board_items::Write<BoardSettings>> {
         let conn = self.lock();
         let changed = conn.execute(

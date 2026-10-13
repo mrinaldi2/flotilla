@@ -99,6 +99,8 @@ mod owner_threads_tests;
 mod peer_grants;
 mod peers;
 mod permissions;
+#[cfg(test)]
+mod platform_labels_migration_tests;
 mod pr_changes;
 mod project_links;
 mod project_repos;

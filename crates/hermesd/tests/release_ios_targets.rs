@@ -10,11 +10,11 @@ use common::ios_targets::{
 };
 use common::tasks::error_text;
 use common::WsClient;
-use hermesd::kanban::model::{Platform, ProjectRole, Role};
+use hermesd::kanban::model::{ProjectRole, Role};
 use serde_json::json;
 #[tokio::test]
 async fn an_ios_package_is_tested_by_ios_qa_and_closes_on_the_iphone() {
-    let mut t = team(Platform::Ios).await;
+    let mut t = team("ios").await;
     ios_qa_tests_ios(&mut t).await;
     // The project's desktop list doesn't change for it (AC 2).
     let seen = t.bots[LEAD].call("release_machines", json!({})).await;
@@ -57,7 +57,7 @@ async fn an_ios_package_is_tested_by_ios_qa_and_closes_on_the_iphone() {
 
 #[tokio::test]
 async fn a_desktop_package_still_needs_every_desktop_computer() {
-    let mut t = team(Platform::Desktop).await;
+    let mut t = team("desktop").await;
     ios_qa_tests_ios(&mut t).await;
     let id = package(&mut t, "0.17.4", "desktop-mac").await;
     // iOS QA isn't a desktop tester: its result doesn't count here.
@@ -81,7 +81,7 @@ async fn a_desktop_package_still_needs_every_desktop_computer() {
 /// The lead can take back only the iOS tester role it can give.
 #[tokio::test]
 async fn the_lead_removes_only_an_ios_tester() {
-    let mut t = team(Platform::Ios).await;
+    let mut t = team("ios").await;
     ios_qa_tests_ios(&mut t).await;
     let raw = t.bots[LEAD]
         .call_raw(
@@ -103,7 +103,7 @@ async fn the_lead_removes_only_an_ios_tester() {
 /// role or taking it away.
 #[tokio::test]
 async fn the_lead_gives_the_ios_tester_role_only_to_a_bot_that_neither_leads_ships_nor_builds() {
-    let mut t = team(Platform::Ios).await;
+    let mut t = team("ios").await;
     for (bot, machine) in [
         ("iOS QA", "iphone"),
         ("Team Lead", "ios"),
@@ -145,7 +145,7 @@ async fn the_lead_gives_the_ios_tester_role_only_to_a_bot_that_neither_leads_shi
 /// make a dev its iOS tester, nor make its iOS tester a dev afterwards.
 #[tokio::test]
 async fn the_lead_keeps_the_ios_tester_and_a_dev_apart_in_either_order() {
-    let mut t = team(Platform::Ios).await;
+    let mut t = team("ios").await;
     // A dev first, then the iOS tester: refused.
     let raw = t.bots[LEAD]
         .call_raw(
@@ -200,7 +200,7 @@ async fn an_ios_package_frozen_on_desktop_computers_deploys_to_the_iphone_after_
     use hermesd::releases::model::ReleaseTargets;
     use hermesd::releases::{check_frozen, frozen_hash};
 
-    let mut t = team(Platform::Ios).await;
+    let mut t = team("ios").await;
     ios_qa_tests_ios(&mut t).await;
     let id = package(&mut t, "iOS 0.5.0", "ios").await;
     t.bots[IOS_QA].call("release_test", pass(&id)).await;

@@ -30,7 +30,7 @@ pub(super) fn tools() -> Vec<Value> {
                  "cwd": {"type": "string", "description": "The folder it runs in, on the target computer."},
                  "shell": {"type": "string", "enum": ["zsh", "bash", "powershell", "cmd"], "description": "Optional here: zsh on macOS, bash on Linux, powershell on Windows by default. Required for another computer."},
                  "target_machine": {"type": "string", "description": "Optional. 'here' (default) or a linked computer's name."},
-                 "item": {"type": "string", "description": "Optional. The board item whose card shows it, e.g. H-117."},
+                 "item": {"type": "string", "description": "Optional. The board item whose card shows it, e.g. RB-12."},
                  "decision_id": {"type": "string", "description": "Optional. The decision that shows it."},
                  "pinned_files": {"type": "array", "items": {"type": "string"}, "description": "Optional. Absolute paths the command relies on; their hashes are checked again before it runs."},
                  "timeout_s": {"type": "integer", "description": "Optional. Seconds before it is stopped (default 600, max 3600)."}

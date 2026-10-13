@@ -98,6 +98,7 @@ async fn a_bot_shapes_a_draft_with_the_owner_who_finalizes_it() {
     db.set_project_lead(&project_id, Some(&lead_id)).unwrap();
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(db, &project_id);
     let recipes = db
         .create_board(&project_id, "Recipes", "RB", Preset::Simple)
         .unwrap();

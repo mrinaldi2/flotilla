@@ -20,6 +20,7 @@ fn setup(d: &TestDaemon, ids: &[String]) -> Setup {
     db.set_project_lead(&project_id, Some(&ids[0])).unwrap();
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(db, &project_id);
     Setup {
         project_id,
         lead_id: ids[0].clone(),

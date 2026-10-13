@@ -86,14 +86,6 @@ pub(super) fn revised(
             ("priority", item.priority.as_str().to_string()),
             ("labels", item.labels.join(", ")),
             ("acceptance_criteria", ac.join("\n")),
-            (
-                "platforms",
-                item.platforms
-                    .iter()
-                    .map(|p| p.as_str())
-                    .collect::<Vec<_>>()
-                    .join(", "),
-            ),
             ("parent", item.parent_id.clone().unwrap_or_default()),
         ]
     };

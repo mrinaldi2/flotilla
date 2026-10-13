@@ -75,7 +75,6 @@ pub fn file(
                 item_type: ItemType::Chore,
                 title: &title,
                 description: &description,
-                platforms: &[],
                 size: None,
                 priority: Priority::P2,
                 labels: &["follow-up".to_string()],

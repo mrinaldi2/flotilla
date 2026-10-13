@@ -7,7 +7,6 @@ use crate::common;
 
 use common::ios_targets::{ios_qa_tests_ios, package, pass, team, DEVOPS, IOS_QA, TESTER_IMAC};
 use common::WsClient;
-use hermesd::kanban::model::Platform;
 use hermesd::quiesce::pending;
 use serde_json::{json, Value};
 
@@ -40,7 +39,7 @@ fn flag(t: &common::ios_targets::Team) -> Option<Value> {
 /// here.
 #[tokio::test]
 async fn an_ios_deploy_task_never_flags_a_desktop() {
-    let mut t = team(Platform::Ios).await;
+    let mut t = team("ios").await;
     ios_qa_tests_ios(&mut t).await;
     let id = package(&mut t, "iOS 0.6.1", "ios").await;
     t.bots[IOS_QA].call("release_test", pass(&id)).await;
@@ -64,7 +63,7 @@ async fn an_ios_deploy_task_never_flags_a_desktop() {
 /// deployed its unconfirmed install elsewhere is called off with its task.
 #[tokio::test]
 async fn a_deployed_package_closes_its_unconfirmed_installs() {
-    let mut t = team(Platform::Desktop).await;
+    let mut t = team("desktop").await;
     let mut owner = WsClient::connect(&t.pair.d).await;
     let project = t.pair.d.app.db.item_project(&t.item).unwrap().unwrap();
     // The owner needs only this computer for it.

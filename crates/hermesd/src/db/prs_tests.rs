@@ -4,7 +4,7 @@
 use super::prs::NewPr;
 use super::{Db, NewItem};
 use crate::actor::Actor;
-use crate::kanban::model::{ItemType, Platform, Priority};
+use crate::kanban::model::{ItemType, Priority};
 use crate::prs::model::PrState;
 
 fn card(db: &Db, project: &str, title: &str) -> String {
@@ -15,10 +15,9 @@ fn card(db: &Db, project: &str, title: &str) -> String {
             item_type: ItemType::Feature,
             title,
             description: "",
-            platforms: &[Platform::Daemon],
             size: None,
             priority: Priority::P1,
-            labels: &[],
+            labels: &["platform:daemon".to_string()],
             parent_id: None,
             acceptance_criteria: &[],
         },

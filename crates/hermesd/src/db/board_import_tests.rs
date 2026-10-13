@@ -1,7 +1,7 @@
 //! The backlog import's storage (B6): key adoption, kept and new ids,
 //! idempotent re-runs, dry runs, and the home-only rule.
 
-use crate::kanban::import::{
+use crate::backlog_import::{
     is_imported, parse, AWAITING_OWNER_LABEL, DEPLOYING_LABEL, NOT_IMPORTED_SQL,
 };
 use crate::kanban::model::*;
@@ -68,7 +68,7 @@ fn an_empty_board_takes_the_key_and_every_entry_keeps_or_gets_an_id() {
     assert!(links.iter().all(|l| l.kind == LinkKind::Decision));
 
     let renamed = db.get_item("H-041").unwrap().unwrap();
-    assert_eq!(renamed.labels, ["rename", "was:R1-I2"]);
+    assert_eq!(renamed.labels, ["rename", "was:R1-I2", "platform:ios"]);
     assert_eq!(renamed.category, ColumnCategory::Review);
     let events = db.item_events("H-041").unwrap();
     assert_eq!(events.len(), 1);
@@ -156,7 +156,10 @@ fn nothing_lands_where_only_the_daemon_moves_it() {
         .all(|c| !matches!(c.column_key.as_str(), "approval" | "deploying")));
     let rel = db.get_item("H-043").unwrap().unwrap();
     assert_eq!(rel.category, ColumnCategory::Verify);
-    assert_eq!(rel.labels, ["was:REL-D-1", DEPLOYING_LABEL]);
+    assert_eq!(
+        rel.labels,
+        ["was:REL-D-1", DEPLOYING_LABEL, "platform:desktop"]
+    );
     let h11 = db.get_item("H-011").unwrap().unwrap();
     assert_eq!(h11.category, ColumnCategory::Verify);
     assert_eq!(h11.labels, [AWAITING_OWNER_LABEL]);

@@ -1,11 +1,11 @@
-// The item drawer's fixed parts (H-018 §3.6): the header with Move to…, the
+// The item drawer's fixed parts: the header with Move to…, the
 // state stepper, the meta line and the next step.
 
 import { Pencil, X } from "lucide-react";
 import type { ReactElement } from "react";
 import type { BoardColumn, Item } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import { Priority, Size } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { platformWord, typeLabel } from "../labels";
+import { typeLabel } from "../labels";
 import type { Anchor } from "../useBoardMoves";
 import type { NextStep } from "./drawerText";
 import { age, flowOf } from "./drawerText";
@@ -104,7 +104,7 @@ export function Stepper(props: {
   );
 }
 
-/** "Doing for 31h · Desktop Dev · P1 · M · desktop daemon". */
+/** "Doing for 31h · Lead · P1 · M · area:web, urgent". */
 export function MetaLine(props: {
   readonly item: Item;
   readonly column: BoardColumn | undefined;
@@ -117,7 +117,7 @@ export function MetaLine(props: {
     item.assignee ? props.who(`bot:${item.assignee}`) : "Unassigned",
     Priority[item.priority],
     item.size === undefined ? "" : Size[item.size],
-    item.platforms.map(platformWord).join(" "),
+    item.labels.join(", "),
   ];
   return (
     <p className="drawer-meta">

@@ -9,7 +9,7 @@ use common::tasks::error_text;
 use common::WsClient;
 use hermesd::actor::Actor;
 use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Platform, Priority};
+use hermesd::kanban::model::{ItemType, Priority};
 use serde_json::{json, Value};
 
 /// A new item left where `create_item` puts it (not in Verify).
@@ -25,10 +25,9 @@ fn open_item(r: &Releases, title: &str) -> String {
                 item_type: ItemType::Feature,
                 title,
                 description: "",
-                platforms: &[Platform::Daemon],
                 size: None,
                 priority: Priority::P1,
-                labels: &[],
+                labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &["one".to_string(), "two".to_string()],
             },

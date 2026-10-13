@@ -10,10 +10,10 @@ use super::board::board_roles;
 
 /// The roles `tools/list` shows a bot's tools for: its board roles; on a
 /// linked computer, the roles the board's home gives it, as mirrored here,
-/// since its calls go there (`board_remote`, H-254); or before its project
-/// has a board, the role the board will seed for it (H-037). A running
-/// session keeps the list it read at its start, so it already holds its
-/// tools when the owner starts the board.
+/// since its calls go there (`board_remote`); or before its project has a
+/// board, the lead's role for the project's lead, which the board gives it.
+/// A running session keeps the list it read at its start, so the lead
+/// already holds its tools when the owner starts the board.
 pub(super) fn listed_roles(app: &Arc<AppState>, bot: &bus::Bot) -> anyhow::Result<Vec<Role>> {
     if let Some(roles) = board_roles(app, bot)? {
         return Ok(roles);
@@ -32,7 +32,5 @@ pub(super) fn listed_roles(app: &Arc<AppState>, bot: &bus::Bot) -> anyhow::Resul
         .db
         .get_project(&bot.project_id)?
         .is_some_and(|p| p.lead_bot_id.as_deref() == Some(bot.id.as_str()));
-    Ok(crate::kanban::defaults::seed_role(&bot.name, is_lead)
-        .into_iter()
-        .collect())
+    Ok(is_lead.then_some(Role::Lead).into_iter().collect())
 }

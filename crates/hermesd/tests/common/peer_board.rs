@@ -6,7 +6,7 @@ use super::{create_bot, McpClient};
 use hermesd::actor::Actor;
 use hermesd::db::{MoveTo, NewItem};
 use hermesd::kanban::feed::{Change, ChangeKind};
-use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
+use hermesd::kanban::model::{ItemType, Priority, ProjectRole, Role};
 use serde_json::json;
 
 pub struct Board {
@@ -49,6 +49,7 @@ pub async fn board_on(mut p: Paired) -> Board {
     let db = &mac.app.db;
     db.ensure_board(&mac_app, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(db, &mac_app);
     db.set_project_role(&ProjectRole {
         project_id: mac_app.clone(),
         role: Role::Tester,
@@ -64,10 +65,9 @@ pub async fn board_on(mut p: Paired) -> Board {
                 item_type: ItemType::Feature,
                 title: "Peer board",
                 description: "",
-                platforms: &[Platform::Daemon],
                 size: None,
                 priority: Priority::P1,
-                labels: &[],
+                labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
             },

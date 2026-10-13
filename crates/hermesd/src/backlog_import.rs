@@ -6,7 +6,8 @@
 //! approximated. Imported items are left out of flow metrics
 //! (`NOT_IMPORTED_SQL`, `is_imported`).
 
-use super::model::{ColumnCategory, ItemEvent, ItemEventKind, ItemType, Platform, Size};
+use crate::kanban::labels::label;
+use crate::kanban::model::{ColumnCategory, ItemEvent, ItemEventKind, ItemType, Size};
 
 pub mod cli;
 mod fields;
@@ -17,8 +18,11 @@ mod tests;
 
 use fields::{artifacts, hex_ids, item_type, platforms, size, state};
 
-/// The backlog's id prefix: its rows keep their ids under it (H-017 §5.3).
+/// The backlog's id prefix: its rows keep their ids under it.
 pub const SOURCE_KEY: &str = "H";
+
+/// The label group a row's platform cell fills: `platform:ios`.
+pub const PLATFORM_GROUP: &str = "platform";
 
 /// The label that marks a renamed release-1/2 row (H-020 §3 point 3).
 pub const RENAME_LABEL: &str = "rename";
@@ -60,7 +64,6 @@ pub struct Entry {
     pub title: String,
     pub item_type: ItemType,
     pub category: ColumnCategory,
-    pub platforms: Vec<Platform>,
     pub size: Option<Size>,
     pub labels: Vec<String>,
     pub description: String,
@@ -222,7 +225,6 @@ fn base(line: usize, id: &str, title: &str, category: ColumnCategory) -> Result<
         title: title.to_string(),
         item_type: item_type(title),
         category,
-        platforms: Vec::new(),
         size: None,
         labels,
         description: String::new(),
@@ -249,7 +251,8 @@ fn row_entry(h: &Header, row: &[String], line: usize) -> Result<Entry, Skipped> 
     e.labels.extend(state_label.map(str::to_string));
     let (platform_text, size_text) = (cell(h.platform), cell(h.size));
     let (list, unknown) = platforms(platform_text);
-    e.platforms = list;
+    e.labels
+        .extend(list.iter().map(|p| label(PLATFORM_GROUP, p)));
     if !unknown.is_empty() {
         e.warnings.push(format!(
             "platform '{platform_text}': no platform for {unknown:?}"
@@ -298,7 +301,7 @@ fn row_entry(h: &Header, row: &[String], line: usize) -> Result<Entry, Skipped> 
 }
 
 /// `### H-040 — title` and its bullets. It names no state, so it is new
-/// work: the inbox, as every new item starts (H-017 §3).
+/// work: the inbox, as every new item starts.
 fn section_entry(heading: &str, body: &[&str], line: usize) -> Result<Entry, Skipped> {
     let (id, title) = heading
         .split_once(" — ")

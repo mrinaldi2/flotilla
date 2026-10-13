@@ -10,10 +10,10 @@ use bus::now;
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::Serialize;
 
-use crate::kanban::import::{Entry, Key, Parsed, Skipped, IMPORT_NOTE, SOURCE_KEY};
+use crate::backlog_import::{Entry, Key, Parsed, Skipped, IMPORT_NOTE, SOURCE_KEY};
 use crate::kanban::model::{ColumnCategory, ItemEventKind, LinkKind, Priority};
 
-use super::board::{settings_in, to_json_list, to_text};
+use super::board::{settings_in, to_text};
 use super::board_items::{record, Event};
 use super::board_ranks::rank_last;
 use super::{ts, Actor, Db};
@@ -289,11 +289,11 @@ fn insert(
     let at = ts(now());
     let done_at = (e.category == ColumnCategory::Done).then_some(at.as_str());
     tx.execute(
-        "INSERT INTO item(id, project_id, seq, type, title, description, platforms, size,
+        "INSERT INTO item(id, project_id, seq, type, title, description, size,
                           priority, rank, column_key, category, assignee, labels, created_by,
                           created_at, updated_at, state_entered_at, done_at, board_id)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?16,
-                 ?16, ?17, (SELECT id FROM board WHERE project_id = ?2 AND is_default = 1))",
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?15,
+                 ?15, ?16, (SELECT id FROM board WHERE project_id = ?2 AND is_default = 1))",
         params![
             id,
             project_id,
@@ -301,7 +301,6 @@ fn insert(
             to_text(&e.item_type),
             e.title,
             e.description,
-            to_json_list(&e.platforms),
             e.size.map(|s| to_text(&s)),
             to_text(&Priority::P2),
             rank_last(tx, project_id, column)?,

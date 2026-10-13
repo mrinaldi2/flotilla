@@ -14,9 +14,7 @@ use std::sync::Arc;
 use bus::contract::board as c;
 
 use super::edit::{Edited, Editor};
-use super::model::{
-    DraftRevision, Item, ItemState, ItemType, LinkKind, Platform, Priority, Size, Unmet,
-};
+use super::model::{DraftRevision, Item, ItemState, ItemType, LinkKind, Priority, Size, Unmet};
 use crate::actor::Actor;
 use crate::app::AppState;
 use crate::db::ItemEdit;
@@ -69,7 +67,6 @@ fn undo_field(
 ) -> anyhow::Result<Edited> {
     let unknown = || invalid(format!("{field} can't go back to “{from}”"));
     let list: Vec<String>;
-    let platforms: Vec<Platform>;
     let mut edit = ItemEdit::default();
     match field {
         "title" => edit.title = Some(from),
@@ -85,13 +82,6 @@ fn undo_field(
         "acceptance_criteria" => {
             list = split(from, "\n");
             edit.acceptance_criteria = Some(&list);
-        }
-        "platforms" => {
-            platforms = split(from, ",")
-                .iter()
-                .map(|p| Platform::parse(p).ok_or_else(unknown))
-                .collect::<Result<_, _>>()?;
-            edit.platforms = Some(&platforms);
         }
         "parent" => edit.parent_id = Some((!from.is_empty()).then_some(from)),
         other => return Err(invalid(format!("a change to {other} can't be undone"))),

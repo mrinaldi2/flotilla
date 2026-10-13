@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 use rusqlite::params;
 
 use super::{ts, Db};
-use crate::kanban::import::NOT_IMPORTED_SQL;
+use crate::backlog_import::NOT_IMPORTED_SQL;
 
 /// A WIP override granted on a move: by the lead or the owner, or the
 /// automatic one for returned work.

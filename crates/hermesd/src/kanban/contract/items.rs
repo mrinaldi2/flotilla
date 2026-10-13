@@ -3,18 +3,17 @@
 use bus::contract::board as c;
 
 use super::super::model as m;
-use super::{all, at, maybe_at, model_list, stamp, wire_list, MapError};
+use super::{all, at, maybe_at, stamp, MapError};
 
 impl From<m::Item> for c::Item {
     fn from(v: m::Item) -> Self {
-        c::Item {
+        let mut item = c::Item {
             id: v.id,
             board_id: v.board_id,
             seq: v.seq,
             r#type: v.item_type.into(),
             title: v.title,
             description: v.description,
-            platforms: wire_list(v.platforms),
             size: v.size.map(Into::into),
             priority: v.priority.into(),
             rank: v.rank,
@@ -35,14 +34,18 @@ impl From<m::Item> for c::Item {
             done_at: v.done_at.and_then(stamp),
             version: v.version,
             state: v.state.as_str().to_string(),
-        }
+            ..Default::default()
+        };
+        crate::compat018::item_out(&mut item);
+        item
     }
 }
 
 impl TryFrom<c::Item> for m::Item {
     type Error = MapError;
 
-    fn try_from(v: c::Item) -> Result<Self, MapError> {
+    fn try_from(mut v: c::Item) -> Result<Self, MapError> {
+        crate::compat018::item_in(&mut v);
         Ok(m::Item {
             id: v.id,
             board_id: v.board_id,
@@ -50,7 +53,6 @@ impl TryFrom<c::Item> for m::Item {
             item_type: m::ItemType::from_wire(v.r#type)?,
             title: v.title,
             description: v.description,
-            platforms: model_list(v.platforms, m::Platform::from_wire)?,
             size: v.size.map(m::Size::from_wire).transpose()?,
             priority: m::Priority::from_wire(v.priority)?,
             rank: v.rank,
@@ -81,7 +83,7 @@ impl TryFrom<c::Item> for m::Item {
 
 impl From<m::ItemCard> for c::ItemCard {
     fn from(v: m::ItemCard) -> Self {
-        c::ItemCard {
+        let mut card = c::ItemCard {
             id: v.id,
             board_id: v.board_id,
             r#type: v.item_type.into(),
@@ -91,7 +93,6 @@ impl From<m::ItemCard> for c::ItemCard {
             rank: v.rank,
             column_key: v.column_key,
             assignee: v.assignee,
-            platforms: wire_list(v.platforms),
             labels: v.labels,
             blocked: v.blocked,
             stale: v.stale,
@@ -100,14 +101,18 @@ impl From<m::ItemCard> for c::ItemCard {
             version: v.version,
             owner_commented_at: v.owner_commented_at.and_then(stamp),
             draft: v.draft,
-        }
+            ..Default::default()
+        };
+        crate::compat018::card_out(&mut card);
+        card
     }
 }
 
 impl TryFrom<c::ItemCard> for m::ItemCard {
     type Error = MapError;
 
-    fn try_from(v: c::ItemCard) -> Result<Self, MapError> {
+    fn try_from(mut v: c::ItemCard) -> Result<Self, MapError> {
+        crate::compat018::card_in(&mut v);
         Ok(m::ItemCard {
             id: v.id,
             board_id: v.board_id,
@@ -118,7 +123,6 @@ impl TryFrom<c::ItemCard> for m::ItemCard {
             rank: v.rank,
             column_key: v.column_key,
             assignee: v.assignee,
-            platforms: model_list(v.platforms, m::Platform::from_wire)?,
             labels: v.labels,
             blocked: v.blocked,
             stale: v.stale,

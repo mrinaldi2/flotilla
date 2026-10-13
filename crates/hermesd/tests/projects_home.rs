@@ -44,6 +44,7 @@ async fn each_project_has_a_row_counting_what_its_needs_you_lists() {
     let busy = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     let me = db.daemon_id().unwrap();
     db.ensure_board(&busy, &me, Some("H")).unwrap();
+    crate::common::roles::by_name(db, &busy);
     let (urgent, _) = new_item(db, &busy, "Crash on start", Priority::P0);
     bots[0]
         .call(
@@ -136,6 +137,7 @@ async fn a_row_counts_every_column_and_all_of_doing() {
     let project_id = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(db, &project_id);
     for n in 0..4 {
         let (id, _) = new_item(db, &project_id, &format!("Doing {n}"), Priority::P2);
         walk(db, &id, &["doing"], None);

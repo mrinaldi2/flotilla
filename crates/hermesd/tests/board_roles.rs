@@ -1,6 +1,6 @@
-//! Seeded board roles and the tools they list over MCP (H-037): a new board
-//! gives the team's standard names their roles, and a bot without a role
-//! still reads the board.
+//! Board roles and the tools they list over MCP: a new board gives only the
+//! project's lead a role, whatever the bots are called, and a bot without a
+//! role still reads the board.
 
 use crate::common;
 
@@ -32,11 +32,15 @@ const NAMES: &[&str] = &[
     "Writer",
 ];
 
+/// No role comes from a name (0.19.0 K8): "Team Lead" or "Tester Win" is
+/// just a name, and the project's lead, here "Writer", leads.
 #[tokio::test]
-async fn a_new_board_seeds_roles_from_bot_names() {
+async fn a_new_board_gives_only_the_projects_lead_a_role() {
     let (pair, _bots) = project_with_bots(NAMES).await;
     let db = &pair.d.app.db;
     let project_id = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
+    let writer = &pair.ids[NAMES.len() - 1];
+    db.set_project_lead(&project_id, Some(writer)).unwrap();
     let mut owner = WsClient::connect(&pair.d).await;
     let board = snapshot(
         call(
@@ -47,29 +51,14 @@ async fn a_new_board_seeds_roles_from_bot_names() {
         )
         .await,
     );
-    let role_of = |name: &str| -> Vec<String> {
-        let id = &pair.ids[NAMES.iter().position(|n| *n == name).unwrap()];
-        db.project_roles(&project_id)
-            .unwrap()
-            .into_iter()
-            .filter(|r| &r.bot_id == id)
-            .map(|r| r.role.as_text().to_string())
-            .collect()
-    };
-    for (name, role) in [
-        ("Team Lead", "lead"),
-        ("Scrum Master", "coach"),
-        ("devops", "devops"),
-        ("Architect", "reviewer.arch"),
-        ("UX Designer", "reviewer.ux"),
-        ("Tester Win", "tester"),
-        ("Desktop Dev", "dev"),
-        ("iOS Dev", "dev"),
-    ] {
-        assert_eq!(role_of(name), vec![role.to_string()], "{name}");
-    }
-    assert!(role_of("Writer").is_empty());
-    assert_eq!(board.roles.len(), 8);
+    let roles: Vec<(String, String)> = db
+        .project_roles(&project_id)
+        .unwrap()
+        .into_iter()
+        .map(|r| (r.bot_id, r.role.as_text().to_string()))
+        .collect();
+    assert_eq!(roles, [(writer.clone(), "lead".to_string())]);
+    assert_eq!(board.roles.len(), 1);
 }
 
 #[tokio::test]
@@ -79,6 +68,7 @@ async fn a_bot_without_a_role_lists_the_reads_and_its_own_items_tools() {
     let project_id = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("P"))
         .unwrap();
+    crate::common::roles::by_name(db, &project_id);
     let [dev, writer] = &mut bots[..] else {
         unreachable!()
     };

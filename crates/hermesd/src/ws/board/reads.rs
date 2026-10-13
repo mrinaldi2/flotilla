@@ -107,7 +107,7 @@ pub(super) fn query_cards(
     let bad = |e: MapError| refuse("invalid_request", e.to_string());
     let types = wire_list(&r.types, m::ItemType::from_wire).map_err(bad)?;
     let priorities = wire_list(&r.priorities, m::Priority::from_wire).map_err(bad)?;
-    let platforms = wire_list(&r.platforms, m::Platform::from_wire).map_err(bad)?;
+    let labels = crate::compat018::query_labels(r);
     let wanted = |card: &m::ItemCard| {
         (r.column_keys.is_empty() || r.column_keys.contains(&card.column_key))
             && r.assignee
@@ -115,7 +115,7 @@ pub(super) fn query_cards(
                 .is_none_or(|a| card.assignee.as_ref() == Some(a))
             && (types.is_empty() || types.contains(&card.item_type))
             && (priorities.is_empty() || priorities.contains(&card.priority))
-            && (platforms.is_empty() || platforms.iter().any(|p| card.platforms.contains(p)))
+            && crate::kanban::labels::matches_any(&card.labels, &labels)
             && r.blocked.is_none_or(|b| card.blocked == b)
     };
     Ok(c::ItemQueryResult {

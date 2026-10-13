@@ -4,7 +4,7 @@
 use super::*;
 use crate::db::{NewItem, Write};
 use crate::kanban::guards::WIP_OVERRIDE_LABEL;
-use crate::kanban::model::{ItemEventKind, ItemType, LinkKind, Platform, Priority, Size};
+use crate::kanban::model::{ItemEventKind, ItemType, LinkKind, Priority, Size};
 
 struct Board {
     db: Db,
@@ -23,7 +23,15 @@ fn board() -> Board {
     };
     let lead = bot("Team Lead", "team-lead");
     let dev = bot("Desktop Dev", "desktop-dev");
+    db.set_project_lead(&p.id, Some(&lead)).unwrap();
     db.ensure_board(&p.id, "d-mac", Some("H")).unwrap();
+    db.set_project_role(&crate::kanban::model::ProjectRole {
+        project_id: p.id.clone(),
+        role: crate::kanban::model::Role::Dev,
+        bot_id: dev.clone(),
+        machine: None,
+    })
+    .unwrap();
     Board {
         db,
         project: p.id,
@@ -50,10 +58,9 @@ impl Board {
                     item_type: ItemType::Feature,
                     title,
                     description: "",
-                    platforms: &[Platform::Daemon],
                     size: Some(Size::M),
                     priority: Priority::P2,
-                    labels: &[],
+                    labels: &["platform:daemon".to_string()],
                     parent_id: None,
                     acceptance_criteria: &ac,
                 },
@@ -123,7 +130,7 @@ fn the_lead_refines_once_the_definition_of_ready_is_met() {
     let item = b.item("Guards");
     assert_eq!(
         codes(b.moved(&item, "ready", &lead, None)),
-        ["dor.spec_link_for_ui_or_daemon"]
+        ["dor.spec_link"]
     );
     assert_eq!(
         b.db.get_item(&item.id).unwrap().unwrap().column_key,
@@ -131,7 +138,7 @@ fn the_lead_refines_once_the_definition_of_ready_is_met() {
     );
     assert_eq!(
         codes(b.moved(&item, "ready", &b.as_bot(&b.dev), None)),
-        ["role.not_allowed", "dor.spec_link_for_ui_or_daemon"]
+        ["role.not_allowed", "dor.spec_link"]
     );
 
     b.link(&item, LinkKind::Artifact, &lead);
@@ -179,7 +186,7 @@ fn a_wip_override_is_logged_and_flags_the_card_until_it_leaves() {
 
     b.link(&over, LinkKind::Branch, &b.as_bot(&b.dev));
     let review = done(b.moved(&over, "review", &b.as_bot(&b.dev), None));
-    assert!(review.labels.is_empty());
+    assert!(!review.labels.contains(&WIP_OVERRIDE_LABEL.to_string()));
 }
 
 #[test]

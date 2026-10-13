@@ -8,7 +8,7 @@ use common::releases::releases;
 use common::tasks::error_text;
 use hermesd::actor::Actor;
 use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Platform, Priority, Size};
+use hermesd::kanban::model::{ItemType, Priority, Size};
 use serde_json::json;
 
 #[tokio::test]
@@ -23,10 +23,9 @@ async fn a_card_stacked_on_one_in_verify_goes_to_ready() {
                 item_type: ItemType::Feature,
                 title,
                 description: "",
-                platforms: &[Platform::Daemon],
                 size: Some(Size::S),
                 priority: Priority::P1,
-                labels: &[],
+                labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &["it works".to_string()],
             },

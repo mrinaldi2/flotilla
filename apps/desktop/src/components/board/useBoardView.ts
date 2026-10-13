@@ -12,6 +12,8 @@ import { loadBoardPrefs, saveBoardPrefs } from "./boardPrefs";
 import { boardOfItem, cardsOf, columnsOf, pickBoard } from "./boards";
 import type { BoardModel } from "./boardSync";
 import { matchesFilters } from "./filters";
+import type { LabelGroupView } from "./labelGroups";
+import { boardLabelGroups } from "./labelGroups";
 import type { SettingsSection } from "./settings/BoardSettings";
 import { useOpenedItem } from "./useOpenedItem";
 
@@ -26,6 +28,11 @@ export interface BoardView {
   readonly shown: readonly ItemCard[];
   readonly botsById: ReadonlyMap<string, Bot>;
   readonly botOptions: readonly BotOption[];
+  /** The board's label groups and those its cards use, for the filters. */
+  readonly labelGroups: readonly LabelGroupView[];
+  /** The groups whose labels the cards show: the board's own, or, from a
+   * home that names no boards, every group the cards use. */
+  readonly chipGroups: ReadonlySet<string>;
   /** `bot:<id>` in words. */
   readonly who: (actor: string) => string;
   readonly opened: string | null;
@@ -96,6 +103,19 @@ export function useBoardView(opts: {
   }, [model.cards, board]);
   const botsById = useMemo(() => new Map(bots.map((bot) => [bot.id, bot])), [bots]);
   const botOptions = useBotOptions(bots, cards);
+  const labelGroups = useMemo(
+    () =>
+      boardLabelGroups(
+        board,
+        cards.map((card) => card.labels),
+      ),
+    [board, cards],
+  );
+  const chipGroups = useMemo(
+    () =>
+      new Set((board === undefined ? labelGroups : board.labelGroups).map((group) => group.name)),
+    [board, labelGroups],
+  );
   // The board shown is the one remembered, however it was reached.
   const remember = (boardId: string | undefined): void => {
     if (boardId !== undefined && boardId !== prefs.board) {
@@ -112,6 +132,8 @@ export function useBoardView(opts: {
     shown: cards.filter((card) => matchesFilters(card, prefs.filters)),
     botsById,
     botOptions,
+    labelGroups,
+    chipGroups,
     who: (actor) =>
       botsById.get(actor.startsWith("bot:") ? actor.slice(4) : actor)?.name ?? "the lead",
     opened,

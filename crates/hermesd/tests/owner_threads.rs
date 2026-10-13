@@ -140,6 +140,7 @@ async fn a_question_on_a_card_waits_for_the_owners_comment_or_a_dismissal() {
     let project_id = db.get_bot(&lead).unwrap().unwrap().project_id;
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(db, &project_id);
     db.set_project_role(&ProjectRole {
         project_id: project_id.clone(),
         role: Role::Lead,

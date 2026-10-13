@@ -1,6 +1,6 @@
 use super::*;
 
-const FIXTURE: &str = include_str!("../../../tests/fixtures/board_import_backlog.md");
+const FIXTURE: &str = include_str!("../../tests/fixtures/board_import_backlog.md");
 
 fn entry<'a>(parsed: &'a Parsed, id: &str) -> &'a Entry {
     parsed
@@ -67,7 +67,7 @@ fn states_types_and_fields_map_without_guessing() {
     // Verify and say where they were (ARCH-R22 M1).
     assert_eq!(
         entry(&parsed, "REL-D-1").labels,
-        ["was:REL-D-1", DEPLOYING_LABEL]
+        ["was:REL-D-1", DEPLOYING_LABEL, "platform:desktop"]
     );
     assert_eq!(entry(&parsed, "H-011").labels, [AWAITING_OWNER_LABEL]);
     assert!(entry(&parsed, "H-011")
@@ -81,18 +81,18 @@ fn states_types_and_fields_map_without_guessing() {
     let h1 = entry(&parsed, "H-001");
     assert_eq!(h1.key, Key::Kept(1));
     assert_eq!(h1.size, Some(Size::M));
-    assert!(h1.platforms.is_empty());
+    assert!(!h1.labels.iter().any(|l| l.starts_with("platform:")));
     assert_eq!(h1.warnings.len(), 1, "'all' names no platform");
     assert_eq!(h1.decisions, ["aaaa1111", "bbbb2222"]);
     assert_eq!(h1.owner.as_deref(), Some("Architect"));
 
     let h3 = entry(&parsed, "H-003");
-    assert_eq!(h3.platforms, [Platform::Ios]);
+    assert_eq!(h3.labels, ["platform:ios"]);
     assert_eq!(h3.owner.as_deref(), Some("iOS QA"));
     assert_eq!(h3.tasks, ["1234abcd"]);
 
     let h5 = entry(&parsed, "H-005");
-    assert_eq!(h5.platforms, [Platform::Desktop, Platform::Ios]);
+    assert_eq!(h5.labels, ["platform:desktop", "platform:ios"]);
     assert_eq!(h5.size, None);
     assert!(h5.warnings[0].contains("S-M"));
 
@@ -105,8 +105,8 @@ fn states_types_and_fields_map_without_guessing() {
 
     let r = entry(&parsed, "R1-I2");
     assert_eq!(r.key, Key::Legacy("R1-I2".into()));
-    assert_eq!(r.labels, ["rename", "was:R1-I2"]);
-    assert_eq!(entry(&parsed, "B1").labels, ["was:B1"]);
+    assert_eq!(r.labels, ["rename", "was:R1-I2", "platform:ios"]);
+    assert_eq!(entry(&parsed, "B1").labels, ["was:B1", "platform:desktop"]);
     assert_eq!(entry(&parsed, "REL-D-1").size, None, "a dash is no size");
 
     let h40 = entry(&parsed, "H-040");

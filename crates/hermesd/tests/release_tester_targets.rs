@@ -12,7 +12,7 @@ use common::ios_targets::{ios_qa_tests_ios, package, pass, team, DEVOPS, IOS_QA}
 use common::peer_board::board;
 use common::peers::{bot_named, wait_until};
 use common::WsClient;
-use hermesd::kanban::model::{Platform, ProjectRole, Role};
+use hermesd::kanban::model::{ProjectRole, Role};
 use hermesd::releases::model::{DeployAction, DeployResult, ReleaseStatus};
 use hermesd::releases::{ios_repair, machines, testers_on};
 use serde_json::json;
@@ -72,7 +72,7 @@ async fn the_ios_tester_on_a_linked_computer_tests_ios_not_that_computer() {
 /// sent to `ios` and confirmed under either name.
 #[tokio::test]
 async fn a_deploy_on_ios_reaches_a_package_frozen_for_the_iphone() {
-    let mut t = team(Platform::Ios).await;
+    let mut t = team("ios").await;
     ios_qa_tests_ios(&mut t).await;
     let id = package(&mut t, "iOS 0.6.1", "ios").await;
     t.bots[IOS_QA].call("release_test", pass(&id)).await;
@@ -113,7 +113,7 @@ async fn a_deploy_on_ios_reaches_a_package_frozen_for_the_iphone() {
 /// (iOS 0.6.1 on the live board) is deployed at boot, its item Done.
 #[tokio::test]
 async fn an_ios_package_confirmed_on_ios_is_settled_at_boot() {
-    let mut t = team(Platform::Ios).await;
+    let mut t = team("ios").await;
     ios_qa_tests_ios(&mut t).await;
     let id = package(&mut t, "iOS 0.6.1", "ios").await;
     t.bots[IOS_QA].call("release_test", pass(&id)).await;

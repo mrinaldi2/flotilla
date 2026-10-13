@@ -1,5 +1,5 @@
-//! Closing on an outcome, past code and whose word closes it (H-154,
-//! ARCH-R62 M1, M2).
+//! Closing on an outcome, past code and whose word closes it (ARCH-R62 M1,
+//! M2).
 
 use super::*;
 

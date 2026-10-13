@@ -151,6 +151,7 @@ function Bar(
           filters={prefs.filters}
           onChange={(filters) => updatePrefs({ ...prefs, filters })}
           botOptions={view.botOptions}
+          labelGroups={view.labelGroups}
           shown={view.shown.length}
           total={view.cards.length}
           hiddenNames={columns.filter((c) => !c.visible).map((c) => c.name)}
@@ -282,6 +283,7 @@ export default function Board(props: BoardProps): ReactElement {
         onOpen={view.openItem}
         onSetLimit={model.canRule ? setLimit : undefined}
         onNewItem={newItem}
+        chipGroups={view.chipGroups}
       />
       <Side {...parts} moves={moves} />
       <Sheets sheet={sheet} board={props} view={view} onClose={() => setSheet(null)} />

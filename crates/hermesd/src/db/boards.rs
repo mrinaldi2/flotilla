@@ -8,7 +8,7 @@ use super::{parse_ts, Db};
 use crate::kanban::model::Board;
 
 const BOARD_COLUMNS: &str = "id, project_id, name, key, description, ord, is_default, \
-     structure_policy, archived_at, version, flow, automations";
+     structure_policy, archived_at, version, flow, automations, label_groups";
 
 fn board_from_row(r: &rusqlite::Row<'_>) -> rusqlite::Result<Board> {
     Ok(Board {
@@ -24,6 +24,7 @@ fn board_from_row(r: &rusqlite::Row<'_>) -> rusqlite::Result<Board> {
         version: r.get(9)?,
         flow: from_text(r.get(10)?)?,
         automations: from_json(r.get(11)?)?,
+        label_groups: from_json(r.get(12)?)?,
     })
 }
 

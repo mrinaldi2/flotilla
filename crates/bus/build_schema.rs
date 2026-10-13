@@ -55,7 +55,7 @@ pub fn message_schemas(set: &FileDescriptorSet) -> Value {
                 (!text.is_empty()).then(|| {
                     (
                         l.path.clone(),
-                        text.split_whitespace().collect::<Vec<_>>().join(" "),
+                        without_refs(&text.split_whitespace().collect::<Vec<_>>().join(" ")),
                     )
                 })
             })
@@ -157,4 +157,34 @@ fn object_schema(
         properties.insert(field.name().to_string(), schema);
     }
     json!({"type": "object", "properties": properties, "required": required})
+}
+
+/// A description without the design references in parentheses, "(H-116)"
+/// or "(H-020 §6.1, ARCH-R25 F2)": a bot reading the tool has no use for
+/// this repository's own backlog and reviews.
+fn without_refs(text: &str) -> String {
+    let is_ref = |inner: &str| {
+        let first = inner.trim_start();
+        ["H-", "ARCH-R", "ADR-", "UX-", "CE-"].iter().any(|p| {
+            first
+                .strip_prefix(p)
+                .is_some_and(|rest| rest.starts_with(|c: char| c.is_ascii_digit()))
+        })
+    };
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(open) = rest.find('(') {
+        let Some(len) = rest[open..].find(')') else {
+            break;
+        };
+        let inner = &rest[open + 1..open + len];
+        if is_ref(inner) {
+            out.push_str(rest[..open].trim_end());
+        } else {
+            out.push_str(&rest[..=open + len]);
+        }
+        rest = &rest[open + len + 1..];
+    }
+    out.push_str(rest);
+    out
 }

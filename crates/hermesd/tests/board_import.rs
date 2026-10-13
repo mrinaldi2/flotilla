@@ -33,6 +33,7 @@ async fn the_lead_imports_the_backlog_once_over_mcp() {
     std::fs::write(artifacts.join("backlog.md"), FIXTURE).unwrap();
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), None)
         .unwrap();
+    crate::common::roles::by_name(db, &project_id);
 
     assert!(names(&lead.tools().await).contains(&"board_import".to_string()));
     assert!(!names(&dev.tools().await).contains(&"board_import".to_string()));
@@ -82,6 +83,7 @@ async fn the_owner_imports_over_the_control_plane() {
 
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), None)
         .unwrap();
+    crate::common::roles::by_name(db, &project_id);
     let dry = owner.request(req).await;
     assert_eq!(dry["type"], "board_imported", "{dry}");
     assert_eq!(dry["report"]["dry_run"], json!(true));

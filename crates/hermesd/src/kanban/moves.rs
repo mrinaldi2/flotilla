@@ -1,4 +1,4 @@
-//! The move engine (H-020 §1.2). `item_move` runs the guards and commits;
+//! The move engine. `item_move` runs the guards and commits;
 //! `item_move_check` runs them for every column and writes nothing. WS, MCP
 //! and the peer link all come through here, so each rule lives only in
 //! `guards`.
@@ -14,7 +14,7 @@ use super::model::{BoardColumn, BoardFlow, Item, Unmet};
 /// release package.
 pub const CLOSED_WITHOUT_RELEASE: &str = "closed by the owner without a release";
 
-/// The note on the close of a spike or a chore without code (H-154),
+/// The note on the close of a spike or a chore without code,
 /// followed by the outcome it closed on.
 pub const CLOSED_ON_OUTCOME: &str = "closed on its outcome";
 
@@ -114,7 +114,7 @@ pub(crate) fn move_in(
         let rule = guards::rule(item.category, to.category);
         let escape = guards::closes_without_release(&item, &mv, &who, &ctx);
         // A spike or a chore closed on its outcome names it in the history
-        // (H-154): the newest artifact linked, which the guard required.
+        //: the newest artifact linked, which the guard required.
         let outcome = (rule == Rule::Finish && !escape)
             .then(|| guards::outcome_link(&ctx))
             .flatten();
@@ -142,7 +142,7 @@ pub(crate) fn move_in(
 }
 
 /// What the move's history event says: the reason, the review verdict, any
-/// WIP override (automatic for returned work, H-017 rev 2.1 §1.3) and an
+/// WIP override (automatic for returned work) and an
 /// owner's close without a release (ARCH-R22 F1).
 fn note(
     rule: Rule,

@@ -14,7 +14,7 @@ use tokio_tungstenite::tungstenite::Message as WsMsg;
 
 use hermesd::actor::Actor;
 use hermesd::db::{Db, MoveTo, NewItem, Write};
-use hermesd::kanban::model::{ItemType, Platform, Priority};
+use hermesd::kanban::model::{ItemType, Priority};
 
 use super::{TestDaemon, WsClient};
 
@@ -142,10 +142,9 @@ pub fn new_item(db: &Db, project: &str, title: &str, priority: Priority) -> (Str
                 item_type: ItemType::Feature,
                 title,
                 description: "",
-                platforms: &[Platform::Daemon],
                 size: None,
                 priority,
-                labels: &[],
+                labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
             },

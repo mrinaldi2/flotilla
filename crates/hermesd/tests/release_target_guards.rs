@@ -8,7 +8,6 @@ use crate::common;
 use common::ios_targets::{ios_qa_tests_ios, package, pass, team, Team, DEVOPS, IOS_QA, LEAD};
 use common::tasks::error_text;
 use common::{spawn_daemon, WsClient};
-use hermesd::kanban::model::Platform;
 use hermesd::releases::ios_repair;
 use hermesd::releases::model::{DeployAction, DeployResult, ReleaseStatus};
 use serde_json::json;
@@ -17,7 +16,7 @@ use serde_json::json;
 /// `iphone`, whatever the case.
 #[tokio::test]
 async fn a_computer_cant_take_the_ios_target_name() {
-    let mut t = team(Platform::Ios).await;
+    let mut t = team("ios").await;
     for name in ["ios", "iPhone", " IOS "] {
         let raw = t.bots[LEAD]
             .call_raw("machine_name_set", json!({"name": name}))
@@ -78,7 +77,7 @@ fn record(t: &Team, id: &str, machine: &str, action: DeployAction, result: Deplo
 /// settled at boot; confirm would refuse it too.
 #[tokio::test]
 async fn the_boot_settle_skips_a_package_changed_after_it_was_frozen() {
-    let mut t = team(Platform::Ios).await;
+    let mut t = team("ios").await;
     let id = approved(&mut t, "iOS 0.6.1").await;
     record(&t, &id, "ios", DeployAction::Deploy, DeployResult::Ok);
     let app = &t.pair.d.app;
@@ -100,7 +99,7 @@ async fn the_boot_settle_skips_a_package_changed_after_it_was_frozen() {
 /// rollback undid doesn't reach the iPhone; a new install after it does.
 #[tokio::test]
 async fn all_done_ignores_an_install_rolled_back_since() {
-    let mut t = team(Platform::Ios).await;
+    let mut t = team("ios").await;
     let id = approved(&mut t, "iOS 0.6.1").await;
     record(&t, &id, "ios", DeployAction::Deploy, DeployResult::Ok);
     record(
