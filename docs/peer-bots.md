@@ -164,12 +164,16 @@ and stays that way as the team changes.
     record, and points the bot at that copy. A bot attaching a file of its
     own has its daemon send the bytes (`attachment_push`); the home never
     reads a path on the other computer. A draft's files never leave the
-    home.
+    home, nor does a detached one. What a computer has staged and not yet
+    attached counts toward the item's cap on the home, and an upload left
+    for ten minutes is swept when its bot starts another. A link holds at
+    most four file chunks waiting to be sent.
 - **Mixed versions.** Each side says in its `peer_hello` which kanban
   contract it speaks (`kanban: 2` from 0.19; 0.18 says none), and the link
   speaks the older one. A 0.18 computer is served the home's default board
   as its one board. A 0.19 computer with a 0.18 home keeps that one board
   and refuses the board structure tools and attachments before asking.
+  A home that is down is the read-only board, never taken for a 0.18 one.
 - **Stand-ins do not count** towards `max_bots_per_project`; only bots that
   run on a daemon count there.
 - **Unlinking**, from either side, archives the stand-ins on both sides
