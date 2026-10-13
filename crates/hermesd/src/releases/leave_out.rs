@@ -31,7 +31,8 @@ use crate::prs::{owner, repo};
 use super::cut::{self, version_of};
 use super::model::{Release, ReleaseStatus};
 use super::{git_cache, load};
-use crate::kanban::api::{publish_moves, publish_touched, system_move};
+use crate::kanban::api::{publish_moves, publish_touched, report_fact};
+use crate::kanban::facts::Fact;
 
 /// The owner's Leave out of `numbers` from `release_id`.
 pub fn request(
@@ -202,11 +203,11 @@ fn unsubmit(t: &crate::db::BoardTx<'_>, release: &Release) -> anyhow::Result<Mov
             continue;
         };
         if item.category == ColumnCategory::Approval {
-            let from = system_move(
+            let from = report_fact(
                 t,
                 &release.project_id,
                 &item.id,
-                ColumnCategory::Verify,
+                Fact::ReleaseWithdrawn,
                 &note,
                 false,
                 &Actor::User,

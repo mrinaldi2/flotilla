@@ -40,6 +40,21 @@ macro_rules! text_enum {
             }
         }
 
+        impl serde::Serialize for $name {
+            fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+                s.serialize_str(self.as_str())
+            }
+        }
+
+        impl<'de> serde::Deserialize<'de> for $name {
+            fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+                let text = String::deserialize(d)?;
+                Self::parse(&text).ok_or_else(|| {
+                    serde::de::Error::custom(format!("unknown {}: {text}", stringify!($name)))
+                })
+            }
+        }
+
         impl TextValue for $name {
             fn as_text(self) -> &'static str {
                 self.as_str()
@@ -65,6 +80,11 @@ text_enum!(
     /// What a column means to the board itself (0.19.0 K2): WIP, staleness
     /// and cycle time apply to `active` columns; `done` and `cancelled` end.
     ColumnKind { Open => "open", Active => "active", Done => "done", Cancelled => "cancelled" }
+);
+text_enum!(
+    /// How a board decides moves (0.19.0 K3): the H-017 flow every board had
+    /// before 0.19, or its columns' own movers and rules.
+    BoardFlow { ReleaseGated => "release_gated", Custom => "custom" }
 );
 text_enum!(
     /// Who may change a board's columns, rules and types besides the owner.
@@ -134,6 +154,9 @@ pub struct Board {
     pub ord: u32,
     pub is_default: bool,
     pub structure_policy: StructurePolicy,
+    pub flow: BoardFlow,
+    /// Fact name (`pr.merged`) → the column key a custom board moves to.
+    pub automations: BTreeMap<String, String>,
     pub archived_at: Option<DateTime<Utc>>,
     pub version: u64,
 }

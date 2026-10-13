@@ -11,6 +11,7 @@
 
 mod base;
 mod board;
+mod board_flow;
 mod board_links;
 mod boards;
 mod checks;
@@ -36,6 +37,7 @@ mod workers;
 
 use base::MIGRATION_1;
 use board::MIGRATION_BOARD_CORE;
+use board_flow::MIGRATION_BOARD_FLOW;
 use board_links::{
     MIGRATION_AC_POST_INSTALL, MIGRATION_BOARD_LINKS, MIGRATION_BOARD_WORKFLOW,
     MIGRATION_GUARDRAILS_2, MIGRATION_TASK_CARDS, MIGRATION_TASK_RELEASE, MIGRATION_TASK_TARGET,
@@ -142,6 +144,7 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_CHECK_UNROUTABLE,
     MIGRATION_CHECK_HEAVY,
     MIGRATION_BOARDS,
+    MIGRATION_BOARD_FLOW,
 ];
 
 #[cfg(test)]

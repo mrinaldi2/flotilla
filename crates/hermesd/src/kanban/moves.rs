@@ -6,8 +6,9 @@
 use crate::actor::Actor;
 use crate::db::{BoardTx, Db, MoveTo, Write};
 
+use super::flow;
 use super::guards::{self, unmet, Move, Rule, Who};
-use super::model::{BoardColumn, Item, Unmet};
+use super::model::{BoardColumn, BoardFlow, Item, Unmet};
 
 /// The note on the move of an item the owner closed out of Verify with no
 /// release package.
@@ -75,7 +76,7 @@ pub fn item_move(db: &Db, req: &MoveRequest<'_>, actor: &Actor<'_>) -> anyhow::R
         if item.version != req.expected_version {
             return Ok(Moved::Conflict(Box::new(item)));
         }
-        let columns = t.columns(&project_id)?;
+        let columns = board_columns(t, &item)?;
         let Some(to) = columns.iter().find(|c| c.key == req.to) else {
             let text = format!("This board has no column {}.", req.to);
             return Ok(Moved::Refused(vec![unmet("move.column", text, None)]));
@@ -86,20 +87,32 @@ pub fn item_move(db: &Db, req: &MoveRequest<'_>, actor: &Actor<'_>) -> anyhow::R
             reason: req.reason,
             override_reason: req.override_reason,
         };
-        let refused = guards::evaluate(&item, &mv, &who, &ctx);
-        if !refused.is_empty() {
-            return Ok(Moved::Refused(refused));
-        }
-        let rule = guards::rule(item.category, to.category);
         let over = guards::over_limit(&item, to, &ctx).is_some() && who != Who::Daemon;
-        let escape = guards::closes_without_release(&item, &mv, &who, &ctx);
-        // A spike or a chore closed on its outcome names it in the history
-        // (H-154): the newest artifact linked, which the guard required.
-        let outcome = (rule == Rule::Finish && !escape)
-            .then(|| guards::outcome_link(&ctx))
-            .flatten();
-        let note = note(rule, &mv, over, escape, outcome);
-        let first = guards::is_return(rule);
+        let (note, first) = if let Some(from) = custom_from(t, &item, &columns)? {
+            let policy = t.column_policy(&item.board_id, &to.key)?;
+            let refused = flow::evaluate(&item, from, &policy, &mv, &who, &ctx);
+            if !refused.is_empty() {
+                return Ok(Moved::Refused(refused));
+            }
+            let first = flow::is_return(from, to);
+            (custom_note(&mv, over, first), first)
+        } else {
+            let refused = guards::evaluate(&item, &mv, &who, &ctx);
+            if !refused.is_empty() {
+                return Ok(Moved::Refused(refused));
+            }
+            let rule = guards::rule(item.category, to.category);
+            let escape = guards::closes_without_release(&item, &mv, &who, &ctx);
+            // A spike or a chore closed on its outcome names it in the history
+            // (H-154): the newest artifact linked, which the guard required.
+            let outcome = (rule == Rule::Finish && !escape)
+                .then(|| guards::outcome_link(&ctx))
+                .flatten();
+            (
+                note(rule, &mv, over, escape, outcome),
+                guards::is_return(rule),
+            )
+        };
         Ok(
             match t.move_item(
                 req.id,
@@ -151,6 +164,49 @@ fn note(
     (!parts.is_empty()).then(|| parts.join(" · "))
 }
 
+/// The columns of the item's own board (every column of the project for an
+/// item from a home older than 0.19, which names no board).
+fn board_columns(t: &BoardTx<'_>, item: &Item) -> anyhow::Result<Vec<BoardColumn>> {
+    let project_id = t
+        .item_project(&item.id)?
+        .ok_or_else(|| anyhow::anyhow!("item {} not found", item.id))?;
+    Ok(t.columns(&project_id)?
+        .into_iter()
+        .filter(|c| item.board_id.is_empty() || c.board_id == item.board_id)
+        .collect())
+}
+
+/// The item's column, when its board is custom; `None` for a release-gated
+/// board, whose guards decide.
+fn custom_from<'c>(
+    t: &BoardTx<'_>,
+    item: &Item,
+    columns: &'c [BoardColumn],
+) -> anyhow::Result<Option<&'c BoardColumn>> {
+    let custom = t
+        .board(&item.board_id)?
+        .is_some_and(|b| b.flow == BoardFlow::Custom);
+    Ok(custom
+        .then(|| columns.iter().find(|c| c.key == item.column_key))
+        .flatten())
+}
+
+/// The history note of a move on a custom board: the reason and any WIP
+/// override, automatic for a return.
+fn custom_note(mv: &Move<'_>, over: bool, returned: bool) -> Option<String> {
+    let mut parts = Vec::new();
+    if let Some(reason) = mv.reason.map(str::trim).filter(|r| !r.is_empty()) {
+        parts.push(reason.to_string());
+    }
+    if over && returned {
+        parts.push(guards::RETURNED_OVER_WIP.to_string());
+    } else if over {
+        let reason = mv.override_reason.unwrap_or_default().trim();
+        parts.push(format!("WIP override: {reason}"));
+    }
+    (!parts.is_empty()).then(|| parts.join(" · "))
+}
+
 /// What stands between the item and each other column, in board order, for
 /// the actor asking, read from one snapshot. No reason or override is
 /// assumed, so a column that needs one lists it.
@@ -162,19 +218,25 @@ pub fn item_move_check(
     db.board_read(|t| {
         let (item, project_id, who) = load_in(t, id, actor)?;
         let ctx = t.move_context(&project_id, &item)?;
-        Ok(t.columns(&project_id)?
-            .into_iter()
-            .filter(|c| c.key != item.column_key)
-            .map(|to| {
-                let mv = Move {
-                    to: &to,
-                    reason: None,
-                    override_reason: None,
-                };
-                let refused = guards::evaluate(&item, &mv, &who, &ctx);
-                (to, refused)
-            })
-            .collect())
+        let columns = board_columns(t, &item)?;
+        let from = custom_from(t, &item, &columns)?.cloned();
+        let mut out = Vec::new();
+        for to in columns.iter().filter(|c| c.key != item.column_key) {
+            let mv = Move {
+                to,
+                reason: None,
+                override_reason: None,
+            };
+            let refused = match &from {
+                Some(from) => {
+                    let policy = t.column_policy(&item.board_id, &to.key)?;
+                    flow::evaluate(&item, from, &policy, &mv, &who, &ctx)
+                }
+                None => guards::evaluate(&item, &mv, &who, &ctx),
+            };
+            out.push((to.clone(), refused));
+        }
+        Ok(out)
     })
 }
 

@@ -41,7 +41,7 @@ use crate::actor::Actor;
 use crate::app::AppState;
 use crate::db::BoardTx;
 use crate::decisions::{conflict, invalid};
-use crate::kanban::model::{ColumnCategory, Role};
+use crate::kanban::model::Role;
 use crate::mcp::tasks::close_cancelled;
 use crate::messaging;
 
@@ -52,7 +52,8 @@ use super::model::{
 };
 use super::post_install::post_install_checked;
 use super::{load, Caller};
-use crate::kanban::api::{publish_moves, system_move};
+use crate::kanban::api::{publish_moves, report_fact};
+use crate::kanban::facts::Fact;
 
 /// The computers the old package reached itself, and those left that the
 /// via package covers.
@@ -139,11 +140,11 @@ pub(super) fn close_via(
         let note = format!("release {} deployed via {}", old.name, via.name);
         let mut moved = Vec::new();
         for ri in &old.items {
-            let from = system_move(
+            let from = report_fact(
                 t,
                 project,
                 &ri.item_id,
-                ColumnCategory::Done,
+                Fact::ReleaseDeployed,
                 &note,
                 false,
                 actor,

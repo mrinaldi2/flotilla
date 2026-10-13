@@ -67,6 +67,7 @@ pub async fn team(platform: Platform) -> Team {
         .create_item(
             &NewItem {
                 project_id: &project,
+                board_id: None,
                 item_type: ItemType::Feature,
                 title: "Per platform",
                 description: "",

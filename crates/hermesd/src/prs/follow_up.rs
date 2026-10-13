@@ -71,6 +71,7 @@ pub fn file(
             t,
             &NewItem {
                 project_id: project,
+                board_id: None,
                 item_type: ItemType::Chore,
                 title: &title,
                 description: &description,

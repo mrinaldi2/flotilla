@@ -45,6 +45,7 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
         .create_item(
             &NewItem {
                 project_id: &project_id,
+                board_id: None,
                 item_type: ItemType::Feature,
                 title: "Board over WS",
                 description: "",

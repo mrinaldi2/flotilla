@@ -3,12 +3,12 @@
 
 use rusqlite::{params, Connection, OptionalExtension};
 
-use super::board::from_text;
+use super::board::{from_json, from_text};
 use super::{parse_ts, Db};
 use crate::kanban::model::Board;
 
-const BOARD_COLUMNS: &str =
-    "id, project_id, name, key, description, ord, is_default, structure_policy, archived_at, version";
+const BOARD_COLUMNS: &str = "id, project_id, name, key, description, ord, is_default, \
+     structure_policy, archived_at, version, flow, automations";
 
 fn board_from_row(r: &rusqlite::Row<'_>) -> rusqlite::Result<Board> {
     Ok(Board {
@@ -22,6 +22,8 @@ fn board_from_row(r: &rusqlite::Row<'_>) -> rusqlite::Result<Board> {
         structure_policy: from_text(r.get(7)?)?,
         archived_at: r.get::<_, Option<String>>(8)?.map(|t| parse_ts(&t)),
         version: r.get(9)?,
+        flow: from_text(r.get(10)?)?,
+        automations: from_json(r.get(11)?)?,
     })
 }
 
@@ -49,6 +51,16 @@ pub(super) fn default_board_in(
     conn.query_row(
         &format!("SELECT {BOARD_COLUMNS} FROM board WHERE project_id = ?1 AND is_default = 1"),
         params![project_id],
+        board_from_row,
+    )
+    .optional()
+}
+
+/// One board by id.
+pub(super) fn board_in(conn: &Connection, board_id: &str) -> rusqlite::Result<Option<Board>> {
+    conn.query_row(
+        &format!("SELECT {BOARD_COLUMNS} FROM board WHERE id = ?1"),
+        params![board_id],
         board_from_row,
     )
     .optional()

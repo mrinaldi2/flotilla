@@ -29,6 +29,7 @@ pub fn item(pair: &Pair, project: &str, column: &str, assignee: Option<&str>) ->
         .create_item(
             &NewItem {
                 project_id: project,
+                board_id: None,
                 item_type: ItemType::Feature,
                 title: "Workflow",
                 description: "",

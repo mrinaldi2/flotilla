@@ -1,0 +1,227 @@
+//! What a new board starts from (0.19.0 K3): data, not code paths. Simple
+//! and Software are custom boards ruled by their columns; Release-gated is
+//! the H-017 flow every board had before 0.19. Everything can be changed
+//! afterwards.
+
+use std::collections::BTreeMap;
+
+use super::defaults::COLUMNS;
+use super::facts::Fact;
+use super::flow::{ColumnPolicy, EntryRule, Mover};
+use super::model::{BoardFlow, ColumnCategory, ColumnKind, Size, WipScope};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Preset {
+    Simple,
+    Software,
+    ReleaseGated,
+}
+
+pub struct PresetColumn {
+    pub key: &'static str,
+    pub name: &'static str,
+    pub kind: ColumnKind,
+    pub wip_limit: Option<u32>,
+    pub wip_scope: WipScope,
+    pub visible: bool,
+    pub policy: ColumnPolicy,
+}
+
+impl PresetColumn {
+    /// The category a custom column carries for the code that still reads
+    /// categories (the inbox a new item lands in, metrics): its kind's.
+    pub fn category(&self) -> ColumnCategory {
+        match self.kind {
+            ColumnKind::Open => ColumnCategory::Inbox,
+            ColumnKind::Active => ColumnCategory::Doing,
+            ColumnKind::Done => ColumnCategory::Done,
+            ColumnKind::Cancelled => ColumnCategory::Cancelled,
+        }
+    }
+}
+
+impl Preset {
+    pub const ALL: &'static [Preset] = &[Preset::Simple, Preset::Software, Preset::ReleaseGated];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            Preset::Simple => "simple",
+            Preset::Software => "software",
+            Preset::ReleaseGated => "release_gated",
+        }
+    }
+
+    pub fn parse(name: &str) -> Option<Preset> {
+        Preset::ALL.iter().copied().find(|p| p.name() == name)
+    }
+
+    pub fn flow(self) -> BoardFlow {
+        match self {
+            Preset::ReleaseGated => BoardFlow::ReleaseGated,
+            Preset::Simple | Preset::Software => BoardFlow::Custom,
+        }
+    }
+
+    pub fn columns(self) -> Vec<PresetColumn> {
+        match self {
+            Preset::Simple => vec![
+                col(
+                    "todo",
+                    "To do",
+                    ColumnKind::Open,
+                    None,
+                    ColumnPolicy::default(),
+                ),
+                col(
+                    "doing",
+                    "Doing",
+                    ColumnKind::Active,
+                    Some(3),
+                    ColumnPolicy::default(),
+                ),
+                col(
+                    "done",
+                    "Done",
+                    ColumnKind::Done,
+                    None,
+                    ColumnPolicy::default(),
+                ),
+                cancelled(),
+            ],
+            Preset::Software => vec![
+                col(
+                    "inbox",
+                    "Inbox",
+                    ColumnKind::Open,
+                    None,
+                    ColumnPolicy::default(),
+                ),
+                col(
+                    "ready",
+                    "Ready",
+                    ColumnKind::Open,
+                    Some(10),
+                    ColumnPolicy {
+                        movers: vec![Mover::Lead],
+                        rules: vec![
+                            EntryRule::AcPresent,
+                            EntryRule::SizeAtMost { size: Size::M },
+                            EntryRule::BlockersDone,
+                        ],
+                        allowed_from: Vec::new(),
+                    },
+                ),
+                PresetColumn {
+                    wip_scope: WipScope::PerAssignee,
+                    ..col(
+                        "doing",
+                        "Doing",
+                        ColumnKind::Active,
+                        Some(1),
+                        ColumnPolicy {
+                            movers: vec![Mover::Lead, Mover::Assignee],
+                            rules: vec![EntryRule::AssigneeSet],
+                            allowed_from: Vec::new(),
+                        },
+                    )
+                },
+                col(
+                    "review",
+                    "Review",
+                    ColumnKind::Active,
+                    Some(3),
+                    ColumnPolicy {
+                        movers: vec![Mover::Assignee],
+                        rules: vec![EntryRule::Link { kind: "pr".into() }],
+                        allowed_from: vec!["doing".into()],
+                    },
+                ),
+                col(
+                    "done",
+                    "Done",
+                    ColumnKind::Done,
+                    None,
+                    ColumnPolicy {
+                        movers: vec![Mover::Lead],
+                        rules: Vec::new(),
+                        allowed_from: Vec::new(),
+                    },
+                ),
+                cancelled(),
+            ],
+            Preset::ReleaseGated => COLUMNS
+                .iter()
+                .map(|c| PresetColumn {
+                    key: c.key,
+                    name: c.name,
+                    kind: c.category.kind(),
+                    wip_limit: c.wip_limit,
+                    wip_scope: c.wip_scope,
+                    visible: c.visible,
+                    policy: ColumnPolicy::default(),
+                })
+                .collect(),
+        }
+    }
+
+    /// The category each column has: a release-gated board keeps the H-017
+    /// categories its guards key on.
+    pub fn categories(self) -> Vec<ColumnCategory> {
+        match self {
+            Preset::ReleaseGated => COLUMNS.iter().map(|c| c.category).collect(),
+            _ => self.columns().iter().map(PresetColumn::category).collect(),
+        }
+    }
+
+    /// Fact → column key, for custom boards.
+    pub fn automations(self) -> BTreeMap<String, String> {
+        let pairs: &[(Fact, &str)] = match self {
+            Preset::Software => &[
+                (Fact::PrOpened, "review"),
+                (Fact::PrMerged, "done"),
+                (Fact::PrClosed, "doing"),
+                (Fact::PrChangesRequested, "doing"),
+            ],
+            Preset::Simple | Preset::ReleaseGated => &[],
+        };
+        pairs
+            .iter()
+            .map(|(f, c)| (f.name().to_string(), (*c).to_string()))
+            .collect()
+    }
+}
+
+fn col(
+    key: &'static str,
+    name: &'static str,
+    kind: ColumnKind,
+    wip_limit: Option<u32>,
+    policy: ColumnPolicy,
+) -> PresetColumn {
+    PresetColumn {
+        key,
+        name,
+        kind,
+        wip_limit,
+        wip_scope: WipScope::Column,
+        visible: true,
+        policy,
+    }
+}
+
+fn cancelled() -> PresetColumn {
+    PresetColumn {
+        visible: false,
+        ..col(
+            "cancelled",
+            "Cancelled",
+            ColumnKind::Cancelled,
+            None,
+            ColumnPolicy {
+                movers: vec![Mover::Lead],
+                rules: vec![EntryRule::Reason],
+                allowed_from: Vec::new(),
+            },
+        )
+    }
+}

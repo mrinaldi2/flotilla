@@ -19,13 +19,14 @@ use crate::actor::Actor;
 use crate::app::AppState;
 use crate::db::prs::NewPr;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
-use crate::kanban::model::{ColumnCategory, LinkKind};
+use crate::kanban::model::LinkKind;
 use crate::prs::model::Pr;
 use crate::prs::{checks, repo};
 
 use super::cut::{self, version_of};
 use super::{git_cache, load};
-use crate::kanban::api::{publish_moves, system_move};
+use crate::kanban::api::{publish_moves, report_fact};
+use crate::kanban::facts::Fact;
 
 const GATE: &str = "hermes/leave_out";
 const PUSHED: &str = "hermes/leave_out_pushed";
@@ -259,11 +260,11 @@ pub fn after_merge(app: &Arc<AppState>, merged: &Pr) -> anyhow::Result<()> {
             let Some(pr) = t.pr_by_id(pr_id)? else {
                 continue;
             };
-            let from = system_move(
+            let from = report_fact(
                 t,
                 project,
                 &pr.item_id,
-                ColumnCategory::Doing,
+                Fact::ReleaseLeftOutReverted,
                 &note,
                 true,
                 &Actor::User,

@@ -17,7 +17,7 @@ use super::board::{
 };
 use super::board_ranks::rank_last;
 use super::board_tx::BoardTx;
-use super::boards::default_board_in;
+use super::boards::{board_in, default_board_in};
 use super::{ts, Actor, Db};
 use crate::kanban::defaults;
 
@@ -31,6 +31,8 @@ pub enum Write<T> {
 
 pub struct NewItem<'a> {
     pub project_id: &'a str,
+    /// The board it goes on; `None` is the project's default board.
+    pub board_id: Option<&'a str>,
     pub item_type: ItemType,
     pub title: &'a str,
     /// Empty means the type's template sections.
@@ -192,8 +194,11 @@ impl BoardTx<'_> {
         let tx = self.conn;
         let settings = settings_in(tx, new.project_id)?
             .ok_or_else(|| anyhow::anyhow!("this project has no board"))?;
-        let board = default_board_in(tx, new.project_id)?
-            .ok_or_else(|| anyhow::anyhow!("this project has no board"))?;
+        let board = match new.board_id {
+            Some(id) => board_in(tx, id)?.filter(|b| b.project_id == new.project_id),
+            None => default_board_in(tx, new.project_id)?,
+        }
+        .ok_or_else(|| anyhow::anyhow!("this project has no such board"))?;
         let inbox: String = tx.query_row(
             "SELECT key FROM board_column
              WHERE project_id = ?1 AND board_id = ?2 AND category = 'inbox'
