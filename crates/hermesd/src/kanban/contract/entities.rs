@@ -3,6 +3,7 @@
 use bus::contract::board as c;
 use bus::contract::pbjson_types::Struct;
 
+use super::super::flow::{tokens, ColumnPolicy};
 use super::super::model as m;
 use super::{at, maybe_at, stamp, MapError};
 
@@ -48,6 +49,25 @@ impl TryFrom<c::BoardSettings> for m::BoardSettings {
     }
 }
 
+impl From<m::Board> for c::Board {
+    fn from(v: m::Board) -> Self {
+        c::Board {
+            id: v.id,
+            project_id: v.project_id,
+            name: v.name,
+            key: v.key,
+            description: v.description,
+            ord: v.ord,
+            is_default: v.is_default,
+            structure_policy: v.structure_policy.as_str().to_string(),
+            flow: v.flow.as_str().to_string(),
+            automations: v.automations.into_iter().collect(),
+            archived: v.archived_at.is_some(),
+            version: v.version,
+        }
+    }
+}
+
 impl From<m::BoardColumn> for c::BoardColumn {
     fn from(v: m::BoardColumn) -> Self {
         c::BoardColumn {
@@ -61,6 +81,9 @@ impl From<m::BoardColumn> for c::BoardColumn {
             wip_limit: v.wip_limit,
             wip_scope: v.wip_scope.into(),
             visible: v.visible,
+            movers: v.policy.movers.iter().map(|m| m.token()).collect(),
+            rules: v.policy.rules.iter().map(|r| r.token()).collect(),
+            allowed_from: v.policy.allowed_from,
         }
     }
 }
@@ -86,6 +109,11 @@ impl TryFrom<c::BoardColumn> for m::BoardColumn {
             wip_limit: v.wip_limit,
             wip_scope: m::WipScope::from_wire(v.wip_scope)?,
             visible: v.visible,
+            policy: ColumnPolicy {
+                movers: tokens::movers(&v.movers).map_err(|_| MapError::UnknownEnum("Mover"))?,
+                rules: tokens::rules(&v.rules).map_err(|_| MapError::UnknownEnum("EntryRule"))?,
+                allowed_from: v.allowed_from,
+            },
         })
     }
 }

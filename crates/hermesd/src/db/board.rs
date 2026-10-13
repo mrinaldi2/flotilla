@@ -329,7 +329,7 @@ pub(super) fn columns_in(
     let rows = conn
         .prepare(
             "SELECT project_id, key, name, ord, category, wip_limit, wip_scope, visible,
-                    board_id, kind
+                    board_id, kind, movers, rules, allowed_from
              FROM board_column WHERE project_id = ?1 ORDER BY ord",
         )?
         .query_map(params![project_id], |r| {
@@ -349,6 +349,15 @@ pub(super) fn columns_in(
                 wip_limit: r.get(5)?,
                 wip_scope: from_text(r.get(6)?)?,
                 visible: r.get(7)?,
+                policy: crate::kanban::flow::ColumnPolicy {
+                    movers: r
+                        .get::<_, Option<String>>(10)?
+                        .map(from_json)
+                        .transpose()?
+                        .unwrap_or_default(),
+                    rules: from_json(r.get(11)?)?,
+                    allowed_from: from_json(r.get(12)?)?,
+                },
             })
         })?
         .collect::<Result<_, _>>()?;

@@ -27,16 +27,20 @@ pub struct PresetColumn {
     pub policy: ColumnPolicy,
 }
 
+/// The category a custom column carries for the code that still reads
+/// categories (the inbox a new item lands in, metrics): its kind's.
+pub fn category_of(kind: ColumnKind) -> ColumnCategory {
+    match kind {
+        ColumnKind::Open => ColumnCategory::Inbox,
+        ColumnKind::Active => ColumnCategory::Doing,
+        ColumnKind::Done => ColumnCategory::Done,
+        ColumnKind::Cancelled => ColumnCategory::Cancelled,
+    }
+}
+
 impl PresetColumn {
-    /// The category a custom column carries for the code that still reads
-    /// categories (the inbox a new item lands in, metrics): its kind's.
     pub fn category(&self) -> ColumnCategory {
-        match self.kind {
-            ColumnKind::Open => ColumnCategory::Inbox,
-            ColumnKind::Active => ColumnCategory::Doing,
-            ColumnKind::Done => ColumnCategory::Done,
-            ColumnKind::Cancelled => ColumnCategory::Cancelled,
-        }
+        category_of(self.kind)
     }
 }
 

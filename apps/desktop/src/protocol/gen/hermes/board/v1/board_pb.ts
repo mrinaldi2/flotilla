@@ -19,7 +19,7 @@ import type { JsonObject, Message } from "@bufbuild/protobuf";
  * Describes the file hermes/board/v1/board.proto.
  */
 export const file_hermes_board_v1_board: GenFile = /*@__PURE__*/
-  fileDesc("ChtoZXJtZXMvYm9hcmQvdjEvYm9hcmQucHJvdG8SD2hlcm1lcy5ib2FyZC52MSIcCgpTdHJpbmdMaXN0Eg4KBnZhbHVlcxgBIAMoCSKtAgoNQm9hcmRTZXR0aW5ncxISCgpwcm9qZWN0X2lkGAEgASgJEgsKA2tleRgCIAEoCRIQCghuZXh0X3NlcRgDIAEoDRIZChFzdGFsZV9hZnRlcl9ob3VycxgEIAEoDRJPChFyZXF1aXJlZF9tYWNoaW5lcxgFIAMoCzI0Lmhlcm1lcy5ib2FyZC52MS5Cb2FyZFNldHRpbmdzLlJlcXVpcmVkTWFjaGluZXNFbnRyeRIWCg5ob21lX2RhZW1vbl9pZBgGIAEoCRIPCgd2ZXJzaW9uGAcgASgEGlQKFVJlcXVpcmVkTWFjaGluZXNFbnRyeRILCgNrZXkYASABKAkSKgoFdmFsdWUYAiABKAsyGy5oZXJtZXMuYm9hcmQudjEuU3RyaW5nTGlzdDoCOAEingIKC0JvYXJkQ29sdW1uEhIKCnByb2plY3RfaWQYASABKAkSCwoDa2V5GAIgASgJEgwKBG5hbWUYAyABKAkSCwoDb3JkGAQgASgNEjEKCGNhdGVnb3J5GAUgASgOMh8uaGVybWVzLmJvYXJkLnYxLkNvbHVtbkNhdGVnb3J5EhYKCXdpcF9saW1pdBgGIAEoDUgAiAEBEiwKCXdpcF9zY29wZRgHIAEoDjIZLmhlcm1lcy5ib2FyZC52MS5XaXBTY29wZRIPCgd2aXNpYmxlGAggASgIEhAKCGJvYXJkX2lkGAkgASgJEikKBGtpbmQYCiABKA4yGy5oZXJtZXMuYm9hcmQudjEuQ29sdW1uS2luZEIMCgpfd2lwX2xpbWl0IngKC1Byb2plY3RSb2xlEhIKCnByb2plY3RfaWQYASABKAkSIwoEcm9sZRgCIAEoDjIVLmhlcm1lcy5ib2FyZC52MS5Sb2xlEg4KBmJvdF9pZBgDIAEoCRIUCgdtYWNoaW5lGAQgASgJSACIAQFCCgoIX21hY2hpbmUiXAoHQmxvY2tlZBIPCgJieRgBIAEoCUgAiAEBEg4KBnJlYXNvbhgCIAEoCRIpCgVzaW5jZRgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBQoDX2J5IuUBChNBY2NlcHRhbmNlQ3JpdGVyaW9uEgsKA2lkeBgBIAEoDRIMCgR0ZXh0GAIgASgJEg8KB2NoZWNrZWQYAyABKAgSFwoKY2hlY2tlZF9ieRgEIAEoCUgAiAEBEjMKCmNoZWNrZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAGIAQESFAoHbWFjaGluZRgGIAEoCUgCiAEBEhQKDHBvc3RfaW5zdGFsbBgHIAEoCEINCgtfY2hlY2tlZF9ieUINCgtfY2hlY2tlZF9hdEIKCghfbWFjaGluZSJHCgpJdGVtUGVyc29uEg4KBmJvdF9pZBgBIAEoCRIpCgRyb2xlGAIgASgOMhsuaGVybWVzLmJvYXJkLnYxLlBlcnNvblJvbGUiqAEKEEl0ZW1WZXJpZmljYXRpb24SDwoHbWFjaGluZRgBIAEoCRIzCgZyZXN1bHQYAiABKA4yIy5oZXJtZXMuYm9hcmQudjEuVmVyaWZpY2F0aW9uUmVzdWx0EgoKAmJ5GAMgASgJEiYKAmF0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCgRub3RlGAUgASgJSACIAQFCBwoFX25vdGUiwgcKBEl0ZW0SCgoCaWQYASABKAkSCwoDc2VxGAIgASgNEicKBHR5cGUYAyABKA4yGS5oZXJtZXMuYm9hcmQudjEuSXRlbVR5cGUSDQoFdGl0bGUYBCABKAkSEwoLZGVzY3JpcHRpb24YBSABKAkSLAoJcGxhdGZvcm1zGAYgAygOMhkuaGVybWVzLmJvYXJkLnYxLlBsYXRmb3JtEigKBHNpemUYByABKA4yFS5oZXJtZXMuYm9hcmQudjEuU2l6ZUgAiAEBEisKCHByaW9yaXR5GAggASgOMhkuaGVybWVzLmJvYXJkLnYxLlByaW9yaXR5EgwKBHJhbmsYCSABKAkSEgoKY29sdW1uX2tleRgKIAEoCRIxCghjYXRlZ29yeRgLIAEoDjIfLmhlcm1lcy5ib2FyZC52MS5Db2x1bW5DYXRlZ29yeRIuCgdibG9ja2VkGAwgASgLMhguaGVybWVzLmJvYXJkLnYxLkJsb2NrZWRIAYgBARIVCghhc3NpZ25lZRgNIAEoCUgCiAEBEhYKCXBhcmVudF9pZBgOIAEoCUgDiAEBEhcKCnJlbGVhc2VfaWQYDyABKAlIBIgBARIOCgZsYWJlbHMYECADKAkSQQoTYWNjZXB0YW5jZV9jcml0ZXJpYRgRIAMoCzIkLmhlcm1lcy5ib2FyZC52MS5BY2NlcHRhbmNlQ3JpdGVyaW9uEisKBnBlb3BsZRgSIAMoCzIbLmhlcm1lcy5ib2FyZC52MS5JdGVtUGVyc29uEjgKDXZlcmlmaWNhdGlvbnMYEyADKAsyIS5oZXJtZXMuYm9hcmQudjEuSXRlbVZlcmlmaWNhdGlvbhISCgpjcmVhdGVkX2J5GBQgASgJEi4KCmNyZWF0ZWRfYXQYFSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfYXQYFiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjQKEHN0YXRlX2VudGVyZWRfYXQYFyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjAKB2RvbmVfYXQYGCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSAWIAQESDwoHdmVyc2lvbhgZIAEoBBIQCghib2FyZF9pZBgaIAEoCUIHCgVfc2l6ZUIKCghfYmxvY2tlZEILCglfYXNzaWduZWVCDAoKX3BhcmVudF9pZEINCgtfcmVsZWFzZV9pZEIKCghfZG9uZV9hdCLBAwoISXRlbUNhcmQSCgoCaWQYASABKAkSJwoEdHlwZRgCIAEoDjIZLmhlcm1lcy5ib2FyZC52MS5JdGVtVHlwZRINCgV0aXRsZRgDIAEoCRIrCghwcmlvcml0eRgEIAEoDjIZLmhlcm1lcy5ib2FyZC52MS5Qcmlvcml0eRIoCgRzaXplGAUgASgOMhUuaGVybWVzLmJvYXJkLnYxLlNpemVIAIgBARIMCgRyYW5rGAYgASgJEhIKCmNvbHVtbl9rZXkYByABKAkSFQoIYXNzaWduZWUYCCABKAlIAYgBARIsCglwbGF0Zm9ybXMYCSADKA4yGS5oZXJtZXMuYm9hcmQudjEuUGxhdGZvcm0SDgoGbGFiZWxzGAogAygJEg8KB2Jsb2NrZWQYCyABKAgSDQoFc3RhbGUYDCABKAgSEgoKYWNfY2hlY2tlZBgNIAEoDRIQCghhY190b3RhbBgOIAEoDRIPCgd2ZXJzaW9uGA8gASgEEjYKEm93bmVyX2NvbW1lbnRlZF9hdBgQIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCBwoFX3NpemVCCwoJX2Fzc2lnbmVlIqsBCghJdGVtTGluaxIPCgdpdGVtX2lkGAEgASgJEicKBGtpbmQYAiABKA4yGS5oZXJtZXMuYm9hcmQudjEuTGlua0tpbmQSCwoDcmVmGAMgASgJEhIKBWxhYmVsGAQgASgJSACIAQESEgoKY3JlYXRlZF9ieRgFIAEoCRImCgJhdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCCAoGX2xhYmVsIpQBCgtJdGVtQ29tbWVudBIKCgJpZBgBIAEoCRIPCgdpdGVtX2lkGAIgASgJEg4KBmF1dGhvchgDIAEoCRIMCgRib2R5GAQgASgJEhUKCHJlcGx5X3RvGAUgASgJSACIAQESJgoCYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wQgsKCV9yZXBseV90byL7AQoJSXRlbUV2ZW50EgoKAmlkGAEgASgDEg8KB2l0ZW1faWQYAiABKAkSJgoCYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg0KBWFjdG9yGAQgASgJEiwKBGtpbmQYBSABKA4yHi5oZXJtZXMuYm9hcmQudjEuSXRlbUV2ZW50S2luZBIRCgRmcm9tGAYgASgJSACIAQESDwoCdG8YByABKAlIAYgBARISCgVmaWVsZBgIIAEoCUgCiAEBEhEKBG5vdGUYCSABKAlIA4gBAUIHCgVfZnJvbUIFCgNfdG9CCAoGX2ZpZWxkQgcKBV9ub3RlIpEBCghUZW1wbGF0ZRISCgpwcm9qZWN0X2lkGAEgASgJEisKBGtpbmQYAiABKA4yHS5oZXJtZXMuYm9hcmQudjEuVGVtcGxhdGVLaW5kEgwKBG5hbWUYAyABKAkSDwoHdmVyc2lvbhgEIAEoDRIlCgRib2R5GAUgASgLMhcuZ29vZ2xlLnByb3RvYnVmLlN0cnVjdCI9CgVVbm1ldBIMCgRjb2RlGAEgASgJEgwKBHRleHQYAiABKAkSEAoDZml4GAMgASgJSACIAQFCBgoEX2ZpeCqwAgoOQ29sdW1uQ2F0ZWdvcnkSHwobQ09MVU1OX0NBVEVHT1JZX1VOU1BFQ0lGSUVEEAASGQoVQ09MVU1OX0NBVEVHT1JZX0lOQk9YEAESGQoVQ09MVU1OX0NBVEVHT1JZX1JFQURZEAISGQoVQ09MVU1OX0NBVEVHT1JZX0RPSU5HEAMSGgoWQ09MVU1OX0NBVEVHT1JZX1JFVklFVxAEEhoKFkNPTFVNTl9DQVRFR09SWV9WRVJJRlkQBRIcChhDT0xVTU5fQ0FURUdPUllfQVBQUk9WQUwQBhIdChlDT0xVTU5fQ0FURUdPUllfREVQTE9ZSU5HEAcSGAoUQ09MVU1OX0NBVEVHT1JZX0RPTkUQCBIdChlDT0xVTU5fQ0FURUdPUllfQ0FOQ0VMTEVEEAkqiAEKCkNvbHVtbktpbmQSGwoXQ09MVU1OX0tJTkRfVU5TUEVDSUZJRUQQABIUChBDT0xVTU5fS0lORF9PUEVOEAESFgoSQ09MVU1OX0tJTkRfQUNUSVZFEAISFAoQQ09MVU1OX0tJTkRfRE9ORRADEhkKFUNPTFVNTl9LSU5EX0NBTkNFTExFRBAEKlcKCFdpcFNjb3BlEhkKFVdJUF9TQ09QRV9VTlNQRUNJRklFRBAAEhQKEFdJUF9TQ09QRV9DT0xVTU4QARIaChZXSVBfU0NPUEVfUEVSX0FTU0lHTkVFEAIqrwEKBFJvbGUSFAoQUk9MRV9VTlNQRUNJRklFRBAAEg0KCVJPTEVfTEVBRBABEg4KClJPTEVfQ09BQ0gQAhIPCgtST0xFX0RFVk9QUxADEhYKElJPTEVfUkVWSUVXRVJfQVJDSBAEEhQKEFJPTEVfUkVWSUVXRVJfVVgQBRIPCgtST0xFX1RFU1RFUhAGEgwKCFJPTEVfREVWEAcSFAoQUk9MRV9SRVZJRVdFUl9DRRAIKo0BCghJdGVtVHlwZRIZChVJVEVNX1RZUEVfVU5TUEVDSUZJRUQQABISCg5JVEVNX1RZUEVfRVBJQxABEhUKEUlURU1fVFlQRV9GRUFUVVJFEAISEQoNSVRFTV9UWVBFX0JVRxADEhMKD0lURU1fVFlQRV9TUElLRRAEEhMKD0lURU1fVFlQRV9DSE9SRRAFKnUKCFBsYXRmb3JtEhgKFFBMQVRGT1JNX1VOU1BFQ0lGSUVEEAASFAoQUExBVEZPUk1fREVTS1RPUBABEhAKDFBMQVRGT1JNX0lPUxACEhMKD1BMQVRGT1JNX0RBRU1PThADEhIKDlBMQVRGT1JNX0lORlJBEAQqQAoEU2l6ZRIUChBTSVpFX1VOU1BFQ0lGSUVEEAASCgoGU0laRV9TEAESCgoGU0laRV9NEAISCgoGU0laRV9MEAMqaAoIUHJpb3JpdHkSGAoUUFJJT1JJVFlfVU5TUEVDSUZJRUQQABIPCgtQUklPUklUWV9QMBABEg8KC1BSSU9SSVRZX1AxEAISDwoLUFJJT1JJVFlfUDIQAxIPCgtQUklPUklUWV9QMxAEKl0KClBlcnNvblJvbGUSGwoXUEVSU09OX1JPTEVfVU5TUEVDSUZJRUQQABIYChRQRVJTT05fUk9MRV9SRVZJRVdFUhABEhgKFFBFUlNPTl9ST0xFX1ZFUklGSUVSEAIqlgEKElZlcmlmaWNhdGlvblJlc3VsdBIjCh9WRVJJRklDQVRJT05fUkVTVUxUX1VOU1BFQ0lGSUVEEAASHAoYVkVSSUZJQ0FUSU9OX1JFU1VMVF9QQVNTEAESHAoYVkVSSUZJQ0FUSU9OX1JFU1VMVF9GQUlMEAISHwobVkVSSUZJQ0FUSU9OX1JFU1VMVF9CTE9DS0VEEAMq/gEKCExpbmtLaW5kEhkKFUxJTktfS0lORF9VTlNQRUNJRklFRBAAEhIKDkxJTktfS0lORF9UQVNLEAESFgoSTElOS19LSU5EX0RFQ0lTSU9OEAISFgoSTElOS19LSU5EX0FSVElGQUNUEAMSFAoQTElOS19LSU5EX0JSQU5DSBAEEhAKDExJTktfS0lORF9QUhAFEhUKEUxJTktfS0lORF9NRUVUSU5HEAYSGQoVTElOS19LSU5EX0lURU1fQkxPQ0tTEAcSGgoWTElOS19LSU5EX0lURU1fUkVMQVRFUxAIEh0KGUxJTktfS0lORF9JVEVNX0RVUExJQ0FURVMQCSqZAwoNSXRlbUV2ZW50S2luZBIfChtJVEVNX0VWRU5UX0tJTkRfVU5TUEVDSUZJRUQQABIbChdJVEVNX0VWRU5UX0tJTkRfQ1JFQVRFRBABEhkKFUlURU1fRVZFTlRfS0lORF9NT1ZFRBACEhoKFklURU1fRVZFTlRfS0lORF9FRElURUQQAxIdChlJVEVNX0VWRU5UX0tJTkRfQ09NTUVOVEVEEAQSGgoWSVRFTV9FVkVOVF9LSU5EX0xJTktFRBAFEhwKGElURU1fRVZFTlRfS0lORF9BU1NJR05FRBAGEhsKF0lURU1fRVZFTlRfS0lORF9CTE9DS0VEEAcSGgoWSVRFTV9FVkVOVF9LSU5EX1JBTktFRBAIEh0KGUlURU1fRVZFTlRfS0lORF9UQVNLX0RPTkUQCRIgChxJVEVNX0VWRU5UX0tJTkRfVEFTS19FWFBJUkVEEAoSIgoeSVRFTV9FVkVOVF9LSU5EX1RBU0tfQ0FOQ0VMTEVEEAsSHAoYSVRFTV9FVkVOVF9LSU5EX1VOTElOS0VEEAwqagoMVGVtcGxhdGVLaW5kEh0KGVRFTVBMQVRFX0tJTkRfVU5TUEVDSUZJRUQQABIbChdURU1QTEFURV9LSU5EX0lURU1fVFlQRRABEh4KGlRFTVBMQVRFX0tJTkRfTUVFVElOR19UWVBFEAJiBnByb3RvMw", [file_google_protobuf_struct, file_google_protobuf_timestamp]);
+  fileDesc("ChtoZXJtZXMvYm9hcmQvdjEvYm9hcmQucHJvdG8SD2hlcm1lcy5ib2FyZC52MSIcCgpTdHJpbmdMaXN0Eg4KBnZhbHVlcxgBIAMoCSK1AgoFQm9hcmQSCgoCaWQYASABKAkSEgoKcHJvamVjdF9pZBgCIAEoCRIMCgRuYW1lGAMgASgJEgsKA2tleRgEIAEoCRITCgtkZXNjcmlwdGlvbhgFIAEoCRILCgNvcmQYBiABKA0SEgoKaXNfZGVmYXVsdBgHIAEoCBIYChBzdHJ1Y3R1cmVfcG9saWN5GAggASgJEgwKBGZsb3cYCSABKAkSPAoLYXV0b21hdGlvbnMYCiADKAsyJy5oZXJtZXMuYm9hcmQudjEuQm9hcmQuQXV0b21hdGlvbnNFbnRyeRIQCghhcmNoaXZlZBgLIAEoCBIPCgd2ZXJzaW9uGAwgASgEGjIKEEF1dG9tYXRpb25zRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKtAgoNQm9hcmRTZXR0aW5ncxISCgpwcm9qZWN0X2lkGAEgASgJEgsKA2tleRgCIAEoCRIQCghuZXh0X3NlcRgDIAEoDRIZChFzdGFsZV9hZnRlcl9ob3VycxgEIAEoDRJPChFyZXF1aXJlZF9tYWNoaW5lcxgFIAMoCzI0Lmhlcm1lcy5ib2FyZC52MS5Cb2FyZFNldHRpbmdzLlJlcXVpcmVkTWFjaGluZXNFbnRyeRIWCg5ob21lX2RhZW1vbl9pZBgGIAEoCRIPCgd2ZXJzaW9uGAcgASgEGlQKFVJlcXVpcmVkTWFjaGluZXNFbnRyeRILCgNrZXkYASABKAkSKgoFdmFsdWUYAiABKAsyGy5oZXJtZXMuYm9hcmQudjEuU3RyaW5nTGlzdDoCOAEi0wIKC0JvYXJkQ29sdW1uEhIKCnByb2plY3RfaWQYASABKAkSCwoDa2V5GAIgASgJEgwKBG5hbWUYAyABKAkSCwoDb3JkGAQgASgNEjEKCGNhdGVnb3J5GAUgASgOMh8uaGVybWVzLmJvYXJkLnYxLkNvbHVtbkNhdGVnb3J5EhYKCXdpcF9saW1pdBgGIAEoDUgAiAEBEiwKCXdpcF9zY29wZRgHIAEoDjIZLmhlcm1lcy5ib2FyZC52MS5XaXBTY29wZRIPCgd2aXNpYmxlGAggASgIEhAKCGJvYXJkX2lkGAkgASgJEikKBGtpbmQYCiABKA4yGy5oZXJtZXMuYm9hcmQudjEuQ29sdW1uS2luZBIOCgZtb3ZlcnMYCyADKAkSDQoFcnVsZXMYDCADKAkSFAoMYWxsb3dlZF9mcm9tGA0gAygJQgwKCl93aXBfbGltaXQieAoLUHJvamVjdFJvbGUSEgoKcHJvamVjdF9pZBgBIAEoCRIjCgRyb2xlGAIgASgOMhUuaGVybWVzLmJvYXJkLnYxLlJvbGUSDgoGYm90X2lkGAMgASgJEhQKB21hY2hpbmUYBCABKAlIAIgBAUIKCghfbWFjaGluZSJcCgdCbG9ja2VkEg8KAmJ5GAEgASgJSACIAQESDgoGcmVhc29uGAIgASgJEikKBXNpbmNlGAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIFCgNfYnki5QEKE0FjY2VwdGFuY2VDcml0ZXJpb24SCwoDaWR4GAEgASgNEgwKBHRleHQYAiABKAkSDwoHY2hlY2tlZBgDIAEoCBIXCgpjaGVja2VkX2J5GAQgASgJSACIAQESMwoKY2hlY2tlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIAYgBARIUCgdtYWNoaW5lGAYgASgJSAKIAQESFAoMcG9zdF9pbnN0YWxsGAcgASgIQg0KC19jaGVja2VkX2J5Qg0KC19jaGVja2VkX2F0QgoKCF9tYWNoaW5lIkcKCkl0ZW1QZXJzb24SDgoGYm90X2lkGAEgASgJEikKBHJvbGUYAiABKA4yGy5oZXJtZXMuYm9hcmQudjEuUGVyc29uUm9sZSKoAQoQSXRlbVZlcmlmaWNhdGlvbhIPCgdtYWNoaW5lGAEgASgJEjMKBnJlc3VsdBgCIAEoDjIjLmhlcm1lcy5ib2FyZC52MS5WZXJpZmljYXRpb25SZXN1bHQSCgoCYnkYAyABKAkSJgoCYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKBG5vdGUYBSABKAlIAIgBAUIHCgVfbm90ZSLCBwoESXRlbRIKCgJpZBgBIAEoCRILCgNzZXEYAiABKA0SJwoEdHlwZRgDIAEoDjIZLmhlcm1lcy5ib2FyZC52MS5JdGVtVHlwZRINCgV0aXRsZRgEIAEoCRITCgtkZXNjcmlwdGlvbhgFIAEoCRIsCglwbGF0Zm9ybXMYBiADKA4yGS5oZXJtZXMuYm9hcmQudjEuUGxhdGZvcm0SKAoEc2l6ZRgHIAEoDjIVLmhlcm1lcy5ib2FyZC52MS5TaXplSACIAQESKwoIcHJpb3JpdHkYCCABKA4yGS5oZXJtZXMuYm9hcmQudjEuUHJpb3JpdHkSDAoEcmFuaxgJIAEoCRISCgpjb2x1bW5fa2V5GAogASgJEjEKCGNhdGVnb3J5GAsgASgOMh8uaGVybWVzLmJvYXJkLnYxLkNvbHVtbkNhdGVnb3J5Ei4KB2Jsb2NrZWQYDCABKAsyGC5oZXJtZXMuYm9hcmQudjEuQmxvY2tlZEgBiAEBEhUKCGFzc2lnbmVlGA0gASgJSAKIAQESFgoJcGFyZW50X2lkGA4gASgJSAOIAQESFwoKcmVsZWFzZV9pZBgPIAEoCUgEiAEBEg4KBmxhYmVscxgQIAMoCRJBChNhY2NlcHRhbmNlX2NyaXRlcmlhGBEgAygLMiQuaGVybWVzLmJvYXJkLnYxLkFjY2VwdGFuY2VDcml0ZXJpb24SKwoGcGVvcGxlGBIgAygLMhsuaGVybWVzLmJvYXJkLnYxLkl0ZW1QZXJzb24SOAoNdmVyaWZpY2F0aW9ucxgTIAMoCzIhLmhlcm1lcy5ib2FyZC52MS5JdGVtVmVyaWZpY2F0aW9uEhIKCmNyZWF0ZWRfYnkYFCABKAkSLgoKY3JlYXRlZF9hdBgVIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgWIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNAoQc3RhdGVfZW50ZXJlZF9hdBgXIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMAoHZG9uZV9hdBgYIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBIBYgBARIPCgd2ZXJzaW9uGBkgASgEEhAKCGJvYXJkX2lkGBogASgJQgcKBV9zaXplQgoKCF9ibG9ja2VkQgsKCV9hc3NpZ25lZUIMCgpfcGFyZW50X2lkQg0KC19yZWxlYXNlX2lkQgoKCF9kb25lX2F0ItMDCghJdGVtQ2FyZBIKCgJpZBgBIAEoCRInCgR0eXBlGAIgASgOMhkuaGVybWVzLmJvYXJkLnYxLkl0ZW1UeXBlEg0KBXRpdGxlGAMgASgJEisKCHByaW9yaXR5GAQgASgOMhkuaGVybWVzLmJvYXJkLnYxLlByaW9yaXR5EigKBHNpemUYBSABKA4yFS5oZXJtZXMuYm9hcmQudjEuU2l6ZUgAiAEBEgwKBHJhbmsYBiABKAkSEgoKY29sdW1uX2tleRgHIAEoCRIVCghhc3NpZ25lZRgIIAEoCUgBiAEBEiwKCXBsYXRmb3JtcxgJIAMoDjIZLmhlcm1lcy5ib2FyZC52MS5QbGF0Zm9ybRIOCgZsYWJlbHMYCiADKAkSDwoHYmxvY2tlZBgLIAEoCBINCgVzdGFsZRgMIAEoCBISCgphY19jaGVja2VkGA0gASgNEhAKCGFjX3RvdGFsGA4gASgNEg8KB3ZlcnNpb24YDyABKAQSNgoSb3duZXJfY29tbWVudGVkX2F0GBAgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghib2FyZF9pZBgRIAEoCUIHCgVfc2l6ZUILCglfYXNzaWduZWUiqwEKCEl0ZW1MaW5rEg8KB2l0ZW1faWQYASABKAkSJwoEa2luZBgCIAEoDjIZLmhlcm1lcy5ib2FyZC52MS5MaW5rS2luZBILCgNyZWYYAyABKAkSEgoFbGFiZWwYBCABKAlIAIgBARISCgpjcmVhdGVkX2J5GAUgASgJEiYKAmF0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEIICgZfbGFiZWwilAEKC0l0ZW1Db21tZW50EgoKAmlkGAEgASgJEg8KB2l0ZW1faWQYAiABKAkSDgoGYXV0aG9yGAMgASgJEgwKBGJvZHkYBCABKAkSFQoIcmVwbHlfdG8YBSABKAlIAIgBARImCgJhdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCCwoJX3JlcGx5X3RvIvsBCglJdGVtRXZlbnQSCgoCaWQYASABKAMSDwoHaXRlbV9pZBgCIAEoCRImCgJhdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDQoFYWN0b3IYBCABKAkSLAoEa2luZBgFIAEoDjIeLmhlcm1lcy5ib2FyZC52MS5JdGVtRXZlbnRLaW5kEhEKBGZyb20YBiABKAlIAIgBARIPCgJ0bxgHIAEoCUgBiAEBEhIKBWZpZWxkGAggASgJSAKIAQESEQoEbm90ZRgJIAEoCUgDiAEBQgcKBV9mcm9tQgUKA190b0IICgZfZmllbGRCBwoFX25vdGUikQEKCFRlbXBsYXRlEhIKCnByb2plY3RfaWQYASABKAkSKwoEa2luZBgCIAEoDjIdLmhlcm1lcy5ib2FyZC52MS5UZW1wbGF0ZUtpbmQSDAoEbmFtZRgDIAEoCRIPCgd2ZXJzaW9uGAQgASgNEiUKBGJvZHkYBSABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0Ij0KBVVubWV0EgwKBGNvZGUYASABKAkSDAoEdGV4dBgCIAEoCRIQCgNmaXgYAyABKAlIAIgBAUIGCgRfZml4KrACCg5Db2x1bW5DYXRlZ29yeRIfChtDT0xVTU5fQ0FURUdPUllfVU5TUEVDSUZJRUQQABIZChVDT0xVTU5fQ0FURUdPUllfSU5CT1gQARIZChVDT0xVTU5fQ0FURUdPUllfUkVBRFkQAhIZChVDT0xVTU5fQ0FURUdPUllfRE9JTkcQAxIaChZDT0xVTU5fQ0FURUdPUllfUkVWSUVXEAQSGgoWQ09MVU1OX0NBVEVHT1JZX1ZFUklGWRAFEhwKGENPTFVNTl9DQVRFR09SWV9BUFBST1ZBTBAGEh0KGUNPTFVNTl9DQVRFR09SWV9ERVBMT1lJTkcQBxIYChRDT0xVTU5fQ0FURUdPUllfRE9ORRAIEh0KGUNPTFVNTl9DQVRFR09SWV9DQU5DRUxMRUQQCSqIAQoKQ29sdW1uS2luZBIbChdDT0xVTU5fS0lORF9VTlNQRUNJRklFRBAAEhQKEENPTFVNTl9LSU5EX09QRU4QARIWChJDT0xVTU5fS0lORF9BQ1RJVkUQAhIUChBDT0xVTU5fS0lORF9ET05FEAMSGQoVQ09MVU1OX0tJTkRfQ0FOQ0VMTEVEEAQqVwoIV2lwU2NvcGUSGQoVV0lQX1NDT1BFX1VOU1BFQ0lGSUVEEAASFAoQV0lQX1NDT1BFX0NPTFVNThABEhoKFldJUF9TQ09QRV9QRVJfQVNTSUdORUUQAiqvAQoEUm9sZRIUChBST0xFX1VOU1BFQ0lGSUVEEAASDQoJUk9MRV9MRUFEEAESDgoKUk9MRV9DT0FDSBACEg8KC1JPTEVfREVWT1BTEAMSFgoSUk9MRV9SRVZJRVdFUl9BUkNIEAQSFAoQUk9MRV9SRVZJRVdFUl9VWBAFEg8KC1JPTEVfVEVTVEVSEAYSDAoIUk9MRV9ERVYQBxIUChBST0xFX1JFVklFV0VSX0NFEAgqjQEKCEl0ZW1UeXBlEhkKFUlURU1fVFlQRV9VTlNQRUNJRklFRBAAEhIKDklURU1fVFlQRV9FUElDEAESFQoRSVRFTV9UWVBFX0ZFQVRVUkUQAhIRCg1JVEVNX1RZUEVfQlVHEAMSEwoPSVRFTV9UWVBFX1NQSUtFEAQSEwoPSVRFTV9UWVBFX0NIT1JFEAUqdQoIUGxhdGZvcm0SGAoUUExBVEZPUk1fVU5TUEVDSUZJRUQQABIUChBQTEFURk9STV9ERVNLVE9QEAESEAoMUExBVEZPUk1fSU9TEAISEwoPUExBVEZPUk1fREFFTU9OEAMSEgoOUExBVEZPUk1fSU5GUkEQBCpACgRTaXplEhQKEFNJWkVfVU5TUEVDSUZJRUQQABIKCgZTSVpFX1MQARIKCgZTSVpFX00QAhIKCgZTSVpFX0wQAypoCghQcmlvcml0eRIYChRQUklPUklUWV9VTlNQRUNJRklFRBAAEg8KC1BSSU9SSVRZX1AwEAESDwoLUFJJT1JJVFlfUDEQAhIPCgtQUklPUklUWV9QMhADEg8KC1BSSU9SSVRZX1AzEAQqXQoKUGVyc29uUm9sZRIbChdQRVJTT05fUk9MRV9VTlNQRUNJRklFRBAAEhgKFFBFUlNPTl9ST0xFX1JFVklFV0VSEAESGAoUUEVSU09OX1JPTEVfVkVSSUZJRVIQAiqWAQoSVmVyaWZpY2F0aW9uUmVzdWx0EiMKH1ZFUklGSUNBVElPTl9SRVNVTFRfVU5TUEVDSUZJRUQQABIcChhWRVJJRklDQVRJT05fUkVTVUxUX1BBU1MQARIcChhWRVJJRklDQVRJT05fUkVTVUxUX0ZBSUwQAhIfChtWRVJJRklDQVRJT05fUkVTVUxUX0JMT0NLRUQQAyr+AQoITGlua0tpbmQSGQoVTElOS19LSU5EX1VOU1BFQ0lGSUVEEAASEgoOTElOS19LSU5EX1RBU0sQARIWChJMSU5LX0tJTkRfREVDSVNJT04QAhIWChJMSU5LX0tJTkRfQVJUSUZBQ1QQAxIUChBMSU5LX0tJTkRfQlJBTkNIEAQSEAoMTElOS19LSU5EX1BSEAUSFQoRTElOS19LSU5EX01FRVRJTkcQBhIZChVMSU5LX0tJTkRfSVRFTV9CTE9DS1MQBxIaChZMSU5LX0tJTkRfSVRFTV9SRUxBVEVTEAgSHQoZTElOS19LSU5EX0lURU1fRFVQTElDQVRFUxAJKpkDCg1JdGVtRXZlbnRLaW5kEh8KG0lURU1fRVZFTlRfS0lORF9VTlNQRUNJRklFRBAAEhsKF0lURU1fRVZFTlRfS0lORF9DUkVBVEVEEAESGQoVSVRFTV9FVkVOVF9LSU5EX01PVkVEEAISGgoWSVRFTV9FVkVOVF9LSU5EX0VESVRFRBADEh0KGUlURU1fRVZFTlRfS0lORF9DT01NRU5URUQQBBIaChZJVEVNX0VWRU5UX0tJTkRfTElOS0VEEAUSHAoYSVRFTV9FVkVOVF9LSU5EX0FTU0lHTkVEEAYSGwoXSVRFTV9FVkVOVF9LSU5EX0JMT0NLRUQQBxIaChZJVEVNX0VWRU5UX0tJTkRfUkFOS0VEEAgSHQoZSVRFTV9FVkVOVF9LSU5EX1RBU0tfRE9ORRAJEiAKHElURU1fRVZFTlRfS0lORF9UQVNLX0VYUElSRUQQChIiCh5JVEVNX0VWRU5UX0tJTkRfVEFTS19DQU5DRUxMRUQQCxIcChhJVEVNX0VWRU5UX0tJTkRfVU5MSU5LRUQQDCpqCgxUZW1wbGF0ZUtpbmQSHQoZVEVNUExBVEVfS0lORF9VTlNQRUNJRklFRBAAEhsKF1RFTVBMQVRFX0tJTkRfSVRFTV9UWVBFEAESHgoaVEVNUExBVEVfS0lORF9NRUVUSU5HX1RZUEUQAmIGcHJvdG8z", [file_google_protobuf_struct, file_google_protobuf_timestamp]);
 
 /**
  * Machines, as a map value (map values cannot be repeated).
@@ -39,6 +39,89 @@ export type StringList = Message<"hermes.board.v1.StringList"> & {
  */
 export const StringListSchema: GenMessage<StringList> = /*@__PURE__*/
   messageDesc(file_hermes_board_v1_board, 0);
+
+/**
+ * One board of a project (0.19.0). A project has a default board; others
+ * are made with `board_create`.
+ *
+ * @generated from message hermes.board.v1.Board
+ */
+export type Board = Message<"hermes.board.v1.Board"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string project_id = 2;
+   */
+  projectId: string;
+
+  /**
+   * @generated from field: string name = 3;
+   */
+  name: string;
+
+  /**
+   * The item-id prefix of the items created on it.
+   *
+   * @generated from field: string key = 4;
+   */
+  key: string;
+
+  /**
+   * @generated from field: string description = 5;
+   */
+  description: string;
+
+  /**
+   * @generated from field: uint32 ord = 6;
+   */
+  ord: number;
+
+  /**
+   * @generated from field: bool is_default = 7;
+   */
+  isDefault: boolean;
+
+  /**
+   * "owner_confirms" or "lead_free": what a lead's structure change needs.
+   *
+   * @generated from field: string structure_policy = 8;
+   */
+  structurePolicy: string;
+
+  /**
+   * "custom" (the columns' movers and rules decide) or "release_gated".
+   *
+   * @generated from field: string flow = 9;
+   */
+  flow: string;
+
+  /**
+   * Fact name (`pr.merged`) to the column key a custom board moves to.
+   *
+   * @generated from field: map<string, string> automations = 10;
+   */
+  automations: { [key: string]: string };
+
+  /**
+   * @generated from field: bool archived = 11;
+   */
+  archived: boolean;
+
+  /**
+   * @generated from field: uint64 version = 12;
+   */
+  version: bigint;
+};
+
+/**
+ * Describes the message hermes.board.v1.Board.
+ * Use `create(BoardSchema)` to create a new message.
+ */
+export const BoardSchema: GenMessage<Board> = /*@__PURE__*/
+  messageDesc(file_hermes_board_v1_board, 1);
 
 /**
  * One project's board configuration.
@@ -96,7 +179,7 @@ export type BoardSettings = Message<"hermes.board.v1.BoardSettings"> & {
  * Use `create(BoardSettingsSchema)` to create a new message.
  */
 export const BoardSettingsSchema: GenMessage<BoardSettings> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 1);
+  messageDesc(file_hermes_board_v1_board, 2);
 
 /**
  * @generated from message hermes.board.v1.BoardColumn
@@ -155,6 +238,28 @@ export type BoardColumn = Message<"hermes.board.v1.BoardColumn"> & {
    * @generated from field: hermes.board.v1.ColumnKind kind = 10;
    */
   kind: ColumnKind;
+
+  /**
+   * A custom board's rules for entering the column, as tokens: movers
+   * `any_member`, `assignee`, `lead`, `owner`, `system`, `roles:dev,tester`
+   * (none: any member); rules `assignee_set`, `fields_filled:Goal;Steps`,
+   * `ac_present`, `ac_all_checked`, `size_at_most:M`, `blockers_done`,
+   * `not_blocked`, `link:pr`, `independent`, `reason`, `predicate:<name>`;
+   * `allowed_from` column keys (none: any).
+   *
+   * @generated from field: repeated string movers = 11;
+   */
+  movers: string[];
+
+  /**
+   * @generated from field: repeated string rules = 12;
+   */
+  rules: string[];
+
+  /**
+   * @generated from field: repeated string allowed_from = 13;
+   */
+  allowedFrom: string[];
 };
 
 /**
@@ -162,7 +267,7 @@ export type BoardColumn = Message<"hermes.board.v1.BoardColumn"> & {
  * Use `create(BoardColumnSchema)` to create a new message.
  */
 export const BoardColumnSchema: GenMessage<BoardColumn> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 2);
+  messageDesc(file_hermes_board_v1_board, 3);
 
 /**
  * @generated from message hermes.board.v1.ProjectRole
@@ -196,7 +301,7 @@ export type ProjectRole = Message<"hermes.board.v1.ProjectRole"> & {
  * Use `create(ProjectRoleSchema)` to create a new message.
  */
 export const ProjectRoleSchema: GenMessage<ProjectRole> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 3);
+  messageDesc(file_hermes_board_v1_board, 4);
 
 /**
  * Set while an item is blocked: a flag, not a column.
@@ -227,7 +332,7 @@ export type Blocked = Message<"hermes.board.v1.Blocked"> & {
  * Use `create(BlockedSchema)` to create a new message.
  */
 export const BlockedSchema: GenMessage<Blocked> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 4);
+  messageDesc(file_hermes_board_v1_board, 5);
 
 /**
  * @generated from message hermes.board.v1.AcceptanceCriterion
@@ -280,7 +385,7 @@ export type AcceptanceCriterion = Message<"hermes.board.v1.AcceptanceCriterion">
  * Use `create(AcceptanceCriterionSchema)` to create a new message.
  */
 export const AcceptanceCriterionSchema: GenMessage<AcceptanceCriterion> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 5);
+  messageDesc(file_hermes_board_v1_board, 6);
 
 /**
  * @generated from message hermes.board.v1.ItemPerson
@@ -302,7 +407,7 @@ export type ItemPerson = Message<"hermes.board.v1.ItemPerson"> & {
  * Use `create(ItemPersonSchema)` to create a new message.
  */
 export const ItemPersonSchema: GenMessage<ItemPerson> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 6);
+  messageDesc(file_hermes_board_v1_board, 7);
 
 /**
  * @generated from message hermes.board.v1.ItemVerification
@@ -339,7 +444,7 @@ export type ItemVerification = Message<"hermes.board.v1.ItemVerification"> & {
  * Use `create(ItemVerificationSchema)` to create a new message.
  */
 export const ItemVerificationSchema: GenMessage<ItemVerification> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 7);
+  messageDesc(file_hermes_board_v1_board, 8);
 
 /**
  * A work item in full, as the item drawer shows it.
@@ -493,7 +598,7 @@ export type Item = Message<"hermes.board.v1.Item"> & {
  * Use `create(ItemSchema)` to create a new message.
  */
 export const ItemSchema: GenMessage<Item> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 8);
+  messageDesc(file_hermes_board_v1_board, 9);
 
 /**
  * The compact form a board column lists; the drawer fetches the Item.
@@ -583,6 +688,13 @@ export type ItemCard = Message<"hermes.board.v1.ItemCard"> & {
    * @generated from field: google.protobuf.Timestamp owner_commented_at = 16;
    */
   ownerCommentedAt?: Timestamp | undefined;
+
+  /**
+   * The board it is on. Empty from a home older than 0.19.
+   *
+   * @generated from field: string board_id = 17;
+   */
+  boardId: string;
 };
 
 /**
@@ -590,7 +702,7 @@ export type ItemCard = Message<"hermes.board.v1.ItemCard"> & {
  * Use `create(ItemCardSchema)` to create a new message.
  */
 export const ItemCardSchema: GenMessage<ItemCard> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 9);
+  messageDesc(file_hermes_board_v1_board, 10);
 
 /**
  * @generated from message hermes.board.v1.ItemLink
@@ -634,7 +746,7 @@ export type ItemLink = Message<"hermes.board.v1.ItemLink"> & {
  * Use `create(ItemLinkSchema)` to create a new message.
  */
 export const ItemLinkSchema: GenMessage<ItemLink> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 10);
+  messageDesc(file_hermes_board_v1_board, 11);
 
 /**
  * @generated from message hermes.board.v1.ItemComment
@@ -676,7 +788,7 @@ export type ItemComment = Message<"hermes.board.v1.ItemComment"> & {
  * Use `create(ItemCommentSchema)` to create a new message.
  */
 export const ItemCommentSchema: GenMessage<ItemComment> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 11);
+  messageDesc(file_hermes_board_v1_board, 12);
 
 /**
  * One append-only history entry.
@@ -737,7 +849,7 @@ export type ItemEvent = Message<"hermes.board.v1.ItemEvent"> & {
  * Use `create(ItemEventSchema)` to create a new message.
  */
 export const ItemEventSchema: GenMessage<ItemEvent> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 12);
+  messageDesc(file_hermes_board_v1_board, 13);
 
 /**
  * @generated from message hermes.board.v1.Template
@@ -776,7 +888,7 @@ export type Template = Message<"hermes.board.v1.Template"> & {
  * Use `create(TemplateSchema)` to create a new message.
  */
 export const TemplateSchema: GenMessage<Template> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 13);
+  messageDesc(file_hermes_board_v1_board, 14);
 
 /**
  * A guard a move does not meet yet, with what would fix it. The UI shows these
@@ -806,7 +918,7 @@ export type Unmet = Message<"hermes.board.v1.Unmet"> & {
  * Use `create(UnmetSchema)` to create a new message.
  */
 export const UnmetSchema: GenMessage<Unmet> = /*@__PURE__*/
-  messageDesc(file_hermes_board_v1_board, 14);
+  messageDesc(file_hermes_board_v1_board, 15);
 
 /**
  * The canonical category a column maps to. Guards and metrics key on it, so

@@ -148,6 +148,27 @@ message StringList {
   repeated string values = 1;
 }
 
+// One board of a project (0.19.0). A project has a default board; others
+// are made with `board_create`.
+message Board {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  // The item-id prefix of the items created on it.
+  string key = 4;
+  string description = 5;
+  uint32 ord = 6;
+  bool is_default = 7;
+  // "owner_confirms" or "lead_free": what a lead's structure change needs.
+  string structure_policy = 8;
+  // "custom" (the columns' movers and rules decide) or "release_gated".
+  string flow = 9;
+  // Fact name (`pr.merged`) to the column key a custom board moves to.
+  map<string, string> automations = 10;
+  bool archived = 11;
+  uint64 version = 12;
+}
+
 // One project's board configuration.
 message BoardSettings {
   string project_id = 1;
@@ -177,6 +198,15 @@ message BoardColumn {
   string board_id = 9;
   // Unset from a home older than 0.19: derive it from `category`.
   ColumnKind kind = 10;
+  // A custom board's rules for entering the column, as tokens: movers
+  // `any_member`, `assignee`, `lead`, `owner`, `system`, `roles:dev,tester`
+  // (none: any member); rules `assignee_set`, `fields_filled:Goal;Steps`,
+  // `ac_present`, `ac_all_checked`, `size_at_most:M`, `blockers_done`,
+  // `not_blocked`, `link:pr`, `independent`, `reason`, `predicate:<name>`;
+  // `allowed_from` column keys (none: any).
+  repeated string movers = 11;
+  repeated string rules = 12;
+  repeated string allowed_from = 13;
 }
 
 message ProjectRole {
@@ -277,6 +307,8 @@ message ItemCard {
   // The owner's latest comment on it (H-211): a computer mirroring the board
   // closes its card questions asked before it.
   google.protobuf.Timestamp owner_commented_at = 16;
+  // The board it is on. Empty from a home older than 0.19.
+  string board_id = 17;
 }
 
 message ItemLink {

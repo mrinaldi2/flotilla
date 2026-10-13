@@ -345,7 +345,8 @@ pub(super) fn cards_in(
                 (SELECT count(*) FROM item_ac a WHERE a.item_id = i.id AND a.checked),
                 (SELECT count(*) FROM item_ac a WHERE a.item_id = i.id),
                 (SELECT max(at) FROM item_comment m WHERE m.item_id = i.id
-                    AND (m.author = 'user' OR m.author LIKE 'device:%'))
+                    AND (m.author = 'user' OR m.author LIKE 'device:%')),
+                i.board_id
          FROM item i JOIN board_column c ON c.project_id = i.project_id AND c.key = i.column_key
          WHERE i.project_id = ?1 {filter}
          ORDER BY c.ord, i.rank"
@@ -355,6 +356,7 @@ pub(super) fn cards_in(
         let category: ColumnCategory = from_text(r.get(11)?)?;
         Ok(ItemCard {
             id: r.get(0)?,
+            board_id: r.get::<_, Option<String>>(17)?.unwrap_or_default(),
             item_type: from_text(r.get(1)?)?,
             title: r.get(2)?,
             priority: from_text(r.get(3)?)?,

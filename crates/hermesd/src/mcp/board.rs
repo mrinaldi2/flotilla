@@ -84,6 +84,9 @@ pub(super) fn call(
         "item_move" => item_move(app, &me, decode("ItemMove", args, project)?),
         "item_move_check" => check(app, &me, decode("ItemMoveCheck", args, project)?),
         "role_set" => super::board_roles::role_set(app, &me, decode("RoleSet", args, project)?),
+        board if super::board_structure::handles(board) => {
+            super::board_structure::call(app, &me, &roles, board, args)
+        }
         meeting if super::meetings::handles(meeting) => {
             super::meetings::call(app, &me.bot, roles, meeting, args)
         }

@@ -139,6 +139,14 @@ pub(super) fn board_work(limits: &crate::config::TaskLimits) -> String {
      All work is a task linked to a board card, never a note. A note never\n\
      authorises work, and one over {max_note} bytes is refused: put long\n\
      content in an artifact.\n\n\
+     A project can have several boards, each with its own columns. On a\n\
+     custom board a column's movers and rules decide who may move a card in\n\
+     and what it needs first; `board_list` shows every board with its\n\
+     columns, rules and automations, and `item_move_check` shows what stands\n\
+     in your way. Read them again when the owner or the lead changes a\n\
+     board. The lead changes a board's structure with `column_add`,\n\
+     `column_update` and the other board tools; under the board's policy the\n\
+     owner may have to approve first, so agree the change with the owner.\n\n\
      - Before you delegate, find or create the card (`item_query`,\n\
      `item_create`) and send kind `task` with `item`. A task you send while\n\
      holding one inherits its card; when you hold several, pass\n\
@@ -166,10 +174,10 @@ pub(super) fn pull_requests(on: bool) -> &'static str {
         return "";
     }
     "## Code goes through pull requests\n\n\
-     Every change to a repository is a pull request (PR) on its card. The\n\
-     daemon moves the card: a PR opened puts it in Review, a merge puts it in\n\
-     Verify, and a PR closed unmerged puts it back in Doing. Never move a code\n\
-     card to Review or Verify yourself.\n\n\
+     Every change to a repository is a pull request (PR) on its card. A PR\n\
+     opened, merged or closed unmerged moves the card where its board's\n\
+     automations say (`board_list` shows them); on a release-gated board,\n\
+     to Review, Verify and back to Doing. Never make those moves yourself.\n\n\
      - Push your branch, then `pr_open` with the card (`item`), the branch,\n\
      your worktree's path and the change note as `body`. That is the PR.\n\
      - After every later push, `pr_push` with the PR number and the full sha\n\
@@ -181,7 +189,8 @@ pub(super) fn pull_requests(on: bool) -> &'static str {
      - `pr_close` with a reason only to abandon a PR.\n\
      - You can't review a PR you opened, pushed to, or whose card you hold.\n\
      - Nobody merges by hand: a mergeable PR goes to DevOps as a merge task,\n\
-     run with `hermesd pr merge`, and a raw push to main is refused.\n\
+     run with `hermesd pr merge`, and a raw push to the project's branch is\n\
+     refused.\n\
      - The owner reviews, approves, runs commands, grants extras, types into\n\
      terminals and answers prompts only on the board's home computer or\n\
      their phone. Owner acts claimed from a linked computer are refused, and\n\
@@ -193,7 +202,7 @@ pub(super) fn pull_requests(on: bool) -> &'static str {
 /// refused for leaving the card out).
 pub(super) fn owner_reporting() -> &'static str {
     "## Owner requests on a card\n\n\
-     A message from the owner may start with `[card H-nnn]`: the request is\n\
+     A message from the owner may start with `[card KEY-12]`: the request is\n\
      work on that card. Do it there — comment, link and move the card — and\n\
      answer the owner with `message_owner`. A message from the owner without\n\
      a card is just as much yours to act on: a conversation needs no card\n\

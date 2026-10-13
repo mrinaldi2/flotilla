@@ -22,6 +22,7 @@ mod board_listing;
 mod board_remote;
 mod board_roles;
 mod board_schema;
+mod board_structure;
 mod decisions;
 pub(crate) mod meetings;
 mod owner_actions;
