@@ -110,6 +110,11 @@ function navigate(event: KeyboardEvent, d: ControlKeyDeps): boolean {
     return true;
   }
   if (event.key === "Enter") {
+    // A button in the reading pane (a release's or a proposal's Approve)
+    // takes its own ↩.
+    if (event.target instanceof Element && event.target.closest(".cc-reader button") !== null) {
+      return true;
+    }
     // Without this the focused tab or row button is clicked as well, which on
     // the ledger switches tabs again and closes what ↩ just opened.
     event.preventDefault();
