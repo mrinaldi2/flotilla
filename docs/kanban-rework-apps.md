@@ -1,6 +1,6 @@
 # Kanban rework: desktop, phone and linked computers
 
-Status: **proposal, awaiting owner approval**. This is the companion to
+Status: **approved by the owner on 2026-10-13**. This is the companion to
 [kanban-rework.md](kanban-rework.md), and the terms used here are defined
 there.
 
