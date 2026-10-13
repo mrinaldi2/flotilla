@@ -31,12 +31,15 @@ impl Shell {
         Self::ALL.into_iter().find(|s| s.as_str() == text)
     }
 
-    /// This computer's default.
+    /// This computer's default: zsh on macOS, bash on Linux and other Unix
+    /// systems (which may not have zsh), PowerShell on Windows.
     pub fn here() -> Self {
         if cfg!(windows) {
             Shell::Powershell
-        } else {
+        } else if cfg!(target_os = "macos") {
             Shell::Zsh
+        } else {
+            Shell::Bash
         }
     }
 }

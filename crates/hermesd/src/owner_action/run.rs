@@ -35,7 +35,13 @@ fn login_path() -> &'static str {
     static PATH: std::sync::OnceLock<String> = std::sync::OnceLock::new();
     PATH.get_or_init(|| {
         let fallback = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
-        std::process::Command::new("/bin/zsh")
+        // The login shell of this computer's default (`Shell::here`).
+        let shell = if cfg!(target_os = "macos") {
+            "/bin/zsh"
+        } else {
+            "/bin/bash"
+        };
+        std::process::Command::new(shell)
             .args(["-l", "-c", "printf %s \"$PATH\""])
             .stdin(Stdio::null())
             .output()
