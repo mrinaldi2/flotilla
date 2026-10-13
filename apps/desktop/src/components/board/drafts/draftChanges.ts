@@ -64,38 +64,36 @@ export interface ChangeWords {
   readonly after?: string;
 }
 
+/** An attachment or a link, added or removed. */
+function attached(r: DraftRevision, field: string): ChangeWords {
+  const what = r.to ?? r.from ?? "";
+  const added = r.to !== undefined;
+  const noun = r.field === "attachment" ? "Attached" : "Linked";
+  return { field, mark: added ? "+" : "−", summary: added ? `${noun} ${what}` : `Removed ${what}` };
+}
+
+/** Criteria added and removed, one line each. */
+function criteria(r: DraftRevision, field: string): ChangeWords {
+  const before = lines(r.from);
+  const after = lines(r.to);
+  const added = after.filter((c) => !before.includes(c));
+  const removed = before.filter((c) => !after.includes(c));
+  const parts = [...added.map((c) => `+ ${c}`), ...removed.map((c) => `− ${c}`)];
+  const mark = removed.length === 0 ? "+" : added.length === 0 ? "−" : "~";
+  return { field, mark, summary: parts.length === 0 ? "Reordered" : parts.join("; ") };
+}
+
 /** One revision in words. */
 export function changeWords(r: DraftRevision): ChangeWords {
   const field = FIELDS[r.field] ?? r.field;
   if (r.field === "attachment" || r.field === "link") {
-    const what = r.to ?? r.from ?? "";
-    const added = r.to !== undefined;
-    const noun = r.field === "attachment" ? "Attached" : "Linked";
-    return {
-      field,
-      mark: added ? "+" : "−",
-      summary: added ? `${noun} ${what}` : `Removed ${what}`,
-    };
+    return attached(r, field);
   }
   if (r.field === "acceptance_criteria") {
-    const before = lines(r.from);
-    const after = lines(r.to);
-    const added = after.filter((c) => !before.includes(c));
-    const removed = before.filter((c) => !after.includes(c));
-    const parts = [...added.map((c) => `+ ${c}`), ...removed.map((c) => `− ${c}`)];
-    return {
-      field,
-      mark: removed.length === 0 ? "+" : added.length === 0 ? "−" : "~",
-      summary: parts.length === 0 ? "Reordered" : parts.join("; "),
-    };
+    return criteria(r, field);
   }
   const before = r.from ?? "";
   const after = r.to ?? "";
-  return {
-    field,
-    mark: "~",
-    summary: r.field === "description" ? "Rewritten" : `${short(before)} → ${short(after)}`,
-    before,
-    after,
-  };
+  const summary = r.field === "description" ? "Rewritten" : `${short(before)} → ${short(after)}`;
+  return { field, mark: "~", summary, before, after };
 }

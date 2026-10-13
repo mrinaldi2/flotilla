@@ -16,7 +16,7 @@ interface DiscussButtonProps {
 }
 
 /** The project's bots, the lead first. */
-export function leadFirst(bots: readonly Bot[], leadId: string | undefined): Bot[] {
+function leadFirst(bots: readonly Bot[], leadId: string | undefined): Bot[] {
   const lead = bots.filter((b) => b.id === leadId);
   return [...lead, ...bots.filter((b) => b.id !== leadId)];
 }

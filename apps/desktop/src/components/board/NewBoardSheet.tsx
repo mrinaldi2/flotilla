@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { FormEvent, ReactElement } from "react";
 import type { Board } from "../../protocol/gen/hermes/board/v1/board_pb";
 import { useEscapeKey } from "../../hooks/useEscapeKey";
+import { errText } from "../../util";
 import OverlayShell from "../overlay/OverlayShell";
 import { keyProblem, suggestKey } from "./boards";
 import { PRESETS } from "./presets";
@@ -43,6 +44,80 @@ function PresetPreview({ preset }: { readonly preset: Preset }): ReactElement {
   );
 }
 
+function PresetPicker(props: {
+  readonly value: PresetName;
+  readonly onChange: (preset: PresetName) => void;
+}): ReactElement {
+  return (
+    <fieldset className="new-board-presets">
+      <legend className="field-label">Preset</legend>
+      {PRESETS.map((p) => (
+        <label key={p.name} className={`preset${props.value === p.name ? " preset-on" : ""}`}>
+          <span className="preset-head">
+            <input
+              type="radio"
+              name="preset"
+              value={p.name}
+              checked={props.value === p.name}
+              onChange={() => props.onChange(p.name)}
+            />
+            <span className="preset-title">{p.title}</span>
+            <span className="preset-blurb">{p.blurb}</span>
+          </span>
+          <PresetPreview preset={p} />
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
+/** The key's hint: its problem, or what ids it gives. */
+function keyHint(key: string, problem: string | null): string {
+  if (problem !== null) {
+    return problem;
+  }
+  return `Items get ids like ${key === "" ? "KEY" : key}-1.`;
+}
+
+function NameAndKey(props: {
+  readonly name: string;
+  readonly keyText: string;
+  readonly problem: string | null;
+  readonly onName: (name: string) => void;
+  readonly onKey: (key: string) => void;
+}): ReactElement {
+  const { problem } = props;
+  return (
+    <>
+      <div className="field-row">
+        <label className="field">
+          <span className="field-label">Name</span>
+          <input
+            type="text"
+            value={props.name}
+            autoFocus
+            placeholder="Recipes"
+            onChange={(event) => props.onName(event.target.value)}
+          />
+        </label>
+        <label className="field new-board-key">
+          <span className="field-label">Key</span>
+          <input
+            type="text"
+            value={props.keyText}
+            aria-describedby="new-board-key-hint"
+            aria-invalid={problem !== null}
+            onChange={(event) => props.onKey(event.target.value)}
+          />
+        </label>
+      </div>
+      <p id="new-board-key-hint" className={problem === null ? "field-hint" : "field-error"}>
+        {keyHint(props.keyText, problem)}
+      </p>
+    </>
+  );
+}
+
 export default function NewBoardSheet(props: NewBoardSheetProps): ReactElement {
   const [name, setName] = useState(props.initial?.name ?? "");
   // Typed by the owner; until then it follows the name.
@@ -51,9 +126,10 @@ export default function NewBoardSheet(props: NewBoardSheetProps): ReactElement {
   const [sending, setSending] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
   useEscapeKey(props.onCancel);
-  const key = typedKey ?? (name.trim() === "" ? "" : suggestKey(name));
-  const problem = name.trim() === "" ? null : keyProblem(key, props.boards);
-  const ready = name.trim() !== "" && problem === null && !sending;
+  const named = name.trim() !== "";
+  const key = typedKey ?? (named ? suggestKey(name) : "");
+  const problem = named ? keyProblem(key, props.boards) : null;
+  const ready = named && problem === null && !sending;
 
   const submit = (event: FormEvent): void => {
     event.preventDefault();
@@ -63,7 +139,7 @@ export default function NewBoardSheet(props: NewBoardSheetProps): ReactElement {
     setSending(true);
     setRefusal(null);
     props.onCreate({ name: name.trim(), key, preset }).catch((failure: unknown) => {
-      setRefusal(failure instanceof Error ? failure.message : String(failure));
+      setRefusal(errText(failure));
       setSending(false);
     });
   };
@@ -72,50 +148,14 @@ export default function NewBoardSheet(props: NewBoardSheetProps): ReactElement {
     <OverlayShell label="New board" onClose={props.onCancel}>
       <form className="confirm-dialog new-board" onSubmit={submit}>
         <h2 className="confirm-title">New board</h2>
-        <div className="field-row">
-          <label className="field">
-            <span className="field-label">Name</span>
-            <input
-              type="text"
-              value={name}
-              autoFocus
-              placeholder="Recipes"
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
-          <label className="field new-board-key">
-            <span className="field-label">Key</span>
-            <input
-              type="text"
-              value={key}
-              aria-describedby="new-board-key-hint"
-              aria-invalid={problem !== null}
-              onChange={(event) => setTypedKey(event.target.value.toUpperCase())}
-            />
-          </label>
-        </div>
-        <p id="new-board-key-hint" className={problem === null ? "field-hint" : "field-error"}>
-          {problem ?? (key === "" ? "Items get ids like KEY-1." : `Items get ids like ${key}-1.`)}
-        </p>
-        <fieldset className="new-board-presets">
-          <legend className="field-label">Preset</legend>
-          {PRESETS.map((p) => (
-            <label key={p.name} className={`preset${preset === p.name ? " preset-on" : ""}`}>
-              <span className="preset-head">
-                <input
-                  type="radio"
-                  name="preset"
-                  value={p.name}
-                  checked={preset === p.name}
-                  onChange={() => setPreset(p.name)}
-                />
-                <span className="preset-title">{p.title}</span>
-                <span className="preset-blurb">{p.blurb}</span>
-              </span>
-              <PresetPreview preset={p} />
-            </label>
-          ))}
-        </fieldset>
+        <NameAndKey
+          name={name}
+          keyText={key}
+          problem={problem}
+          onName={setName}
+          onKey={(typed) => setTypedKey(typed.toUpperCase())}
+        />
+        <PresetPicker value={preset} onChange={setPreset} />
         {refusal === null ? null : (
           <p className="field-error" role="alert">
             {refusal}

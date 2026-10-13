@@ -10,7 +10,7 @@
 // draft is headed "Draft · not on the board yet", with Discuss with a bot,
 // its changes to review, and Discard / Finalize at the foot.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { escapeIsTheDrawers } from "../../../hooks/useDrawerEscape";
 import type { DaemonApi } from "../../../protocol/api";
@@ -22,12 +22,10 @@ import AttachmentViewer from "../attachments/AttachmentViewer";
 import ItemMarkdown from "../attachments/ItemMarkdown";
 import { useDrawerAttachments } from "../attachments/useDrawerAttachments";
 import { useDraftDrawer } from "../drafts/useDraftDrawer";
-import ItemEditForm from "../edit/ItemEditForm";
 import type { Anchor } from "../useBoardMoves";
-import { DrawerHeader, MetaLine, NextStepView, Stepper } from "./DrawerParts";
-import { DrawerTabs } from "./DrawerTabsView";
+import DrawerBody from "./DrawerBody";
+import { DrawerHeader } from "./DrawerParts";
 import type { Tab } from "./DrawerTabsView";
-import { nextStep } from "./drawerText";
 import { useItemDetail } from "./useItemDetail";
 
 export interface ItemDrawerProps {
@@ -102,22 +100,19 @@ function useDrawerKeys(onClose: () => void, onStep?: (direction: -1 | 1) => void
   }, [onClose, onStep]);
 }
 
-export default function ItemDrawer(props: ItemDrawerProps): ReactElement {
+/** Everything the drawer holds for one item. */
+function useItemDrawer(props: ItemDrawerProps) {
   const { api, itemId, columns, bots } = props;
-  const { detail, check, error, comment, setDetail, reload } = useItemDetail(
-    api,
-    itemId,
-    props.version,
-  );
+  const state = useItemDetail(api, itemId, props.version);
+  const { detail, setDetail, reload } = state;
   const [editing, setEditing] = useState(props.initialEdit === true);
   const [viewing, setViewing] = useState<ItemAttachment | null>(null);
   const editable = props.canEdit ?? props.canComment;
   const who = whoNamer(bots);
-  const columnName = (key: string): string => columns.find((c) => c.key === key)?.name ?? key;
   const item = detail?.item;
   const attachments = detail?.attachments ?? [];
   const files = useDrawerAttachments(api, itemId, attachments, setDetail);
-  const now = props.now ?? Date.now;
+  const now = (props.now ?? Date.now)();
   const draft = useDraftDrawer({
     api,
     client: editable ? props.client : undefined,
@@ -132,110 +127,124 @@ export default function ItemDrawer(props: ItemDrawerProps): ReactElement {
     reload,
     setDetail,
     onDone: props.onDraftDone,
-    now: now(),
+    now,
     initialDiscuss: props.initialDiscuss,
   });
   useDrawerKeys(props.onClose, editing ? undefined : props.onStep);
-  const column = columns.find((c) => c.key === item?.columnKey);
-  const title = useRef<HTMLHeadingElement>(null);
-  const loaded = item !== undefined;
-  // Callers key the drawer by item, so ↑/↓ mounts it afresh and this runs again.
-  useEffect(() => {
-    if (loaded) {
-      title.current?.focus();
-    }
-  }, [loaded]);
+  return { state, editing, setEditing, viewing, setViewing, editable, who, files, now, draft };
+}
 
+/** The item's attachments under its description, and a draft's "Discuss with a bot". */
+function OverviewAfter(props: {
+  readonly api: BoardApi;
+  readonly draftAfter: ReactNode;
+  readonly attachments: readonly ItemAttachment[];
+  readonly files: ReturnType<typeof useDrawerAttachments>;
+  readonly editable: boolean;
+  readonly onOpen: (attachment: ItemAttachment) => void;
+}): ReactElement {
+  return (
+    <>
+      {props.draftAfter}
+      <AttachmentsSection
+        api={props.api}
+        attachments={props.attachments}
+        uploads={props.files.uploads}
+        actions={props.editable ? props.files.actions : undefined}
+        onOpen={props.onOpen}
+      />
+    </>
+  );
+}
+
+type DrawerState = ReturnType<typeof useItemDrawer>;
+
+/** The item once read, or what stands in for it. */
+function DrawerMain(props: { readonly p: ItemDrawerProps; readonly d: DrawerState }): ReactElement {
+  const { p, d } = props;
+  const { detail } = d.state;
+  const item = detail?.item;
+  if (item === undefined || detail === null) {
+    return (
+      <p className="drawer-empty" role="status">
+        {d.state.error === null ? "Loading…" : `Couldn't load ${p.itemId}: ${d.state.error}`}
+      </p>
+    );
+  }
   const overview = {
-    description:
-      item === undefined ? null : (
-        <ItemMarkdown
-          api={api}
-          text={item.description}
-          attachments={attachments}
-          onOpen={setViewing}
-        />
-      ),
+    description: (
+      <ItemMarkdown
+        api={p.api}
+        text={item.description}
+        attachments={detail.attachments}
+        onOpen={d.setViewing}
+      />
+    ),
     after: (
-      <>
-        {draft.after}
-        <AttachmentsSection
-          api={api}
-          attachments={attachments}
-          uploads={files.uploads}
-          actions={editable ? files.actions : undefined}
-          onOpen={setViewing}
-        />
-      </>
+      <OverviewAfter
+        api={p.api}
+        draftAfter={d.draft.after}
+        attachments={detail.attachments}
+        files={d.files}
+        editable={d.editable}
+        onOpen={d.setViewing}
+      />
     ),
   };
-  const done = (): void => {
-    setEditing(false);
-    reload();
-  };
+  return (
+    <DrawerBody
+      api={p.api}
+      detail={detail}
+      item={item}
+      check={d.state.check}
+      columns={p.columns}
+      bots={p.bots}
+      who={d.who}
+      now={d.now}
+      isDraft={d.draft.isDraft}
+      review={d.draft.review}
+      overview={overview}
+      editing={d.editing}
+      onEdited={() => {
+        d.setEditing(false);
+        d.state.reload();
+      }}
+      onPasteImage={d.files.pasteImage}
+      onComment={p.canComment ? d.state.comment : undefined}
+      initialTab={p.initialTab}
+    >
+      {p.children}
+    </DrawerBody>
+  );
+}
 
+export default function ItemDrawer(props: ItemDrawerProps): ReactElement {
+  const { api, itemId } = props;
+  const d = useItemDrawer(props);
+  const item = d.state.detail?.item;
+  const isDraft = d.draft.isDraft;
+  const canEdit = d.editable && item !== undefined && !d.editing;
   return (
     <aside
-      className={`item-drawer${draft.isDraft ? " item-drawer-draft" : ""}`}
-      aria-label={draft.isDraft ? `Draft ${itemId}` : `Item ${itemId}`}
-      {...(editable ? files.dropTarget : {})}
+      className={isDraft ? "item-drawer item-drawer-draft" : "item-drawer"}
+      aria-label={`${isDraft ? "Draft" : "Item"} ${itemId}`}
+      {...(d.editable ? d.files.dropTarget : {})}
     >
       <DrawerHeader
         itemId={itemId}
         item={item}
-        draft={draft.isDraft}
-        onMove={draft.isDraft ? undefined : props.onMove}
-        onEdit={editable && item !== undefined && !editing ? () => setEditing(true) : undefined}
+        draft={isDraft}
+        onMove={isDraft ? undefined : props.onMove}
+        onEdit={canEdit ? () => d.setEditing(true) : undefined}
         onClose={props.onClose}
         back={props.back}
       />
-      {item === undefined ? (
-        <p className="drawer-empty" role="status">
-          {error === null ? "Loading…" : `Couldn't load ${itemId}: ${error}`}
-        </p>
-      ) : (
-        <div className="drawer-body">
-          <h2 className="drawer-title" tabIndex={-1} ref={title}>
-            {item.title}
-          </h2>
-          {draft.isDraft ? null : (
-            <>
-              <Stepper column={column} />
-              <MetaLine item={item} column={column} who={who} now={now()} />
-              <NextStepView
-                step={nextStep(columns, column, check)}
-                assignee={item.assignee ? who(`bot:${item.assignee}`) : null}
-              />
-            </>
-          )}
-          {props.children}
-          {draft.review}
-          {editing ? (
-            <ItemEditForm
-              api={api}
-              item={item}
-              bots={bots}
-              onPasteImage={files.pasteImage}
-              onSaved={done}
-              onCancel={done}
-            />
-          ) : detail ? (
-            <DrawerTabs
-              detail={detail}
-              initialTab={props.initialTab}
-              who={who}
-              columnName={columnName}
-              onComment={props.canComment ? comment : undefined}
-              overview={overview}
-            />
-          ) : null}
-        </div>
-      )}
-      {draft.isDraft ? draft.footer : props.footer}
-      {draft.side}
-      {draft.overlay}
-      {viewing === null ? null : (
-        <AttachmentViewer api={api} attachment={viewing} onClose={() => setViewing(null)} />
+      <DrawerMain p={props} d={d} />
+      {isDraft ? d.draft.footer : props.footer}
+      {d.draft.side}
+      {d.draft.overlay}
+      {d.viewing === null ? null : (
+        <AttachmentViewer api={api} attachment={d.viewing} onClose={() => d.setViewing(null)} />
       )}
     </aside>
   );

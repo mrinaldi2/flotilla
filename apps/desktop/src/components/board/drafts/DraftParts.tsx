@@ -13,6 +13,7 @@ import type {
 } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import { ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import OverlayShell from "../../overlay/OverlayShell";
+import { UnmetList } from "../MovePopovers";
 import { changeWords, unseenLine } from "./draftChanges";
 
 export function ChangesStrip(props: {
@@ -98,7 +99,7 @@ export function DraftReview(props: {
 }
 
 /** The column a draft goes live in by default: the board's first open one. */
-export function firstOpen(columns: readonly BoardColumn[]): BoardColumn | undefined {
+function firstOpen(columns: readonly BoardColumn[]): BoardColumn | undefined {
   return columns.find((c) => c.kind === ColumnKind.OPEN) ?? columns[0];
 }
 
@@ -117,19 +118,7 @@ export function DraftFooter(props: {
       {props.unmet === null ? null : (
         <div className="draft-refused" role="alert">
           <p>{`Can't finalize into ${name}:`}</p>
-          <ul className="board-refusal-list">
-            {props.unmet.map((u) => (
-              <li key={`${u.code}:${u.text}`}>
-                <span className="board-refusal-mark" aria-hidden="true">
-                  ✗
-                </span>
-                <span>
-                  <span className="board-refusal-text">{u.text}</span>
-                  {u.fix === undefined ? null : <span className="board-refusal-fix">{u.fix}</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <UnmetList unmet={props.unmet} />
         </div>
       )}
       <div className="draft-foot-row">

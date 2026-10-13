@@ -15,9 +15,41 @@ interface AttachmentViewerProps {
   readonly onClose: () => void;
 }
 
+function Stage(props: {
+  readonly api: BoardApi;
+  readonly attachment: ItemAttachment;
+}): ReactElement {
+  const { attachment: a } = props;
+  const image = useAttachmentImage(props.api, a.kind === "image" && !a.removed ? a.id : null);
+  if (a.kind !== "image") {
+    return (
+      <div className="attachment-details">
+        {a.caption ? <p>{a.caption}</p> : null}
+        <p className="mono">{a.url || a.path}</p>
+        <p className="drawer-dim">
+          {a.kind === "doc"
+            ? "A linked document: bots read it from the project's artifacts or its address."
+            : "Kept in the project's artifacts on the board's home; bots read it there."}
+        </p>
+      </div>
+    );
+  }
+  if (image.kind !== "ready") {
+    return (
+      <span className="lightbox-note">
+        {image.kind === "loading" ? "Loading image…" : "Image unavailable"}
+      </span>
+    );
+  }
+  return (
+    <span className="lightbox-image">
+      <img src={image.url} alt={a.caption || a.name} />
+    </span>
+  );
+}
+
 export default function AttachmentViewer(props: AttachmentViewerProps): ReactElement {
   const { attachment: a, onClose } = props;
-  const image = useAttachmentImage(props.api, a.kind === "image" && !a.removed ? a.id : null);
   useEscapeKey(onClose);
   const label = kindLabel(a);
   const size = a.kind === "doc" ? "" : ` · ${sizeWords(Number(a.bytes))}`;
@@ -46,25 +78,7 @@ export default function AttachmentViewer(props: AttachmentViewerProps): ReactEle
           </button>
         </div>
         <div className="lightbox-stage" data-backdrop="true">
-          {a.kind !== "image" ? (
-            <div className="attachment-details">
-              {a.caption ? <p>{a.caption}</p> : null}
-              <p className="mono">{a.url || a.path}</p>
-              <p className="drawer-dim">
-                {a.kind === "doc"
-                  ? "A linked document: bots read it from the project's artifacts or its address."
-                  : "Kept in the project's artifacts on the board's home; bots read it there."}
-              </p>
-            </div>
-          ) : image.kind === "ready" ? (
-            <span className="lightbox-image">
-              <img src={image.url} alt={a.caption || a.name} />
-            </span>
-          ) : (
-            <span className="lightbox-note">
-              {image.kind === "loading" ? "Loading image…" : "Image unavailable"}
-            </span>
-          )}
+          <Stage api={props.api} attachment={a} />
         </div>
       </div>
     </div>

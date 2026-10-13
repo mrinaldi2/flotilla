@@ -13,7 +13,7 @@ import type {
 import { errText } from "../../../util";
 
 /** The structure arms of a board request. */
-export type StructureCall = Extract<
+type StructureCall = Extract<
   BoardCall,
   {
     readonly case:

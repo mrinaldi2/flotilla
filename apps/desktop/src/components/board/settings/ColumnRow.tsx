@@ -5,22 +5,11 @@
 import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { ReactElement } from "react";
-import type { BoardColumn, ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import ColumnRules from "./ColumnRules";
-import type { Policy } from "./ColumnRules";
-import { KINDS, kindChip, moverWords, ruleWords } from "./rules";
-
-/** A change to one column, as `column_update` takes it. */
-export interface ColumnChange {
-  readonly name?: string;
-  readonly kind?: ColumnKind;
-  readonly wipLimit?: number;
-  readonly clearWipLimit?: boolean;
-  readonly visible?: boolean;
-  /** "" moves it first. */
-  readonly after?: string;
-  readonly policy?: Policy;
-}
+import type { ColumnChange } from "./columnEdits";
+import { afterFor, limitChange, policyLine } from "./columnEdits";
+import { KINDS, kindChip } from "./rules";
 
 interface ColumnRowProps {
   readonly column: BoardColumn;
@@ -34,118 +23,160 @@ interface ColumnRowProps {
   readonly onRemove: () => void;
 }
 
-/** The `after` that moves `column` one place up or down, or null at the end. */
-export function afterFor(
-  columns: readonly BoardColumn[],
-  column: BoardColumn,
-  by: -1 | 1,
-): string | null {
-  const at = columns.findIndex((c) => c.key === column.key);
-  const to = at + by;
-  if (at < 0 || to < 0 || to >= columns.length) {
-    return null;
+function OrderButtons(props: {
+  readonly column: BoardColumn;
+  readonly columns: readonly BoardColumn[];
+  readonly disabled: boolean;
+  readonly onChange: (change: ColumnChange) => void;
+}): ReactElement {
+  const { column, disabled } = props;
+  const up = afterFor(props.columns, column, -1);
+  const down = afterFor(props.columns, column, 1);
+  return (
+    <span className="column-row-order">
+      <button
+        type="button"
+        className="icon-btn"
+        aria-label={`Move ${column.name} left`}
+        disabled={disabled || up === null}
+        onClick={() => up !== null && props.onChange({ after: up })}
+      >
+        <ArrowUp size={13} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className="icon-btn"
+        aria-label={`Move ${column.name} right`}
+        disabled={disabled || down === null}
+        onClick={() => down !== null && props.onChange({ after: down })}
+      >
+        <ArrowDown size={13} aria-hidden="true" />
+      </button>
+    </span>
+  );
+}
+
+/** A text field that saves on Enter or when focus leaves it. */
+function SavedInput(props: {
+  readonly label: string;
+  readonly className?: string;
+  readonly type: "text" | "number";
+  readonly initial: string;
+  readonly disabled: boolean;
+  /** Saves `text`; false puts the field back as it was. */
+  readonly onSave: (text: string) => boolean;
+}): ReactElement {
+  const [text, setText] = useState(props.initial);
+  const save = (): void => {
+    if (!props.onSave(text)) {
+      setText(props.initial);
+    }
+  };
+  return (
+    <input
+      className={props.className}
+      type={props.type}
+      min={props.type === "number" ? 1 : undefined}
+      placeholder={props.type === "number" ? "–" : undefined}
+      aria-label={props.label}
+      value={text}
+      disabled={props.disabled}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={save}
+      onKeyDown={(e) => e.key === "Enter" && save()}
+    />
+  );
+}
+
+function KindControl(props: {
+  readonly column: BoardColumn;
+  readonly editable: boolean;
+  readonly onChange: (change: ColumnChange) => void;
+}): ReactElement {
+  const { column } = props;
+  if (!props.editable) {
+    return <span className="kind-chip">{kindChip(column.kind)}</span>;
   }
-  // Up: after the column two above (or first); down: after the one below.
-  return by === -1 ? (columns[to - 1]?.key ?? "") : (columns[to]?.key ?? null);
+  return (
+    <select
+      className="column-row-kind"
+      aria-label={`Kind of ${column.name}`}
+      value={column.kind}
+      onChange={(e) => props.onChange({ kind: Number(e.target.value) })}
+    >
+      {KINDS.map((k) => (
+        <option key={k.kind} value={k.kind}>
+          {`${k.glyph} ${k.word}`}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function RowDetail(props: Omit<ColumnRowProps, "onExpand" | "onRemove">): ReactElement {
+  const { column, columns } = props;
+  if (!props.expanded) {
+    return <p className="column-row-summary">{policyLine(column, columns, props.custom)}</p>;
+  }
+  if (!props.custom) {
+    return (
+      <p className="column-rules-hint">
+        This board is release-gated: its columns follow the built-in flow of 0.18, so their rules
+        can't change. Create a custom board for your own flow.
+      </p>
+    );
+  }
+  return (
+    <ColumnRules
+      column={column}
+      others={columns.filter((c) => c.key !== column.key)}
+      disabled={props.disabled}
+      onSave={(policy) => props.onChange({ policy })}
+    />
+  );
 }
 
 export default function ColumnRow(props: ColumnRowProps): ReactElement {
-  const { column, columns, custom, disabled, expanded } = props;
-  const [name, setName] = useState(column.name);
-  const [wip, setWip] = useState(column.wipLimit === undefined ? "" : String(column.wipLimit));
-  const up = afterFor(columns, column, -1);
-  const down = afterFor(columns, column, 1);
-  const rename = (): void => {
-    const next = name.trim();
-    if (next !== "" && next !== column.name) {
-      props.onChange({ name: next });
-    } else {
-      setName(column.name);
+  const { column, disabled, expanded } = props;
+  const editable = props.custom && !disabled;
+  const rename = (text: string): boolean => {
+    const next = text.trim();
+    if (next === "" || next === column.name) {
+      return false;
     }
+    props.onChange({ name: next });
+    return true;
   };
-  const setLimit = (): void => {
-    const limit = Number.parseInt(wip, 10);
-    if (wip.trim() === "" && column.wipLimit !== undefined) {
-      props.onChange({ clearWipLimit: true });
-    } else if (Number.isInteger(limit) && limit > 0 && limit !== column.wipLimit) {
-      props.onChange({ wipLimit: limit });
-    } else {
-      setWip(column.wipLimit === undefined ? "" : String(column.wipLimit));
+  const setLimit = (text: string): boolean => {
+    const change = limitChange(text, column.wipLimit);
+    if (change !== null) {
+      props.onChange(change);
     }
+    return change !== null;
   };
-  const summary = !custom
-    ? ["Built-in release-gated rules"]
-    : [
-        moverWords(column.movers),
-        ...column.rules.map(ruleWords),
-        column.allowedFrom.length === 0
-          ? ""
-          : `from ${column.allowedFrom.map((k) => columns.find((c) => c.key === k)?.name ?? k).join(", ")}`,
-      ].filter(Boolean);
-
   return (
     <li className={`column-row${column.visible ? "" : " column-row-hidden"}`}>
       <div className="column-row-main">
-        <span className="column-row-order">
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label={`Move ${column.name} left`}
-            disabled={disabled || up === null}
-            onClick={() => up !== null && props.onChange({ after: up })}
-          >
-            <ArrowUp size={13} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label={`Move ${column.name} right`}
-            disabled={disabled || down === null}
-            onClick={() => down !== null && props.onChange({ after: down })}
-          >
-            <ArrowDown size={13} aria-hidden="true" />
-          </button>
-        </span>
-        <input
+        <OrderButtons {...props} />
+        <SavedInput
           className="column-row-name"
           type="text"
-          aria-label={`Name of ${column.name}`}
-          value={name}
+          label={`Name of ${column.name}`}
+          initial={column.name}
           disabled={disabled}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={rename}
-          onKeyDown={(e) => e.key === "Enter" && rename()}
+          onSave={rename}
         />
-        {custom && !disabled ? (
-          <select
-            className="column-row-kind"
-            aria-label={`Kind of ${column.name}`}
-            value={column.kind}
-            onChange={(e) => props.onChange({ kind: Number(e.target.value) })}
-          >
-            {KINDS.map((k) => (
-              <option key={k.kind} value={k.kind}>
-                {`${k.glyph} ${k.word}`}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <span className="kind-chip">{kindChip(column.kind)}</span>
-        )}
-        <label className="column-row-wip">
-          <span>WIP</span>
-          <input
+        <KindControl column={column} editable={editable} onChange={props.onChange} />
+        <span className="column-row-wip">
+          <span aria-hidden="true">WIP</span>
+          <SavedInput
             type="number"
-            min={1}
-            aria-label={`WIP limit of ${column.name}`}
-            placeholder="–"
-            value={wip}
+            label={`WIP limit of ${column.name}`}
+            initial={column.wipLimit === undefined ? "" : String(column.wipLimit)}
             disabled={disabled}
-            onChange={(e) => setWip(e.target.value)}
-            onBlur={setLimit}
-            onKeyDown={(e) => e.key === "Enter" && setLimit()}
+            onSave={setLimit}
           />
-        </label>
+        </span>
         <label className="column-row-visible">
           <input
             type="checkbox"
@@ -155,7 +186,7 @@ export default function ColumnRow(props: ColumnRowProps): ReactElement {
           />
           <span>{column.visible ? "Shown" : "Hidden"}</span>
         </label>
-        {custom && !disabled ? (
+        {editable ? (
           <button
             type="button"
             className="icon-btn"
@@ -179,23 +210,7 @@ export default function ColumnRow(props: ColumnRowProps): ReactElement {
           )}
         </button>
       </div>
-      {expanded ? (
-        custom ? (
-          <ColumnRules
-            column={column}
-            others={columns.filter((c) => c.key !== column.key)}
-            disabled={disabled}
-            onSave={(policy) => props.onChange({ policy })}
-          />
-        ) : (
-          <p className="column-rules-hint">
-            This board is release-gated: its columns follow the built-in flow of 0.18, so their
-            rules can't change. Create a custom board for your own flow.
-          </p>
-        )
-      ) : (
-        <p className="column-row-summary">{summary.join(" · ")}</p>
-      )}
+      <RowDetail {...props} />
     </li>
   );
 }

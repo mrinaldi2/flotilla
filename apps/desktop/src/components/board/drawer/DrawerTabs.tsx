@@ -98,6 +98,7 @@ const LINK_GROUPS: readonly { readonly title: string; readonly kinds: readonly L
   { title: "Artifacts", kinds: [LinkKind.ARTIFACT] },
   { title: "Branches", kinds: [LinkKind.BRANCH, LinkKind.PR] },
   { title: "Meetings", kinds: [LinkKind.MEETING] },
+  { title: "Conversations", kinds: [LinkKind.THREAD] },
   {
     title: "Items",
     kinds: [LinkKind.ITEM_BLOCKS, LinkKind.ITEM_RELATES, LinkKind.ITEM_DUPLICATES],
@@ -105,6 +106,9 @@ const LINK_GROUPS: readonly { readonly title: string; readonly kinds: readonly L
 ];
 
 function linkText(link: ItemLink): string {
+  if (link.kind === LinkKind.THREAD) {
+    return `Chat with ${link.label ?? link.ref}`;
+  }
   const prefix =
     link.kind === LinkKind.ITEM_BLOCKS
       ? "blocks "

@@ -15,6 +15,7 @@ import {
   toggledRule,
   withRoles,
 } from "./rules";
+import type { RuleSpec } from "./rules";
 
 export interface Policy {
   readonly movers: readonly string[];
@@ -33,6 +34,50 @@ interface ColumnRulesProps {
 function toggled(list: readonly string[], value: string, on: boolean): string[] {
   const rest = list.filter((v) => v !== value);
   return on ? [...rest, value] : rest;
+}
+
+/** One rule of the library: its checkbox and, once on, its parameter. */
+function RuleRow(props: {
+  readonly spec: RuleSpec;
+  /** Undefined while off; null for a rule without a parameter. */
+  readonly arg: string | null | undefined;
+  readonly label: string;
+  readonly onToggle: (on: boolean) => void;
+  readonly onArg: (value: string) => void;
+}): ReactElement {
+  const { spec, arg } = props;
+  const on = arg !== undefined;
+  const param = on ? spec.param : { kind: "none" as const };
+  return (
+    <div className="column-rules-rule">
+      <label className="column-rules-option">
+        <input type="checkbox" checked={on} onChange={(e) => props.onToggle(e.target.checked)} />
+        {spec.word}
+      </label>
+      {param.kind === "choice" ? (
+        <select
+          aria-label={props.label}
+          value={arg ?? ""}
+          onChange={(e) => props.onArg(e.target.value)}
+        >
+          {param.options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      ) : null}
+      {param.kind === "text" ? (
+        <input
+          type="text"
+          aria-label={props.label}
+          placeholder={param.hint}
+          value={arg ?? ""}
+          onChange={(e) => props.onArg(e.target.value)}
+        />
+      ) : null}
+    </div>
+  );
 }
 
 export default function ColumnRules(props: ColumnRulesProps): ReactElement {
@@ -96,46 +141,16 @@ export default function ColumnRules(props: ColumnRulesProps): ReactElement {
       </fieldset>
       <fieldset className="column-rules-group" disabled={disabled}>
         <legend>Entry rules</legend>
-        {RULES.map((spec) => {
-          const arg = argOf(spec.head);
-          const on = arg !== undefined;
-          return (
-            <div key={spec.head} className="column-rules-rule">
-              <label className="column-rules-option">
-                <input
-                  type="checkbox"
-                  checked={on}
-                  onChange={(e) =>
-                    setRules(toggledRule(rules, spec.head, e.target.checked, defaultArg(spec)))
-                  }
-                />
-                <span aria-hidden="true">{on ? "✓" : "·"}</span> {spec.word}
-              </label>
-              {on && spec.param.kind === "choice" ? (
-                <select
-                  aria-label={label(spec.word)}
-                  value={arg ?? ""}
-                  onChange={(e) => setRules(toggledRule(rules, spec.head, true, e.target.value))}
-                >
-                  {spec.param.options.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-              {on && spec.param.kind === "text" ? (
-                <input
-                  type="text"
-                  aria-label={label(spec.word)}
-                  placeholder={spec.param.hint}
-                  value={arg ?? ""}
-                  onChange={(e) => setRules(toggledRule(rules, spec.head, true, e.target.value))}
-                />
-              ) : null}
-            </div>
-          );
-        })}
+        {RULES.map((spec) => (
+          <RuleRow
+            key={spec.head}
+            spec={spec}
+            arg={argOf(spec.head)}
+            label={label(spec.word)}
+            onToggle={(on) => setRules(toggledRule(rules, spec.head, on, defaultArg(spec)))}
+            onArg={(value) => setRules(toggledRule(rules, spec.head, true, value))}
+          />
+        ))}
       </fieldset>
       {disabled ? null : (
         <div className="column-rules-actions">

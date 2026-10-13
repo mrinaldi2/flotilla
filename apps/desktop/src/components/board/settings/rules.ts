@@ -49,7 +49,7 @@ type Param =
   | { readonly kind: "choice"; readonly options: readonly string[] }
   | { readonly kind: "text"; readonly hint: string };
 
-interface RuleSpec {
+export interface RuleSpec {
   readonly head: string;
   readonly word: string;
   readonly param: Param;
@@ -96,7 +96,7 @@ export function splitToken(token: string): { readonly head: string; readonly arg
     : { head: token.slice(0, at).trim(), arg: token.slice(at + 1).trim() };
 }
 
-export function joinToken(head: string, arg: string | null): string {
+function joinToken(head: string, arg: string | null): string {
   return arg === null ? head : `${head}:${arg}`;
 }
 

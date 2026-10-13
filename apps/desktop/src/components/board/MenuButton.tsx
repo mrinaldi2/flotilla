@@ -35,6 +35,22 @@ interface MenuButtonProps {
   readonly alignEnd?: boolean;
 }
 
+/** Where ↑, ↓, Home and End move focus among `count` items from `at`; null for other keys. */
+function step(key: string, at: number, count: number): number | null {
+  switch (key) {
+    case "ArrowDown":
+      return (at + 1) % count;
+    case "ArrowUp":
+      return (at - 1 + count) % count;
+    case "Home":
+      return 0;
+    case "End":
+      return count - 1;
+    default:
+      return null;
+  }
+}
+
 export default function MenuButton(props: MenuButtonProps): ReactElement {
   const { entries } = props;
   const [open, setOpen] = useState(props.initiallyOpen === true);
@@ -75,25 +91,20 @@ export default function MenuButton(props: MenuButtonProps): ReactElement {
   }, [open, props.initiallyOpen]);
 
   const onMenuKey = (event: KeyboardEvent<HTMLDivElement>): void => {
-    const all = items();
-    const at = all.findIndex((el) => el === document.activeElement);
-    const next =
-      event.key === "ArrowDown"
-        ? (at + 1) % all.length
-        : event.key === "ArrowUp"
-          ? (at - 1 + all.length) % all.length
-          : event.key === "Home"
-            ? 0
-            : event.key === "End"
-              ? all.length - 1
-              : null;
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
       close(true);
-    } else if (event.key === "Tab") {
+      return;
+    }
+    if (event.key === "Tab") {
       close(false);
-    } else if (next !== null) {
+      return;
+    }
+    const all = items();
+    const at = all.findIndex((el) => el === document.activeElement);
+    const next = step(event.key, at, all.length);
+    if (next !== null) {
       event.preventDefault();
       all[next]?.focus();
     }

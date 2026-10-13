@@ -8,7 +8,7 @@ import type { Board, BoardColumn } from "../../../protocol/gen/hermes/board/v1/b
 import { ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import OverlayShell from "../../overlay/OverlayShell";
 import ColumnRow from "./ColumnRow";
-import type { ColumnChange } from "./ColumnRow";
+import type { ColumnChange } from "./columnEdits";
 import { KINDS } from "./rules";
 
 export interface ColumnsActions {

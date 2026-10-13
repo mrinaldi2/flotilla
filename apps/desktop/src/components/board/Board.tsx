@@ -3,36 +3,33 @@
 // its toolbar, the lead's latest change, its columns, and on the right the
 // item drawer or the board's settings.
 
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import type { ReactElement } from "react";
 import type { AddToast } from "../../app/useToasts";
 import type { DaemonApi } from "../../protocol/api";
 import { boardCall } from "../../protocol/board";
 import type { Bot, Project } from "../../protocol/entities";
-import type { BoardColumn, ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn } from "../../protocol/gen/hermes/board/v1/board_pb";
 import type { BoardSnapshot } from "../../protocol/gen/hermes/board/v1/requests_pb";
 import { useNow } from "../control/useNow";
 import { ItemOwnerActions } from "../ownerActions/OwnerActionList";
 import BoardColumns from "./BoardColumns";
 import BoardDrawer from "./BoardDrawer";
 import BoardFilterBar from "./BoardFilterBar";
-import type { BotOption } from "./BoardFilterBar";
-import type { BoardPrefs } from "./boardPrefs";
-import { loadBoardPrefs, saveBoardPrefs } from "./boardPrefs";
-import { boardOfItem, cardsOf, columnsOf, pickBoard } from "./boards";
 import type { BoardModel } from "./boardSync";
 import BoardToolbar from "./BoardToolbar";
 import DraftsTray from "./drafts/DraftsTray";
 import NewItemDialog from "./drafts/NewItemDialog";
-import { matchesFilters } from "./filters";
 import LeadNotice from "./LeadNotice";
-import { MoveDialog, MoveMenu, RefusalPopover } from "./MovePopovers";
+import { MovePopups } from "./MovePopovers";
 import NewBoardSheet from "./NewBoardSheet";
 import type { NewBoard } from "./NewBoardSheet";
 import BoardSettings from "./settings/BoardSettings";
 import type { SettingsSection } from "./settings/BoardSettings";
 import { useBoardMoves } from "./useBoardMoves";
-import { useOpenedItem } from "./useOpenedItem";
+import type { BoardMoves } from "./useBoardMoves";
+import { useBoardView } from "./useBoardView";
+import type { BoardView } from "./useBoardView";
 
 export interface BoardProps {
   readonly client: DaemonApi;
@@ -54,104 +51,23 @@ export interface BoardProps {
     readonly sheet?: "board" | "item";
     readonly switcher?: boolean;
     readonly drafts?: boolean;
+    readonly discuss?: string;
   };
   /** "Now", for ages; stories pin it. */
   readonly now?: number;
 }
 
-function byRank(a: ItemCard, b: ItemCard): number {
-  if (a.rank === b.rank) {
-    return a.id.localeCompare(b.id);
-  }
-  return a.rank < b.rank ? -1 : 1;
-}
+type Sheet = "board" | "item" | null;
 
-/** The board a link asks for, until the owner picks another. */
-function useAsked(openBoard: string | undefined): [string | undefined, () => void] {
-  const [asked, setAsked] = useState(openBoard);
-  const [last, setLast] = useState(openBoard);
-  if (openBoard !== last) {
-    setLast(openBoard);
-    setAsked(openBoard);
-  }
-  return [asked, () => setAsked(undefined)];
-}
-
-export default function Board(props: BoardProps): ReactElement {
-  const { client, project, model, bots, canControl, addToast, refresh, adopt } = props;
-  const [prefs, setPrefs] = useState<BoardPrefs>(() => loadBoardPrefs(project.id));
-  const [opened, setOpened] = useOpenedItem(props.openItem);
-  const [asked, forgetAsked] = useAsked(props.openBoard);
-  const [settings, setSettings] = useState<SettingsSection | null>(props.initial?.settings ?? null);
-  const [sheet, setSheet] = useState(props.initial?.sheet ?? null);
-  const [showArchived, setShowArchived] = useState(false);
-  const clock = useNow();
-  const now = props.now ?? clock;
-
-  const updatePrefs = useCallback(
-    (next: BoardPrefs): void => {
-      setPrefs(next);
-      saveBoardPrefs(project.id, next);
-    },
-    [project.id],
-  );
-  const board = pickBoard(model, { asked, item: opened ?? undefined, remembered: prefs.board });
-
-  const columns = useMemo(() => columnsOf(model, board), [model, board]);
-  const cards = useMemo(() => {
-    const sorted = cardsOf([...model.cards.values()], board);
-    // oxlint-disable-next-line unicorn/no-array-sort
-    sorted.sort(byRank);
-    return sorted;
-  }, [model.cards, board]);
-  const drafts = [...model.drafts.values()];
-  const moves = useBoardMoves({ api: client, columns, refresh, addToast });
-  const botsById = useMemo(() => new Map(bots.map((bot) => [bot.id, bot])), [bots]);
-  const who = (actor: string): string =>
-    botsById.get(actor.startsWith("bot:") ? actor.slice(4) : actor)?.name ?? "the lead";
-  const botOptions = useMemo((): readonly BotOption[] => {
-    const options: BotOption[] = bots.map((bot) => ({ id: bot.id, bot }));
-    for (const card of cards) {
-      const id = card.assignee;
-      if (id !== undefined && !options.some((option) => option.id === id)) {
-        options.push({ id, bot: undefined });
-      }
-    }
-    return options;
-  }, [bots, cards]);
-
-  const canStructure = model.canRule && client.hasGrant("approve");
-  const shown = cards.filter((card) => matchesFilters(card, prefs.filters));
-  const select = (boardId: string): void => {
-    forgetAsked();
-    setOpened(null);
-    updatePrefs({ ...prefs, board: boardId });
-  };
-  const openItem = (id: string | null): void => {
-    setSettings(null);
-    setOpened(id);
-    // The board shown is the one remembered, however it was reached: the
-    // item's own board, or the one a link asked for once the drawer closes.
-    const on = id === null ? board?.id : boardOfItem(model, id);
-    if (on !== undefined && on !== prefs.board) {
-      forgetAsked();
-      updatePrefs({ ...prefs, board: on });
-    }
-  };
-  // The owner's call, on the board's home (H-099).
-  const setLimit =
-    (column: BoardColumn) =>
-    async (wipLimit: number | undefined): Promise<void> => {
-      await boardCall(
-        client,
-        {
-          case: "columnSetLimit",
-          value: { projectId: project.id, columnKey: column.key, wipLimit },
-        },
-        "board",
-      );
-      refresh();
-    };
+/** New board and New item, over the board. */
+function Sheets(props: {
+  readonly sheet: Sheet;
+  readonly board: BoardProps;
+  readonly view: BoardView;
+  readonly onClose: () => void;
+}): ReactElement | null {
+  const { client, project, model, adopt } = props.board;
+  const { view } = props;
   const createBoard = async (next: NewBoard): Promise<void> => {
     const result = await boardCall(
       client,
@@ -161,72 +77,198 @@ export default function Board(props: BoardProps): ReactElement {
     if (result.outcome.case === "applied") {
       adopt(result.outcome.value);
     }
-    setSheet(null);
-    select(result.boardId);
+    props.onClose();
+    view.select(result.boardId);
   };
+  if (props.sheet === "board") {
+    return <NewBoardSheet boards={model.boards} onCreate={createBoard} onCancel={props.onClose} />;
+  }
+  if (props.sheet === "item") {
+    return (
+      <NewItemDialog
+        api={client}
+        projectId={project.id}
+        board={view.board}
+        onCreated={(id) => {
+          props.onClose();
+          view.openItem(id);
+        }}
+        onCancel={props.onClose}
+      />
+    );
+  }
+  return null;
+}
+
+/** The empty board: how its items arrive. */
+function NoItems(props: { readonly name: string; readonly canAdd: boolean }): ReactElement {
+  return (
+    <div className="board-empty" role="status">
+      <h2>No items yet</h2>
+      <p>
+        {`When the team plans work for ${props.name}, its items show up here, column by column.`}
+        {props.canAdd ? " Or start one yourself with + New item." : ""}
+      </p>
+    </div>
+  );
+}
+
+interface Parts {
+  readonly props: BoardProps;
+  readonly view: BoardView;
+  readonly canStructure: boolean;
+  readonly now: number;
+}
+
+/** The toolbar: switcher, filters, New item, drafts tray, ⚙ Board. */
+function Bar(
+  p: Parts & {
+    readonly onSheet: (sheet: Sheet) => void;
+    readonly newItem: (() => void) | undefined;
+  },
+): ReactElement {
+  const { props, view } = p;
+  const { prefs, updatePrefs, board, columns } = view;
+  const [showArchived, setShowArchived] = useState(false);
+  return (
+    <BoardToolbar
+      boards={props.model.boards}
+      board={board}
+      onSelect={view.select}
+      onNewBoard={p.canStructure ? () => p.onSheet("board") : undefined}
+      showArchived={showArchived}
+      onShowArchived={() => setShowArchived(true)}
+      onNewItem={p.newItem}
+      onSettings={
+        board === undefined
+          ? undefined
+          : () => view.setSettings(view.settings === null ? "general" : null)
+      }
+      settingsOpen={view.settings !== null}
+      switcherOpen={props.initial?.switcher}
+      filters={
+        <BoardFilterBar
+          filters={prefs.filters}
+          onChange={(filters) => updatePrefs({ ...prefs, filters })}
+          botOptions={view.botOptions}
+          shown={view.shown.length}
+          total={view.cards.length}
+          hiddenNames={columns.filter((c) => !c.visible).map((c) => c.name)}
+          showHidden={prefs.showHidden}
+          onShowHidden={(showHidden) => updatePrefs({ ...prefs, showHidden })}
+        />
+      }
+      drafts={
+        <DraftsTray
+          api={props.client}
+          drafts={[...props.model.drafts.values()]}
+          bots={props.bots}
+          onOpen={view.openItem}
+          initiallyOpen={props.initial?.drafts}
+        />
+      }
+    />
+  );
+}
+
+/** The right side: the open item's drawer, or the board's settings. */
+function Side(p: Parts & { readonly moves: BoardMoves }): ReactElement {
+  const { props, view } = p;
+  const { client, project, model, canControl } = props;
+  const { board, columns, cards } = view;
+  const counts = new Map(
+    columns.map((c) => [c.key, cards.filter((x) => x.columnKey === c.key).length]),
+  );
+  return (
+    <>
+      <BoardDrawer
+        api={client}
+        client={client}
+        openId={view.opened}
+        shown={view.shown}
+        drafts={model.drafts}
+        columns={columns}
+        bots={props.bots}
+        canControl={canControl}
+        connected={props.connected}
+        leadId={project.lead_bot_id ?? undefined}
+        onOpen={view.openItem}
+        onMove={canControl ? p.moves.openMenu : null}
+        now={props.now}
+        initialDiscuss={props.initial?.discuss}
+        onDraftDone={(message) => {
+          view.openItem(null);
+          props.addToast("info", message, "");
+        }}
+      >
+        <ItemOwnerActions {...props} projectId={project.id} itemId={view.opened} />
+      </BoardDrawer>
+      {view.settings === null || board === undefined ? null : (
+        <BoardSettings
+          key={board.id}
+          api={client}
+          board={board}
+          columns={columns}
+          counts={counts}
+          canEdit={p.canStructure}
+          proposals={model.proposals}
+          who={view.who}
+          adopt={props.adopt}
+          onClose={() => view.setSettings(null)}
+          initialSection={view.settings}
+          initiallyExpanded={props.initial?.expanded}
+          now={p.now}
+        />
+      )}
+    </>
+  );
+}
+
+export default function Board(props: BoardProps): ReactElement {
+  const { client, project, model, bots, canControl, addToast, refresh } = props;
+  const view = useBoardView({
+    projectId: project.id,
+    model,
+    bots,
+    openItem: props.openItem,
+    openBoard: props.openBoard,
+    settings: props.initial?.settings,
+  });
+  const { prefs, updatePrefs, board, columns, cards } = view;
+  const [sheet, setSheet] = useState<Sheet>(props.initial?.sheet ?? null);
+  const clock = useNow();
+  const parts: Parts = {
+    props,
+    view,
+    canStructure: model.canRule && client.hasGrant("approve"),
+    now: props.now ?? clock,
+  };
+  const moves = useBoardMoves({ api: client, columns, refresh, addToast });
+  // The owner's call, on the board's home (H-099).
+  const setLimit =
+    (column: BoardColumn) =>
+    async (wipLimit: number | undefined): Promise<void> => {
+      const value = { projectId: project.id, columnKey: column.key, wipLimit };
+      await boardCall(client, { case: "columnSetLimit", value }, "board");
+      refresh();
+    };
   const newItem = canControl ? () => setSheet("item") : undefined;
-  const { ui } = moves;
 
   return (
     <div className="board-view">
-      <BoardToolbar
-        boards={model.boards}
-        board={board}
-        onSelect={select}
-        onNewBoard={canStructure ? () => setSheet("board") : undefined}
-        showArchived={showArchived}
-        onShowArchived={() => setShowArchived(true)}
-        onNewItem={newItem}
-        onSettings={
-          board === undefined
-            ? undefined
-            : () => {
-                setOpened(null);
-                setSettings(settings === null ? "general" : null);
-              }
-        }
-        settingsOpen={settings !== null}
-        switcherOpen={props.initial?.switcher}
-        filters={
-          <BoardFilterBar
-            filters={prefs.filters}
-            onChange={(filters) => updatePrefs({ ...prefs, filters })}
-            botOptions={botOptions}
-            shown={shown.length}
-            total={cards.length}
-            hiddenNames={columns.filter((c) => !c.visible).map((c) => c.name)}
-            showHidden={prefs.showHidden}
-            onShowHidden={(showHidden) => updatePrefs({ ...prefs, showHidden })}
-          />
-        }
-        drafts={
-          <DraftsTray
-            api={client}
-            drafts={drafts}
-            bots={bots}
-            onOpen={openItem}
-            initiallyOpen={props.initial?.drafts}
-          />
-        }
-      />
+      <Bar {...parts} onSheet={setSheet} newItem={newItem} />
       {board === undefined ? null : (
         <LeadNotice
           projectId={project.id}
           boardId={board.id}
           proposals={model.proposals}
-          who={who}
-          now={now}
-          onView={() => setSettings("columns")}
+          who={view.who}
+          now={parts.now}
+          onView={() => view.setSettings("columns")}
         />
       )}
       {cards.length === 0 ? (
-        <div className="board-empty" role="status">
-          <h2>No items yet</h2>
-          <p>
-            {`When the team plans work for ${board?.name ?? project.name}, its items show up here, column by column.`}
-            {newItem === undefined ? "" : " Or start one yourself with + New item."}
-          </p>
-        </div>
+        <NoItems name={board?.name ?? project.name} canAdd={newItem !== undefined} />
       ) : null}
       <BoardColumns
         columns={columns}
@@ -234,101 +276,16 @@ export default function Board(props: BoardProps): ReactElement {
         prefs={prefs}
         onPrefs={updatePrefs}
         gated={board === undefined || board.flow === "release_gated"}
-        botsById={botsById}
+        botsById={view.botsById}
         moves={moves}
         canMove={canControl}
-        onOpen={openItem}
+        onOpen={view.openItem}
         onSetLimit={model.canRule ? setLimit : undefined}
         onNewItem={newItem}
       />
-      <BoardDrawer
-        api={client}
-        client={client}
-        openId={opened}
-        shown={shown}
-        drafts={model.drafts}
-        columns={columns}
-        bots={bots}
-        canControl={canControl}
-        connected={props.connected}
-        leadId={project.lead_bot_id ?? undefined}
-        onOpen={openItem}
-        onMove={canControl ? moves.openMenu : null}
-        onDraftDone={(message) => {
-          setOpened(null);
-          addToast("info", message, "");
-        }}
-      >
-        <ItemOwnerActions {...props} projectId={project.id} itemId={opened} />
-      </BoardDrawer>
-      {settings === null || board === undefined ? null : (
-        <BoardSettings
-          key={board.id}
-          api={client}
-          board={board}
-          columns={columns}
-          counts={
-            new Map(columns.map((c) => [c.key, cards.filter((x) => x.columnKey === c.key).length]))
-          }
-          canEdit={canStructure}
-          proposals={model.proposals}
-          who={who}
-          adopt={adopt}
-          onClose={() => setSettings(null)}
-          initialSection={settings}
-          initiallyExpanded={props.initial?.expanded}
-          now={now}
-        />
-      )}
-      {sheet === "board" ? (
-        <NewBoardSheet
-          boards={model.boards}
-          onCreate={createBoard}
-          onCancel={() => setSheet(null)}
-        />
-      ) : null}
-      {sheet === "item" ? (
-        <NewItemDialog
-          api={client}
-          projectId={project.id}
-          board={board}
-          onCreated={(id) => {
-            setSheet(null);
-            openItem(id);
-          }}
-          onCancel={() => setSheet(null)}
-        />
-      ) : null}
-      {ui.kind === "menu" ? (
-        <MoveMenu
-          card={ui.card}
-          anchor={ui.anchor}
-          columns={columns}
-          checks={ui.checks}
-          onChoose={(toKey) => moves.requestMove(ui.card, toKey, ui.anchor)}
-          onClose={moves.close}
-        />
-      ) : null}
-      {ui.kind === "refused" ? (
-        <RefusalPopover
-          card={ui.card}
-          to={ui.to}
-          anchor={ui.anchor}
-          unmet={ui.unmet}
-          onClose={moves.close}
-        />
-      ) : null}
-      {ui.kind === "input" ? (
-        <MoveDialog
-          card={ui.card}
-          to={ui.to}
-          needsReason={ui.needsReason}
-          needsOverride={ui.needsOverride}
-          unmet={ui.unmet}
-          onConfirm={moves.confirm}
-          onCancel={moves.close}
-        />
-      ) : null}
+      <Side {...parts} moves={moves} />
+      <Sheets sheet={sheet} board={props} view={view} onClose={() => setSheet(null)} />
+      <MovePopups moves={moves} columns={columns} />
     </div>
   );
 }

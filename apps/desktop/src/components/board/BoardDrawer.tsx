@@ -29,6 +29,10 @@ interface BoardDrawerProps {
   readonly onOpen: (id: string | null) => void;
   readonly onMove: ((card: ItemCard, anchor: Anchor) => void) | null;
   readonly onDraftDone?: (message: string) => void;
+  /** "Now", for ages; stories pin it. */
+  readonly now?: number;
+  /** Stories: the draft's chat docked at once. */
+  readonly initialDiscuss?: string;
   /** The open item's commands for the owner (H-117), above its tabs. */
   readonly children?: ReactNode;
 }
@@ -75,6 +79,8 @@ export default function BoardDrawer(props: BoardDrawerProps): ReactElement | nul
       onMove={move && card ? (anchor) => move(card, anchor) : undefined}
       onStep={step}
       onDraftDone={props.onDraftDone}
+      now={props.now === undefined ? undefined : () => props.now ?? 0}
+      initialDiscuss={props.initialDiscuss}
     >
       {props.children}
     </ItemDrawer>

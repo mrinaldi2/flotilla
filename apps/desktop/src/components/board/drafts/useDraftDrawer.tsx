@@ -16,6 +16,7 @@ import DiscussButton from "./DiscussButton";
 import DiscussPanel from "./DiscussPanel";
 import { ChangesStrip, DiscardDialog, DraftFooter, DraftReview } from "./DraftParts";
 import { useDraft } from "./useDraft";
+import type { DraftState, FinalizeOutcome } from "./useDraft";
 
 export interface DraftDrawerParams {
   readonly api: BoardApi;
@@ -48,55 +49,103 @@ export interface DraftSlots {
   readonly overlay: ReactNode;
 }
 
-export function useDraftDrawer(p: DraftDrawerParams): DraftSlots {
-  const { api, item } = p;
-  const isDraft = item?.state === "draft";
-  const draft = useDraft(api, p.itemId, item?.version, p.reload, isDraft);
+const NONE: DraftSlots = {
+  isDraft: false,
+  review: null,
+  after: null,
+  footer: null,
+  side: null,
+  overlay: null,
+};
+
+/** What the drawer says after Finalize, beyond a refusal. */
+function finalized(
+  outcome: FinalizeOutcome,
+  itemId: string,
+  columns: readonly BoardColumn[],
+): { readonly done?: string; readonly failure?: string } {
+  switch (outcome.kind) {
+    case "done":
+      return {
+        done: `${itemId} is on the board, in ${columns.find((c) => c.key === outcome.column)?.name ?? outcome.column}.`,
+      };
+    case "conflict":
+      return { failure: `${itemId} changed meanwhile; look at it again, then finalize.` };
+    case "failed":
+      return { failure: outcome.message };
+    default:
+      return {};
+  }
+}
+
+/** Finalize, Discard and Discuss: their busy state and their refusals. */
+function useDraftActions(p: DraftDrawerParams, draft: DraftState) {
   const [discussWith, setDiscussWith] = useState<string | null>(p.initialDiscuss ?? null);
   const [discarding, setDiscarding] = useState(false);
   const [busy, setBusy] = useState(false);
   const [unmet, setUnmet] = useState<readonly Unmet[] | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  const id = p.itemId;
+  const version = p.item?.version ?? 0n;
+  const left = (message: string): void => {
+    p.reload();
+    p.onDone?.(message);
+  };
+  return {
+    discussWith,
+    closeDiscuss: () => setDiscussWith(null),
+    discarding,
+    setDiscarding,
+    busy,
+    unmet,
+    error: failure ?? draft.error,
+    discuss: (chosen: Bot): void => {
+      setFailure(null);
+      void (async () => {
+        try {
+          const invite = { id, bot: chosen.id };
+          p.setDetail(await boardCall(p.api, { case: "itemInvite", value: invite }, "item"));
+          setDiscussWith(chosen.id);
+        } catch (error) {
+          setFailure(errText(error));
+        }
+      })();
+    },
+    finalize: (column: string): void => {
+      setBusy(true);
+      setUnmet(null);
+      setFailure(null);
+      void (async () => {
+        const outcome = await draft.finalize(column, version);
+        setBusy(false);
+        setUnmet(outcome.kind === "refused" ? outcome.unmet : null);
+        const said = finalized(outcome, id, p.columns);
+        setFailure(said.failure ?? null);
+        if (said.done !== undefined) {
+          left(said.done);
+        }
+      })();
+    },
+    discard: (reason: string): void => {
+      setDiscarding(false);
+      void (async () => {
+        if (await draft.discard(reason, version)) {
+          left(`${id} was discarded.`);
+        }
+      })();
+    },
+  };
+}
+
+export function useDraftDrawer(p: DraftDrawerParams): DraftSlots {
+  const { api, item } = p;
+  const isDraft = item?.state === "draft";
+  const draft = useDraft(api, p.itemId, item?.version, p.reload, isDraft);
+  const actions = useDraftActions(p, draft);
   if (!isDraft || item === undefined) {
-    return { isDraft: false, review: null, after: null, footer: null, side: null, overlay: null };
+    return NONE;
   }
-  const version = item.version;
-  const bot = p.bots.find((b) => b.id === discussWith);
-
-  const discuss = (chosen: Bot): void => {
-    setFailure(null);
-    void (async () => {
-      try {
-        const invite = { id: item.id, bot: chosen.id };
-        p.setDetail(await boardCall(api, { case: "itemInvite", value: invite }, "item"));
-        setDiscussWith(chosen.id);
-      } catch (error) {
-        setFailure(errText(error));
-      }
-    })();
-  };
-  const finalize = (column: string): void => {
-    setBusy(true);
-    setUnmet(null);
-    setFailure(null);
-    void (async () => {
-      const outcome = await draft.finalize(column, version);
-      setBusy(false);
-      if (outcome.kind === "done") {
-        const name = p.columns.find((c) => c.key === outcome.column)?.name ?? outcome.column;
-        p.reload();
-        p.onDone?.(`${item.id} is on the board, in ${name}.`);
-      } else if (outcome.kind === "refused") {
-        setUnmet(outcome.unmet);
-      } else if (outcome.kind === "conflict") {
-        setFailure(`${item.id} changed meanwhile; look at it again, then finalize.`);
-      } else {
-        setFailure(outcome.message);
-      }
-    })();
-  };
-
-  const error = failure ?? draft.error;
+  const bot = p.bots.find((b) => b.id === actions.discussWith);
   return {
     isDraft: true,
     review:
@@ -105,7 +154,7 @@ export function useDraftDrawer(p: DraftDrawerParams): DraftSlots {
           changes={draft.reviewing}
           undone={draft.undone}
           who={p.who}
-          onUndo={(revision) => void draft.undo(revision, version)}
+          onUndo={(revision) => void draft.undo(revision, item.version)}
           onClose={draft.closeReview}
         />
       ),
@@ -115,23 +164,23 @@ export function useDraftDrawer(p: DraftDrawerParams): DraftSlots {
           bots={p.bots}
           leadId={p.leadId}
           invited={p.detail?.invited ?? []}
-          onDiscuss={discuss}
+          onDiscuss={actions.discuss}
         />
       ),
     footer: (
       <>
         <ChangesStrip unseen={draft.unseen} who={p.who} onReview={draft.review} />
-        {error === null ? null : (
+        {actions.error === null ? null : (
           <p className="field-error draft-error" role="alert">
-            {error}
+            {actions.error}
           </p>
         )}
         <DraftFooter
           columns={p.columns}
-          busy={busy}
-          unmet={unmet}
-          onFinalize={finalize}
-          onDiscard={() => setDiscarding(true)}
+          busy={actions.busy}
+          unmet={actions.unmet}
+          onFinalize={actions.finalize}
+          onDiscard={() => actions.setDiscarding(true)}
         />
       </>
     ),
@@ -144,23 +193,15 @@ export function useDraftDrawer(p: DraftDrawerParams): DraftSlots {
           connected={p.connected}
           changes={draft.unseen.length}
           onReview={draft.review}
-          onClose={() => setDiscussWith(null)}
+          onClose={actions.closeDiscuss}
           now={p.now}
         />
       ),
-    overlay: discarding ? (
+    overlay: actions.discarding ? (
       <DiscardDialog
         itemId={item.id}
-        onCancel={() => setDiscarding(false)}
-        onDiscard={(reason) => {
-          setDiscarding(false);
-          void (async () => {
-            if (await draft.discard(reason, version)) {
-              p.reload();
-              p.onDone?.(`${item.id} was discarded.`);
-            }
-          })();
-        }}
+        onCancel={() => actions.setDiscarding(false)}
+        onDiscard={actions.discard}
       />
     ) : null,
   };

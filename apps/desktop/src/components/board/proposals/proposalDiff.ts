@@ -5,7 +5,15 @@
 // the owner sees it now.
 
 import type { BoardColumn, ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import type { BoardProposal } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import type {
+  AutomationSet,
+  BoardCreate,
+  BoardProposal,
+  BoardUpdate,
+  ColumnAdd,
+  ColumnRemove,
+  ColumnUpdate,
+} from "../../../protocol/gen/hermes/board/v1/requests_pb";
 import { PRESETS } from "../presets";
 import { factWord, moverWords, ruleWords } from "../settings/rules";
 
@@ -55,117 +63,140 @@ function listDiff(
   ];
 }
 
+/** One line when `value` is set: "WIP limit 2". */
+function when<T>(value: T | undefined, words: (value: T) => string): string[] {
+  return value === undefined ? [] : [words(value)];
+}
+
+interface Board {
+  readonly columns: readonly BoardColumn[];
+  readonly before: readonly StripColumn[];
+  readonly nameOf: (key: string) => string;
+}
+
+function columnAdd(b: Board, add: ColumnAdd): ProposalDiff {
+  const column: StripColumn = {
+    key: `+${add.name}`,
+    name: add.name,
+    kind: add.kind,
+    mark: "added",
+  };
+  return {
+    before: b.before,
+    after: placed(b.before, column, add.after),
+    rules: [
+      ...add.rules.map((r) => `+ ${ruleWords(r)}`),
+      ...(add.movers.length === 0 ? [] : [`Moved in by: ${moverWords(add.movers)}`]),
+    ],
+    notes: when(add.wipLimit, (n) => `WIP limit ${n}`),
+  };
+}
+
+function policyDiff(b: Board, old: BoardColumn | undefined, update: ColumnUpdate): string[] {
+  if (update.setPolicy !== true || old === undefined) {
+    return [];
+  }
+  return [
+    ...listDiff(old.rules, update.rules, ruleWords),
+    ...listDiff(old.movers, update.movers, (t) => `mover: ${moverWords([t])}`),
+    ...listDiff(old.allowedFrom, update.allowedFrom, (k) => `from ${b.nameOf(k)}`),
+  ];
+}
+
+function columnUpdate(b: Board, update: ColumnUpdate): ProposalDiff {
+  const old = b.columns.find((c) => c.key === update.key);
+  const current = b.before.find((c) => c.key === update.key) ?? {
+    key: update.key,
+    name: old?.name ?? update.key,
+    kind: old?.kind ?? 0,
+  };
+  const next: StripColumn = {
+    ...current,
+    name: update.name ?? current.name,
+    kind: update.kind ?? current.kind,
+    mark: "changed",
+  };
+  const marked = b.before.map((c) => (c.key === update.key ? next : c));
+  const after = update.after === undefined ? marked : placed(marked, next, update.after);
+  return {
+    before: b.before,
+    after: update.visible === false ? after.filter((c) => c.key !== update.key) : after,
+    rules: policyDiff(b, old, update),
+    notes: [
+      ...when(update.wipLimit, (n) => `WIP limit ${n}`),
+      ...(update.clearWipLimit === true ? ["No WIP limit"] : []),
+      ...when(update.visible, (shown) => (shown ? "Shown" : "Hidden")),
+    ],
+  };
+}
+
+function columnRemove(b: Board, remove: ColumnRemove): ProposalDiff {
+  return {
+    before: b.before,
+    after: b.before.map((c) => (c.key === remove.key ? { ...c, mark: "removed" } : c)),
+    rules: [],
+    notes: when(remove.moveItemsTo, (to) => `Its items move to ${b.nameOf(to)}`),
+  };
+}
+
+function automationSet(b: Board, set: AutomationSet): ProposalDiff {
+  const to = set.columnKey ?? "";
+  const note =
+    to === ""
+      ? `When ${factWord(set.fact)}: items stay where they are`
+      : `When ${factWord(set.fact)} → move to ${b.nameOf(to)}`;
+  return { before: b.before, after: b.before, rules: [], notes: [note] };
+}
+
+function boardCreate(create: BoardCreate): ProposalDiff {
+  const preset = PRESETS.find((p) => p.name === create.preset);
+  return {
+    before: [],
+    after: (preset?.columns ?? [])
+      .filter((c) => c.hidden !== true)
+      .map((c) => ({ key: c.name, name: c.name, kind: c.kind, mark: "added" })),
+    rules: [],
+    notes: [`A new board, ${create.name}, from the ${preset?.title ?? create.preset} preset`],
+  };
+}
+
+function boardUpdate(b: Board, update: BoardUpdate): ProposalDiff {
+  return {
+    before: b.before,
+    after: b.before,
+    rules: [],
+    notes: [
+      ...when(update.name, (name) => `Renamed to ${name}`),
+      ...when(update.description, () => "New description"),
+    ],
+  };
+}
+
 /** The change `proposal` makes to a board whose columns are `columns`. */
 export function proposalDiff(
   proposal: BoardProposal,
   columns: readonly BoardColumn[],
 ): ProposalDiff {
   const before = strip(columns);
+  const b: Board = {
+    columns,
+    before,
+    nameOf: (key) => columns.find((c) => c.key === key)?.name ?? key,
+  };
   const change = proposal.change;
-  const nameOf = (key: string): string => columns.find((c) => c.key === key)?.name ?? key;
   switch (change.case) {
-    case "columnAdd": {
-      const add = change.value;
-      const column: StripColumn = {
-        key: `+${add.name}`,
-        name: add.name,
-        kind: add.kind,
-        mark: "added",
-      };
-      return {
-        before,
-        after: placed(before, column, add.after),
-        rules: [
-          ...add.rules.map((r) => `+ ${ruleWords(r)}`),
-          ...(add.movers.length === 0 ? [] : [`Moved in by: ${moverWords(add.movers)}`]),
-        ],
-        notes: add.wipLimit === undefined ? [] : [`WIP limit ${add.wipLimit}`],
-      };
-    }
-    case "columnUpdate": {
-      const update = change.value;
-      const old = columns.find((c) => c.key === update.key);
-      const current = before.find((c) => c.key === update.key) ?? {
-        key: update.key,
-        name: old?.name ?? update.key,
-        kind: old?.kind ?? 0,
-      };
-      const next: StripColumn = {
-        ...current,
-        name: update.name ?? current.name,
-        kind: update.kind ?? current.kind,
-        mark: "changed",
-      };
-      const marked = before.map((c) => (c.key === update.key ? next : c));
-      const after = update.after === undefined ? marked : placed(marked, next, update.after);
-      const policy = update.setPolicy === true && old !== undefined;
-      return {
-        before,
-        after: update.visible === false ? after.filter((c) => c.key !== update.key) : after,
-        rules: policy
-          ? [
-              ...listDiff(old.rules, update.rules, ruleWords),
-              ...listDiff(old.movers, update.movers, (t) => `mover: ${moverWords([t])}`),
-              ...listDiff(old.allowedFrom, update.allowedFrom, (k) => `from ${nameOf(k)}`),
-            ]
-          : [],
-        notes: [
-          ...(update.wipLimit === undefined ? [] : [`WIP limit ${update.wipLimit}`]),
-          ...(update.clearWipLimit === true ? ["No WIP limit"] : []),
-          ...(update.visible === undefined ? [] : [update.visible ? "Shown" : "Hidden"]),
-        ],
-      };
-    }
-    case "columnRemove": {
-      const remove = change.value;
-      return {
-        before,
-        after: before.map((c) => (c.key === remove.key ? { ...c, mark: "removed" } : c)),
-        rules: [],
-        notes:
-          remove.moveItemsTo === undefined
-            ? []
-            : [`Its items move to ${nameOf(remove.moveItemsTo)}`],
-      };
-    }
-    case "automationSet": {
-      const set = change.value;
-      return {
-        before,
-        after: before,
-        rules: [],
-        notes: [
-          set.columnKey === undefined || set.columnKey === ""
-            ? `When ${factWord(set.fact)}: items stay where they are`
-            : `When ${factWord(set.fact)} → move to ${nameOf(set.columnKey)}`,
-        ],
-      };
-    }
-    case "boardCreate": {
-      const preset = PRESETS.find((p) => p.name === change.value.preset);
-      return {
-        before: [],
-        after: (preset?.columns ?? [])
-          .filter((c) => c.hidden !== true)
-          .map((c) => ({ key: c.name, name: c.name, kind: c.kind, mark: "added" })),
-        rules: [],
-        notes: [
-          `A new board, ${change.value.name}, from the ${preset?.title ?? change.value.preset} preset`,
-        ],
-      };
-    }
-    case "boardUpdate": {
-      const update = change.value;
-      return {
-        before,
-        after: before,
-        rules: [],
-        notes: [
-          ...(update.name === undefined ? [] : [`Renamed to ${update.name}`]),
-          ...(update.description === undefined ? [] : ["New description"]),
-        ],
-      };
-    }
+    case "columnAdd":
+      return columnAdd(b, change.value);
+    case "columnUpdate":
+      return columnUpdate(b, change.value);
+    case "columnRemove":
+      return columnRemove(b, change.value);
+    case "automationSet":
+      return automationSet(b, change.value);
+    case "boardCreate":
+      return boardCreate(change.value);
+    case "boardUpdate":
+      return boardUpdate(b, change.value);
     default:
       return { before, after: before, rules: [], notes: [proposal.summary] };
   }
