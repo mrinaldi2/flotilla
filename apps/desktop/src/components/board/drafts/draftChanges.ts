@@ -37,7 +37,6 @@ const FIELDS: Readonly<Record<string, string>> = {
   acceptance_criteria: "Acceptance criteria",
   attachment: "Attachment",
   link: "Link",
-  platforms: "Platforms",
   parent: "Parent",
 };
 

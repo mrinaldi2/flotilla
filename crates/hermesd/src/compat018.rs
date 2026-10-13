@@ -84,6 +84,32 @@ pub fn card_in(card: &mut c::ItemCard) {
     card.labels = with_platforms(std::mem::take(&mut card.labels), &platforms);
 }
 
+/// A card a linked computer mirrors, from a home on either version: its
+/// labels hold the platforms, and the old field stays filled for the
+/// 0.18 readers it may serve in turn.
+pub fn mirrored_card(card: &mut c::ItemCard) {
+    card_in(card);
+    card_out(card);
+}
+
+/// A snapshot a linked computer mirrors: every card as [`mirrored_card`],
+/// and the settings' machines by label.
+pub fn mirrored_snapshot(snapshot: &mut c::BoardSnapshot) {
+    snapshot
+        .cards
+        .iter_mut()
+        .chain(snapshot.drafts.iter_mut())
+        .for_each(mirrored_card);
+    if let Some(settings) = snapshot.settings.as_mut() {
+        if settings.required_machines_by_label.is_empty() {
+            settings.required_machines_by_label = machines_in(settings)
+                .into_iter()
+                .map(|(label, values)| (label, c::StringList { values }))
+                .collect();
+        }
+    }
+}
+
 /// A new item's labels, with any platforms a 0.18 caller named.
 pub fn create_labels(req: &c::ItemCreate) -> Vec<String> {
     with_platforms(req.labels.clone(), &req.platforms)

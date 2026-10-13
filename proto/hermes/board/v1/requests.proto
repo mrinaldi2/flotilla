@@ -574,7 +574,7 @@ message BoardSnapshot {
   repeated BoardProposal proposals = 9;
   // Whether this connection may rule on the project's releases: the owner's
   // own credentials with the approve grant (a board is served only on its
-  // home, where rulings are made). H-020 §6.5.
+  // home, where rulings are made).
   bool can_rule = 6;
 }
 

@@ -13,8 +13,8 @@ pub struct LabelGroup {
 }
 
 impl LabelGroup {
-    /// The label one of its values stands for: `platform` and `ios` give
-    /// `platform:ios`.
+    /// The label one of its values stands for: `area` and `web` give
+    /// `area:web`.
     pub fn label(&self, value: &str) -> String {
         label(&self.name, value)
     }

@@ -6,7 +6,7 @@ import type { AddToast } from "../../app/useToasts";
 import type { BoardCall } from "../../protocol/board";
 import { DaemonError } from "../../protocol/connection";
 import type { ItemCard, Unmet } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { ItemSchema, Platform } from "../../protocol/gen/hermes/board/v1/board_pb";
+import { ItemSchema } from "../../protocol/gen/hermes/board/v1/board_pb";
 import { MoveCheckSchema } from "../../protocol/gen/hermes/board/v1/requests_pb";
 import type { MoveCheck } from "../../protocol/gen/hermes/board/v1/requests_pb";
 import { card, defaultColumns, moved, snapshot, unmet } from "../../test/boardFixtures";
@@ -18,7 +18,7 @@ const h24 = card({
   id: "H-024",
   title: "Releases tab",
   columnKey: "ready",
-  platforms: [Platform.DESKTOP],
+  labels: ["platform:desktop"],
   version: 4n,
 });
 const h17 = card({
@@ -110,7 +110,7 @@ describe("BoardView", () => {
     setup([
       h24,
       h17,
-      card({ id: "H-030", columnKey: "ready", rank: "a5", platforms: [Platform.IOS] }),
+      card({ id: "H-030", columnKey: "ready", rank: "a5", labels: ["platform:ios"] }),
     ]);
     await screen.findByRole("article", { name: /^H-024/ });
 

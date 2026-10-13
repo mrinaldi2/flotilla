@@ -84,7 +84,7 @@ export type ReleaseCreate = Message<"hermes.board.v1.ReleaseCreate"> & {
   displayVersion?: string | undefined;
 
   /**
-   * Item ids, e.g. "H-017"; each must be in Verify and in no other open package.
+   * Item ids, e.g. "RB-12"; each must be in Verify and in no other open package.
    *
    * @generated from field: repeated string items = 4;
    */
@@ -143,7 +143,7 @@ export type ReleasePlan = Message<"hermes.board.v1.ReleasePlan"> & {
   displayVersion?: string | undefined;
 
   /**
-   * Item ids, e.g. "H-137"; each open and in no other open package.
+   * Item ids, e.g. "RB-12"; each open and in no other open package.
    *
    * @generated from field: repeated string items = 4;
    */
@@ -155,7 +155,7 @@ export type ReleasePlan = Message<"hermes.board.v1.ReleasePlan"> & {
   changelog?: string | undefined;
 
   /**
-   * The release's REL work card, e.g. "H-244": the owner Run cards,
+   * The release's REL work card, e.g. "RB-30": the owner Run cards,
    * decisions and questions on it show on the release (H-247).
    *
    * @generated from field: optional string work_item = 6;

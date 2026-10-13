@@ -33,6 +33,8 @@ interface BoardColumnsProps {
   readonly onSetLimit?: (column: BoardColumn) => (limit: number | undefined) => Promise<void>;
   /** "+ New item" at the foot of open columns. */
   readonly onNewItem?: () => void;
+  /** The label groups whose labels show on the cards. */
+  readonly chipGroups?: ReadonlySet<string>;
 }
 
 interface Drag {
@@ -136,6 +138,7 @@ export default function BoardColumns(props: BoardColumnsProps): ReactElement {
                     setAnnounce("");
                   }}
                   dragging={drag?.card.id === card.id}
+                  chipGroups={props.chipGroups}
                 />
               ))}
             </BoardColumnView>
