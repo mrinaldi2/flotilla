@@ -6,7 +6,7 @@
 use bus::now;
 use rusqlite::{params, Connection, OptionalExtension};
 
-use crate::board::model::ColumnCategory;
+use crate::kanban::model::ColumnCategory;
 use crate::releases::machines;
 use crate::releases::model::{PlanItem, Release, ReleaseStatus};
 

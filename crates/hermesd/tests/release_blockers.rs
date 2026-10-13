@@ -8,9 +8,9 @@ use std::collections::HashMap;
 
 use common::releases::{releases, Releases};
 use hermesd::actor::Actor;
-use hermesd::board::model::{ItemType, Platform, Priority};
 use hermesd::db::NewItem;
 use hermesd::events::Push;
+use hermesd::kanban::model::{ItemType, Platform, Priority};
 use hermesd::releases::blockers_watch;
 use serde_json::{json, Value};
 

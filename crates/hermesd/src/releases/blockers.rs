@@ -10,9 +10,9 @@ use serde_json::{json, Value};
 use super::machines;
 use super::model::{Release, ReleaseStatus};
 use crate::app::AppState;
-use crate::board::model::ItemComment;
 use crate::db::OnCard;
 use crate::decisions::invalid;
+use crate::kanban::model::ItemComment;
 
 /// One thing only the owner can clear that holds the release up.
 #[derive(Debug, Clone, PartialEq, Eq)]

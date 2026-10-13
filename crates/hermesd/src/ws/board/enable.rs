@@ -58,9 +58,9 @@ async fn enable_linked(
     let mut feed = app.board.writer();
     db.ensure_board(project_id, &db.daemon_id()?, None)?;
     // Relayed to the linked peers, which start mirroring it (B9).
-    feed.publish(crate::board::feed::Change {
+    feed.publish(crate::kanban::feed::Change {
         project_id,
-        kind: crate::board::feed::ChangeKind::SettingsChanged,
+        kind: crate::kanban::feed::ChangeKind::SettingsChanged,
         item_id: "",
         card: None,
         from_column: None,

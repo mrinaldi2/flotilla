@@ -12,8 +12,8 @@ use bus::contract::board::{
 use common::board::*;
 use common::*;
 use hermesd::actor::Actor;
-use hermesd::board::model::{ItemType, Platform, Priority};
 use hermesd::db::NewItem;
+use hermesd::kanban::model::{ItemType, Platform, Priority};
 use serde_json::json;
 
 #[tokio::test]

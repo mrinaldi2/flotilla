@@ -10,8 +10,8 @@ use bus::now;
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::Serialize;
 
-use crate::board::import::{Entry, Key, Parsed, Skipped, IMPORT_NOTE, SOURCE_KEY};
-use crate::board::model::{ColumnCategory, ItemEventKind, LinkKind, Priority};
+use crate::kanban::import::{Entry, Key, Parsed, Skipped, IMPORT_NOTE, SOURCE_KEY};
+use crate::kanban::model::{ColumnCategory, ItemEventKind, LinkKind, Priority};
 
 use super::board::{settings_in, to_json_list, to_text};
 use super::board_items::{rank_last, record, Event};

@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 use std::time::Duration;
 
 use common::prs::{branch, give, head, set_policy, setup_with, Repo};
-use hermesd::board::model::Role;
+use hermesd::kanban::model::Role;
 use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
 use hermesd::prs::check_model::{CheckResult, CheckRun};
 use hermesd::releases::machines;

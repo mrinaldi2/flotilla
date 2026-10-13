@@ -6,9 +6,9 @@ use std::sync::Arc;
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::{ItemType, LinkKind, Priority, Role};
 use crate::db::NewItem;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
+use crate::kanban::model::{ItemType, LinkKind, Priority, Role};
 
 /// `pr_follow_up`: the reviewer, the PR's author or the lead files finding
 /// `index` of review `review_id` as an Inbox card; returns its id.

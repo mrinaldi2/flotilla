@@ -9,7 +9,7 @@ use crate::releases::model::{
     ReleaseStatus, ReleaseTest, Smoke, Verdict,
 };
 
-use crate::board::model::ItemEventKind;
+use crate::kanban::model::ItemEventKind;
 
 use super::board::{from_json, from_text, parse_at, to_text};
 use super::board_items::{record, Event};
@@ -394,7 +394,7 @@ impl BoardTx<'_> {
     pub fn settings(
         &self,
         project_id: &str,
-    ) -> anyhow::Result<Option<crate::board::model::BoardSettings>> {
+    ) -> anyhow::Result<Option<crate::kanban::model::BoardSettings>> {
         Ok(super::board::settings_in(self.conn, project_id)?)
     }
 }

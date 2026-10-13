@@ -19,9 +19,9 @@ use chrono::Utc;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::db::{BoardTx, NewCut, NewRelease};
 use crate::decisions::{conflict, invalid};
+use crate::kanban::model::Role;
 use crate::prs::model::{Pr, PrState};
 use crate::prs::repo;
 

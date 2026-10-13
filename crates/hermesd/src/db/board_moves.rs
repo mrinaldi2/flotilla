@@ -3,8 +3,8 @@
 
 use std::collections::BTreeMap;
 
-use crate::board::guards::{Blocker, ColumnLoad, Context};
-use crate::board::model::{BoardColumn, Item, ItemLink, ProjectRole};
+use crate::kanban::guards::{Blocker, ColumnLoad, Context};
+use crate::kanban::model::{BoardColumn, Item, ItemLink, ProjectRole};
 use rusqlite::{params, OptionalExtension};
 
 use super::board::{columns_in, roles_in, settings_in};

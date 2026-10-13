@@ -11,9 +11,9 @@ use bus::*;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::feed::ChangeKind;
 use crate::db::{Actor, DecisionFilter};
 use crate::decisions::{self, Detail, RaiseRequest};
+use crate::kanban::feed::ChangeKind;
 
 use super::caller;
 

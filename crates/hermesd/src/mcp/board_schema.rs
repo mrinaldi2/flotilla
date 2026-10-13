@@ -12,8 +12,8 @@ use bus::contract::board::MESSAGE_SCHEMAS;
 use serde::de::DeserializeOwned;
 use serde_json::{json, Map, Value};
 
-use crate::board::contract::{all_spellings, spellings};
-use crate::board::model::Role;
+use crate::kanban::contract::{all_spellings, spellings};
+use crate::kanban::model::Role;
 
 /// Who sees a board tool in `tools/list` (H-020 §1.6, H-037).
 #[derive(Clone, Copy, PartialEq, Eq)]

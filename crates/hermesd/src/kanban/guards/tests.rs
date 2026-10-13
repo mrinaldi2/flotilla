@@ -4,8 +4,8 @@
 use chrono::Utc;
 
 use super::*;
-use crate::board::defaults::COLUMNS;
-use crate::board::model::{
+use crate::kanban::defaults::COLUMNS;
+use crate::kanban::model::{
     AcceptanceCriterion, ItemPerson, ItemType, ItemVerification, Priority, Size, VerificationResult,
 };
 
@@ -222,7 +222,7 @@ fn dor_sections_come_from_the_description() {
         ["dor.steps_to_reproduce"],
         "a hint doesn't fill a section"
     );
-    c.item.description = crate::board::defaults::description_skeleton(&serde_json::json!({
+    c.item.description = crate::kanban::defaults::description_skeleton(&serde_json::json!({
         "sections": ["Steps to reproduce", "Expected", "Actual"]
     }));
     assert_eq!(
@@ -369,7 +369,7 @@ fn rules_outside_moves() {
 
 #[test]
 fn templates_name_only_known_dor_fields() {
-    for (item_type, body) in crate::board::defaults::item_templates() {
+    for (item_type, body) in crate::kanban::defaults::item_templates() {
         assert_eq!(check_template(&body), Ok(()), "{item_type:?}");
     }
     let typo = serde_json::json!({"ready": ["acceptance_critera", "size"]});

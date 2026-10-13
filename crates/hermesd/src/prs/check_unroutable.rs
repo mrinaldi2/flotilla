@@ -12,7 +12,7 @@ use std::sync::{Mutex, OnceLock};
 use chrono::{Duration, Utc};
 
 use crate::app::AppState;
-use crate::board::model::Role;
+use crate::kanban::model::Role;
 use crate::prs::check_model::{CheckRun, Unroutable};
 
 /// How long a required check is unroutable before someone is asked.

@@ -10,8 +10,8 @@ use bus::contract::board as c;
 use serde_json::{json, Map, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::decisions::invalid;
+use crate::kanban::model::Role;
 use crate::meetings::actions::{self, ActionEdit, NewAction};
 use crate::meetings::model::MeetingType;
 use crate::meetings::run::{self, AdHoc, Close, Contribute};

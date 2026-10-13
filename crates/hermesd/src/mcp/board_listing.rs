@@ -4,7 +4,7 @@
 use std::sync::Arc;
 
 use crate::app::AppState;
-use crate::board::model::Role;
+use crate::kanban::model::Role;
 
 use super::board::board_roles;
 
@@ -32,7 +32,7 @@ pub(super) fn listed_roles(app: &Arc<AppState>, bot: &bus::Bot) -> anyhow::Resul
         .db
         .get_project(&bot.project_id)?
         .is_some_and(|p| p.lead_bot_id.as_deref() == Some(bot.id.as_str()));
-    Ok(crate::board::defaults::seed_role(&bot.name, is_lead)
+    Ok(crate::kanban::defaults::seed_role(&bot.name, is_lead)
         .into_iter()
         .collect())
 }

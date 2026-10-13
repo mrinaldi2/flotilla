@@ -7,8 +7,8 @@ use std::fmt::Write as _;
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::feed::{card_after_commit, Change, ChangeKind};
 use crate::db::ImportReport;
+use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 
 /// Import `markdown` into the project's board; `dry_run` keeps nothing.
 pub fn run(

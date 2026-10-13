@@ -20,9 +20,9 @@ use chrono::{Duration, Utc};
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::bot_permissions::Stored;
 use crate::decisions::{forbidden, invalid};
+use crate::kanban::model::Role;
 use crate::releases::{deploy, quiesce_gate, Caller};
 
 use super::PauseRequest;

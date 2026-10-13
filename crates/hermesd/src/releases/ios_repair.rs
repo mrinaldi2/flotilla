@@ -15,8 +15,8 @@ use serde_json::json;
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::ColumnCategory;
 use crate::db::Db;
+use crate::kanban::model::ColumnCategory;
 
 use super::deploy::all_done;
 use super::machines::{is_ios_package, is_ios_target, IOS_DEVICE};

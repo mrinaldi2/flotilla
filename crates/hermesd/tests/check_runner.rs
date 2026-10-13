@@ -13,7 +13,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use common::prs::{branch, error, give, head, set_policy, setup, setup_with, Repo};
-use hermesd::board::model::Role;
+use hermesd::kanban::model::Role;
 use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
 use hermesd::prs::check_model::{CheckResult, CheckRun};
 use hermesd::prs::check_rerun::{rerun, Asker};

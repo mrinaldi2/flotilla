@@ -5,9 +5,9 @@ use bus::Capability;
 
 use super::{not_found, refuse, Refusal};
 use crate::app::AppState;
-use crate::board::contract::MapError;
-use crate::board::model as m;
-use crate::board::moves;
+use crate::kanban::contract::MapError;
+use crate::kanban::model as m;
+use crate::kanban::moves;
 use crate::ws::Conn;
 
 /// History events per page when the client names no limit, and the most it

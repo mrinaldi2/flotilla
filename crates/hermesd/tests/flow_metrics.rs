@@ -9,7 +9,7 @@ use common::peer_board::board;
 use common::peers::wait_until;
 use common::tasks::project_with_bots;
 use common::*;
-use hermesd::board::model::Priority;
+use hermesd::kanban::model::Priority;
 use serde_json::{json, Value};
 
 const BACKLOG: &str = include_str!("fixtures/board_import_backlog.md");

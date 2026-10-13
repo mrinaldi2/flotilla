@@ -13,8 +13,8 @@ use std::sync::Arc;
 use serde_json::json;
 
 use crate::app::AppState;
-use crate::board::model::{ColumnCategory, Role};
 use crate::decisions::conflict;
+use crate::kanban::model::{ColumnCategory, Role};
 
 use super::model::{Release, ReleaseEvent, ReleaseStatus};
 use super::{load, publish_touched, Caller};

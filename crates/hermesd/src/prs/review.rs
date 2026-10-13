@@ -8,9 +8,9 @@ use bus::{MessageKind, TaskState, DEFAULT_TASK_DEADLINE_HOURS};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::db::reviews::NewReview;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
+use crate::kanban::model::Role;
 use crate::messaging::{self, daemon_sender, Dm};
 use crate::prs::model::Pr;
 use crate::prs::owner::Shape;

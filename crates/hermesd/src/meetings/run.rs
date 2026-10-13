@@ -8,9 +8,9 @@ use chrono::Utc;
 use serde_json::{json, Map, Value};
 
 use crate::app::AppState;
-use crate::board::model::ColumnCategory;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
 use crate::events::Push;
+use crate::kanban::model::ColumnCategory;
 use crate::messaging::{self, user_sender, Dm};
 
 use super::model::{Attendee, Contribution, Meeting, MeetingStatus, MeetingType, OWNER};
@@ -141,7 +141,7 @@ fn inputs(app: &AppState, project_id: &str) -> anyhow::Result<Value> {
     let board = if db.board_settings(project_id)?.is_some() {
         let columns = db.board_columns(project_id)?;
         let cards = db.board_cards(project_id)?;
-        let card = |c: &crate::board::model::ItemCard| json!({ "id": c.id, "title": c.title, "column": c.column_key, "assignee": c.assignee });
+        let card = |c: &crate::kanban::model::ItemCard| json!({ "id": c.id, "title": c.title, "column": c.column_key, "assignee": c.assignee });
         let in_category = |cat: ColumnCategory| {
             let keys: Vec<&str> = columns
                 .iter()

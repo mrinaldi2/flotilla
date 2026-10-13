@@ -9,7 +9,7 @@ use common::releases::releases;
 use common::tasks::project_with_bots;
 use common::*;
 use hermesd::actor::Actor;
-use hermesd::board::model::Priority;
+use hermesd::kanban::model::Priority;
 use serde_json::{json, Value};
 
 const OWNER: Actor<'static> = Actor::User;

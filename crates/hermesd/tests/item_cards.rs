@@ -8,7 +8,7 @@ use common::board::new_item;
 use common::peer_board::board;
 use common::peers::{project, wait_until};
 use common::WsClient;
-use hermesd::board::model::Priority;
+use hermesd::kanban::model::Priority;
 use serde_json::{json, Value};
 
 fn entry<'a>(reply: &'a Value, id: &str) -> &'a Value {

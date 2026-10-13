@@ -1,11 +1,11 @@
 //! The backlog import's storage (B6): key adoption, kept and new ids,
 //! idempotent re-runs, dry runs, and the home-only rule.
 
-use crate::board::import::{
+use crate::kanban::import::{
     is_imported, parse, AWAITING_OWNER_LABEL, DEPLOYING_LABEL, NOT_IMPORTED_SQL,
 };
-use crate::board::model::*;
-use crate::board::moves::{item_move, MoveRequest, Moved, CLOSED_WITHOUT_RELEASE};
+use crate::kanban::model::*;
+use crate::kanban::moves::{item_move, MoveRequest, Moved, CLOSED_WITHOUT_RELEASE};
 
 use super::board_tests::new_item;
 use super::releases::NewRelease;

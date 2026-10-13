@@ -17,9 +17,9 @@ use chrono::Utc;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::bot_permissions::Stored;
 use crate::decisions::{conflict, forbidden, invalid};
+use crate::kanban::model::Role;
 use crate::prs::repo;
 
 use super::cut::{tag_name, version_of};

@@ -9,10 +9,10 @@ use bus::{DecisionState, MessageKind, Sender, SenderKind, TaskState, DEFAULT_TAS
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::{ColumnCategory, Role};
 use crate::db::BoardTx;
 use crate::decisions::authority::is_relayed;
 use crate::decisions::{conflict, forbidden, invalid};
+use crate::kanban::model::{ColumnCategory, Role};
 use crate::messaging::{self, Dm};
 
 use super::machines;

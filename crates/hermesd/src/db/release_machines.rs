@@ -220,8 +220,8 @@ impl BoardTx<'_> {
 
 #[cfg(test)]
 mod tests {
-    use crate::board::model::{ProjectRole, Role};
     use crate::db::Db;
+    use crate::kanban::model::{ProjectRole, Role};
 
     /// ARCH-R55 S2: a linked tester tests on its peer whatever its role
     /// says; a tester here can't claim a linked computer's name.

@@ -9,14 +9,14 @@ use bus::contract::board as c;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::contract::model_list;
-use crate::board::feed::ChangeKind;
-use crate::board::guards::{self, Who};
-use crate::board::model::{
+use crate::db::{BoardTx, ItemEdit, NewItem, Write};
+use crate::kanban::contract::model_list;
+use crate::kanban::feed::ChangeKind;
+use crate::kanban::guards::{self, Who};
+use crate::kanban::model::{
     ColumnCategory, Item, ItemType, LinkKind, Platform, Priority, Size, Unmet,
 };
-use crate::board::moves::load_in;
-use crate::db::{BoardTx, ItemEdit, NewItem, Write};
+use crate::kanban::moves::load_in;
 use crate::releases::post_install;
 
 use super::board::{bot_id, conflict, item_out, out, own_item, published, refused, written, Me};

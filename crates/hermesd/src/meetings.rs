@@ -13,8 +13,8 @@ use serde_json::{json, Value};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::decisions::{forbidden, invalid, not_found};
+use crate::kanban::model::Role;
 
 use model::{ActionItem, Meeting, MeetingStatus, MeetingType, Series, OWNER};
 

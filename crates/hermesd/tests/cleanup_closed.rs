@@ -12,7 +12,7 @@ use chrono::{Duration, Utc};
 use common::cleanup::{jobs, linked, notes, open, pr, step};
 use common::prs::{approve, branch, commit, opened, setup, Repo};
 use common::repo::git;
-use hermesd::board::model::Role;
+use hermesd::kanban::model::Role;
 use hermesd::pr_cli::{drop_stale, merge_in, Plan};
 use hermesd::prs::merge::answer;
 use hermesd::prs::queue;

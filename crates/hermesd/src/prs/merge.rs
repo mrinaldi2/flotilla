@@ -22,9 +22,9 @@ use serde_json::{json, Value};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::{ColumnCategory, Role};
 use crate::bot_permissions::Stored;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
+use crate::kanban::model::{ColumnCategory, Role};
 use crate::prs::model::{Pr, PrState};
 use crate::prs::{mergeable, repo, review};
 use crate::releases::{daemon_move, git_cache, publish_moves};

@@ -3,7 +3,7 @@
 use std::collections::BTreeSet;
 
 use super::{has_text, unmet, Context, Move, Rule, Who};
-use crate::board::model::{
+use crate::kanban::model::{
     ColumnCategory as Cat, Item, ItemType, LinkKind, Platform, Size, Unmet, VerificationResult,
 };
 
@@ -344,7 +344,7 @@ fn ready_to_package(item: &Item, ctx: &Context, out: &mut Vec<Unmet>) {
 
 /// The acceptance criteria provable only after install that aren't checked
 /// yet (H-116): nothing reaches Done while one is open.
-pub fn open_post_install(item: &Item) -> Vec<&crate::board::model::AcceptanceCriterion> {
+pub fn open_post_install(item: &Item) -> Vec<&crate::kanban::model::AcceptanceCriterion> {
     item.acceptance_criteria
         .iter()
         .filter(|ac| ac.post_install && !ac.checked)

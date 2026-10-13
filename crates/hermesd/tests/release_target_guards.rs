@@ -8,7 +8,7 @@ mod common;
 use common::ios_targets::{ios_qa_tests_ios, package, pass, team, Team, DEVOPS, IOS_QA, LEAD};
 use common::tasks::error_text;
 use common::{spawn_daemon, WsClient};
-use hermesd::board::model::Platform;
+use hermesd::kanban::model::Platform;
 use hermesd::releases::ios_repair;
 use hermesd::releases::model::{DeployAction, DeployResult, ReleaseStatus};
 use serde_json::json;

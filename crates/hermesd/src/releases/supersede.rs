@@ -30,7 +30,7 @@ use serde_json::json;
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::ColumnCategory;
+use crate::kanban::model::ColumnCategory;
 
 use super::deployed_via::{close_via, reaches, reaches_and_contains, ruled_open};
 use super::machines::is_ios_package;

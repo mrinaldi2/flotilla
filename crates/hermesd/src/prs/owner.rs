@@ -12,10 +12,10 @@ use serde_json::{json, Value};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::ColumnCategory;
 use crate::db::reviews::NewReview;
 use crate::db::OwnerProof;
 use crate::decisions::{conflict, invalid, not_found};
+use crate::kanban::model::ColumnCategory;
 use crate::prs::model::Pr;
 use crate::prs::review_model::{Finding, Review, Verdict};
 use crate::releases::{daemon_move, publish_moves};

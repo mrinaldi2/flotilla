@@ -8,8 +8,8 @@ use chrono::{DateTime, Utc};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
+use crate::kanban::model::Role;
 use crate::messaging::{self, user_sender, Dm};
 
 use super::model::{DeployAction, Release, ReleaseStatus};

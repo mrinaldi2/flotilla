@@ -7,7 +7,7 @@ use std::collections::BTreeMap;
 use super::prs::NewPr;
 use super::{Db, NewItem};
 use crate::actor::Actor;
-use crate::board::model::{ItemType, Platform, Priority};
+use crate::kanban::model::{ItemType, Platform, Priority};
 use crate::prs::check_model::{CheckResult, NewCheck, Report};
 
 fn project(db: &Db) -> String {

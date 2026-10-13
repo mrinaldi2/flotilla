@@ -56,7 +56,7 @@ fn count(v: &Value, key: &str) -> u32 {
 
 fn stamp(v: &Value, key: &str) -> Option<Timestamp> {
     let at = chrono::DateTime::parse_from_rfc3339(v.get(key)?.as_str()?).ok()?;
-    crate::board::contract::stamp(at.with_timezone(&chrono::Utc))
+    crate::kanban::contract::stamp(at.with_timezone(&chrono::Utc))
 }
 
 fn strings(v: &Value, key: &str) -> Vec<String> {

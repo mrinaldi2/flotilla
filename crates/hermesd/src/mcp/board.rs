@@ -10,11 +10,11 @@ use serde_json::{json, Value};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::contract::model_list;
-use crate::board::feed::{card_after_commit, Change, ChangeKind};
-use crate::board::model::{Item, ItemType, Platform, Priority, Role, Unmet};
-use crate::board::moves::{item_move as move_item, item_move_check, MoveRequest, Moved};
 use crate::db::Write;
+use crate::kanban::contract::model_list;
+use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
+use crate::kanban::model::{Item, ItemType, Platform, Priority, Role, Unmet};
+use crate::kanban::moves::{item_move as move_item, item_move_check, MoveRequest, Moved};
 
 use super::board_schema::{all_tools, decode, friendly, OWN_ITEM_TOOLS};
 use super::caller;

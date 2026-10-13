@@ -32,7 +32,7 @@ async fn bot_with_bus(
 /// took deploys.
 #[tokio::test]
 async fn a_deleted_bot_loses_its_board_roles() {
-    use hermesd::board::model::{ProjectRole, Role};
+    use hermesd::kanban::model::{ProjectRole, Role};
 
     let d = spawn_daemon().await;
     let mut c = WsClient::connect(&d).await;

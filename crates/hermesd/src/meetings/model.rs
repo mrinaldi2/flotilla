@@ -4,7 +4,7 @@
 use chrono::{DateTime, Utc};
 use serde_json::{json, Value};
 
-use crate::board::model::{text_enum, TextValue};
+use crate::kanban::model::{text_enum, TextValue};
 
 /// An attendee or action owner who is the owner rather than a bot.
 pub const OWNER: &str = "owner";

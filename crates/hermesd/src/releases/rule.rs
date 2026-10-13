@@ -9,9 +9,9 @@ use bus::{now, DecisionState, Ruling};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::ColumnCategory;
 use crate::decisions::publish::publish_settled;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
+use crate::kanban::model::ColumnCategory;
 
 use super::model::{Release, ReleaseStatus, Verdict};
 use super::{check_frozen, daemon_move, publish_moves, publish_touched};

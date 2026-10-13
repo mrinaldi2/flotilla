@@ -1,5 +1,5 @@
 //! The only place the board meets the wire contract: conversions between the
-//! repository's types (`board::model`) and the protobuf messages generated
+//! repository's types (`kanban::model`) and the protobuf messages generated
 //! from `proto/hermes/board/v1` (`bus::contract::board`).
 //!
 //! model → contract is infallible. contract → model is `TryFrom`: protobuf

@@ -15,8 +15,8 @@ use common::prs::{clone, commit};
 use common::repo::{git, remote};
 use common::{create_bot, McpClient, WsClient};
 use hermesd::actor::Actor;
-use hermesd::board::model::{ProjectRole, Role};
 use hermesd::db::MoveTo;
+use hermesd::kanban::model::{ProjectRole, Role};
 use serde_json::json;
 
 /// The Mac's project on a fresh repository, H-1 in Doing, and the PC's

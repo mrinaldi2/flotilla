@@ -12,11 +12,11 @@ use sha2::{Digest, Sha256};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::feed::{card_after_commit, Change, ChangeKind, FeedWriter};
-use crate::board::guards::{self, Move, Who};
-use crate::board::model::{ColumnCategory, Role};
 use crate::db::{BoardTx, MoveTo, Write};
 use crate::decisions::{conflict, forbidden, not_found};
+use crate::kanban::feed::{card_after_commit, Change, ChangeKind, FeedWriter};
+use crate::kanban::guards::{self, Move, Who};
+use crate::kanban::model::{ColumnCategory, Role};
 
 use model::Release;
 

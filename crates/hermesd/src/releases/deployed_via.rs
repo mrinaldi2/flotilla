@@ -39,9 +39,9 @@ use serde_json::json;
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::{ColumnCategory, Role};
 use crate::db::BoardTx;
 use crate::decisions::{conflict, invalid};
+use crate::kanban::model::{ColumnCategory, Role};
 use crate::mcp::tasks::close_cancelled;
 use crate::messaging;
 

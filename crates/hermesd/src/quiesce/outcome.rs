@@ -14,8 +14,8 @@ use chrono::Utc;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::db::Quiesce;
+use crate::kanban::model::Role;
 use crate::releases::model::ReleaseEvent;
 
 /// One line of what a pause did.

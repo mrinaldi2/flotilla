@@ -13,8 +13,8 @@ use bus::PermissionExtra;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
+use crate::kanban::model::Role;
 use crate::messaging::{self, daemon_sender, Dm};
 
 use super::assemble::attach_build;

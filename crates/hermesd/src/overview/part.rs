@@ -9,7 +9,7 @@ use serde_json::Value;
 
 use crate::app::AppState;
 use crate::attention::{self, cut, timestamp, Scope};
-use crate::board::model::ColumnCategory;
+use crate::kanban::model::ColumnCategory;
 use crate::releases::model::{Release, ReleaseStatus};
 
 /// The longest meeting summary a row carries.

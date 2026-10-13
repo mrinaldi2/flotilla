@@ -12,7 +12,7 @@ use serde_json::{json, Value};
 use super::board_home::kind_from;
 use super::{board_ids, PeerError};
 use crate::app::AppState;
-use crate::board::feed::{Change, ChangeKind};
+use crate::kanban::feed::{Change, ChangeKind};
 
 /// Fetches the boards this peer holds for projects linked through it.
 pub(super) async fn link_up(app: Arc<AppState>, peer_id: String) {
@@ -146,7 +146,7 @@ fn apply_card(app: &Arc<AppState>, link: &ProjectLink, kind: ChangeKind, frame: 
     board_ids::card(&mut card, |id| {
         board_ids::from_home(&app.db, &link.peer_id, &link.project_id, id)
     });
-    let Ok(model) = crate::board::model::ItemCard::try_from(card.clone()) else {
+    let Ok(model) = crate::kanban::model::ItemCard::try_from(card.clone()) else {
         return;
     };
     let item_id = model.id.clone();

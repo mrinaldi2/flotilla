@@ -1,11 +1,11 @@
 //! Board storage, part 1: a project's board settings, columns, roles and
 //! templates, seeded together when the board is enabled. It stores and
-//! returns the board's own types (`board::model`); adapters map them to the
-//! wire contract through `board::contract`.
+//! returns the board's own types (`kanban::model`); adapters map them to the
+//! wire contract through `kanban::contract`.
 
 use std::collections::BTreeMap;
 
-use crate::board::model::{
+use crate::kanban::model::{
     BoardColumn, BoardSettings, Platform, ProjectRole, Role, Template, TemplateKind, TextValue,
 };
 use bus::now;
@@ -14,7 +14,7 @@ use serde::de::DeserializeOwned;
 use serde_json::Value;
 
 use super::{parse_ts, ts, Db};
-use crate::board::defaults;
+use crate::kanban::defaults;
 
 /// A value-set member as stored.
 pub(super) fn to_text<T: TextValue>(value: &T) -> &'static str {

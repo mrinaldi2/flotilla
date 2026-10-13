@@ -7,9 +7,9 @@ use bus::{MessageKind, TaskState, MAX_MESSAGE_BYTES};
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::feed::ChangeKind;
-use crate::board::model::LinkKind;
 use crate::events::Push;
+use crate::kanban::feed::ChangeKind;
+use crate::kanban::model::LinkKind;
 use crate::messaging;
 use crate::messaging::Dm;
 

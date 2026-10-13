@@ -9,8 +9,8 @@ use common::board::connect_with;
 use common::tasks::{error_text, project_with_bots, Pair};
 use common::{token_str, McpClient, WsClient};
 use hermesd::actor::Actor;
-use hermesd::board::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use hermesd::db::{MoveTo, NewItem};
+use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 /// Team Lead, DevOps, a Tester here (no machine named) and Tester iMac,

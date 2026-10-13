@@ -8,9 +8,9 @@ use std::sync::Arc;
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::{ColumnCategory, LinkKind};
 use crate::db::prs::{Head, NewPr};
 use crate::decisions::{conflict, forbidden, not_found};
+use crate::kanban::model::{ColumnCategory, LinkKind};
 use crate::prs::checks;
 use crate::prs::model::{Pr, PrState};
 use crate::prs::repo::{self, Repo};

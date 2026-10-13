@@ -69,7 +69,7 @@ impl Stored {
             devops: db
                 .project_roles(&bot.project_id)?
                 .iter()
-                .any(|r| r.role == crate::board::model::Role::Devops && r.bot_id == bot.id),
+                .any(|r| r.role == crate::kanban::model::Role::Devops && r.bot_id == bot.id),
         })
     }
 }

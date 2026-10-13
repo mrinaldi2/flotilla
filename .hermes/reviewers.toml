@@ -68,10 +68,10 @@ paths = [
   # Composer off when the hook settings write fails (H-209 M1)
   "crates/hermesd/src/supervisor/lifecycle.rs",
   # Roles (who may review and merge) and board gates
-  "crates/hermesd/src/board/team.rs",
+  "crates/hermesd/src/kanban/team.rs",
   "crates/hermesd/src/mcp/board_roles.rs",
-  "crates/hermesd/src/board/guards.rs",
-  "crates/hermesd/src/board/guards/**",
+  "crates/hermesd/src/kanban/guards.rs",
+  "crates/hermesd/src/kanban/guards/**",
   "crates/hermesd/src/db/reviews.rs",
   # Peer trust (links, forwarded owner acts, mirrors)
   "crates/hermesd/src/peer.rs",

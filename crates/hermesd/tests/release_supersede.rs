@@ -15,7 +15,7 @@ use common::supersede::{
 };
 use common::tasks::error_text;
 use common::WsClient;
-use hermesd::board::model::{ProjectRole, Role};
+use hermesd::kanban::model::{ProjectRole, Role};
 use serde_json::json;
 
 #[tokio::test]
@@ -38,7 +38,7 @@ async fn a_deploy_supersedes_the_older_unruled_packages_of_its_platform() {
     let db = &r.pair.d.app.db;
     let ios_item = db.get_item(&items[1]).unwrap().unwrap();
     let edit = hermesd::db::ItemEdit {
-        platforms: Some(&[hermesd::board::model::Platform::Ios]),
+        platforms: Some(&[hermesd::kanban::model::Platform::Ios]),
         ..hermesd::db::ItemEdit::default()
     };
     db.update_item(

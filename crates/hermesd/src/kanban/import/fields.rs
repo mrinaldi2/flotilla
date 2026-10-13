@@ -1,7 +1,7 @@
 //! Backlog cells to board fields. Each mapping covers the spellings the
 //! backlog uses; anything else is reported by the caller, not guessed.
 
-use crate::board::model::{ColumnCategory, ItemType, Platform, Size};
+use crate::kanban::model::{ColumnCategory, ItemType, Platform, Size};
 
 /// A state cell's column, and the label that keeps a state the board can't
 /// hold: its leading words, as the backlog writes them.

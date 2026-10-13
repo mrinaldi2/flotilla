@@ -21,10 +21,10 @@ use chrono::{DateTime, Duration, Utc};
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::db::{NewQuiesce, Quiesce};
 use crate::decisions::conflict;
 use crate::events::Push;
+use crate::kanban::model::Role;
 
 pub mod cli;
 pub mod fallback;

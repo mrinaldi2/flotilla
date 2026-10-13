@@ -7,8 +7,8 @@ use bus::contract::board as c;
 use bus::MessageKind;
 
 use super::{not_found, refuse, Refusal};
-use crate::board::feed::{card_after_commit, Change, ChangeKind};
-use crate::board::model::{Item, ItemComment};
+use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
+use crate::kanban::model::{Item, ItemComment};
 use crate::messaging;
 use crate::ws::owner_card::with_card;
 use crate::ws::Conn;

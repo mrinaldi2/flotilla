@@ -13,8 +13,8 @@ use bus::Peer;
 use super::PeerEntry;
 use crate::app::AppState;
 use crate::attention::{self, cut, key, timestamp};
-use crate::board::model::{BoardColumn, ColumnCategory, ItemCard};
 use crate::db::Db;
+use crate::kanban::model::{BoardColumn, ColumnCategory, ItemCard};
 
 /// The most Doing cards a row lists.
 const DOING_SHOWN: usize = 3;

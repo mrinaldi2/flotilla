@@ -10,7 +10,7 @@ use common::ios_targets::{
 };
 use common::tasks::error_text;
 use common::WsClient;
-use hermesd::board::model::{Platform, ProjectRole, Role};
+use hermesd::kanban::model::{Platform, ProjectRole, Role};
 use serde_json::json;
 #[tokio::test]
 async fn an_ios_package_is_tested_by_ios_qa_and_closes_on_the_iphone() {

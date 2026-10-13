@@ -8,8 +8,8 @@ use bus::contract::board as c;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::db::NewReleaseTest;
+use crate::kanban::model::Role;
 use crate::releases::assemble::{self, NewPackage};
 use crate::releases::model::{DeployResult, ReleaseBuild, Smoke};
 use crate::releases::publish::{self, Publish};

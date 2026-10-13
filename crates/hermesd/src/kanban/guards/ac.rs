@@ -2,7 +2,7 @@
 //! post-install (H-116) and editing.
 
 use super::{has_text, unmet, Who};
-use crate::board::model::{ColumnCategory as Cat, Item, Role, Unmet};
+use crate::kanban::model::{ColumnCategory as Cat, Item, Role, Unmet};
 
 /// Checking an acceptance criterion: a tester, a verifier named on the item,
 /// the lead or the owner. A lead bot that doesn't verify gives the evidence

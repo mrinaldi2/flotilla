@@ -9,8 +9,8 @@ use bus::{Bot, Peer};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::feed::{card_after_commit, Change, ChangeKind};
 use crate::db::Db;
+use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 
 /// Record the card on the task mirrored here: linked on the item when this
 /// machine holds the board, named on the task otherwise.

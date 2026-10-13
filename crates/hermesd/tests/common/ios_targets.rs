@@ -2,8 +2,8 @@
 //! (`release_ios_targets.rs`, H-176): the team, a package, a passing test.
 
 use hermesd::actor::Actor;
-use hermesd::board::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use hermesd::db::{MoveTo, NewItem};
+use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 use super::tasks::{error_text, project_with_bots, Pair};

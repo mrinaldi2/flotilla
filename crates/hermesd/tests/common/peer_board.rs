@@ -4,9 +4,9 @@
 use super::peers::{bot_named, paired, project, wait_until, Paired};
 use super::{create_bot, McpClient};
 use hermesd::actor::Actor;
-use hermesd::board::feed::{Change, ChangeKind};
-use hermesd::board::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use hermesd::db::{MoveTo, NewItem};
+use hermesd::kanban::feed::{Change, ChangeKind};
+use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
 use serde_json::json;
 
 pub struct Board {

@@ -4,7 +4,7 @@
 //! the guards that decide whether a move is allowed belong to the service
 //! layer above (B3), which calls these once they pass.
 
-use crate::board::model::{
+use crate::kanban::model::{
     ColumnCategory, Item, ItemEventKind, ItemType, Platform, Priority, Size,
 };
 use bus::now;
@@ -15,8 +15,8 @@ use super::board_items::{item_in, rank_first, rank_last, record, Event, Write};
 use super::board_notes::replace_ac;
 use super::board_tx::BoardTx;
 use super::{ts, Actor};
-use crate::board::guards::WIP_OVERRIDE_LABEL;
-use crate::board::rank;
+use crate::kanban::guards::WIP_OVERRIDE_LABEL;
+use crate::kanban::rank;
 
 /// Fields an edit may change; `None` leaves a field as it is.
 #[derive(Default)]

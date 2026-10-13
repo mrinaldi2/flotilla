@@ -4,7 +4,7 @@
 
 use rusqlite::params;
 
-use crate::board::model::{
+use crate::kanban::model::{
     BoardColumn, BoardSettings, ItemCard, ItemComment, ItemEvent, ProjectRole,
 };
 

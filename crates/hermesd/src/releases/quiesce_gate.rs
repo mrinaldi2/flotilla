@@ -8,8 +8,8 @@ use std::sync::Arc;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::decisions::forbidden;
+use crate::kanban::model::Role;
 
 use super::model::DeployAction;
 use super::{deploy, load, machines, Caller};

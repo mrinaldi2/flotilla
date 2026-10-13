@@ -17,9 +17,9 @@ use serde_json::{json, Value};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::{ColumnCategory, LinkKind};
 use crate::db::prs::NewPr;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
+use crate::kanban::model::{ColumnCategory, LinkKind};
 use crate::prs::model::Pr;
 use crate::prs::{checks, repo};
 

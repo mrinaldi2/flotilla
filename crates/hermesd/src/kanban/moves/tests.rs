@@ -2,9 +2,9 @@
 //! history and the WIP override flag.
 
 use super::*;
-use crate::board::guards::WIP_OVERRIDE_LABEL;
-use crate::board::model::{ItemEventKind, ItemType, LinkKind, Platform, Priority, Size};
 use crate::db::{NewItem, Write};
+use crate::kanban::guards::WIP_OVERRIDE_LABEL;
+use crate::kanban::model::{ItemEventKind, ItemType, LinkKind, Platform, Priority, Size};
 
 struct Board {
     db: Db,
@@ -229,9 +229,9 @@ fn returned_work_goes_over_wip_first_and_flagged() {
         )
         .unwrap()
         .id;
-    b.db.set_project_role(&crate::board::model::ProjectRole {
+    b.db.set_project_role(&crate::kanban::model::ProjectRole {
         project_id: b.project.clone(),
-        role: crate::board::model::Role::ReviewerArch,
+        role: crate::kanban::model::Role::ReviewerArch,
         bot_id: arch.clone(),
         machine: None,
     })

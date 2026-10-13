@@ -17,7 +17,7 @@ use common::board::{new_item, next_envelope, send_raw, walk};
 use common::peers::{project, wait_until};
 use common::tasks::project_with_bots;
 use common::*;
-use hermesd::board::model::Priority;
+use hermesd::kanban::model::Priority;
 use prost::Message;
 use serde_json::{json, Value};
 

@@ -10,7 +10,7 @@ use std::time::Duration;
 use chrono::Utc;
 use common::prs::{branch, give, head, set_policy, setup, Repo};
 use common::WsClient;
-use hermesd::board::model::Role;
+use hermesd::kanban::model::Role;
 use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
 use hermesd::prs::check_model::{CheckResult, CheckRun};
 use hermesd::releases::machines;

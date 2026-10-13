@@ -54,7 +54,7 @@ pub fn archive_bot(
 
     release_open_tasks(app, bot)?;
     // Its board items go to the lead, who moves them on (H-099).
-    if let Err(e) = crate::board::handback::items_to_lead(app, bot, actor) {
+    if let Err(e) = crate::kanban::handback::items_to_lead(app, bot, actor) {
         tracing::warn!(bot_id = %bot.id, error = %e, "items not handed back to the lead");
     }
 
@@ -64,9 +64,9 @@ pub fn archive_bot(
     app.db.archive_bot(&bot.id, &actor.as_stored())?;
     // Its board roles went with it: watchers and linked computers refetch.
     if app.db.board_settings(&bot.project_id)?.is_some() {
-        app.board.writer().publish(crate::board::feed::Change {
+        app.board.writer().publish(crate::kanban::feed::Change {
             project_id: &bot.project_id,
-            kind: crate::board::feed::ChangeKind::SettingsChanged,
+            kind: crate::kanban::feed::ChangeKind::SettingsChanged,
             item_id: "",
             card: None,
             from_column: None,

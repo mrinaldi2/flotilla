@@ -7,9 +7,9 @@
 use bus::contract::board as c;
 
 use super::Conn;
-use crate::board::feed::{card_after_commit, Change, ChangeKind};
-use crate::board::model::ColumnCategory;
 use crate::decisions::{invalid, not_found};
+use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
+use crate::kanban::model::ColumnCategory;
 
 /// The longest message text the card's comment quotes.
 const QUOTED_MAX: usize = 500;

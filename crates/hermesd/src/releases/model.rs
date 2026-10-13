@@ -4,7 +4,7 @@
 use chrono::{DateTime, Utc};
 use serde_json::{json, Value};
 
-use crate::board::model::{text_enum, TextValue};
+use crate::kanban::model::{text_enum, TextValue};
 
 text_enum!(
     /// Where a package is in its life (H-020 §6, the final set).

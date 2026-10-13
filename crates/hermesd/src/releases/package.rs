@@ -8,9 +8,9 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::app::AppState;
-use crate::board::model::{Platform, Role};
 use crate::db::{BoardTx, NewReleaseTest};
 use crate::decisions::{conflict, invalid};
+use crate::kanban::model::{Platform, Role};
 
 use super::machines;
 use super::model::{Release, ReleaseStatus};

@@ -14,10 +14,10 @@ use chrono::{DateTime, Utc};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::Role;
 use crate::db::merge_queue::QueueRow;
 use crate::db::OwnerProof;
 use crate::decisions::{conflict, not_found};
+use crate::kanban::model::Role;
 use crate::messaging::{self, daemon_sender, Dm};
 use crate::prs::model::{Pr, PrState};
 use crate::prs::review_model::Verdict;

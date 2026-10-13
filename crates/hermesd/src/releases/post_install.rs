@@ -9,9 +9,9 @@ use bus::now;
 use serde_json::json;
 
 use crate::app::AppState;
-use crate::board::guards;
 use crate::db::BoardTx;
 use crate::decisions::{conflict, not_found};
+use crate::kanban::guards;
 
 use super::lifecycle::tell_installers;
 use super::model::{DeployAction, Release, ReleaseEvent};

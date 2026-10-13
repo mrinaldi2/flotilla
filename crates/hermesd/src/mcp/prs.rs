@@ -8,7 +8,7 @@ use bus::contract::pr as p;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::Role;
+use crate::kanban::model::Role;
 use crate::prs::check_rerun::{self, Asker};
 use crate::prs::review_model::{Finding, Verdict};
 use crate::prs::{self, flow, follow_up, review};

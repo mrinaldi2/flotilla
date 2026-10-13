@@ -7,11 +7,11 @@ use std::sync::Arc;
 use chrono::{DateTime, NaiveDate, Utc};
 
 use crate::app::AppState;
-use crate::board::feed::{card_after_commit, Change, ChangeKind};
-use crate::board::guards;
-use crate::board::model::{ItemType, LinkKind, Priority};
 use crate::db::NewItem;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
+use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
+use crate::kanban::guards;
+use crate::kanban::model::{ItemType, LinkKind, Priority};
 
 use super::model::{ActionItem, ActionStatus, MeetingStatus};
 use super::run::changed;

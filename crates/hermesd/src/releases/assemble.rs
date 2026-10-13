@@ -8,11 +8,11 @@ use std::sync::Arc;
 use bus::{DecisionKind, Priority};
 
 use crate::app::AppState;
-use crate::board::guards::{self, Move, Who};
-use crate::board::model::{ColumnCategory, Role, Unmet};
 use crate::db::{BoardTx, NewRelease};
 use crate::decisions::service::{raise, RaiseRequest};
 use crate::decisions::{conflict, invalid};
+use crate::kanban::guards::{self, Move, Who};
+use crate::kanban::model::{ColumnCategory, Role, Unmet};
 
 use super::machines;
 use super::model::{Release, ReleaseBuild, ReleaseStatus};

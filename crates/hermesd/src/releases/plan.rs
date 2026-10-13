@@ -16,9 +16,9 @@ use std::sync::Arc;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::board::model::{ColumnCategory, Role};
 use crate::db::{BoardTx, NewRelease};
 use crate::decisions::{conflict, forbidden, invalid};
+use crate::kanban::model::{ColumnCategory, Role};
 
 use super::model::{Release, ReleaseEvent, ReleaseStatus};
 use super::{load, Caller};

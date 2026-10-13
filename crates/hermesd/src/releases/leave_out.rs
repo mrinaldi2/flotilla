@@ -21,9 +21,9 @@ use serde_json::{json, Value};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::board::model::{ColumnCategory, Role};
 use crate::db::{LeaveOut, OwnerProof};
 use crate::decisions::{conflict, invalid};
+use crate::kanban::model::{ColumnCategory, Role};
 use crate::messaging::{self, daemon_sender, Dm};
 use crate::prs::model::Pr;
 use crate::prs::{owner, repo};

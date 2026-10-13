@@ -162,7 +162,7 @@ answer for the owner. See the [protocol](protocol.md#the-decision-registry).
 ## Board
 
 A project's backlog lives on its board (H-017): items move through columns
-whose categories the guards key on. One pure function, `board::guards`,
+whose categories the guards key on. One pure function, `kanban::guards`,
 decides every move, and each guarded change runs as one `BEGIN IMMEDIATE`
 transaction (`Db::board_tx`) that reads the item, the caller's roles and the
 column loads, checks the version, runs the guard and writes, so nothing changes
