@@ -13,6 +13,7 @@ pub use board_drafts::UnseenDraft;
 pub use board_edit::{ItemEdit, MoveTo};
 pub use board_import::{Created, ImportReport, Warned};
 pub use board_items::{NewItem, Write};
+pub use board_proposals::BoardProposal;
 pub use board_reads::BoardSnapshot;
 pub use board_tx::BoardTx;
 pub use card_questions::Asker;

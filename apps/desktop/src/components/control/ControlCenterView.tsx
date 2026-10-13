@@ -7,6 +7,8 @@ import OwnerActionList from "../ownerActions/OwnerActionList";
 import ReleaseReview from "../releases/ReleaseReview";
 import { botNamer, useItemTitles } from "../releases/ReleasesView";
 import { useDecisionRelease } from "../releases/useDecisionRelease";
+import ProposalReview from "../board/proposals/ProposalReview";
+import { useDecisionProposal } from "../board/proposals/useDecisionProposal";
 import ReadingPane from "./ReadingPane";
 import { useControlCenter } from "./useControlCenter";
 import type { ControlCenterOptions } from "./useControlCenter";
@@ -34,6 +36,27 @@ export default function ControlCenterView(props: ControlCenterOptions): ReactEle
       />
     );
 
+  const proposed = useDecisionProposal(props.client, props.connected, state.reading);
+  const found = proposed.found;
+  const openBoard = props.onOpenBoard;
+  const proposal =
+    found === undefined || state.reading === undefined ? undefined : (
+      <ProposalReview
+        key={found.proposal.id}
+        found={found}
+        lead={state.reading.raised_by.name}
+        canApprove={canControl && props.client.hasGrant("approve")}
+        busy={proposed.busy}
+        error={proposed.error}
+        onRule={(approve, note) => void proposed.rule(approve, note)}
+        onChange={
+          openBoard === undefined || found.board === undefined
+            ? undefined
+            : () => openBoard(state.reading?.project_id ?? "", found.proposal.boardId)
+        }
+      />
+    );
+
   const pane = (showBack: boolean): ReactElement => (
     <ReadingPane
       decision={state.reading}
@@ -49,7 +72,7 @@ export default function ControlCenterView(props: ControlCenterOptions): ReactEle
       botAvatar={cc.botAvatar}
       textareaRef={cc.textareaRef}
       onDelete={cc.setDeleting}
-      release={release}
+      release={release ?? proposal}
       ownerActions={
         state.reading === undefined ? undefined : (
           <OwnerActionList

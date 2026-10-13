@@ -85,6 +85,9 @@ export default function MainPane(props: MainPaneProps): ReactElement {
         onToast={addToast}
         permissions={props.permissions}
         onOpenBot={props.onOpenBot}
+        onOpenBoard={(projectId, board) =>
+          daemon.select({ kind: "project", projectId, tab: "board", board, boardSettings: true })
+        }
       />
     );
   }

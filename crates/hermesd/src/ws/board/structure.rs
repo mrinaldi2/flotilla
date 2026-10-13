@@ -80,3 +80,51 @@ fn refusal(e: anyhow::Error) -> Refusal {
     let code = crate::decisions::error_code(&e).unwrap_or("invalid_request");
     refuse(code, e.to_string())
 }
+
+/// How many of the lead's applied changes the owner's snapshot carries.
+const RECENT_CHANGES: usize = 10;
+
+/// The lead's open proposals and its latest applied changes, newest
+/// first, for the owner's snapshot (0.19.0 K5).
+pub(super) fn proposals(
+    app: &crate::app::AppState,
+    project_id: &str,
+) -> anyhow::Result<Vec<c::BoardProposal>> {
+    let mut applied = 0;
+    Ok(app
+        .db
+        .board_proposals(project_id)?
+        .into_iter()
+        .filter(|p| match p.state.as_str() {
+            "open" => true,
+            "applied" => {
+                applied += 1;
+                applied <= RECENT_CHANGES
+            }
+            _ => false,
+        })
+        .filter_map(proposal_wire)
+        .collect())
+}
+
+fn proposal_wire(p: crate::db::BoardProposal) -> Option<c::BoardProposal> {
+    use c::board_proposal::Change;
+    let change = match serde_json::from_str::<Structure>(&p.request).ok()? {
+        Structure::Create(r) => Change::BoardCreate(r),
+        Structure::Board(r) => Change::BoardUpdate(r),
+        Structure::ColumnAdd(r) => Change::ColumnAdd(r),
+        Structure::ColumnUpdate(r) => Change::ColumnUpdate(r),
+        Structure::ColumnRemove(r) => Change::ColumnRemove(r),
+        Structure::Automation(r) => Change::AutomationSet(r),
+    };
+    Some(c::BoardProposal {
+        id: p.id,
+        board_id: p.board_id.unwrap_or_default(),
+        summary: p.summary,
+        proposed_by: p.proposed_by,
+        decision_id: p.decision_id.unwrap_or_default(),
+        state: p.state,
+        at: crate::kanban::contract::stamp(p.created_at),
+        change: Some(change),
+    })
+}

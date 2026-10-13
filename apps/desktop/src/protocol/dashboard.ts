@@ -112,7 +112,9 @@ export interface AttentionRowJson {
     | "main_moved_outside"
     | "check_unroutable"
     | "cleanup_held"
-    | "disk_low";
+    | "disk_low"
+    /** A bot changed a draft since the owner last looked (0.19.0). */
+    | "draft_updated";
   readonly id: string;
   /** One line, set by the daemon. */
   readonly title: string;
