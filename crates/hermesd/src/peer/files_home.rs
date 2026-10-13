@@ -106,9 +106,9 @@ pub(super) fn serve_push(app: &Arc<AppState>, peer: &Peer, frame: &Value) -> any
 
 /// `attachment_fetch {project_id, attachment_id, offset}`: a chunk of an
 /// attachment's bytes, at most 512 KiB, base64, with the sha256 they must
-/// hash to. Only an image or a file of a live item of the linked project:
-/// a draft's, a discarded item's and another project's don't exist here
-/// for a peer, and a doc has no bytes of its own.
+/// hash to. Only an image or a file attached to a live item of the linked
+/// project: a draft's, a discarded item's, a detached one and another
+/// project's don't exist here for a peer, and a doc has no bytes of its own.
 pub(super) fn serve_fetch(
     app: &Arc<AppState>,
     peer: &Peer,
@@ -124,7 +124,9 @@ pub(super) fn serve_fetch(
             };
             let ours = t.item_project(&att.item_id)?.as_deref() == Some(link.project_id.as_str());
             let live = t.item_state(&att.item_id)? == Some(ItemState::Live);
-            Ok((ours && live).then_some(att))
+            // A detached file's bytes stay for the home's history, not to
+            // go on being handed out.
+            Ok((ours && live && !att.removed).then_some(att))
         })?
         .ok_or_else(|| refuse("not_found", format!("no attachment {id}")))?;
     if att.kind == AttachmentKind::Doc {

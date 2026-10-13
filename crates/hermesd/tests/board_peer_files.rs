@@ -146,6 +146,20 @@ async fn the_home_opens_no_peer_path_and_serves_no_draft_or_other_project() {
     assert_eq!(served["sha256"], live.sha256);
     assert_eq!(served["total"], 1000);
 
+    // Not once it is detached: its bytes stay for the home's history only.
+    let gone = owner_attach(&mut b.p.mac_client, &b.item, "gone.png", &screenshot(900)).await;
+    let detached = call(
+        &mut b.p.mac_client,
+        Request::ItemDetach(c::ItemDetach {
+            id: b.item.clone(),
+            attachment_id: gone.id.clone(),
+        }),
+    )
+    .await;
+    assert!(matches!(response(detached), Response::Item(_)));
+    let refused = ask(&b, fetch(&gone.id, &b.win_app)).await.unwrap_err();
+    assert!(refused.contains("not_found"), "{refused}");
+
     // A draft's isn't.
     let created = call(
         &mut b.p.mac_client,
