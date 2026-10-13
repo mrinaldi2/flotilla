@@ -5,6 +5,7 @@
 //! The repo's review and check policy (`policy`). Release packages and the
 //! deploy gate live in `crate::releases`.
 
+pub mod api;
 pub mod contract;
 pub mod defaults;
 pub mod feed;

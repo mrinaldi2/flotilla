@@ -33,9 +33,10 @@ use crate::app::AppState;
 use crate::kanban::model::ColumnCategory;
 
 use super::deployed_via::{close_via, reaches, reaches_and_contains, ruled_open};
+use super::load;
 use super::machines::is_ios_package;
 use super::model::{Release, ReleaseEvent, ReleaseStatus};
-use super::{daemon_move, load, publish_moves, publish_touched};
+use crate::kanban::api::{publish_moves, publish_touched, system_move};
 
 /// Not ruled on yet: the owner still has it to decide.
 fn unruled_open(status: ReleaseStatus) -> bool {
@@ -134,7 +135,7 @@ fn supersede(
             if !held_here {
                 continue;
             }
-            let from = daemon_move(
+            let from = system_move(
                 t,
                 project,
                 &ri.item_id,

@@ -17,7 +17,8 @@ use crate::decisions::conflict;
 use crate::kanban::model::{ColumnCategory, Role};
 
 use super::model::{Release, ReleaseEvent, ReleaseStatus};
-use super::{load, publish_touched, Caller};
+use super::{load, Caller};
+use crate::kanban::api::publish_touched;
 
 /// The record of a cancelled package, and the package it succeeded as it
 /// stands now.

@@ -24,10 +24,11 @@ use crate::actor::Actor;
 use crate::app::AppState;
 use crate::bot_permissions::Stored;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
+use crate::kanban::api::{publish_moves, system_move};
 use crate::kanban::model::{ColumnCategory, Role};
 use crate::prs::model::{Pr, PrState};
 use crate::prs::{mergeable, repo, review};
-use crate::releases::{daemon_move, git_cache, publish_moves};
+use crate::releases::git_cache;
 
 const MERGE: &str = "hermes/pr_merge";
 const MERGED: &str = "hermes/pr_merged";
@@ -296,7 +297,7 @@ fn merged(
                 "PR #{} merged at {sha}; its branch {} was kept: {kept_note}",
                 pr.number, pr.branch
             );
-            t.add_item_comment(&pr.item_id, &body, None, &actor)?;
+            crate::kanban::api::comment(t, &pr.item_id, &body, None, &actor)?;
         }
         // A card with PRs in several repos moves once all of them merged.
         let waiting: Vec<String> = t
@@ -312,7 +313,7 @@ fn merged(
             return Ok((waiting, Vec::new()));
         }
         let note = format!("PR #{} merged", pr.number);
-        let moved = daemon_move(
+        let moved = system_move(
             t,
             &pr.project_id,
             &pr.item_id,

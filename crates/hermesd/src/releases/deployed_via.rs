@@ -51,7 +51,8 @@ use super::model::{
     DeployAction, DeployResult, Release, ReleaseDeployment, ReleaseEvent, ReleaseStatus,
 };
 use super::post_install::post_install_checked;
-use super::{daemon_move, load, publish_moves, Caller};
+use super::{load, Caller};
+use crate::kanban::api::{publish_moves, system_move};
 
 /// The computers the old package reached itself, and those left that the
 /// via package covers.
@@ -138,7 +139,7 @@ pub(super) fn close_via(
         let note = format!("release {} deployed via {}", old.name, via.name);
         let mut moved = Vec::new();
         for ri in &old.items {
-            let from = daemon_move(
+            let from = system_move(
                 t,
                 project,
                 &ri.item_id,

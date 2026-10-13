@@ -30,7 +30,8 @@ use crate::prs::{owner, repo};
 
 use super::cut::{self, version_of};
 use super::model::{Release, ReleaseStatus};
-use super::{daemon_move, git_cache, load, publish_moves, publish_touched};
+use super::{git_cache, load};
+use crate::kanban::api::{publish_moves, publish_touched, system_move};
 
 /// The owner's Leave out of `numbers` from `release_id`.
 pub fn request(
@@ -117,7 +118,7 @@ pub fn request(
                     l.number,
                     version_of(&release)
                 );
-                t.add_item_comment(&l.item_id, &body, None, &Actor::User)?;
+                crate::kanban::api::comment(t, &l.item_id, &body, None, &Actor::User)?;
             }
             Ok((
                 t.insert_leave_out(&release.id, &ids, "recut", &by)?,
@@ -201,7 +202,7 @@ fn unsubmit(t: &crate::db::BoardTx<'_>, release: &Release) -> anyhow::Result<Mov
             continue;
         };
         if item.category == ColumnCategory::Approval {
-            let from = daemon_move(
+            let from = system_move(
                 t,
                 &release.project_id,
                 &item.id,

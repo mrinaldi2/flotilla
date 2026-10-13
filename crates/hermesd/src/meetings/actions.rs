@@ -170,7 +170,8 @@ pub fn promote(
     let actor = party.actor();
     let mut feed = app.board.writer();
     let item = app.db.board_tx(|t| {
-        let item = t.create_item(
+        let item = crate::kanban::api::create(
+            t,
             &NewItem {
                 project_id,
                 item_type: ItemType::Chore,
@@ -185,7 +186,8 @@ pub fn promote(
             },
             &actor,
         )?;
-        t.add_item_link(
+        crate::kanban::api::link(
+            t,
             &item.id,
             LinkKind::Meeting,
             &meeting.id,

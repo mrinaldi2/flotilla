@@ -67,7 +67,8 @@ pub fn file(
     };
     let mut findings = review.findings.clone();
     let item = app.db.board_tx(|t| {
-        let item = t.create_item(
+        let item = crate::kanban::api::create(
+            t,
             &NewItem {
                 project_id: project,
                 item_type: ItemType::Chore,
@@ -82,7 +83,14 @@ pub fn file(
             },
             &actor,
         )?;
-        t.add_item_link(&item.id, LinkKind::ItemRelates, &pr.item_id, None, &actor)?;
+        crate::kanban::api::link(
+            t,
+            &item.id,
+            LinkKind::ItemRelates,
+            &pr.item_id,
+            None,
+            &actor,
+        )?;
         findings[index].follow_up_item_id = Some(item.id.clone());
         t.set_review_findings(&review.id, &findings)?;
         Ok(item)

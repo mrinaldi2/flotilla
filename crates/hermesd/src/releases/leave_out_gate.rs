@@ -24,7 +24,8 @@ use crate::prs::model::Pr;
 use crate::prs::{checks, repo};
 
 use super::cut::{self, version_of};
-use super::{daemon_move, git_cache, load, publish_moves};
+use super::{git_cache, load};
+use crate::kanban::api::{publish_moves, system_move};
 
 const GATE: &str = "hermes/leave_out";
 const PUSHED: &str = "hermes/leave_out_pushed";
@@ -155,7 +156,8 @@ pub fn executor(
             &required.tree,
             &required.checks,
         )?;
-        t.add_item_link(
+        crate::kanban::api::link(
+            t,
             &card,
             LinkKind::Pr,
             &format!("#{}", pr.number),
@@ -257,7 +259,7 @@ pub fn after_merge(app: &Arc<AppState>, merged: &Pr) -> anyhow::Result<()> {
             let Some(pr) = t.pr_by_id(pr_id)? else {
                 continue;
             };
-            let from = daemon_move(
+            let from = system_move(
                 t,
                 project,
                 &pr.item_id,

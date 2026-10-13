@@ -10,12 +10,13 @@ use crate::actor::Actor;
 use crate::app::AppState;
 use crate::db::prs::{Head, NewPr};
 use crate::decisions::{conflict, forbidden, not_found};
+use crate::kanban::api::{publish_moves, system_move};
 use crate::kanban::model::{ColumnCategory, LinkKind};
 use crate::prs::checks;
 use crate::prs::model::{Pr, PrState};
 use crate::prs::repo::{self, Repo};
 use crate::prs::worktree;
-use crate::releases::{daemon_move, machines, publish_moves};
+use crate::releases::machines;
 
 /// What a bot asks to open.
 pub struct Open<'a> {
@@ -129,8 +130,9 @@ pub fn open(app: &Arc<AppState>, bot: &bus::Bot, req: &Open<'_>) -> anyhow::Resu
         // Opened again within a closed PR's window: its cleanup is off.
         t.cancel_closed_cleanup(project, &repo.name, branch, pr.number)?;
         let actor = bot_actor(bot);
-        t.add_item_link(&item.id, LinkKind::Branch, branch, None, &actor)?;
-        t.add_item_link(
+        crate::kanban::api::link(t, &item.id, LinkKind::Branch, branch, None, &actor)?;
+        crate::kanban::api::link(
+            t,
             &item.id,
             LinkKind::Pr,
             &format!("#{}", pr.number),
@@ -138,7 +140,7 @@ pub fn open(app: &Arc<AppState>, bot: &bus::Bot, req: &Open<'_>) -> anyhow::Resu
             &actor,
         )?;
         let note = format!("PR #{} opened", pr.number);
-        let moved = daemon_move(
+        let moved = system_move(
             t,
             project,
             &item.id,
@@ -251,7 +253,7 @@ pub fn close(
             .ok_or_else(|| conflict(format!("PR #{number} isn't open any more")))?;
         t.close_pr(&pr, reason)?;
         let note = format!("PR #{number} closed: {reason}");
-        let moved = daemon_move(
+        let moved = system_move(
             t,
             project,
             &pr.item_id,

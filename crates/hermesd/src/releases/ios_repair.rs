@@ -24,7 +24,8 @@ use super::model::{
     DeployAction, DeployResult, Release, ReleaseEvent, ReleaseStatus, ReleaseTargets,
 };
 use super::post_install::post_install_checked;
-use super::{check_frozen, daemon_move, frozen_hash, publish_moves};
+use super::{check_frozen, frozen_hash};
+use crate::kanban::api::{publish_moves, system_move};
 
 /// Whether `release` is one to repair: an iOS package submitted, not over,
 /// not deploying yet, still as frozen, whose deploy targets nobody set and
@@ -97,7 +98,7 @@ pub fn settle_ios_deploys(app: &Arc<AppState>) -> anyhow::Result<Vec<String>> {
                 t.set_release_status(&release.id, ReleaseStatus::Deployed)?;
                 let note = format!("release {} deployed", release.name);
                 for ri in &release.items {
-                    let from = daemon_move(
+                    let from = system_move(
                         t,
                         project,
                         &ri.item_id,
