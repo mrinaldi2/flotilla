@@ -42,6 +42,10 @@ pub(super) fn friendly(mut value: Value) -> Value {
             }
             Value::Array(items) => items.iter_mut().for_each(|i| walk(i, short)),
             Value::Object(map) => {
+                // Board settings' machines keyed by bare platform, beside
+                // the same by label.
+                let by_label = map.contains_key("requiredMachinesByLabel")
+                    || map.contains_key("required_machines_by_label");
                 *map = std::mem::take(map)
                     .into_iter()
                     .map(|(key, mut value)| {
@@ -49,7 +53,9 @@ pub(super) fn friendly(mut value: Value) -> Value {
                         (snake(&key), value)
                     })
                     // Filled for 0.18 readers; a bot reads the labels.
-                    .filter(|(key, _)| key != "platforms")
+                    .filter(|(key, _)| {
+                        key != "platforms" && !(by_label && key == "required_machines")
+                    })
                     .collect();
             }
             _ => {}

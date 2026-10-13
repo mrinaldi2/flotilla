@@ -77,3 +77,27 @@ fn short_names_decode_and_come_back_short() {
         json!({"category": "doing", "roles": ["reviewer.arch"]})
     );
 }
+
+/// Bots have no `platforms` any more: the labels say how to name one, and
+/// the fields kept for 0.18 readers stay out of what they read.
+#[test]
+fn a_bot_reads_platforms_as_labels_and_no_018_fields() {
+    let tools = board_tool_list(&[Role::Lead]);
+    for name in ["item_create", "item_update", "item_query"] {
+        let tool = tools.iter().find(|t| t["name"] == name).expect(name);
+        let props = &tool["inputSchema"]["properties"];
+        assert!(props.get("platforms").is_none(), "{name}");
+        let about = props["labels"]["description"].as_str().unwrap_or_default();
+        assert!(about.contains("platform:ios"), "{name}: {about}");
+    }
+    let out = friendly(json!({"settings": {
+        "requiredMachines": {"ios": {"values": ["iphone"]}},
+        "requiredMachinesByLabel": {"platform:ios": {"values": ["iphone"]}},
+    }, "card": {"platforms": ["PLATFORM_IOS"], "labels": ["platform:ios"]}}));
+    assert_eq!(
+        out,
+        json!({"settings": {
+            "required_machines_by_label": {"platform:ios": {"values": ["iphone"]}},
+        }, "card": {"labels": ["platform:ios"]}})
+    );
+}

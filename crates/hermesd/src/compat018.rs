@@ -10,6 +10,7 @@
 use std::collections::BTreeMap;
 
 use bus::contract::board as c;
+use serde_json::{json, Value};
 
 use crate::kanban::labels::{self, label};
 
@@ -164,6 +165,51 @@ pub fn machines_in(settings: &c::BoardSettings) -> BTreeMap<String, Vec<String>>
             (key, list.values.clone())
         })
         .collect()
+}
+
+/// A 0.19 bot's tool arguments for a home on 0.18, which reads platforms
+/// only from `platforms` and has no label filter: the `platform:` labels
+/// it knows move there. On an update `labels` is the whole list, so it also
+/// says which platforms are left. A query can't ask such a home for other
+/// labels, so it is refused rather than widened.
+pub fn args_for_018_home(home: &str, name: &str, args: &mut Value) -> anyhow::Result<()> {
+    if !matches!(name, "item_create" | "item_update" | "item_query") {
+        return Ok(());
+    }
+    let Some(fields) = args.as_object_mut() else {
+        return Ok(());
+    };
+    let Some(given) = fields.get("labels").and_then(Value::as_array) else {
+        return Ok(());
+    };
+    let (mut platforms, mut rest) = (Vec::new(), Vec::new());
+    for l in given {
+        match l.as_str().and_then(labels::split) {
+            Some((GROUP, value)) if number_of(value).is_some() => platforms.push(json!(value)),
+            _ => rest.push(l.clone()),
+        }
+    }
+    let query = name == "item_query";
+    if query {
+        anyhow::ensure!(
+            rest.is_empty(),
+            "{home} holds this board and runs an older Gravity, which filters by platform only: \
+             ask without the other labels, or once {home} is updated"
+        );
+        fields.remove("labels");
+    } else {
+        fields.insert("labels".into(), Value::Array(rest));
+    }
+    let named = fields.get("platforms").and_then(Value::as_array).cloned();
+    for p in named.into_iter().flatten() {
+        if !platforms.contains(&p) {
+            platforms.push(p);
+        }
+    }
+    if !query || !platforms.is_empty() {
+        fields.insert("platforms".into(), Value::Array(platforms));
+    }
+    Ok(())
 }
 
 /// The old platforms' spellings, short and wire, for decoding a 0.18

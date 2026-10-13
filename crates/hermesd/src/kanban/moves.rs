@@ -113,8 +113,8 @@ pub(crate) fn move_in(
         }
         let rule = guards::rule(item.category, to.category);
         let escape = guards::closes_without_release(&item, &mv, &who, &ctx);
-        // A spike or a chore closed on its outcome names it in the history
-        //: the newest artifact linked, which the guard required.
+        // A spike or a chore closed on its outcome names it in the history:
+        // the newest artifact linked, which the guard required.
         let outcome = (rule == Rule::Finish && !escape)
             .then(|| guards::outcome_link(&ctx))
             .flatten();

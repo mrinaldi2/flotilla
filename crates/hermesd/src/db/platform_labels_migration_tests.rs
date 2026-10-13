@@ -11,7 +11,7 @@ use super::board_tests::board;
 use super::{Db, NewItem};
 use crate::actor::Actor;
 use crate::kanban::labels::LabelGroup;
-use crate::kanban::model::{ItemType, LinkKind, Priority, Size, TemplateKind};
+use crate::kanban::model::{ItemType, LinkKind, Priority, ProjectRole, Role, Size, TemplateKind};
 use crate::kanban::moves::{item_move, MoveRequest, Moved};
 
 const OWNER: Actor<'static> = Actor::User;
@@ -49,6 +49,8 @@ fn state(db: &Db, p: &str) -> Value {
                            WHERE project_id = ?1 ORDER BY name, version"),
         "settings": rows("SELECT required_machines FROM board_settings WHERE project_id = ?1"),
         "boards": rows("SELECT * FROM board WHERE project_id = ?1"),
+        "roles": rows("SELECT role, bot_id, machine FROM project_role
+                       WHERE project_id = ?1 ORDER BY role, bot_id"),
     })
 }
 
@@ -144,7 +146,7 @@ fn a_018_board_keeps_its_platforms_as_labels_and_its_rules() {
         .project_roles(&p)
         .unwrap()
         .into_iter()
-        .find(|r| r.role == crate::kanban::model::Role::Lead)
+        .find(|r| r.role == Role::Lead)
         .unwrap()
         .bot_id;
     let daemon = item(&db, &p, "Guards", ItemType::Feature, &[]);
@@ -154,6 +156,17 @@ fn a_018_board_keeps_its_platforms_as_labels_and_its_rules() {
     let twice = item(&db, &p, "Crash", ItemType::Bug, &["was:B1"]);
     db.board_tx(|t| crate::kanban::api::link(t, &apps, LinkKind::Branch, "feat", None, &OWNER))
         .unwrap();
+    // 0.18 guessed this tester's role from its name and stored it.
+    let tester = db
+        .create_bot(&p, "Tester Win", "", "", "", "/tmp/t", "tester-win", None)
+        .unwrap();
+    db.set_project_role(&ProjectRole {
+        project_id: p.clone(),
+        role: Role::Tester,
+        bot_id: tester.id,
+        machine: Some("win-pc".into()),
+    })
+    .unwrap();
     as_018(
         &db,
         &[
@@ -183,7 +196,7 @@ fn a_018_board_keeps_its_platforms_as_labels_and_its_rules() {
         .unwrap()
         .iter()
         .all(|i| i[3] == "[]"));
-    for key in ["links", "events"] {
+    for key in ["links", "events", "roles"] {
         assert_eq!(after[key], before[key], "{key}");
     }
     let ids = |s: &Value| -> Vec<Value> {
@@ -243,6 +256,18 @@ fn a_018_board_keeps_its_platforms_as_labels_and_its_rules() {
         ])
     );
     assert_eq!(ready("chore"), json!(["description", "label:platform"]));
+
+    // No role is guessed any more, and none that was guessed is lost:
+    // opening the board again leaves them as they were.
+    let roles: Vec<String> = db
+        .project_roles(&p)
+        .unwrap()
+        .iter()
+        .map(|r| r.role.as_str().to_string())
+        .collect();
+    assert_eq!(roles, ["lead", "reviewer.arch", "tester"]);
+    db.ensure_board(&p, "d-mac", None).unwrap();
+    assert_eq!(state(&db, &p)["roles"], before["roles"]);
 
     // Again: nothing changes.
     migrate_from(&db, "ALTER TABLE board ADD COLUMN label_groups");
