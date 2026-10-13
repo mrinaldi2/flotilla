@@ -33,18 +33,26 @@ fn b64() -> &'static base64::engine::GeneralPurpose {
     &base64::engine::general_purpose::STANDARD
 }
 
-/// The cache folder of a project, inside its artifacts even once links
-/// are resolved.
-fn cache_dir(app: &AppState, project_id: &str) -> anyhow::Result<PathBuf> {
+/// A project's cache folder.
+struct Cache {
+    /// As the bots here are told it, like the artifacts' other paths (on
+    /// Windows, without the `\\?\` prefix a canonical path has).
+    shown: PathBuf,
+    /// Canonical: inside the artifacts even once links are resolved. Copies
+    /// are written here, and a shown path must still resolve inside it.
+    real: PathBuf,
+}
+
+fn cache_dir(app: &AppState, project_id: &str) -> anyhow::Result<Cache> {
     let artifacts = artifacts_of(app, project_id)?;
-    let dir = artifacts.join(".cache").join("attachments");
-    fs::create_dir_all(&dir)?;
-    let real = dir.canonicalize()?;
+    let shown = artifacts.join(".cache").join("attachments");
+    fs::create_dir_all(&shown)?;
+    let real = shown.canonicalize()?;
     anyhow::ensure!(
         real.starts_with(artifacts.canonicalize()?),
         "the attachment cache isn't inside the project's artifacts"
     );
-    Ok(real)
+    Ok(Cache { shown, real })
 }
 
 /// A sha256 as the home records it: 64 lower-case hex digits, which also
@@ -113,22 +121,23 @@ pub(crate) async fn local_copy(
     anyhow::ensure!(valid_sha(want.sha256), "its record has no valid sha256");
     let ft = file_type(&app.cfg.attachments, want.name)?;
     check_file_size(&app.cfg.attachments, ft.kind, want.bytes)?;
-    let dir = cache_dir(app, &link.project_id)?;
-    let target = dir.join(format!("{}.{}", want.sha256, ft.ext));
-    if let Some(path) = hit(&dir, &target, want.sha256) {
+    let cache = cache_dir(app, &link.project_id)?;
+    let name = format!("{}.{}", want.sha256, ft.ext);
+    let target = cache.shown.join(&name);
+    if let Some(path) = hit(&cache.real, &target, want.sha256) {
         return Ok(path);
     }
-    let (part, mut out) = part_file(&dir, want.sha256)?;
+    let (part, mut out) = part_file(&cache.real, want.sha256)?;
     let fetched = fetch(app, link, want, &mut out).await;
     drop(out);
     match fetched {
-        Ok(()) => put_in_place(&part, &target),
+        Ok(()) => put_in_place(&part, &cache.real.join(&name)),
         Err(e) => {
             fs::remove_file(&part).ok();
             return Err(e);
         }
     }
-    hit(&dir, &target, want.sha256)
+    hit(&cache.real, &target, want.sha256)
         .ok_or_else(|| anyhow::anyhow!("its copy didn't keep its sha256; try again"))
 }
 
@@ -204,7 +213,7 @@ pub(crate) async fn push(app: &AppState, push: &Push<'_>) -> anyhow::Result<Stri
     (&mut file).take(16).read_to_end(&mut head)?;
     check_content(ft, &head)?;
     file.seek(SeekFrom::Start(0))?;
-    let dir = cache_dir(app, &push.link.project_id)?;
+    let dir = cache_dir(app, &push.link.project_id)?.real;
     let (part, mut copy) = part_file(&dir, &"0".repeat(16))?;
     let sent = send(app, push, ft, &mut file, total, &mut copy).await;
     drop(copy);

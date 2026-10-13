@@ -218,3 +218,31 @@ fn a_listing_keeps_each_attachment_on_its_line() {
         "{listed}"
     );
 }
+
+#[test]
+fn a_bot_on_a_linked_computer_is_told_where_to_read_them() {
+    let shot = att(
+        "a1",
+        AttachmentKind::Image,
+        "items/RB-020/x-a1.png",
+        "",
+        false,
+    );
+    let doc = att(
+        "d1",
+        AttachmentKind::Doc,
+        "",
+        "https://example.com/spec",
+        false,
+    );
+    let listed = listing_elsewhere("RB-020", &[shot, doc]);
+    assert!(
+        !listed.contains("items/RB-020"),
+        "no path of the home's: {listed}"
+    );
+    assert!(
+        listed.contains("a1.png: item_get RB-020 gives you a copy"),
+        "{listed}"
+    );
+    assert!(listed.contains("https://example.com/spec"), "{listed}");
+}
