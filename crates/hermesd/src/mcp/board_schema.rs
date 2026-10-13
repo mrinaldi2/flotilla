@@ -120,7 +120,7 @@ pub(super) const BOARD_TOOLS: &[BoardTool] = &[
         "ItemFlagAc",
         Audience::Member,
         "Flag one acceptance criterion as provable only after install (post_install: true), \
-            or clear the flag. release_submit doesn't wait for it; Done does.",
+            or clear the flag. Only the move to Done waits for a flagged criterion.",
     ),
     tool("board_import", "BoardImport", Audience::Lead),
     // Boards and their structure (0.19.0 K4).
