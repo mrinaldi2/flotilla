@@ -1,24 +1,65 @@
 //! Online backup and restore: SQLite backup API plus configuration
 //! manifests. Secrets are never included.
+//!
+//! A backup reads the database as it is on disk: it never migrates it, so a
+//! newer `hermesd` backs up what an older one wrote, and restoring never
+//! changes the backup it restores from.
 
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context};
+use rusqlite::{Connection, OpenFlags};
+use serde_json::{json, Value};
 
 use crate::config::Config;
-use crate::db::Db;
+
+mod pre_migration;
+
+pub use pre_migration::{before_migrations, pending, Pending, KEEP_PRE_MIGRATION};
+
+/// Where backups go unless `--out` names another folder.
+pub fn backups_dir(cfg: &Config) -> PathBuf {
+    cfg.home.join("backups")
+}
 
 /// Create a backup directory containing `bus.sqlite`, `hermesd.toml` (if any),
 /// per-project/bot config files, and a manifest. Secrets and workspaces are
 /// excluded.
-pub fn backup(cfg: &Config, db: &Db, out: &Path) -> anyhow::Result<PathBuf> {
+pub fn backup(cfg: &Config, out: &Path) -> anyhow::Result<PathBuf> {
+    let db_path = cfg.db_path();
+    if !db_path.exists() {
+        bail!("no database at {}; nothing to back up", db_path.display());
+    }
+    let src = open_unmigrated(&db_path)?;
+    let version = crate::db::schema_version(&src)?;
+    write(
+        cfg,
+        &src,
+        out,
+        json!({ "kind": "manual", "schema_version": version }),
+    )
+}
+
+/// The database as it is, without the migrations `Db::open` runs, and
+/// without creating it.
+pub(crate) fn open_unmigrated(path: &Path) -> anyhow::Result<Connection> {
+    let flags = OpenFlags::SQLITE_OPEN_READ_WRITE
+        | OpenFlags::SQLITE_OPEN_URI
+        | OpenFlags::SQLITE_OPEN_NO_MUTEX;
+    let conn = Connection::open_with_flags(path, flags)
+        .with_context(|| format!("open {}", path.display()))?;
+    conn.busy_timeout(std::time::Duration::from_secs(5))?;
+    Ok(conn)
+}
+
+/// Write the backup folder from `src`; `extra` joins the manifest.
+fn write(cfg: &Config, src: &Connection, out: &Path, extra: Value) -> anyhow::Result<PathBuf> {
     if out.exists() && out.read_dir()?.next().is_some() {
         bail!("backup destination is not empty: {}", out.display());
     }
     std::fs::create_dir_all(out)?;
 
-    db.backup_to(&out.join("bus.sqlite"))
-        .context("SQLite online backup")?;
+    copy_db(src, &out.join("bus.sqlite")).context("SQLite online backup")?;
 
     let cfg_name = crate::brand::daemon_file(".toml");
     let cfg_path = cfg.home.join(&cfg_name);
@@ -33,18 +74,37 @@ pub fn backup(cfg: &Config, db: &Db, out: &Path) -> anyhow::Result<PathBuf> {
         copied = copy_config_tree(&projects_src, &out.join("projects"))?;
     }
 
-    let manifest = serde_json::json!({
+    let mut manifest = json!({
         "version": 1,
         "created_at": chrono::Utc::now().to_rfc3339(),
         "daemon_version": crate::app::DAEMON_VERSION,
         "config_files": copied,
         "includes_secrets": false
     });
+    if let (Some(fields), Value::Object(extra)) = (manifest.as_object_mut(), extra) {
+        fields.extend(extra);
+    }
     std::fs::write(
         out.join("manifest.json"),
         serde_json::to_string_pretty(&manifest)?,
     )?;
     Ok(out.to_path_buf())
+}
+
+/// SQLite's online backup: a consistent copy even of a live WAL database,
+/// which a file copy is not. The copy is closed when this returns.
+fn copy_db(src: &Connection, dest: &Path) -> anyhow::Result<()> {
+    let mut dst = Connection::open(dest)?;
+    let backup = rusqlite::backup::Backup::new(src, &mut dst)?;
+    backup.run_to_completion(64, std::time::Duration::from_millis(50), None)?;
+    Ok(())
+}
+
+/// `PRAGMA integrity_check` on a database file, without migrating it.
+fn intact(path: &Path) -> anyhow::Result<bool> {
+    let conn = open_unmigrated(path)?;
+    let res: String = conn.query_row("PRAGMA integrity_check", [], |r| r.get(0))?;
+    Ok(res == "ok")
 }
 
 const CONFIG_FILES: &[&str] = &["project.json", "bot.json", "system.md", "mcp.json"];
@@ -98,12 +158,11 @@ pub fn restore(cfg: &Config, from: &Path, overwrite: bool) -> anyhow::Result<()>
     if !src_db.exists() {
         bail!("{} does not contain bus.sqlite", from.display());
     }
-    // Validate the backup before touching anything.
-    let check = Db::open(&src_db).context("opening backup database")?;
-    if !check.integrity_check()? {
+    // Validate the backup before touching anything, and leave it as it is:
+    // the daemon migrates the restored copy when it starts.
+    if !intact(&src_db).context("opening backup database")? {
         bail!("backup database failed integrity check");
     }
-    drop(check);
 
     let dest_db = cfg.db_path();
     if dest_db.exists() {
@@ -148,6 +207,7 @@ pub fn restore(cfg: &Config, from: &Path, overwrite: bool) -> anyhow::Result<()>
 mod tests {
     use super::*;
     use crate::config::Config;
+    use crate::db::Db;
 
     #[test]
     fn backup_and_restore_roundtrip() {
@@ -170,7 +230,7 @@ mod tests {
         std::fs::write(cfg.secrets_dir().join("client.token"), "s3cret").unwrap();
 
         let out = home.path().join("backups/b1");
-        backup(&cfg, &db, &out).unwrap();
+        backup(&cfg, &out).unwrap();
         assert!(out.join("bus.sqlite").exists());
         assert!(out.join("manifest.json").exists());
         assert!(out.join("projects/acme/bots/alice/bot.json").exists());

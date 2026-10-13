@@ -136,6 +136,7 @@ mod pr_read;
 mod pr_read_peer;
 mod pr_reviews;
 mod pr_reviews_duties;
+mod premigration_backup;
 mod projects;
 mod projects_home;
 mod projects_home_peer;

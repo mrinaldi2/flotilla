@@ -26,24 +26,36 @@ Bots: the scenario reads best with real Claude Code bots, which are billed.
 To spend nothing, run the daemon with `runtime = "double"` and act as the bots
 with `.claude/skills/bus-live-test/scripts/bus.mjs mcp`.
 
-## 1. Before installing: back up
+## 1. Before installing: what you have, and an optional backup
 
-On each computer, with the version you have now:
+On each computer, note the version you have now:
 
 ```sh
 ~/.thehermes/bin/hermesd --version
-~/.thehermes/bin/hermesd backup        # prints the backup folder; note it
 ```
 
 ```powershell
 & "$env:USERPROFILE\.thehermes\bin\hermesd.exe" --version
-& "$env:USERPROFILE\.thehermes\bin\hermesd.exe" backup
 ```
 
 The branch migrates the database once, when its daemon starts (boards,
-labels, roles). The migration only goes forward, and the automatic backup the
-plan describes is not implemented yet, so take this one by hand. A backup
-holds the database and configuration, never `secrets/` or workspaces.
+labels, roles). The migration only goes forward, so the daemon backs the
+database up first, the same backup `hermesd backup` takes, into
+`backups/pre-migration-<UTC time>-schema-<from>-to-<to>` in the home. If that
+backup can't be written, the daemon migrates nothing and doesn't start; its
+error log says why (free disk space, then start it again). A backup holds the
+database and configuration, never `secrets/` or workspaces.
+
+For extra safety you can still take one by hand now, with the version you
+have:
+
+```sh
+~/.thehermes/bin/hermesd backup        # prints the backup folder; note it
+```
+
+```powershell
+& "$env:USERPROFILE\.thehermes\bin\hermesd.exe" backup
+```
 
 ## 2. Build the branch the usual way
 
@@ -100,9 +112,27 @@ publish`, you approve the release, and the tester runs `hermesd release
 install <release>` in its session. The swap is rolled back unless the new
 service answers with the new build.
 
+**Check the automatic backup.** Once the new daemon is up, there is one
+new folder in the home's `backups/`, ending in `-to-<the new schema>`, and
+the daemon's log has "backed up the database before migrating it" with its
+path:
+
+```sh
+ls -d ~/.thehermes/backups/pre-migration-*
+grep "before migrating" ~/.thehermes/logs/hermesd.err.log
+```
+
+```powershell
+Get-ChildItem "$env:USERPROFILE\.thehermes\backups" -Filter "pre-migration-*"
+```
+
+Only the newest three pre-migration backups are kept; your own backups are
+never removed. Rename one (without the `pre-migration-` prefix) to keep it.
+
 **To go back**, reinstall 0.18.3 from its GitHub release (the DMG and
 `hermesd service install` from its tarball, or the Windows installer). Then
-restore the backup with that 0.18.3 `hermesd`:
+restore the pre-migration backup (or your manual one) with that 0.18.3
+`hermesd`:
 
 ```sh
 ~/.thehermes/bin/hermesd restore --from <backup folder> --overwrite
@@ -192,7 +222,7 @@ Afterwards, archive Recipe Box, or keep it for the next run.
 
 Post the ticked list and every difference on #3, with the branch's commit
 (`git rev-parse origin/k9-acceptance`), the run id of the build, and the
-backup folders.
+pre-migration backup folders.
 
 ## 6. Prompt for the Windows bot
 
@@ -244,7 +274,8 @@ Rules:
    it wasn't run and why.
 4. Before installing, record `hermesd.exe --version`, `service status`, the
    SHA-256 of %USERPROFILE%\.thehermes\bin\hermesd.exe and the number of
-   projects and bots. Then take a backup:
+   projects and bots. Then take a backup by hand as extra safety (the new
+   daemon also takes one before it migrates):
    `& "$env:USERPROFILE\.thehermes\bin\hermesd.exe" backup`.
    Write the results so far to an artifact, send the owner a short summary
    with message_owner, and note in FACTS.md that after the restart you go on
@@ -258,13 +289,15 @@ Rules:
    - /health answers on the port in %USERPROFILE%\.thehermes\hermesd.port;
    - the installed hermesd.exe hashes to the sidecar from step 3;
    - every project and bot from step 4 is still there;
+   - %USERPROFILE%\.thehermes\backups has one new `pre-migration-*`
+     folder (record its name), and the daemon's log names it;
    - the desktop app opens and shows the board;
    - `hermesd.exe release install no-such-release --dry-run`, run from your
      session, ends with the daemon's refusal, not a crash.
    If anything is broken, don't try to repair or roll back. Tell the owner,
-   with the backup folder from step 4.
+   with the backup folders from steps 4 and 6.
 7. Report to the owner with message_owner and an artifact: the commit,
    the toolchain, each step's result, failing tests with their first error
    lines and whether main fails them too, the installer's path and hash,
-   the backup folder, and what step 6 found.
+   the backup folders, and what step 6 found.
 ```
