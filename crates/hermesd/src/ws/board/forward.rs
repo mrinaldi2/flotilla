@@ -15,16 +15,21 @@ use crate::peer::board::{home_name, ids_from_home};
 use crate::peer::{error_code, PeerError};
 use crate::ws::Conn;
 
-/// On the home: one of the forwarded reads, for an item of `project_id`. The
-/// move check is the owner's, which the asking side marks as elsewhere.
+/// On the home: one of the forwarded reads, for a live item of
+/// `project_id`. A draft stays on the home (0.19.0 K4b): to a linked
+/// computer it doesn't exist. The move check is the owner's, which the
+/// asking side marks as elsewhere.
 pub(crate) fn peer_read(
     app: &AppState,
     project_id: &str,
     request: c::BoardRequest,
 ) -> anyhow::Result<c::BoardResponse> {
     let in_project = |id: &str| -> anyhow::Result<()> {
-        match app.db.item_project(id)? {
-            Some(p) if p == project_id => Ok(()),
+        let (project, state) = app
+            .db
+            .board_read(|t| Ok((t.item_project(id)?, t.item_state(id)?)))?;
+        match (project, state) {
+            (Some(p), Some(crate::kanban::model::ItemState::Live)) if p == project_id => Ok(()),
             _ => Err(crate::peer::refuse("not_found", format!("no item {id}"))),
         }
     };
