@@ -47,6 +47,12 @@ fn has_own_board(app: &AppState, project_id: &str) -> bool {
 /// Mirrors the board the link's peer holds for the project, and tells the
 /// project's watchers here to refetch it.
 pub async fn fetch(app: &AppState, link: &ProjectLink) {
+    let turn = app.board_mirror.fetch_turn(&link.project_id);
+    let _turn = turn.lock().await;
+    fetch_whole(app, link).await;
+}
+
+async fn fetch_whole(app: &AppState, link: &ProjectLink) {
     // Ids in a frame are the sender's own (see `frames`).
     let frame = json!({ "type": "board_snapshot", "project_id": link.project_id });
     match app.peers.request(&link.peer_id, frame).await {
@@ -139,6 +145,8 @@ pub(super) fn receive_event(app: &Arc<AppState>, peer_id: &str, frame: &Value) {
 /// Mirrors one board of the project again, or the whole project when the
 /// mirror can't take it alone.
 pub async fn fetch_board(app: &AppState, link: &ProjectLink, board_id: &str) {
+    let turn = app.board_mirror.fetch_turn(&link.project_id);
+    let _turn = turn.lock().await;
     let frame = json!({
         "type": "board_snapshot", "project_id": link.project_id, "board_id": board_id,
     });
@@ -154,7 +162,7 @@ pub async fn fetch_board(app: &AppState, link: &ProjectLink, board_id: &str) {
         _ => None,
     };
     let Some(mut part) = part else {
-        return fetch(app, link).await;
+        return fetch_whole(app, link).await;
     };
     board_ids::snapshot(&mut part, &link.project_id, |id| {
         board_ids::from_home(&app.db, &link.peer_id, &link.project_id, id)
@@ -165,7 +173,7 @@ pub async fn fetch_board(app: &AppState, link: &ProjectLink, board_id: &str) {
         .set_board(&link.project_id, &link.peer_id, board_id, part)
     {
         drop(feed);
-        return fetch(app, link).await;
+        return fetch_whole(app, link).await;
     }
     feed.publish_on(
         Some(board_id),
