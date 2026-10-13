@@ -1,5 +1,6 @@
 //! What a draft can't be used for (review of K4b): a bot holding the owner
-//! token can't act as the owner on a draft.
+//! token can't act as the owner on a draft, and a draft has no say over the
+//! live board.
 
 use crate::common;
 
@@ -115,4 +116,47 @@ async fn the_owner_token_a_bot_can_read_neither_finalizes_discards_invites_nor_m
     )
     .await;
     assert!(matches!(moved(finalized), c::move_result::Outcome::Done(_)));
+}
+
+#[tokio::test]
+async fn a_draft_blocks_no_live_item() {
+    let (pair, mut bots) = project_with_bots(&["Lead", "Builder"]).await;
+    let project_id = project(&pair.d, &pair.ids);
+    let mut owner = WsClient::connect(&pair.d).await;
+    let live = create(&mut owner, &project_id, "Crash on open", false).await;
+    let draft = create(&mut owner, &project_id, "Maybe a redesign", true).await;
+    // The builder, invited and holding no board role, links the draft as
+    // blocking the live item.
+    call(&mut owner, invite(&draft.id, "Builder")).await;
+    bots[1]
+        .call(
+            "item_link",
+            json!({"id": draft.id, "kind": "item:blocks", "ref": live.id}),
+        )
+        .await;
+    let blockers = pair
+        .d
+        .app
+        .db
+        .board_read(|t| t.blockers_of(&live.id))
+        .unwrap();
+    assert!(blockers.is_empty(), "{blockers:?}");
+
+    // Discarded, it never blocks either.
+    call(
+        &mut owner,
+        Request::ItemDiscard(c::ItemDiscard {
+            id: draft.id.clone(),
+            expected_version: draft.version,
+            reason: "not now".into(),
+        }),
+    )
+    .await;
+    let blockers = pair
+        .d
+        .app
+        .db
+        .board_read(|t| t.blockers_of(&live.id))
+        .unwrap();
+    assert!(blockers.is_empty(), "{blockers:?}");
 }
