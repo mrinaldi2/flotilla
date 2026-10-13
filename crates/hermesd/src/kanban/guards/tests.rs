@@ -1,6 +1,5 @@
 //! Guard tests: the H-017 §3 table (`table`), then the finer points of WIP,
 //! reviewers, DoR sections and the rules outside moves.
-
 use chrono::Utc;
 
 use super::*;
@@ -52,6 +51,7 @@ fn column(category: Cat) -> BoardColumn {
         wip_limit: None,
         wip_scope: d.wip_scope,
         visible: d.visible,
+        policy: Default::default(),
     }
 }
 

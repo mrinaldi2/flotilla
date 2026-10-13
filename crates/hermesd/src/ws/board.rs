@@ -25,6 +25,7 @@ mod enable;
 mod forward;
 mod mirrored;
 mod reads;
+mod structure;
 
 /// A request refused before the board service answered it: no grant, an
 /// unknown item, bad arguments. Sent as the envelope's `Error`.
@@ -92,11 +93,20 @@ impl Conn {
             | Request::ItemQuery(_)
             | Request::ItemMoveCheck(_)
             | Request::BoardWatch(_)
-            | Request::BoardUnwatch(_) => Capability::Read,
-            // Choosing the board's home is the owner's call (H-037).
-            Request::BoardEnable(_) | Request::ColumnSetLimit(_) | Request::RoleSet(_) => {
-                Capability::Approve
-            }
+            | Request::BoardUnwatch(_)
+            | Request::BoardList(_) => Capability::Read,
+            // Choosing the board's home is the owner's call (H-037), and so
+            // is the boards' structure (0.19.0).
+            Request::BoardEnable(_)
+            | Request::ColumnSetLimit(_)
+            | Request::RoleSet(_)
+            | Request::BoardCreate(_)
+            | Request::BoardUpdate(_)
+            | Request::ColumnAdd(_)
+            | Request::ColumnUpdate(_)
+            | Request::ColumnRemove(_)
+            | Request::AutomationSet(_)
+            | Request::BoardProposalRule(_) => Capability::Approve,
             _ => Capability::Control,
         };
         if !self.caps.contains(&cap) {
@@ -114,6 +124,14 @@ impl Conn {
         }
         Ok(Some(match request {
             Request::BoardGet(r) => Response::Board(self.snapshot(&r.project_id)?),
+            Request::BoardList(r) => Response::Board(self.snapshot(&r.project_id)?),
+            req @ (Request::BoardCreate(_)
+            | Request::BoardUpdate(_)
+            | Request::ColumnAdd(_)
+            | Request::ColumnUpdate(_)
+            | Request::ColumnRemove(_)
+            | Request::AutomationSet(_)
+            | Request::BoardProposalRule(_)) => Response::Structure(self.structure_request(req)?),
             Request::BoardEnable(r) => return self.board_enable(req_id, r.project_id),
             Request::ColumnSetLimit(r) => {
                 team::set_column_limit(&self.app, &r.project_id, &r.column_key, r.wip_limit)

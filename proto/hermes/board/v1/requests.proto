@@ -49,6 +49,17 @@ message BoardRequest {
     RoleSet role_set = 21;
     // Post-install acceptance criteria (H-116).
     ItemFlagAc item_flag_ac = 22;
+    // Boards and their structure (0.19.0): the owner's, and the lead's under
+    // the board's structure policy.
+    BoardList board_list = 23;
+    BoardCreate board_create = 24;
+    BoardUpdate board_update = 25;
+    ColumnAdd column_add = 26;
+    ColumnUpdate column_update = 27;
+    ColumnRemove column_remove = 28;
+    AutomationSet automation_set = 29;
+    // The owner's answer to a lead's proposed structure change.
+    BoardProposalRule board_proposal_rule = 30;
   }
 }
 
@@ -71,6 +82,8 @@ message BoardResponse {
     BoardUnwatched unwatched = 7;
     // To the item edits.
     EditResult edited = 8;
+    // To the structure requests: done, or proposed for the owner to approve.
+    StructureResult structure = 9;
   }
 }
 
@@ -90,6 +103,93 @@ message BoardPush {
 // A board whose home is another daemon is refused with `no_board` naming it.
 message BoardGet {
   string project_id = 1;
+}
+
+// The project's boards, the default first.
+message BoardList {
+  string project_id = 1;
+}
+
+// A new board from a preset: "simple", "software" or "release_gated".
+message BoardCreate {
+  string project_id = 1;
+  string name = 2;
+  // The item-id prefix; left out, the initials of the name. A taken key
+  // gets a number.
+  optional string key = 3;
+  string preset = 4;
+  optional string description = 5;
+}
+
+// A board's name, description, default flag, archive state or structure
+// policy. `version` is the board's as read: a stale one is refused.
+message BoardUpdate {
+  string board_id = 1;
+  uint64 version = 2;
+  optional string name = 3;
+  optional string description = 4;
+  optional bool is_default = 5;
+  optional bool archived = 6;
+  // "owner_confirms" or "lead_free"; the owner's alone.
+  optional string structure_policy = 7;
+}
+
+// A new column, after `after` (a column key) or at the end.
+message ColumnAdd {
+  string board_id = 1;
+  uint64 version = 2;
+  string name = 3;
+  ColumnKind kind = 4;
+  optional string after = 5;
+  optional uint32 wip_limit = 6;
+  optional WipScope wip_scope = 7;
+  // As on `BoardColumn`.
+  repeated string movers = 8;
+  repeated string rules = 9;
+  repeated string allowed_from = 10;
+}
+
+// Changes one column. Lists replace the column's (`set_policy` says the
+// lists are given, so an empty list clears them).
+message ColumnUpdate {
+  string board_id = 1;
+  uint64 version = 2;
+  string key = 3;
+  optional string name = 4;
+  optional ColumnKind kind = 5;
+  optional uint32 wip_limit = 6;
+  optional bool clear_wip_limit = 7;
+  optional WipScope wip_scope = 8;
+  optional bool visible = 9;
+  // Moves the column after this one; "" moves it first.
+  optional string after = 10;
+  optional bool set_policy = 11;
+  repeated string movers = 12;
+  repeated string rules = 13;
+  repeated string allowed_from = 14;
+}
+
+// Removes a column, moving its items to `move_items_to` first.
+message ColumnRemove {
+  string board_id = 1;
+  uint64 version = 2;
+  string key = 3;
+  optional string move_items_to = 4;
+}
+
+// Maps a fact (`pr.merged`) to a column of a custom board; no column
+// removes the mapping.
+message AutomationSet {
+  string board_id = 1;
+  uint64 version = 2;
+  string fact = 3;
+  optional string column_key = 4;
+}
+
+message BoardProposalRule {
+  string proposal_id = 1;
+  bool approve = 2;
+  optional string note = 3;
 }
 
 // "Start the board on this computer": enables the project's board here as
@@ -176,6 +276,8 @@ message ItemCreate {
   // The epic this belongs to.
   optional string parent_id = 9;
   repeated string acceptance_criteria = 10;
+  // The board it goes on; left out, the project's default board.
+  optional string board_id = 11;
 }
 
 // Change an item's fields; never its column or rank.
@@ -322,10 +424,24 @@ message BoardSnapshot {
   repeated ProjectRole roles = 4;
   // The project's push sequence this snapshot is current with.
   uint64 seq = 5;
+  // Every board of the project, the default first (0.19.0). Columns and
+  // cards name theirs.
+  repeated Board boards = 7;
   // Whether this connection may rule on the project's releases: the owner's
   // own credentials with the approve grant (a board is served only on its
   // home, where rulings are made). H-020 §6.5.
   bool can_rule = 6;
+}
+
+// What a structure request did: applied (the board as it is now) or
+// proposed to the owner, who approves it in Needs you.
+message StructureResult {
+  oneof outcome {
+    BoardSnapshot applied = 1;
+    string proposal_id = 2;
+  }
+  // The board the request changed or proposed to change.
+  string board_id = 3;
 }
 
 message ItemDetail {

@@ -89,8 +89,7 @@ pub fn item_move(db: &Db, req: &MoveRequest<'_>, actor: &Actor<'_>) -> anyhow::R
         };
         let over = guards::over_limit(&item, to, &ctx).is_some() && who != Who::Daemon;
         let (note, first) = if let Some(from) = custom_from(t, &item, &columns)? {
-            let policy = t.column_policy(&item.board_id, &to.key)?;
-            let refused = flow::evaluate(&item, from, &policy, &mv, &who, &ctx);
+            let refused = flow::evaluate(&item, from, &to.policy, &mv, &who, &ctx);
             if !refused.is_empty() {
                 return Ok(Moved::Refused(refused));
             }
@@ -228,10 +227,7 @@ pub fn item_move_check(
                 override_reason: None,
             };
             let refused = match &from {
-                Some(from) => {
-                    let policy = t.column_policy(&item.board_id, &to.key)?;
-                    flow::evaluate(&item, from, &policy, &mv, &who, &ctx)
-                }
+                Some(from) => flow::evaluate(&item, from, &to.policy, &mv, &who, &ctx),
                 None => guards::evaluate(&item, &mv, &who, &ctx),
             };
             out.push((to.clone(), refused));

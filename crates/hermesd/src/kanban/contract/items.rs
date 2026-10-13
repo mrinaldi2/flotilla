@@ -77,6 +77,7 @@ impl From<m::ItemCard> for c::ItemCard {
     fn from(v: m::ItemCard) -> Self {
         c::ItemCard {
             id: v.id,
+            board_id: v.board_id,
             r#type: v.item_type.into(),
             title: v.title,
             priority: v.priority.into(),
@@ -102,6 +103,7 @@ impl TryFrom<c::ItemCard> for m::ItemCard {
     fn try_from(v: c::ItemCard) -> Result<Self, MapError> {
         Ok(m::ItemCard {
             id: v.id,
+            board_id: v.board_id,
             item_type: m::ItemType::from_wire(v.r#type)?,
             title: v.title,
             priority: m::Priority::from_wire(v.priority)?,

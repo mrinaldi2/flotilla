@@ -122,6 +122,14 @@ pub(super) const BOARD_TOOLS: &[BoardTool] = &[
             or clear the flag. release_submit doesn't wait for it; Done does.",
     ),
     tool("board_import", "BoardImport", Audience::Lead),
+    // Boards and their structure (0.19.0 K4).
+    tool("board_list", "BoardList", Audience::Everyone),
+    tool("board_create", "BoardCreate", Audience::Lead),
+    tool("board_update", "BoardUpdate", Audience::Lead),
+    tool("column_add", "ColumnAdd", Audience::Lead),
+    tool("column_update", "ColumnUpdate", Audience::Lead),
+    tool("column_remove", "ColumnRemove", Audience::Lead),
+    tool("automation_set", "AutomationSet", Audience::Lead),
 ];
 
 impl Audience {

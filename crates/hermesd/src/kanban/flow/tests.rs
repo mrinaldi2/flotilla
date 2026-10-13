@@ -29,6 +29,7 @@ fn column(key: &str) -> (BoardColumn, ColumnPolicy) {
         wip_limit: c.wip_limit,
         wip_scope: c.wip_scope,
         visible: c.visible,
+        policy: c.policy.clone(),
     };
     (column, c.policy)
 }

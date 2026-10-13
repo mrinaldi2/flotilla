@@ -92,6 +92,7 @@ async fn a_bot_without_a_role_lists_the_reads_and_its_own_items_tools() {
         reads,
         [
             "board_get",
+            "board_list",
             "item_comment",
             "item_get",
             "item_link",

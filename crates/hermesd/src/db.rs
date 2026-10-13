@@ -34,6 +34,8 @@ pub use workers::NewWorker;
 
 pub mod agent_talk;
 mod board;
+mod board_admin;
+mod board_columns;
 mod board_edit;
 mod board_flow;
 #[cfg(test)]
@@ -45,6 +47,7 @@ mod board_items;
 mod board_links;
 mod board_moves;
 mod board_notes;
+mod board_proposals;
 mod board_ranks;
 mod board_reads;
 #[cfg(test)]

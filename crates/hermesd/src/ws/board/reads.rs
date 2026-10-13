@@ -205,6 +205,12 @@ pub(super) fn snapshot(
         seq,
         // Set by the connection, which knows its grants.
         can_rule: false,
+        boards: app
+            .db
+            .boards(project_id)?
+            .into_iter()
+            .map(Into::into)
+            .collect(),
     }))
 }
 

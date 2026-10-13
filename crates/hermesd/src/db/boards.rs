@@ -96,6 +96,10 @@ impl Db {
         Ok(boards_in(&self.lock(), project_id)?)
     }
 
+    pub fn board(&self, board_id: &str) -> anyhow::Result<Option<Board>> {
+        Ok(board_in(&self.lock(), board_id)?)
+    }
+
     pub fn default_board(&self, project_id: &str) -> anyhow::Result<Option<Board>> {
         Ok(default_board_in(&self.lock(), project_id)?)
     }

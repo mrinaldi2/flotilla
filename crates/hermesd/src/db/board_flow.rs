@@ -1,49 +1,22 @@
-//! Custom board storage (0.19.0 K3): column policies, the facts a board had
-//! no column for, and creating a board from a preset.
+//! Custom board storage (0.19.0 K3): the facts a board had no column for,
+//! and creating a board from a preset.
 
 use std::collections::BTreeMap;
 
 use bus::now;
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::params;
 
-use super::board::{from_json, to_text};
+use super::board::to_text;
 use super::board_tx::BoardTx;
 use super::boards::{board_in, boards_in, free_key};
 use super::{ts, Actor, Db};
-use crate::kanban::flow::{ColumnPolicy, Mover};
+use crate::kanban::flow::Mover;
 use crate::kanban::model::Board;
 use crate::kanban::presets::Preset;
-
-pub(super) fn column_policy_in(
-    conn: &Connection,
-    board_id: &str,
-    key: &str,
-) -> rusqlite::Result<ColumnPolicy> {
-    let row: Option<(Option<String>, String, String)> = conn
-        .query_row(
-            "SELECT movers, rules, allowed_from FROM board_column
-             WHERE board_id = ?1 AND key = ?2",
-            params![board_id, key],
-            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
-        )
-        .optional()?;
-    let Some((movers, rules, allowed_from)) = row else {
-        return Ok(ColumnPolicy::default());
-    };
-    Ok(ColumnPolicy {
-        movers: movers.map(from_json).transpose()?.unwrap_or_default(),
-        rules: from_json(rules)?,
-        allowed_from: from_json(allowed_from)?,
-    })
-}
 
 impl BoardTx<'_> {
     pub fn board(&self, board_id: &str) -> anyhow::Result<Option<Board>> {
         Ok(board_in(self.conn, board_id)?)
-    }
-
-    pub fn column_policy(&self, board_id: &str, key: &str) -> anyhow::Result<ColumnPolicy> {
-        Ok(column_policy_in(self.conn, board_id, key)?)
     }
 
     /// Keep a fact the item's board had no column for, for its card.

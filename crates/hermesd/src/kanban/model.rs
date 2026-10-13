@@ -174,6 +174,9 @@ pub struct BoardColumn {
     pub wip_limit: Option<u32>,
     pub wip_scope: WipScope,
     pub visible: bool,
+    /// A custom board's rules for entering the column; unused on a
+    /// release-gated board.
+    pub policy: super::flow::ColumnPolicy,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -253,6 +256,8 @@ pub struct Item {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ItemCard {
     pub id: String,
+    /// Empty only in a mirror of a home older than 0.19.
+    pub board_id: String,
     pub item_type: ItemType,
     pub title: String,
     pub priority: Priority,
