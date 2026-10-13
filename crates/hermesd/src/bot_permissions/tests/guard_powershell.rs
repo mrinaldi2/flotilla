@@ -188,6 +188,7 @@ fn forced_pushes_and_main_need_release_main() {
     ]);
     let release = GuardContext {
         allow_main: true,
+        protect: Vec::new(),
         ..ctx()
     };
     for command in ["git push origin main", "gh pr merge 12"] {

@@ -91,6 +91,9 @@ pub struct GuardContext {
     pub releases: bool,
     /// The bot holds `release_main`: it may push and merge to `main`.
     pub allow_main: bool,
+    /// The project's shared branch when it isn't `main`: nobody pushes or
+    /// merges to it directly either.
+    pub protect: Vec<String>,
     /// The project runs in Full, where the guard is the only check.
     pub full: bool,
     /// The served release builds and their staging folder: no bot writes
@@ -206,7 +209,8 @@ pub fn slug(bot_name: &str) -> String {
 }
 
 /// `hermesd guard --home H --user-home U [--writable P]… [--worktrees P]…
-/// [--served P]… [--bot NAME] [--releases] [--allow-main] [--full]`: read one tool call on
+/// [--served P]… [--bot NAME] [--releases] [--allow-main] [--protect BRANCH]…
+/// [--full]`: read one tool call on
 /// stdin and print a deny when it must not run or can't be read.
 pub fn run(args: &[String]) -> i32 {
     let value_of = |flag: &str| {
@@ -225,7 +229,7 @@ pub fn run(args: &[String]) -> i32 {
         eprintln!(
             "usage: hermesd guard --home <dir> --user-home <dir> [--writable <dir>]… \
              [--worktrees <dir>]… [--served <dir>]… [--bot <name>] [--releases] \
-             [--allow-main] [--full]"
+             [--allow-main] [--protect <branch>]… [--full]"
         );
         // Exit 2 blocks the call; stderr tells the bot why.
         return 2;
@@ -248,6 +252,11 @@ pub fn run(args: &[String]) -> i32 {
             .filter(|slug| !slug.is_empty()),
         releases: args.iter().any(|a| a == "--releases"),
         allow_main: args.iter().any(|a| a == "--allow-main"),
+        protect: args
+            .windows(2)
+            .filter(|pair| pair[0] == "--protect")
+            .map(|pair| pair[1].clone())
+            .collect(),
         full: args.iter().any(|a| a == "--full"),
     };
     let mut input = String::new();

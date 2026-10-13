@@ -327,7 +327,7 @@ branch is reviewed as one PR into `main` at the end.
 
 | Step | Content | Done when |
 |---|---|---|
-| K0 | Fix: workers are told `git push origin HEAD:{branch}`, which the main-push deny always refuses when the branch is `main`. Protect the project's configured branch instead of the literal `main`. | A worker on a default project lands its push. |
+| K0 | Fix: workers were told `git push origin HEAD:{branch}`, which the main-push deny always refuses when the branch is `main`. Workers now push their own branch and name it in their result, and the guard and deny rules protect the project's configured branch as well as `main`. | A worker's push lands on its own branch; a push to a project's `develop` is refused like one to `main`. |
 | K1 | Module split with no behaviour change: `board/` becomes `kanban/`; `release/`, `prs/` and `meetings/` move out; add the `kanban::api` port; replace `daemon_move` callers with facts. | Every existing test passes unchanged. |
 | K2 | Schema: `board` table, `board_id` everywhere, column `kind`, migration, labels. | The migration test on a copy of a real 0.18 database keeps every item, link and event. |
 | K3 | Rule library, movers, automations, predicates. The Release-gated preset reproduces today's guards. | The guard test table passes against the preset. |

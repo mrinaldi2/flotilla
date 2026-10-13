@@ -168,6 +168,7 @@ fn a_glob_through_the_old_home_link_is_denied_before_and_after_the_move() {
             bot_slug: Some("dev".into()),
             releases: false,
             allow_main: false,
+            protect: Vec::new(),
             full: false,
             served: Vec::new(),
         };

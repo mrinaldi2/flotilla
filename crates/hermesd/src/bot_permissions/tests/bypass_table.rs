@@ -269,6 +269,7 @@ fn an_existing_symlink_cannot_launder_a_path() {
         bot_slug: None,
         releases: false,
         allow_main: false,
+        protect: Vec::new(),
         full: true,
         served: Vec::new(),
     };

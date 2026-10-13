@@ -83,20 +83,22 @@ pub(super) fn repo(
              latest into `repo/` in your workspace: \
              `git clone --filter=blob:none --branch {branch} {url} repo`, or \
              `git -C repo pull --rebase` if it is already there. Work in `repo/`. \
-             Before `complete_task`: commit, `git pull --rebase` (resolve any \
-             conflicts yourself), then `git push origin HEAD:{branch}`. If it still \
-             will not push, push `HEAD:{own}` instead and say so. Name the commit or \
-             branch in your result. Anything you leave unpushed when you stop is \
-             saved to a branch of your own and whoever spawned you is told.\n\n{scratch}"
+             Before `complete_task`: commit, `git pull --rebase origin {branch}` \
+             (resolve any conflicts yourself), then `git push origin HEAD:{own}`, \
+             your own branch. Nobody pushes to `{branch}` directly: it moves only \
+             through a PR. Name the branch and commit in your result. Anything you \
+             leave unpushed when you stop is saved to `{own}` too, and whoever \
+             spawned you is told.\n\n{scratch}"
         )
     } else {
         format!(
             "## The project repository\n\n\
              This project shares {url} (branch `{branch}`). Every worker clones the \
-             branch tip when it starts and pushes its work there before it reports; \
-             its result names the commit, or a branch to merge. Keep a clone in your \
-             workspace to read or build on that work, and `git pull` before you start \
-             and after each worker reports.\n\n"
+             branch tip when it starts and pushes its work to a branch of its own, \
+             which its result names. `{branch}` moves only through a PR, so a \
+             worker's branch lands when a PR from it is merged. Keep a clone in your \
+             workspace to read or build on that work, and `git fetch` before you \
+             start and after each worker reports.\n\n"
         )
     }
 }
@@ -288,11 +290,13 @@ mod tests {
         let worker = repo(Some(&shared), true, "ch-1", "0123456789");
         assert!(worker.contains("$THEHERMES_SCRATCH"));
         assert!(worker.contains("--branch main git@host:me/book.git repo"));
-        assert!(worker.contains("`git push origin HEAD:main`"));
-        assert!(worker.contains("`HEAD:gravity/ch-1-01234567`"));
+        assert!(worker.contains("`git push origin HEAD:gravity/ch-1-01234567`"));
+        assert!(!worker.contains("HEAD:main"));
+        assert!(worker.contains("Nobody pushes to `main` directly"));
         let parent = repo(Some(&shared), false, "lead", "b2");
         assert!(parent.contains("git@host:me/book.git (branch `main`)"));
-        assert!(parent.contains("`git pull`"));
+        assert!(parent.contains("`git fetch`"));
+        assert!(parent.contains("`main` moves only through a PR"));
     }
 
     /// H-131 T1: the owner reads the thread, the board and the dashboard.

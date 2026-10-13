@@ -66,7 +66,7 @@ fn the_guard_is_told_worktrees_not_trusted_paths_are_writable() {
         bot_root: Path::new("/Users/me/.gravity/projects/p/bots/dev"),
         workspace: Path::new("/Users/me/.gravity/projects/p/bots/dev/workspace"),
         artifacts: Some(Path::new("/Users/me/.gravity/projects/p/artifacts")),
-        repo_url: None,
+        repo: None,
         devops: false,
     };
     let trusted = start(PermissionProfile::Trusted, &[]).guard_command();
@@ -134,6 +134,7 @@ fn a_moved_home_keeps_its_locks_on_the_renamed_config() {
         trusted_paths: &[],
         served: &[],
         repo_url: None,
+        protected_branch: None,
         devops: false,
         port: 49777,
         guard_command: "'/bin/hermesd' guard".to_string(),

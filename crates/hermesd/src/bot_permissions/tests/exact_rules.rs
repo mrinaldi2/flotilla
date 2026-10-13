@@ -90,6 +90,7 @@ fn a_binary_a_bot_could_rebuild_gets_no_exact_rule() {
                 trusted_paths: &[PathBuf::from("/Users/me/Developer")],
                 served: &[],
                 repo_url: None,
+                protected_branch: None,
                 devops: false,
                 port: 1,
                 guard_command: String::new(),

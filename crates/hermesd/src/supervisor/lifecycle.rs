@@ -76,7 +76,7 @@ impl Supervisor {
             bot_root: bot_root.as_deref().unwrap_or(&workspace),
             workspace: &workspace,
             artifacts: artifacts.as_deref(),
-            repo_url: stored.repo_url.as_deref(),
+            repo: stored.repo.as_ref(),
             devops: stored.devops,
         }
         .claude_args(&self.inner.cfg.claude_args)?;

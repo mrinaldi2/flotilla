@@ -21,6 +21,7 @@ pub(super) fn ctx() -> GuardContext {
         bot_slug: None,
         releases: false,
         allow_main: false,
+        protect: Vec::new(),
         full: false,
         served: Vec::new(),
     }
@@ -125,6 +126,7 @@ fn main_is_reserved_for_release_main() {
     assert!(push("git push origin HEAD", &ctx()).is_some());
     let release = GuardContext {
         allow_main: true,
+        protect: Vec::new(),
         ..ctx()
     };
     for command in ["git push", "git push origin main", "gh pr merge 12"] {

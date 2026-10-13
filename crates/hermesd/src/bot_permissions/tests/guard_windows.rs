@@ -72,6 +72,7 @@ fn a_glob_in_any_windows_spelling_is_denied_through_the_junction() {
         bot_slug: Some("dev".into()),
         releases: false,
         allow_main: false,
+        protect: Vec::new(),
         full: false,
         served: Vec::new(),
     };
@@ -145,6 +146,7 @@ fn a_bots_own_folder_in_git_bash_spelling_is_its_own() {
         bot_slug: Some("dev".into()),
         releases: false,
         allow_main: false,
+        protect: Vec::new(),
         full: false,
         served: Vec::new(),
     };
@@ -184,6 +186,7 @@ fn a_bot_cleans_its_own_cargo_target_on_windows() {
         bot_slug: Some("dev".into()),
         releases: false,
         allow_main: false,
+        protect: Vec::new(),
         full: false,
         served: Vec::new(),
     };
@@ -233,6 +236,7 @@ fn device_paths_other_than_drive_and_unc_are_refused() {
         bot_slug: Some("dev".into()),
         releases: false,
         allow_main: false,
+        protect: Vec::new(),
         full: false,
         served: Vec::new(),
     };
