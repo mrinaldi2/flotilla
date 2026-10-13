@@ -14,7 +14,8 @@ use crate::kanban::import::{Entry, Key, Parsed, Skipped, IMPORT_NOTE, SOURCE_KEY
 use crate::kanban::model::{ColumnCategory, ItemEventKind, LinkKind, Priority};
 
 use super::board::{settings_in, to_json_list, to_text};
-use super::board_items::{rank_last, record, Event};
+use super::board_items::{record, Event};
+use super::board_ranks::rank_last;
 use super::{ts, Actor, Db};
 
 #[derive(Debug, Serialize)]
@@ -190,7 +191,8 @@ fn adopt_key(tx: &Connection, project_id: &str, current: &str) -> anyhow::Result
          {SOURCE_KEY}-ids can only be kept on an empty board or one keyed {SOURCE_KEY}"
     );
     let taken: bool = tx.query_row(
-        "SELECT EXISTS(SELECT 1 FROM board_settings WHERE key = ?1 AND project_id != ?2)",
+        "SELECT EXISTS(SELECT 1 FROM board_settings WHERE key = ?1 AND project_id != ?2)
+             OR EXISTS(SELECT 1 FROM board WHERE key = ?1 AND project_id != ?2)",
         params![SOURCE_KEY, project_id],
         |r| r.get(0),
     )?;
@@ -201,6 +203,11 @@ fn adopt_key(tx: &Connection, project_id: &str, current: &str) -> anyhow::Result
     tx.execute(
         "UPDATE board_settings SET key = ?2, version = version + 1, updated_at = ?3
          WHERE project_id = ?1",
+        params![project_id, SOURCE_KEY, ts(now())],
+    )?;
+    tx.execute(
+        "UPDATE board SET key = ?2, version = version + 1, updated_at = ?3
+         WHERE project_id = ?1 AND is_default = 1",
         params![project_id, SOURCE_KEY, ts(now())],
     )?;
     Ok(SOURCE_KEY.to_string())
@@ -284,9 +291,9 @@ fn insert(
     tx.execute(
         "INSERT INTO item(id, project_id, seq, type, title, description, platforms, size,
                           priority, rank, column_key, category, assignee, labels, created_by,
-                          created_at, updated_at, state_entered_at, done_at)
+                          created_at, updated_at, state_entered_at, done_at, board_id)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?16,
-                 ?16, ?17)",
+                 ?16, ?17, (SELECT id FROM board WHERE project_id = ?2 AND is_default = 1))",
         params![
             id,
             project_id,

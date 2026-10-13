@@ -9,6 +9,7 @@ impl From<m::Item> for c::Item {
     fn from(v: m::Item) -> Self {
         c::Item {
             id: v.id,
+            board_id: v.board_id,
             seq: v.seq,
             r#type: v.item_type.into(),
             title: v.title,
@@ -43,6 +44,7 @@ impl TryFrom<c::Item> for m::Item {
     fn try_from(v: c::Item) -> Result<Self, MapError> {
         Ok(m::Item {
             id: v.id,
+            board_id: v.board_id,
             seq: v.seq,
             item_type: m::ItemType::from_wire(v.r#type)?,
             title: v.title,

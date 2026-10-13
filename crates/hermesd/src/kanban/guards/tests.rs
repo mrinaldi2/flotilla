@@ -43,10 +43,12 @@ fn column(category: Cat) -> BoardColumn {
         .expect("default column");
     BoardColumn {
         project_id: "p".into(),
+        board_id: "p/main".into(),
         key: d.key.into(),
         name: d.name.into(),
         ord: 0,
         category,
+        kind: category.kind(),
         wip_limit: None,
         wip_scope: d.wip_scope,
         visible: d.visible,
@@ -57,6 +59,7 @@ fn item(category: Cat) -> Item {
     let now = Utc::now();
     Item {
         id: "H-1".into(),
+        board_id: "p/main".into(),
         seq: 1,
         item_type: ItemType::Feature,
         title: "A thing".into(),

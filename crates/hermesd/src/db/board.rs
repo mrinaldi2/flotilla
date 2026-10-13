@@ -13,6 +13,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 
+use super::boards::{default_board_id, free_key};
 use super::{parse_ts, ts, Db};
 use crate::kanban::defaults;
 
@@ -97,28 +98,6 @@ pub(super) fn settings_in(
     .optional()
 }
 
-/// A key no other board uses: the preferred one, else it with a number.
-fn free_key(conn: &Connection, preferred: &str) -> rusqlite::Result<String> {
-    let taken = |key: &str| -> rusqlite::Result<bool> {
-        conn.query_row(
-            "SELECT EXISTS(SELECT 1 FROM board_settings WHERE key = ?1)",
-            params![key],
-            |r| r.get(0),
-        )
-    };
-    if !taken(preferred)? {
-        return Ok(preferred.to_string());
-    }
-    let mut n = 2;
-    loop {
-        let candidate = format!("{preferred}{n}");
-        if !taken(&candidate)? {
-            return Ok(candidate);
-        }
-        n += 1;
-    }
-}
-
 impl Db {
     pub fn board_settings(&self, project_id: &str) -> anyhow::Result<Option<BoardSettings>> {
         Ok(settings_in(&self.lock(), project_id)?)
@@ -156,11 +135,17 @@ impl Db {
              VALUES (?1, ?2, ?3, ?4, ?4)",
             params![project_id, key, home_daemon_id, at],
         )?;
+        let board_id = default_board_id(project_id);
+        tx.execute(
+            "INSERT INTO board(id, project_id, name, key, is_default, created_at, updated_at)
+             VALUES (?1, ?2, 'Main', ?3, 1, ?4, ?4)",
+            params![board_id, project_id, key, at],
+        )?;
         for (ord, c) in defaults::COLUMNS.iter().enumerate() {
             tx.execute(
                 "INSERT INTO board_column(project_id, key, name, ord, category, wip_limit,
-                                          wip_scope, visible)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                                          wip_scope, visible, board_id, kind)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
                 params![
                     project_id,
                     c.key,
@@ -169,7 +154,9 @@ impl Db {
                     to_text(&c.category),
                     c.wip_limit,
                     to_text(&c.wip_scope),
-                    c.visible
+                    c.visible,
+                    board_id,
+                    to_text(&c.category.kind())
                 ],
             )?;
         }
@@ -341,16 +328,24 @@ pub(super) fn columns_in(
 ) -> rusqlite::Result<Vec<BoardColumn>> {
     let rows = conn
         .prepare(
-            "SELECT project_id, key, name, ord, category, wip_limit, wip_scope, visible
+            "SELECT project_id, key, name, ord, category, wip_limit, wip_scope, visible,
+                    board_id, kind
              FROM board_column WHERE project_id = ?1 ORDER BY ord",
         )?
         .query_map(params![project_id], |r| {
+            let category: crate::kanban::model::ColumnCategory = from_text(r.get(4)?)?;
             Ok(BoardColumn {
                 project_id: r.get(0)?,
+                board_id: r.get::<_, Option<String>>(8)?.unwrap_or_default(),
                 key: r.get(1)?,
                 name: r.get(2)?,
                 ord: r.get(3)?,
-                category: from_text(r.get(4)?)?,
+                category,
+                kind: r
+                    .get::<_, Option<String>>(9)?
+                    .map(from_text)
+                    .transpose()?
+                    .unwrap_or_else(|| category.kind()),
                 wip_limit: r.get(5)?,
                 wip_scope: from_text(r.get(6)?)?,
                 visible: r.get(7)?,

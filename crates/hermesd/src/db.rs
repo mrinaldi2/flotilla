@@ -42,12 +42,16 @@ mod board_items;
 mod board_links;
 mod board_moves;
 mod board_notes;
+mod board_ranks;
 mod board_reads;
 #[cfg(test)]
 mod board_schema_tests;
 #[cfg(test)]
 mod board_tests;
 mod board_tx;
+mod boards;
+#[cfg(test)]
+mod boards_migration_tests;
 mod bot_runtime;
 mod bots;
 mod card_questions;
@@ -72,6 +76,7 @@ mod guardrails;
 mod meetings;
 pub mod merge_queue;
 pub mod metrics;
+mod migrate_columns;
 mod overview;
 mod owner_actions;
 mod owner_answers;
@@ -240,7 +245,8 @@ impl Db {
             0
         };
         while version < MIGRATIONS.len() {
-            tx.execute_batch(MIGRATIONS[version])
+            let sql = migrate_columns::without_existing_columns(&tx, MIGRATIONS[version])?;
+            tx.execute_batch(&sql)
                 .with_context(|| format!("applying migration {}", version + 1))?;
             version += 1;
         }

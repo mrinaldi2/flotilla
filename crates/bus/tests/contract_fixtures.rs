@@ -101,11 +101,12 @@ fn the_enum_fixture_lists_every_value() {
         serde_json::from_value(fixture[enum_name].clone())
             .unwrap_or_else(|e| panic!("enums.json {enum_name}: {e}"))
     };
-    let checks: [(&str, Vec<String>); 13] = [
+    let checks: [(&str, Vec<String>); 14] = [
         (
             "ColumnCategory",
             defined::<ColumnCategory>(|e| e.as_str_name()),
         ),
+        ("ColumnKind", defined::<ColumnKind>(|e| e.as_str_name())),
         ("WipScope", defined::<WipScope>(|e| e.as_str_name())),
         ("Role", defined::<Role>(|e| e.as_str_name())),
         ("ItemType", defined::<ItemType>(|e| e.as_str_name())),

@@ -26,6 +26,17 @@ enum ColumnCategory {
   COLUMN_CATEGORY_CANCELLED = 9;
 }
 
+// What a column means to the board itself: open (not started), active (WIP,
+// staleness and cycle time apply), done or cancelled. Every other meaning
+// comes from the column's rules.
+enum ColumnKind {
+  COLUMN_KIND_UNSPECIFIED = 0;
+  COLUMN_KIND_OPEN = 1;
+  COLUMN_KIND_ACTIVE = 2;
+  COLUMN_KIND_DONE = 3;
+  COLUMN_KIND_CANCELLED = 4;
+}
+
 // What a column's WIP limit counts.
 enum WipScope {
   WIP_SCOPE_UNSPECIFIED = 0;
@@ -162,6 +173,10 @@ message BoardColumn {
   optional uint32 wip_limit = 6;
   WipScope wip_scope = 7;
   bool visible = 8;
+  // The board it belongs to. Empty from a home older than 0.19.
+  string board_id = 9;
+  // Unset from a home older than 0.19: derive it from `category`.
+  ColumnKind kind = 10;
 }
 
 message ProjectRole {
@@ -238,6 +253,8 @@ message Item {
   optional google.protobuf.Timestamp done_at = 24;
   // Optimistic concurrency: every mutation names the version it read.
   uint64 version = 25;
+  // The board it is on. Empty from a home older than 0.19.
+  string board_id = 26;
 }
 
 // The compact form a board column lists; the drawer fetches the Item.

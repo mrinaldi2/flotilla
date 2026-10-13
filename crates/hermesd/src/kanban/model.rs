@@ -61,7 +61,33 @@ text_enum!(
         Done => "done", Cancelled => "cancelled",
     }
 );
+text_enum!(
+    /// What a column means to the board itself (0.19.0 K2): WIP, staleness
+    /// and cycle time apply to `active` columns; `done` and `cancelled` end.
+    ColumnKind { Open => "open", Active => "active", Done => "done", Cancelled => "cancelled" }
+);
+text_enum!(
+    /// Who may change a board's columns, rules and types besides the owner.
+    StructurePolicy { OwnerConfirms => "owner_confirms", LeadFree => "lead_free" }
+);
 text_enum!(WipScope { Column => "column", PerAssignee => "per_assignee" });
+
+impl ColumnCategory {
+    /// The kind a column of this category has: until K3 replaces categories
+    /// with rules, the kind follows the category.
+    pub fn kind(self) -> ColumnKind {
+        match self {
+            ColumnCategory::Inbox | ColumnCategory::Ready => ColumnKind::Open,
+            ColumnCategory::Done => ColumnKind::Done,
+            ColumnCategory::Cancelled => ColumnKind::Cancelled,
+            ColumnCategory::Doing
+            | ColumnCategory::Review
+            | ColumnCategory::Verify
+            | ColumnCategory::Approval
+            | ColumnCategory::Deploying => ColumnKind::Active,
+        }
+    }
+}
 text_enum!(Role {
     Lead => "lead", Coach => "coach", Devops => "devops", ReviewerArch => "reviewer.arch",
     ReviewerUx => "reviewer.ux", Tester => "tester", Dev => "dev",
@@ -97,13 +123,31 @@ pub struct BoardSettings {
     pub version: u64,
 }
 
+/// One board of a project: its own name, item-id prefix and structure policy.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Board {
+    pub id: String,
+    pub project_id: String,
+    pub name: String,
+    pub key: String,
+    pub description: String,
+    pub ord: u32,
+    pub is_default: bool,
+    pub structure_policy: StructurePolicy,
+    pub archived_at: Option<DateTime<Utc>>,
+    pub version: u64,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct BoardColumn {
     pub project_id: String,
+    /// Empty only in a mirror of a home older than 0.19.
+    pub board_id: String,
     pub key: String,
     pub name: String,
     pub ord: u32,
     pub category: ColumnCategory,
+    pub kind: ColumnKind,
     pub wip_limit: Option<u32>,
     pub wip_scope: WipScope,
     pub visible: bool,
@@ -155,6 +199,8 @@ pub struct ItemVerification {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Item {
     pub id: String,
+    /// Empty only in a mirror of a home older than 0.19.
+    pub board_id: String,
     pub seq: u32,
     pub item_type: ItemType,
     pub title: String,
