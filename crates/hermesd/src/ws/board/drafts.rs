@@ -9,9 +9,9 @@ use super::item_edits::refusal;
 use super::reads::item_detail;
 use super::{refuse, Refusal};
 use crate::kanban::attach::{read_chunk, Source};
-use crate::kanban::drafts;
 use crate::kanban::edit::Edited;
 use crate::kanban::moves::Moved;
+use crate::kanban::{draft_undo, drafts};
 use crate::ws::Conn;
 
 impl Conn {
@@ -21,7 +21,10 @@ impl Conn {
         // can read, so these take the app's ticket or a paired device, as
         // every act of the owner's own does (`owner_auth`).
         let owners_own = match &req {
-            Request::ItemInvite(_) | Request::ItemFinalize(_) | Request::ItemDiscard(_) => true,
+            Request::ItemInvite(_)
+            | Request::ItemFinalize(_)
+            | Request::ItemDiscard(_)
+            | Request::ItemDraftUndo(_) => true,
             Request::ItemDraftChanges(r) => r.mark_seen == Some(true),
             _ => false,
         };
@@ -29,7 +32,7 @@ impl Conn {
             return Err(refuse(
                 "forbidden",
                 "only the owner, from the app or a paired device, invites to, finalizes, \
-                 discards or marks seen a draft; not with the owner token",
+                 discards, undoes in or marks seen a draft; not with the owner token",
             ));
         }
         let actor = self.actor();
@@ -83,6 +86,9 @@ impl Conn {
             )),
             Request::ItemDiscard(r) => Response::Edited(edit_result(
                 drafts::discard(&self.app, &actor, &r).map_err(refusal)?,
+            )),
+            Request::ItemDraftUndo(r) => Response::Edited(edit_result(
+                draft_undo::undo(&self.app, &actor, &r).map_err(refusal)?,
             )),
             Request::ItemDraftChanges(r) => {
                 Response::DraftChanges(drafts::changes(&self.app, &r).map_err(refusal)?)

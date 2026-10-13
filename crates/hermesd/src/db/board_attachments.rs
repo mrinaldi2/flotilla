@@ -133,6 +133,38 @@ impl BoardTx<'_> {
         Ok(changed == 1)
     }
 
+    /// Attach again one that was detached (a draft's undo); false when it
+    /// isn't on the item or is attached.
+    pub fn reattach(&self, item_id: &str, id: &str, actor: &Actor<'_>) -> anyhow::Result<bool> {
+        let Some(found) = attachment_in(self.conn, id)?.filter(|a| a.item_id == item_id) else {
+            return Ok(false);
+        };
+        let changed = self.conn.execute(
+            "UPDATE item_attachment SET removed_at = NULL, removed_by = NULL
+             WHERE id = ?1 AND removed_at IS NOT NULL",
+            params![id],
+        )?;
+        if changed == 1 {
+            let event = Event {
+                kind: ItemEventKind::Linked,
+                from: None,
+                to: Some(&found.name),
+                field: Some("attachment"),
+                note: Some(id),
+            };
+            record(self.conn, item_id, actor, event)?;
+            revision(
+                self.conn,
+                item_id,
+                actor,
+                "attachment",
+                None,
+                Some(&found.name),
+            )?;
+        }
+        Ok(changed == 1)
+    }
+
     /// An item's attachments, oldest first, detached ones included.
     pub fn attachments(&self, item_id: &str) -> anyhow::Result<Vec<ItemAttachment>> {
         let rows = self

@@ -78,6 +78,25 @@ function openBot(
   };
 }
 
+/** "Lead updated draft RB-20": Review opens the draft, which counts the changes. */
+function draftUpdated(r: AttentionRowJson, a: AttentionActions): RowViewProps {
+  const item = r.item_id;
+  return {
+    glyph: "✎",
+    tone: "you",
+    title: r.title,
+    meta: "Changed since you last looked at it",
+    action: item === undefined || item.length === 0 ? undefined : "Review",
+    label: `Review the draft ${item ?? ""}`,
+    onAction: (event) => {
+      if (item !== undefined && item.length > 0) {
+        a.onItem(item, event.currentTarget);
+      }
+    },
+    verb: "Review",
+  };
+}
+
 /** The row for one of the newer kinds; undefined for one shown elsewhere. */
 export function attentionRow(r: AttentionRowJson, a: AttentionActions): RowViewProps | undefined {
   switch (r.kind) {
@@ -101,6 +120,8 @@ export function attentionRow(r: AttentionRowJson, a: AttentionActions): RowViewP
     case "owner_action":
       // Listed under "Commands for you to run", with its Run button.
       return undefined;
+    case "draft_updated":
+      return draftUpdated(r, a);
     default:
       return prRow(r, a) ?? cleanupRow(r, a);
   }

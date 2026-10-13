@@ -41,6 +41,7 @@ impl Conn {
             .into_iter()
             .map(Into::into)
             .collect();
+        board.proposals = super::structure::proposals(&self.app, project_id)?;
         Ok(board)
     }
 
@@ -234,6 +235,7 @@ pub(super) fn snapshot(
             .collect(),
         // The owner's connection adds them; a linked computer never sees one.
         drafts: Vec::new(),
+        proposals: Vec::new(),
     }))
 }
 
