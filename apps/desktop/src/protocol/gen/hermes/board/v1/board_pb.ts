@@ -145,7 +145,7 @@ export type LabelGroup = Message<"hermes.board.v1.LabelGroup"> & {
   name: string;
 
   /**
-   * The values offered, in order: `ios` stands for the label `platform:ios`.
+   * The values offered, in order: `web` stands for the label `platform:web`.
    *
    * @generated from field: repeated string values = 2;
    */

@@ -88,7 +88,7 @@ fn a_bot_reads_platforms_as_labels_and_no_018_fields() {
         let props = &tool["inputSchema"]["properties"];
         assert!(props.get("platforms").is_none(), "{name}");
         let about = props["labels"]["description"].as_str().unwrap_or_default();
-        assert!(about.contains("platform:ios"), "{name}: {about}");
+        assert!(about.contains("platform:web"), "{name}: {about}");
     }
     let out = friendly(json!({"settings": {
         "requiredMachines": {"ios": {"values": ["iphone"]}},

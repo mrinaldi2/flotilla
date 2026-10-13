@@ -182,7 +182,7 @@ message Board {
 message LabelGroup {
   // Lowercase, no spaces or colons: `platform`, `area`.
   string name = 1;
-  // The values offered, in order: `ios` stands for the label `platform:ios`.
+  // The values offered, in order: `web` stands for the label `platform:web`.
   repeated string values = 2;
 }
 

@@ -981,7 +981,7 @@ export type ItemQuery = Message<"hermes.board.v1.ItemQuery"> & {
   blocked?: boolean | undefined;
 
   /**
-   * Cards carrying any of these labels (`platform:ios`).
+   * Cards carrying any of these labels (`platform:web`).
    *
    * @generated from field: repeated string labels = 9;
    */
@@ -1166,7 +1166,7 @@ export type ItemCreate = Message<"hermes.board.v1.ItemCreate"> & {
 
   /**
    * Free labels. `<group>:<value>` is a label of the board's group of that
-   * name: `platform:ios` gives the item the platform ios.
+   * name: `platform:web` gives the item the platform web.
    *
    * @generated from field: repeated string labels = 8;
    */
@@ -1254,7 +1254,7 @@ export type ItemUpdate = Message<"hermes.board.v1.ItemUpdate"> & {
 
   /**
    * The whole list, replacing the old one. `<group>:<value>` is a label of
-   * the board's group of that name: `platform:ios` gives the platform ios.
+   * the board's group of that name: `platform:web` gives the platform web.
    *
    * @generated from field: hermes.board.v1.StringList labels = 8;
    */
