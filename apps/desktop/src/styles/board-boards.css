@@ -135,7 +135,12 @@
   min-width: 0;
 }
 
-/* New board. */
+/* New board: taller than other dialogs, so the presets fit; where :has()
+   isn't supported the form scrolls instead. */
+.overlay-panel:has(> .new-board) {
+  max-height: 92vh;
+}
+
 .new-board {
   min-height: 0;
   overflow-y: auto;
