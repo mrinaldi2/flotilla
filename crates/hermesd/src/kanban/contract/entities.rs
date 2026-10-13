@@ -52,10 +52,12 @@ impl From<m::BoardColumn> for c::BoardColumn {
     fn from(v: m::BoardColumn) -> Self {
         c::BoardColumn {
             project_id: v.project_id,
+            board_id: v.board_id,
             key: v.key,
             name: v.name,
             ord: v.ord,
             category: v.category.into(),
+            kind: v.kind.into(),
             wip_limit: v.wip_limit,
             wip_scope: v.wip_scope.into(),
             visible: v.visible,
@@ -67,12 +69,20 @@ impl TryFrom<c::BoardColumn> for m::BoardColumn {
     type Error = MapError;
 
     fn try_from(v: c::BoardColumn) -> Result<Self, MapError> {
+        let category = m::ColumnCategory::from_wire(v.category)?;
+        // A home older than 0.19 sends no kind: it follows the category.
+        let kind = match v.kind {
+            0 => category.kind(),
+            kind => m::ColumnKind::from_wire(kind)?,
+        };
         Ok(m::BoardColumn {
             project_id: v.project_id,
+            board_id: v.board_id,
             key: v.key,
             name: v.name,
             ord: v.ord,
-            category: m::ColumnCategory::from_wire(v.category)?,
+            category,
+            kind,
             wip_limit: v.wip_limit,
             wip_scope: m::WipScope::from_wire(v.wip_scope)?,
             visible: v.visible,

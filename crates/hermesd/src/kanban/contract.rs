@@ -74,6 +74,12 @@ map_enum!(ColumnCategory {
     Done,
     Cancelled
 });
+map_enum!(ColumnKind {
+    Open,
+    Active,
+    Done,
+    Cancelled
+});
 map_enum!(WipScope {
     Column,
     PerAssignee
@@ -167,6 +173,7 @@ macro_rules! spellings {
 
 spellings!(
     ColumnCategory,
+    ColumnKind,
     WipScope,
     Role,
     ItemType,

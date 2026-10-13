@@ -15,9 +15,11 @@ use super::board::{
     from_json, from_json_list, from_text, item_template, parse_at, settings_in, to_json_list,
     to_text,
 };
+use super::board_ranks::rank_last;
 use super::board_tx::BoardTx;
+use super::boards::default_board_in;
 use super::{ts, Actor, Db};
-use crate::kanban::{defaults, rank};
+use crate::kanban::defaults;
 
 /// The outcome of a versioned write: done, or refused because someone else
 /// changed the record first, with what it is now.
@@ -75,7 +77,8 @@ pub(super) fn record(
 
 const ITEM_COLUMNS: &str = "id, seq, type, title, description, platforms, size, priority, rank, \
      column_key, category, blocked_by, blocked_reason, blocked_since, assignee, parent_id, \
-     release_id, labels, created_by, created_at, updated_at, state_entered_at, done_at, version";
+     release_id, labels, created_by, created_at, updated_at, state_entered_at, done_at, version, \
+     board_id";
 
 pub(super) fn item_in(conn: &Connection, id: &str) -> rusqlite::Result<Option<Item>> {
     let Some(mut item) = conn
@@ -87,6 +90,7 @@ pub(super) fn item_in(conn: &Connection, id: &str) -> rusqlite::Result<Option<It
                 let blocked_since: Option<String> = r.get(13)?;
                 Ok(Item {
                     id: r.get(0)?,
+                    board_id: r.get::<_, Option<String>>(24)?.unwrap_or_default(),
                     seq: r.get(1)?,
                     item_type: from_text(r.get(2)?)?,
                     title: r.get(3)?,
@@ -172,34 +176,6 @@ pub(super) fn item_in(conn: &Connection, id: &str) -> rusqlite::Result<Option<It
     Ok(Some(item))
 }
 
-/// The rank after the last card in a column.
-pub(super) fn rank_last(
-    conn: &Connection,
-    project_id: &str,
-    column_key: &str,
-) -> anyhow::Result<String> {
-    let last: Option<String> = conn.query_row(
-        "SELECT max(rank) FROM item WHERE project_id = ?1 AND column_key = ?2",
-        params![project_id, column_key],
-        |r| r.get(0),
-    )?;
-    rank::between(last.as_deref(), None).ok_or_else(|| anyhow::anyhow!("no rank after {last:?}"))
-}
-
-/// The rank before the first card in a column.
-pub(super) fn rank_first(
-    conn: &Connection,
-    project_id: &str,
-    column_key: &str,
-) -> anyhow::Result<String> {
-    let first: Option<String> = conn.query_row(
-        "SELECT min(rank) FROM item WHERE project_id = ?1 AND column_key = ?2",
-        params![project_id, column_key],
-        |r| r.get(0),
-    )?;
-    rank::between(None, first.as_deref()).ok_or_else(|| anyhow::anyhow!("no rank before {first:?}"))
-}
-
 /// Active columns flag an item that has sat in them too long.
 fn is_active(category: ColumnCategory) -> bool {
     matches!(
@@ -216,14 +192,18 @@ impl BoardTx<'_> {
         let tx = self.conn;
         let settings = settings_in(tx, new.project_id)?
             .ok_or_else(|| anyhow::anyhow!("this project has no board"))?;
+        let board = default_board_in(tx, new.project_id)?
+            .ok_or_else(|| anyhow::anyhow!("this project has no board"))?;
         let inbox: String = tx.query_row(
-            "SELECT key FROM board_column WHERE project_id = ?1 AND category = 'inbox'
+            "SELECT key FROM board_column
+             WHERE project_id = ?1 AND board_id = ?2 AND category = 'inbox'
              ORDER BY ord LIMIT 1",
-            params![new.project_id],
+            params![new.project_id, board.id],
             |r| r.get(0),
         )?;
+        // One sequence per project; the board's key is the prefix.
         let seq = settings.next_seq;
-        let id = format!("{}-{seq:03}", settings.key);
+        let id = format!("{}-{seq:03}", board.key);
         tx.execute(
             "UPDATE board_settings SET next_seq = next_seq + 1 WHERE project_id = ?1",
             params![new.project_id],
@@ -242,8 +222,9 @@ impl BoardTx<'_> {
             &format!(
                 "INSERT INTO item(id, project_id, seq, type, title, description, platforms, size,
                                   priority, rank, column_key, category, labels, parent_id,
-                                  created_by, created_at, updated_at, state_entered_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, '{}', ?12, ?13, ?14, ?15, ?15, ?15)",
+                                  created_by, created_at, updated_at, state_entered_at, board_id)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, '{}', ?12, ?13, ?14, ?15, ?15, ?15,
+                         ?16)",
                 to_text(&ColumnCategory::Inbox)
             ),
             params![
@@ -261,7 +242,8 @@ impl BoardTx<'_> {
                 serde_json::to_string(new.labels)?,
                 new.parent_id,
                 actor.as_stored(),
-                at
+                at,
+                board.id
             ],
         )?;
         for (idx, text) in new.acceptance_criteria.iter().enumerate() {

@@ -11,8 +11,9 @@ use bus::now;
 use rusqlite::{params, Connection, OptionalExtension};
 
 use super::board::{from_text, to_json_list, to_text};
-use super::board_items::{item_in, rank_first, rank_last, record, Event, Write};
+use super::board_items::{item_in, record, Event, Write};
 use super::board_notes::replace_ac;
+use super::board_ranks::{rank_first, rank_last};
 use super::board_tx::BoardTx;
 use super::{ts, Actor};
 use crate::kanban::guards::WIP_OVERRIDE_LABEL;
