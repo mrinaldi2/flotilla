@@ -254,7 +254,7 @@ message ItemQuery {
   // Deprecated (0.19.0 K8): `labels` with `platform:<name>`.
   repeated Platform platforms = 7;
   optional bool blocked = 8;
-  // Cards carrying any of these labels.
+  // Cards carrying any of these labels (`platform:ios`).
   repeated string labels = 9;
 }
 
@@ -305,6 +305,8 @@ message ItemCreate {
   optional Size size = 6;
   // P2 when left out.
   optional Priority priority = 7;
+  // Free labels. `<group>:<value>` is a label of the board's group of that
+  // name: `platform:ios` gives the item the platform ios.
   repeated string labels = 8;
   // The epic this belongs to.
   optional string parent_id = 9;
@@ -327,7 +329,8 @@ message ItemUpdate {
   PlatformList platforms = 5;
   optional Size size = 6;
   optional Priority priority = 7;
-  // The whole list, replacing the old one.
+  // The whole list, replacing the old one. `<group>:<value>` is a label of
+  // the board's group of that name: `platform:ios` gives the platform ios.
   StringList labels = 8;
   optional string parent_id = 9;
   // The whole list, replacing the old one. A criterion whose text stays the
