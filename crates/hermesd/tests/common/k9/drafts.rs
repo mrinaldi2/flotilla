@@ -74,7 +74,7 @@ async fn phone_drafts(k: &mut K9, board_id: &str) -> (String, Vec<u8>) {
         ..Default::default()
     });
     match response(call(&mut k.phone, invite).await) {
-        Response::Item(detail) => assert_eq!(detail.invited, [k.lead_id.clone()]),
+        Response::Item(detail) => assert_eq!(detail.invited, std::slice::from_ref(&k.lead_id)),
         other => panic!("expected the item, got {other:?}"),
     }
     (draft.id, shot)
