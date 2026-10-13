@@ -28,4 +28,17 @@ describe("label groups", () => {
     ]);
     expect(boardLabelGroups(undefined, [])).toEqual([]);
   });
+
+  it("leaves out a group the board doesn't declare when its cards use many values", () => {
+    const board = create(BoardSchema, {
+      labelGroups: [create(LabelGroupSchema, { name: "platform", values: ["ios"] })],
+    });
+    // An import's old ids (`was:B1`…), one per card: a tag, not a filter.
+    const imported = Array.from({ length: 54 }, (_, i) => [`was:B${String(i)}`, "release:0.16"]);
+    const offered = boardLabelGroups(board, imported).map((group) => group.name);
+    expect(offered).toEqual(["platform", "release"]);
+    // The board's own group keeps every value its cards use.
+    const many = Array.from({ length: 12 }, (_, i) => [`platform:p${String(i)}`]);
+    expect(boardLabelGroups(board, many)[0]?.values).toHaveLength(13);
+  });
 });

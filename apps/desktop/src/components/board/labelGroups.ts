@@ -28,8 +28,16 @@ export function labelWord(label: string): string {
 }
 
 /**
+ * The most values a group the board doesn't declare may use and still be
+ * offered. More is a tag of its own per card (an import's `was:B12`), which
+ * would fill the bar with chips nobody filters on.
+ */
+const MAX_UNDECLARED_VALUES = 8;
+
+/**
  * The groups the filter bar offers: the board's own, in order, then any
- * other group its cards use, with the values they use.
+ * other group its cards use with at most `MAX_UNDECLARED_VALUES` values,
+ * with the values they use.
  */
 export function boardLabelGroups(
   board: Pick<Board, "labelGroups"> | undefined,
@@ -49,5 +57,8 @@ export function boardLabelGroups(
     }
     groups.set(group, values);
   }
-  return [...groups].map(([name, values]) => ({ name, values }));
+  const own = new Set(declared.map((g) => g.name));
+  return [...groups]
+    .filter(([name, values]) => own.has(name) || values.length <= MAX_UNDECLARED_VALUES)
+    .map(([name, values]) => ({ name, values }));
 }

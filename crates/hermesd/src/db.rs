@@ -160,6 +160,27 @@ fn parse_ts(s: &str) -> DateTime<Utc> {
         .unwrap_or_else(|_| Utc::now())
 }
 
+/// The schema version a database has stored: how many of `MIGRATIONS` it
+/// has run, 0 before the first.
+pub fn schema_version(conn: &Connection) -> anyhow::Result<usize> {
+    let has_meta: i64 = conn.query_row(
+        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='meta'",
+        [],
+        |r| r.get(0),
+    )?;
+    if has_meta == 0 {
+        return Ok(0);
+    }
+    let stored = conn
+        .query_row(
+            "SELECT value FROM meta WHERE key='schema_version'",
+            [],
+            |r| r.get::<_, String>(0),
+        )
+        .optional()?;
+    Ok(stored.and_then(|v| v.parse().ok()).unwrap_or(0))
+}
+
 impl Db {
     pub fn open(path: &Path) -> anyhow::Result<Self> {
         if let Some(parent) = path.parent() {
@@ -241,23 +262,7 @@ impl Db {
     fn migrate(&self) -> anyhow::Result<()> {
         let mut conn = self.lock();
         let tx = conn.transaction()?;
-        let has_meta: i64 = tx.query_row(
-            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='meta'",
-            [],
-            |r| r.get(0),
-        )?;
-        let mut version: usize = if has_meta > 0 {
-            tx.query_row(
-                "SELECT value FROM meta WHERE key='schema_version'",
-                [],
-                |r| r.get::<_, String>(0),
-            )
-            .optional()?
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(0)
-        } else {
-            0
-        };
+        let mut version = schema_version(&tx)?;
         while version < MIGRATIONS.len() {
             let sql = migrate_columns::without_existing_columns(&tx, MIGRATIONS[version])?;
             tx.execute_batch(&sql)
@@ -354,17 +359,5 @@ impl Db {
         drop(conn);
         self.prune_signals(now() - Duration::days(signal_days.max(1)))?;
         Ok((messages, deliveries, runs))
-    }
-
-    /// Online backup to the given path using SQLite's backup API.
-    pub fn backup_to(&self, dest: &Path) -> anyhow::Result<()> {
-        if let Some(parent) = dest.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        let conn = self.lock();
-        let mut dst = Connection::open(dest)?;
-        let backup = rusqlite::backup::Backup::new(&conn, &mut dst)?;
-        backup.run_to_completion(64, std::time::Duration::from_millis(50), None)?;
-        Ok(())
     }
 }

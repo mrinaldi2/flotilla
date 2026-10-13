@@ -288,3 +288,48 @@ async fn a_leads_change_waits_for_the_owner_unless_the_board_is_lead_free() {
         .iter()
         .any(|col| col.name == "Ops"));
 }
+
+/// `board_get` is the boards a bot works on: an archived board's columns
+/// and cards are left out, as `board_list` leaves out the board, and its
+/// key is the default board's, the one `item_create` uses (0.19.0 K9).
+#[tokio::test]
+async fn board_get_leaves_out_an_archived_board_and_names_the_default_key() {
+    let (pair, mut bots) = common::tasks::project_with_bots(&["Lead"]).await;
+    let (d, lead) = (&pair.d, &mut bots[0]);
+    let db = &d.app.db;
+    let project = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
+    db.ensure_board(&project, &db.daemon_id().unwrap(), Some("RB"))
+        .unwrap();
+    let main = db.default_board(&project).unwrap().expect("main");
+    let recipes = db
+        .create_board(&project, "Recipes", "RC", Preset::Simple)
+        .unwrap();
+    let owner = || By::Owner(Actor::User);
+    let update = |board: &hermesd::kanban::model::Board| c::BoardUpdate {
+        board_id: board.id.clone(),
+        version: board.version,
+        ..Default::default()
+    };
+    let default = Structure::Board(c::BoardUpdate {
+        is_default: Some(true),
+        ..update(&recipes)
+    });
+    admin::structure(&d.app, owner(), default).expect("default");
+    let main = db.board(&main.id).unwrap().expect("main");
+    let archive = Structure::Board(c::BoardUpdate {
+        archived: Some(true),
+        ..update(&main)
+    });
+    admin::structure(&d.app, owner(), archive).expect("archived");
+
+    let got = lead.call("board_get", serde_json::json!({})).await;
+    assert_eq!(got["key"], "RC", "{got}");
+    let boards: Vec<&str> = got["columns"]
+        .as_array()
+        .expect("columns")
+        .iter()
+        .filter_map(|col| col["board_id"].as_str())
+        .collect();
+    assert!(!boards.is_empty());
+    assert!(boards.iter().all(|b| *b == recipes.id), "{got}");
+}
