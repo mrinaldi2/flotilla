@@ -47,6 +47,9 @@ export function refusalFor(name: string, bytes: number, onItem: number): string 
   if (!image && !FILES.has(ext)) {
     return `${ext === "" ? "A file without a type" : `.${ext}`} isn't taken: attach png, jpg, webp, gif, pdf, md, txt or log.`;
   }
+  if (bytes === 0) {
+    return `${name} is empty: there is nothing to attach.`;
+  }
   const cap = image ? CAPS.image : CAPS.file;
   if (bytes > cap) {
     return `${sizeWords(bytes)} is over the ${sizeWords(cap)} cap for ${image ? "an image" : "a file"}.`;
@@ -57,11 +60,19 @@ export function refusalFor(name: string, bytes: number, onItem: number): string 
   return null;
 }
 
-/** What the item's attached files hold, detached ones and docs left out. */
+/**
+ * What the item's stored files hold, counted as the Hermes service counts
+ * its cap: a detached file too (its bytes are kept for the history), a
+ * stored copy once however often it is attached, and no doc.
+ */
 export function attachedBytes(attachments: readonly ItemAttachment[]): number {
-  return attachments
-    .filter((a) => !a.removed && a.kind !== "doc")
-    .reduce((sum, a) => sum + Number(a.bytes), 0);
+  const stored = new Map<string, number>();
+  for (const a of attachments) {
+    if (a.kind !== "doc" && a.path !== "") {
+      stored.set(a.path, Math.max(stored.get(a.path) ?? 0, Number(a.bytes)));
+    }
+  }
+  return [...stored.values()].reduce((sum, bytes) => sum + bytes, 0);
 }
 
 /** The glyph and word for an attachment's kind: never colour alone. */

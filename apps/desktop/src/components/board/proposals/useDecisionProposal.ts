@@ -1,7 +1,8 @@
 // A lead's structure proposal raises one decision (0.19.0), and approving
 // or declining the proposal is how it is ruled, so Decisions shows the
 // proposal for it. A decision doesn't name its proposal: the project's
-// board snapshot carries the open proposals, each with its decision.
+// board snapshot carries the open proposals, each with its decision. The
+// board is read only for a decision worded as a proposal's (`mayBeProposal`).
 
 import { useCallback, useEffect, useState } from "react";
 import type { DaemonApi } from "../../../protocol/api";
@@ -27,6 +28,16 @@ export interface DecisionProposal {
   readonly rule: (approve: boolean, note?: string) => Promise<void>;
 }
 
+/**
+ * Whether a decision reads as one the Hermes service raised for a lead's
+ * proposal: a question whose body ends "Proposal <id>.". Only then is the
+ * project's board read, since `board_get` starts a board where there is
+ * none, and Decisions must not do that for every project it shows.
+ */
+function mayBeProposal(decision: Decision): boolean {
+  return decision.kind === "question" && /\bProposal [\w-]+\.$/.test(decision.body.trim());
+}
+
 export function useDecisionProposal(
   client: DaemonApi,
   connected: boolean,
@@ -35,7 +46,8 @@ export function useDecisionProposal(
   const [found, setFound] = useState<FoundProposal | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const decisionId = decision?.state === "open" ? decision.id : undefined;
+  const decisionId =
+    decision?.state === "open" && mayBeProposal(decision) ? decision.id : undefined;
   const projectId = decision?.project_id;
   const served = client.encodings.includes(PROTO_ENCODING);
   useEffect(() => {

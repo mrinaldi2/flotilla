@@ -28,7 +28,7 @@ export interface StripColumn {
 export interface ProposalDiff {
   readonly before: readonly StripColumn[];
   readonly after: readonly StripColumn[];
-  /** The rule changes, one line each: "+ Has an assignee", "− Size at most M". */
+  /** The rule changes, one line each, in words: "+ adds: Has an assignee", "− drops: Size at most M". */
   readonly rules: readonly string[];
   /** Anything else it changes, in words. */
   readonly notes: readonly string[];
@@ -58,8 +58,8 @@ function listDiff(
   words: (t: string) => string,
 ): string[] {
   return [
-    ...after.filter((t) => !before.includes(t)).map((t) => `+ ${words(t)}`),
-    ...before.filter((t) => !after.includes(t)).map((t) => `− ${words(t)}`),
+    ...after.filter((t) => !before.includes(t)).map((t) => `+ adds: ${words(t)}`),
+    ...before.filter((t) => !after.includes(t)).map((t) => `− drops: ${words(t)}`),
   ];
 }
 
@@ -85,7 +85,7 @@ function columnAdd(b: Board, add: ColumnAdd): ProposalDiff {
     before: b.before,
     after: placed(b.before, column, add.after),
     rules: [
-      ...add.rules.map((r) => `+ ${ruleWords(r)}`),
+      ...add.rules.map((r) => `+ adds: ${ruleWords(r)}`),
       ...(add.movers.length === 0 ? [] : [`Moved in by: ${moverWords(add.movers)}`]),
     ],
     notes: when(add.wipLimit, (n) => `WIP limit ${n}`),

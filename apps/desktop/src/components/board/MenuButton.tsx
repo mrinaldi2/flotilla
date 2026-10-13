@@ -37,6 +37,10 @@ interface MenuButtonProps {
 
 /** Where ↑, ↓, Home and End move focus among `count` items from `at`; null for other keys. */
 function step(key: string, at: number, count: number): number | null {
+  if (at < 0 && (key === "ArrowDown" || key === "ArrowUp")) {
+    // Nothing focused yet: ↓ starts at the first item, ↑ at the last.
+    return key === "ArrowDown" ? 0 : count - 1;
+  }
   switch (key) {
     case "ArrowDown":
       return (at + 1) % count;

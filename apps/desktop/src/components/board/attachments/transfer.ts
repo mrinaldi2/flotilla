@@ -14,18 +14,36 @@ export interface Upload {
   readonly slice: (start: number, end: number) => Blob;
 }
 
-/** Sends `file` in chunks, reporting bytes received, then attaches it. */
+/** Thrown when an upload is cancelled before it was attached. */
+export class UploadCancelled extends Error {
+  constructor() {
+    super("The upload was cancelled.");
+    this.name = "UploadCancelled";
+  }
+}
+
+/**
+ * Sends `file` in chunks, reporting bytes received, then attaches it. An
+ * aborted `signal` stops it before the next chunk, and before the attach.
+ */
 export async function uploadAttachment(
   api: BoardApi,
   itemId: string,
   uploadId: string,
   file: Upload,
   onProgress: (received: number) => void,
-  caption?: string,
+  options: { readonly caption?: string; readonly signal?: AbortSignal } = {},
 ): Promise<ItemDetail> {
+  const { caption, signal } = options;
+  const stopIfCancelled = (): void => {
+    if (signal?.aborted === true) {
+      throw new UploadCancelled();
+    }
+  };
   let offset = 0;
-  // An empty file still sends one chunk, so the upload exists.
+  // An empty file is refused before it gets here (`refusalFor`).
   do {
+    stopIfCancelled();
     const end = Math.min(offset + CHUNK, file.size);
     // Chunks go in order: each one's offset is what the home has received.
     // oxlint-disable-next-line no-await-in-loop
@@ -49,6 +67,7 @@ export async function uploadAttachment(
     offset = Number(progress.received);
     onProgress(offset);
   } while (offset < file.size);
+  stopIfCancelled();
   return boardCall(
     api,
     { case: "itemAttach", value: { id: itemId, uploadId, name: file.name, caption } },

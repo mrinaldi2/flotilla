@@ -12,7 +12,7 @@ use super::board_drafts::revision;
 use super::board_items::{record, Event};
 use super::board_tx::BoardTx;
 use super::{ts, Actor};
-use crate::kanban::model::{AttachmentKind, ItemAttachment, ItemEventKind};
+use crate::kanban::model::{AttachmentKind, DraftRevision, ItemAttachment, ItemEventKind};
 
 /// An attachment to record. Its bytes, if any, are already stored.
 pub struct NewAttachment<'a> {
@@ -175,6 +175,55 @@ impl BoardTx<'_> {
             .query_map(params![item_id], row)?
             .collect::<Result<_, _>>()?;
         Ok(rows)
+    }
+
+    /// The attachment an attachment revision of a draft added or detached.
+    /// A revision names only the file, and two may share a name, so it is
+    /// found through the history: each attachment revision is written with
+    /// one event that carries the attachment's id, and the n-th revision
+    /// of an actor's (from, to) is that actor's n-th such event.
+    pub fn attachment_of_revision(
+        &self,
+        revision: &DraftRevision,
+    ) -> anyhow::Result<Option<ItemAttachment>> {
+        if revision.field != "attachment" {
+            return Ok(None);
+        }
+        let nth: i64 = self.conn.query_row(
+            r#"SELECT count(*) FROM item_draft_revision
+               WHERE item_id = ?1 AND field = 'attachment' AND actor = ?2
+                 AND "from" IS ?3 AND "to" IS ?4 AND id <= ?5"#,
+            params![
+                revision.item_id,
+                revision.actor,
+                revision.from,
+                revision.to,
+                revision.id
+            ],
+            |r| r.get(0),
+        )?;
+        let id: Option<String> = self
+            .conn
+            .query_row(
+                r#"SELECT note FROM item_event
+                   WHERE item_id = ?1 AND field = 'attachment' AND actor = ?2
+                     AND "from" IS ?3 AND "to" IS ?4
+                   ORDER BY id LIMIT 1 OFFSET ?5"#,
+                params![
+                    revision.item_id,
+                    revision.actor,
+                    revision.from,
+                    revision.to,
+                    nth - 1
+                ],
+                |r| r.get(0),
+            )
+            .optional()?
+            .flatten();
+        let Some(id) = id else {
+            return Ok(None);
+        };
+        Ok(attachment_in(self.conn, &id)?.filter(|a| a.item_id == revision.item_id))
     }
 
     pub fn attachment(&self, id: &str) -> anyhow::Result<Option<ItemAttachment>> {

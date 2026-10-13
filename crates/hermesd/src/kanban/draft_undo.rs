@@ -33,10 +33,7 @@ pub fn undo(
         .ok_or_else(|| not_found(format!("no item {}", req.id)))?;
     let revision = app
         .db
-        .board_read(|t| t.draft_revisions(&req.id, Some(req.revision - 1)))?
-        .into_iter()
-        .next()
-        .filter(|r| r.id == req.revision)
+        .board_read(|t| t.draft_revision(&req.id, req.revision))?
         .ok_or_else(|| not_found(format!("no change {} on {}", req.revision, req.id)))?;
     let editor = Editor {
         app,
@@ -134,19 +131,19 @@ fn undo_attachment(
     if let Err(outcome) = current(editor, req)? {
         return Ok(outcome);
     }
-    let attachments = editor.app.db.board_read(|t| t.attachments(&req.id))?;
-    // The newest attachment of that name in the state the change left it.
+    // The very attachment the change added or detached, still as it left it.
     let (name, removed) = match (&revision.from, &revision.to) {
         (None, Some(added)) => (added, false),
         (Some(detached), None) => (detached, true),
         _ => return Err(invalid("that change can't be undone")),
     };
-    let target = attachments
-        .iter()
-        .rev()
-        .find(|a| &a.name == name && a.removed == removed)
+    let target = editor
+        .app
+        .db
+        .board_read(|t| t.attachment_of_revision(revision))?
+        .filter(|a| a.removed == removed)
         .ok_or_else(|| invalid(format!("{name} was changed again since; nothing to undo")))?;
-    let attachment_id = target.id.clone();
+    let attachment_id = target.id;
     if removed {
         editor.published(super::feed::ChangeKind::ItemUpserted, None, || {
             let done = editor

@@ -44,6 +44,18 @@ pub(super) fn revision(
     Ok(())
 }
 
+fn revision_row(r: &rusqlite::Row<'_>) -> rusqlite::Result<DraftRevision> {
+    Ok(DraftRevision {
+        id: r.get(0)?,
+        item_id: r.get(1)?,
+        actor: r.get(2)?,
+        at: parse_at(r.get(3)?),
+        field: r.get(4)?,
+        from: r.get(5)?,
+        to: r.get(6)?,
+    })
+}
+
 /// After an edit of what was a draft, a revision per field that changed.
 pub(super) fn revised(
     conn: &Connection,
@@ -147,19 +159,22 @@ impl BoardTx<'_> {
                 r#"SELECT id, item_id, actor, at, field, "from", "to" FROM item_draft_revision
                    WHERE item_id = ?1 AND id > ?2 ORDER BY id"#,
             )?
-            .query_map(params![item_id, since.unwrap_or(0)], |r| {
-                Ok(DraftRevision {
-                    id: r.get(0)?,
-                    item_id: r.get(1)?,
-                    actor: r.get(2)?,
-                    at: parse_at(r.get(3)?),
-                    field: r.get(4)?,
-                    from: r.get(5)?,
-                    to: r.get(6)?,
-                })
-            })?
+            .query_map(params![item_id, since.unwrap_or(0)], revision_row)?
             .collect::<Result<_, _>>()?;
         Ok(rows)
+    }
+
+    /// One revision of the draft `item_id`, by its id.
+    pub fn draft_revision(&self, item_id: &str, id: i64) -> anyhow::Result<Option<DraftRevision>> {
+        Ok(self
+            .conn
+            .query_row(
+                r#"SELECT id, item_id, actor, at, field, "from", "to" FROM item_draft_revision
+                   WHERE item_id = ?1 AND id = ?2"#,
+                params![item_id, id],
+                revision_row,
+            )
+            .optional()?)
     }
 
     /// The newest revision the owner has seen; 0 for none.

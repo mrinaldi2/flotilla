@@ -56,7 +56,11 @@ function OrderButtons(props: {
   );
 }
 
-/** A text field that saves on Enter or when focus leaves it. */
+/**
+ * A text field that saves on Enter or when focus leaves it, once per text:
+ * Enter then Tab sends one change, not a second one with the version the
+ * first has used. It takes the board's value whenever that changes.
+ */
 function SavedInput(props: {
   readonly label: string;
   readonly className?: string;
@@ -67,8 +71,20 @@ function SavedInput(props: {
   readonly onSave: (text: string) => boolean;
 }): ReactElement {
   const [text, setText] = useState(props.initial);
+  const [shown, setShown] = useState(props.initial);
+  const [sent, setSent] = useState<string | null>(null);
+  if (props.initial !== shown) {
+    setShown(props.initial);
+    setText(props.initial);
+    setSent(null);
+  }
   const save = (): void => {
-    if (!props.onSave(text)) {
+    if (text === sent) {
+      return;
+    }
+    if (props.onSave(text)) {
+      setSent(text);
+    } else {
       setText(props.initial);
     }
   };
@@ -180,11 +196,12 @@ export default function ColumnRow(props: ColumnRowProps): ReactElement {
         <label className="column-row-visible">
           <input
             type="checkbox"
+            aria-label={`Show ${column.name}`}
             checked={column.visible}
             disabled={disabled}
             onChange={(e) => props.onChange({ visible: e.target.checked })}
           />
-          <span>{column.visible ? "Shown" : "Hidden"}</span>
+          <span aria-hidden="true">{column.visible ? "Shown" : "Hidden"}</span>
         </label>
         {editable ? (
           <button

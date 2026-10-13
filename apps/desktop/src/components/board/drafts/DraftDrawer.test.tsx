@@ -2,12 +2,13 @@ import { create } from "@bufbuild/protobuf";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { DraftRevisionSchema } from "../../../protocol/gen/hermes/board/v1/board_pb";
 import {
   EditResultSchema,
   MoveResultSchema,
 } from "../../../protocol/gen/hermes/board/v1/requests_pb";
 import { unmet } from "../../../test/boardFixtures";
-import { draftDetail, draftItem, recipeColumns } from "../../../test/boardsFixtures";
+import { draftChanges, draftDetail, draftItem, recipeColumns } from "../../../test/boardsFixtures";
 import { boardsClient, STORY_BOTS } from "../../../test/boardStory";
 import * as fx from "../../../test/fixtures";
 import ItemDrawer from "../drawer/ItemDrawer";
@@ -75,6 +76,31 @@ describe("a draft in the drawer", () => {
       expectedVersion: 6n,
     });
     expect(await within(review).findByText("Undone")).toBeInTheDocument();
+  });
+
+  it("lists a change that landed after the drawer read them, since Review marks it seen", async () => {
+    const user = userEvent.setup();
+    const client = boardsClient().onBoard("itemDraftChanges", (call) => {
+      const changes = draftChanges();
+      if (call.case === "itemDraftChanges" && call.value.markSeen === true) {
+        // The lead linked a doc between the drawer's read and the click.
+        changes.revisions.push(
+          create(DraftRevisionSchema, {
+            id: 6n,
+            itemId: "RB-20",
+            actor: "bot:lead",
+            field: "link",
+            to: "artifact:notes.md",
+          }),
+        );
+        changes.seen = 6n;
+      }
+      return { case: "draftChanges", value: changes };
+    });
+    renderDraft(client);
+    await user.click(await screen.findByRole("button", { name: "Review" }));
+    const review = screen.getByRole("region", { name: "Changes since you looked" });
+    expect(await within(review).findByText("Linked artifact:notes.md")).toBeInTheDocument();
   });
 
   it("shows a refused undo in words", async () => {

@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import type { FormEvent, ReactElement } from "react";
-import { useEscapeKey } from "../../../hooks/useEscapeKey";
+import { useDialogKeys } from "../../../hooks/useReturnFocus";
 import type { BoardApi } from "../../../protocol/board";
 import { boardCall } from "../../../protocol/board";
 import type { Board } from "../../../protocol/gen/hermes/board/v1/board_pb";
@@ -28,7 +28,7 @@ export default function NewItemDialog(props: NewItemDialogProps): ReactElement {
   const [type, setType] = useState(ItemType.FEATURE);
   const [sending, setSending] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
-  useEscapeKey(props.onCancel);
+  useDialogKeys(props.onCancel);
   const submit = (event: FormEvent): void => {
     event.preventDefault();
     if (title.trim() === "" || sending) {
