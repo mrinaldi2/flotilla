@@ -145,6 +145,9 @@ async fn run_inner(cfg: &Config, job: &str, spec: Spec) -> anyhow::Result<Outcom
                 .iter()
                 .filter_map(|k| Some((k, std::env::var_os(k)?))),
         )
+        // H-318: the PATH the probe found its tools on, so a check routed
+        // here by those tools finds them too.
+        .env("PATH", crate::tool_path::tool_path())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .kill_on_drop(true);

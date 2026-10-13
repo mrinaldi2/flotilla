@@ -3,7 +3,7 @@
 
 import type { ReactElement } from "react";
 import type { CheckRun, PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { checkResult, checksSummary, checkWhere, splitChecks } from "./checkText";
+import { checkResult, checksSummary, checkWhere, splitChecks, unroutableNote } from "./checkText";
 import { sha7 } from "./prText";
 
 function CheckRow({ check }: { readonly check: CheckRun }): ReactElement {
@@ -11,6 +11,7 @@ function CheckRow({ check }: { readonly check: CheckRun }): ReactElement {
   const notes = [
     check.required ? "" : "optional",
     check.treeOf ? `same tree as ${sha7(check.treeOf)}` : "",
+    unroutableNote(check),
   ].filter(Boolean);
   return (
     <li className="pr-check">

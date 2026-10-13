@@ -48,6 +48,7 @@ pub(super) fn handle(app: &Arc<AppState>, peer_id: &str, frame: &Value) -> anyho
         }
         "create_bot" => super::remote_bots::serve_create(app, &peer, frame),
         crate::prs::check_remote::RUN => crate::prs::check_remote::serve_run(app, &peer, frame),
+        crate::prs::check_lost::RUNNING => crate::prs::check_lost::serve(app, &peer, frame),
         crate::cleanup::remote::REQUEST => crate::cleanup::remote::serve_request(app, &peer, frame),
         crate::cleanup::sweep_remote::PLAN => {
             crate::cleanup::sweep_remote::serve_plan(app, &peer, frame)

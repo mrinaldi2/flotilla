@@ -67,6 +67,7 @@ pub mod supervisor;
 pub mod terminal;
 #[cfg(test)]
 pub(crate) mod test_logs;
+pub mod tool_path;
 pub mod workers;
 pub mod worktree;
 pub mod ws;

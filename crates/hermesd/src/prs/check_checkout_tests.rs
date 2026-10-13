@@ -96,6 +96,84 @@ fn a_checkout_that_cant_be_made_says_why() {
     assert!(!job.join(DIR).exists());
 }
 
+/// H-321 AC1: a GitHub remote spelled for ssh is cloned over https, where
+/// the daemon's token works; other URLs are left as they are.
+#[test]
+fn a_github_ssh_remote_is_cloned_over_https() {
+    for ssh in [
+        "git@github.com:mrinaldi2/gravity.git",
+        "ssh://git@github.com/mrinaldi2/gravity.git",
+        " git@github.com:mrinaldi2/gravity.git\n",
+    ] {
+        assert_eq!(
+            clone_url(ssh),
+            "https://github.com/mrinaldi2/gravity.git",
+            "{ssh:?}"
+        );
+    }
+    let https = "https://github.com/mrinaldi2/gravity_os.git";
+    assert_eq!(clone_url(https), https);
+    assert_eq!(clone_url("/tmp/origin.git"), "/tmp/origin.git");
+    assert_eq!(
+        clone_url("git@gitlab.com:o/r.git"),
+        "git@gitlab.com:o/r.git"
+    );
+}
+
+/// main at the H-279 policy PR's base.
+const LIVE_SHA: &str = "c9fe3e0d5c43ef934d9750381d9981ae52d38a53";
+
+/// Clones the project's own ssh-spelled remote at [`LIVE_SHA`] with
+/// `token`, and checks nothing of a token stays in its config (S2).
+fn live_clone(token: Option<String>) {
+    let root = tempfile::tempdir().unwrap();
+    let job = root.path().join("job");
+    let tree = prepare_with(
+        &job,
+        "git@github.com:mrinaldi2/gravity.git",
+        LIVE_SHA,
+        token,
+    )
+    .unwrap();
+    assert!(tree.join("Cargo.toml").is_file());
+    let config = std::fs::read_to_string(tree.join(".git").join("config")).unwrap();
+    for word in ["credential", "x-access-token", "token-"] {
+        assert!(!config.contains(word), "{word}:\n{config}");
+    }
+    remove(&job).unwrap();
+}
+
+/// H-321 AC1 for real, as on a computer with no GitHub token (win-pc):
+/// the public repository clones anonymously. Needs github.com.
+#[test]
+fn the_projects_ssh_remote_clones_anonymously() {
+    live_clone(None);
+}
+
+/// H-321 AC1 for real with the daemon's own token (gh's login or
+/// `GH_TOKEN`): `cargo test -p hermesd --lib check_checkout -- --ignored`.
+#[test]
+#[ignore = "needs a GitHub token on this computer"]
+fn the_projects_ssh_remote_clones_with_the_daemons_token() {
+    let token = crate::safe_git::daemon_token("https://github.com/mrinaldi2/gravity.git");
+    assert!(token.is_some(), "no GitHub token on this computer");
+    live_clone(token);
+}
+
+/// H-321 AC2: only GitHub remotes are rewritten. An ssh remote anywhere
+/// else still reaches the hardened git, which refuses the transport.
+#[test]
+fn an_ssh_remote_elsewhere_is_still_refused() {
+    let root = tempfile::tempdir().unwrap();
+    let job = root.path().join("job");
+    let error = prepare(&job, "git@example.invalid:o/r.git", &"a".repeat(40)).unwrap_err();
+    assert!(
+        format!("{error:#}").contains("transport 'ssh' not allowed"),
+        "{error:#}"
+    );
+    assert!(!job.join(DIR).exists());
+}
+
 #[test]
 fn the_disk_floor_holds_only_below_it() {
     let dir = tempfile::tempdir().unwrap();

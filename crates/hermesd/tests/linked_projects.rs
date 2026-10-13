@@ -48,7 +48,8 @@ async fn link(p: &mut Paired, project_id: &str, remote: Option<&str>) -> Value {
     if let Some(remote) = remote {
         req["remote_project_id"] = json!(remote);
     }
-    p.mac_client.request(req).await
+    // A round trip to the other daemon and back (H-333): setup's bound.
+    p.mac_client.request_within(setup_wait(), req).await
 }
 
 fn peer_of(bot: &bus::Bot) -> Option<&str> {
@@ -92,7 +93,10 @@ async fn linking_stands_every_bot_in_on_both_sides() {
     );
     let listed =
         t.p.mac_client
-            .request(json!({"type": "list_peer_projects", "peer_id": t.p.mac_peer_id}))
+            .request_within(
+                setup_wait(),
+                json!({"type": "list_peer_projects", "peer_id": t.p.mac_peer_id}),
+            )
             .await;
     assert_eq!(listed["type"], "peer_projects", "{listed}");
     assert_eq!(listed["projects"][0]["id"], t.win_app.as_str());
@@ -223,13 +227,21 @@ async fn unlinking_from_either_side_archives_the_stand_ins_on_both() {
 
     let unlinked =
         t.p.win_client
-            .request(json!({
-                "type": "unlink_project", "project_id": t.win_app, "peer_id": t.p.win_peer_id
-            }))
+            .request_within(
+                setup_wait(),
+                json!({
+                    "type": "unlink_project", "project_id": t.win_app, "peer_id": t.p.win_peer_id
+                }),
+            )
             .await;
     assert_eq!(unlinked["type"], "project", "{unlinked}");
     assert_eq!(unlinked["project"]["links"], json!([]));
-    assert!(bot_named(&t.p.win, &t.win_app, "lead").is_none());
+    // The stand-ins are archived after the reply, not before it (H-333).
+    let (win, win_app) = (&t.p.win, t.win_app.clone());
+    wait_until("the PC archives its stand-in", || {
+        bot_named(win, &win_app, "lead").is_none()
+    })
+    .await;
     let (mac, mac_app) = (&t.p.mac, t.mac_app.clone());
     wait_until("the Mac drops its half", || {
         mac.app

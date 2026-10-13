@@ -212,3 +212,15 @@ fn roles_map_to_board_roles() {
     assert_eq!(ReviewRole::parse("devops"), Some(Devops));
     assert_eq!(ReviewRole::parse("wizard"), None);
 }
+
+/// H-334: `heavy` is optional; unsaid stays unsaid (cargo decides later).
+#[test]
+fn a_check_may_say_whether_it_is_heavy() {
+    let checks = parse_checks(
+        "[[check]]\nname='a'\nrun='true'\nheavy=true\n[[check]]\nname='b'\nrun='true'",
+    )
+    .unwrap();
+    let heavy: Vec<Option<bool>> = checks.for_change(&[]).map(|c| c.heavy).collect();
+    assert_eq!(heavy, [Some(true), None]);
+    assert!(parse_checks("[[check]]\nname='a'\nrun='true'\nheavy='yes'").is_err());
+}

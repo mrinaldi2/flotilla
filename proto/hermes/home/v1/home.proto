@@ -114,6 +114,7 @@ enum AttentionKind {
   MAIN_MOVED_OUTSIDE = 13;                  // main reached a PR's head with no merge gate pass (H-284)
   CLEANUP_HELD = 14;                        // a cleanup held 3 days, or failed: Remove anyway or Keep (H-275)
   DISK_LOW = 15;                            // a computer is under 20 GB free: Clean up (H-275)
+  CHECK_UNROUTABLE = 16;                    // a required check no computer can run, for 1 h (H-318)
 }
 
 message AttentionRow {

@@ -11,6 +11,7 @@ import { BOT_ICONS } from "./botIcons";
 import BotHistory from "./bot/BotHistory";
 import BotChromeSwitch from "./bot/BotChromeSwitch";
 import BotPermissionExtras from "./bot/BotPermissionExtras";
+import BotRoles from "./bot/BotRoles";
 import BotRuntimePicker from "./bot/BotRuntimePicker";
 
 interface InfoPanelProps {
@@ -247,6 +248,8 @@ export default function InfoPanel({
           {saving ? "Saving…" : "Save"}
         </button>
       </div>
+
+      <BotRoles client={client} bot={bot} connected={connected} />
 
       <BotRuntimePicker
         key={`${bot.id}:${bot.runtime ?? "claude_code"}`}

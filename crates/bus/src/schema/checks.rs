@@ -61,3 +61,25 @@ CREATE TABLE IF NOT EXISTS check_job (
 CREATE INDEX IF NOT EXISTS idx_check_job_open ON check_job(machine, ended_at);
 CREATE INDEX IF NOT EXISTS idx_check_job_check ON check_job(check_id, created_at);
 "#;
+
+/// `check_unroutable` (H-318): a queued check no computer could ever run
+/// (none reported its `needs` on its `machine`), with when it was first found
+/// so; the row goes once it routes. A required one unroutable for an hour is
+/// a Needs-you row. A table of its own, so running it again is safe.
+pub(super) const MIGRATION_CHECK_UNROUTABLE: &str = r#"
+CREATE TABLE IF NOT EXISTS check_unroutable (
+    check_id  TEXT PRIMARY KEY REFERENCES check_run(id) ON DELETE CASCADE,
+    since     TEXT NOT NULL
+);
+"#;
+
+/// `check_heavy` (H-334): a check's own `heavy = true|false` from
+/// `checks.toml`, when it says one. Unsaid, a check is heavy when it needs
+/// cargo. A computer runs one heavy check at a time. A table of its own, so
+/// running it again is safe.
+pub(super) const MIGRATION_CHECK_HEAVY: &str = r#"
+CREATE TABLE IF NOT EXISTS check_heavy (
+    check_id  TEXT PRIMARY KEY REFERENCES check_run(id) ON DELETE CASCADE,
+    heavy     INTEGER NOT NULL CHECK (heavy IN (0, 1))
+);
+"#;

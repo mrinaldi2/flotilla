@@ -74,6 +74,18 @@ describe("Needs you: pull requests (AC3)", () => {
     expect(a.onOpenPr).toHaveBeenCalledWith(42, false);
   });
 
+  it("shows a required check no computer can run (H-318)", () => {
+    const a = actions();
+    const view = attentionRow(
+      row("check_unroutable", 42, "No computer can run check rust (PR #42): needs cargo"),
+      a,
+    );
+    expect(view?.tone).toBe("bad");
+    expect(view?.title).toBe("No computer can run check rust (PR #42): needs cargo");
+    view?.onAction?.(click);
+    expect(a.onOpenPr).toHaveBeenCalledWith(42, false);
+  });
+
   it("offers no button without pull requests", () => {
     const view = attentionRow(row("pr_review", 42, "Review PR #42 (H-293): x"), {
       onItem: vi.fn<(itemId: string, opener: HTMLElement) => void>(),

@@ -23,7 +23,7 @@ use crate::board::release::machines;
 use crate::check_exec::{self, Outcome, Spec};
 use crate::prs::check_checkout;
 use crate::prs::check_model::{CheckResult, CheckRun, Report};
-use crate::prs::check_route::{needs_of, route, Limits, Machine, Route};
+use crate::prs::check_route::{is_heavy, needs_of, route, Limits, Machine, Route};
 use crate::prs::checks::{self, short, RunLog};
 use crate::prs::repo;
 
@@ -34,9 +34,11 @@ pub const SYSTEM_RUNNER: &str = "daemon:check-runner";
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct ChecksConfig {
-    /// Check jobs one computer runs at once, every project's (the Mac
-    /// takes at most 2 Rust builds).
+    /// Check jobs one computer runs at once, every project's.
     pub jobs_per_machine: usize,
+    /// Heavy check jobs (Rust builds) one computer runs at once (H-334):
+    /// two at once overrun a laptop's or a shared box's time limits.
+    pub heavy_per_machine: usize,
     /// No job starts on a computer with less free disk than this, in GB.
     pub disk_floor_gb: u64,
     /// How often each computer probes its tools, in seconds; 0 never.
@@ -56,6 +58,7 @@ impl Default for ChecksConfig {
     fn default() -> Self {
         Self {
             jobs_per_machine: 2,
+            heavy_per_machine: 1,
             disk_floor_gb: 20,
             probe_interval_secs: 3600,
             dispatch_interval_secs: 30,
@@ -114,7 +117,7 @@ pub fn on_boot(app: &AppState) {
 }
 
 /// The projects whose board lives on this computer.
-fn home_projects(app: &AppState) -> anyhow::Result<Vec<String>> {
+pub(super) fn home_projects(app: &AppState) -> anyhow::Result<Vec<String>> {
     let me = app.db.daemon_id()?;
     let mut out = Vec::new();
     for project in app.db.list_projects()? {
@@ -143,18 +146,24 @@ pub async fn dispatch(app: &Arc<AppState>, project: &str) -> anyhow::Result<()> 
     let mut machines = inventory(app, project)?;
     let limits = Limits {
         jobs_per_machine: app.cfg.checks.jobs_per_machine.max(1),
+        heavy_per_machine: app.cfg.checks.heavy_per_machine.max(1),
         disk_floor_gb: app.cfg.checks.disk_floor_gb,
     };
     for check in &checks {
         let needs = needs_of(&check.needs, &check.run);
-        match route(&needs, check.machine.as_deref(), &machines, limits) {
+        let heavy = is_heavy(&needs, check.heavy);
+        match route(&needs, check.machine.as_deref(), heavy, &machines, limits) {
             Route::Wait(why) => note(app, check, &why),
+            Route::Unroutable(why) => super::check_unroutable::mark(app, check, &why),
             Route::To(name) => {
                 let Some(m) = machines.iter_mut().find(|m| m.name == name) else {
                     continue;
                 };
                 match start(app, check, &needs, m).await {
-                    Ok(()) => m.open_jobs += 1,
+                    Ok(()) => {
+                        m.open_jobs += 1;
+                        m.open_heavy += usize::from(heavy);
+                    }
                     Err(error) => note(
                         app,
                         check,
@@ -164,6 +173,7 @@ pub async fn dispatch(app: &Arc<AppState>, project: &str) -> anyhow::Result<()> 
             }
         }
     }
+    super::check_unroutable::tell_devops(app, project);
     Ok(())
 }
 
@@ -183,18 +193,19 @@ fn inventory(app: &AppState, project: &str) -> anyhow::Result<Vec<Machine>> {
         let reported = t.all_machine_tools()?;
         let open = reported
             .iter()
-            .map(|(m, _)| t.open_jobs_on(m))
+            .map(|(m, _)| Ok((t.open_jobs_on(m)?, t.open_heavy_on(m)?)))
             .collect::<anyhow::Result<Vec<_>>>()?;
         Ok((here, reported, open))
     })?;
     let mut out = Vec::new();
-    for ((name, tools), open_jobs) in reported.into_iter().zip(open) {
+    for ((name, tools), (open_jobs, open_heavy)) in reported.into_iter().zip(open) {
         let is_here = name == here;
         let online = is_here || peer_for(app, project, &name).is_some();
         out.push(Machine {
             name,
             tools,
             open_jobs,
+            open_heavy,
             here: is_here,
             online,
         });
@@ -209,11 +220,29 @@ pub(super) fn peer_for(app: &AppState, project: &str, name: &str) -> Option<bus:
     (peer.revoked_at.is_none() && linked && app.peers.is_online(&peer.id)).then_some(peer)
 }
 
-/// The jobs this daemon is running now: a job open here that isn't one
-/// was cut short by a restart.
+/// The jobs this daemon is running now, its own and a linked home's: a
+/// job that isn't one was cut short by a restart (H-334 asks a linked
+/// computer the same).
 fn running_here() -> &'static Mutex<HashSet<String>> {
     static RUNNING: OnceLock<Mutex<HashSet<String>>> = OnceLock::new();
     RUNNING.get_or_init(Mutex::default)
+}
+
+/// Marks `job` as running here (`on`) or done.
+pub(super) fn hold(job: &str, on: bool) {
+    let mut running = running_here().lock().unwrap_or_else(|e| e.into_inner());
+    if on {
+        running.insert(job.to_string());
+    } else {
+        running.remove(job);
+    }
+}
+
+/// [`hold`], for tests that stand in for a computer still running a job.
+#[cfg(any(test, feature = "test-support"))]
+#[doc(hidden)]
+pub fn hold_for_tests(job: &str, on: bool) {
+    hold(job, on);
 }
 
 pub(super) fn is_running_here(job: &str) -> bool {

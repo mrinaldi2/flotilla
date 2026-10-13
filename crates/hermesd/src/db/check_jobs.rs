@@ -8,7 +8,8 @@ use rusqlite::{params, OptionalExtension, Row};
 use super::board_tx::BoardTx;
 use super::checks::{check_row, COLUMNS};
 use super::{parse_ts, ts};
-use crate::prs::check_model::CheckRun;
+use crate::prs::check_model::{CheckRun, Unroutable};
+use crate::prs::check_route::{is_heavy, needs_of};
 
 /// Why a job ran: the check's first run, the one automatic retry after an
 /// `error`, or a re-run someone asked for.
@@ -101,6 +102,31 @@ impl BoardTx<'_> {
             |r| r.get(0),
         )?;
         Ok(n as usize)
+    }
+
+    /// Open heavy jobs on a computer, every project's: what its heavy slot
+    /// counts (H-334).
+    pub fn open_heavy_on(&self, machine: &str) -> anyhow::Result<usize> {
+        let mut stmt = self.conn.prepare(
+            "SELECT c.needs, c.run,
+                    (SELECT heavy FROM check_heavy h WHERE h.check_id = c.id)
+             FROM check_job j JOIN check_run c ON c.id = j.check_id
+             WHERE j.machine = ?1 AND j.ended_at IS NULL",
+        )?;
+        let rows = stmt.query_map(params![machine], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, Option<bool>>(2)?,
+            ))
+        })?;
+        let mut n = 0;
+        for row in rows {
+            let (needs, run, said) = row?;
+            let needs: Vec<String> = serde_json::from_str(&needs).unwrap_or_default();
+            n += usize::from(is_heavy(&needs_of(&needs, &run), said));
+        }
+        Ok(n)
     }
 
     /// A project's open jobs.
@@ -249,16 +275,69 @@ impl BoardTx<'_> {
         self.note_check_id(id)
     }
 
-    /// Why a queued check still waits, shown with it.
+    /// Why a queued check still waits, shown with it. It isn't unroutable
+    /// (any more): it waits for something that comes, or it routed.
     pub fn set_check_note(&self, id: &str, note: Option<&str>) -> anyhow::Result<bool> {
         let n = self.conn.execute(
             "UPDATE check_run SET note = ?2 WHERE id = ?1 AND note IS NOT ?2",
             params![id, note],
+        )? + self.conn.execute(
+            "DELETE FROM check_unroutable WHERE check_id = ?1",
+            params![id],
         )?;
-        if n == 1 {
+        if n > 0 {
             self.note_check_id(id)?;
         }
-        Ok(n == 1)
+        Ok(n > 0)
+    }
+
+    /// No computer can run the queued check (H-318): `note` says why, and
+    /// `unroutable_since` keeps the first time it was found so.
+    pub fn set_check_unroutable(&self, id: &str, note: &str) -> anyhow::Result<bool> {
+        let n = self.conn.execute(
+            "UPDATE check_run SET note = ?2
+             WHERE id = ?1 AND result = 'queued' AND note IS NOT ?2",
+            params![id, note],
+        )? + self.conn.execute(
+            "INSERT INTO check_unroutable(check_id, since)
+             SELECT id, ?2 FROM check_run WHERE id = ?1 AND result = 'queued'
+             ON CONFLICT(check_id) DO NOTHING",
+            params![id, ts(now())],
+        )?;
+        if n > 0 {
+            self.note_check_id(id)?;
+        }
+        Ok(n > 0)
+    }
+
+    /// The project's required checks on an open PR's head that no computer
+    /// could run since `before` or earlier (H-318): one per check name, its
+    /// oldest such time, its note and the newest PR it holds up.
+    pub fn unroutable_checks(
+        &self,
+        project_id: &str,
+        before: chrono::DateTime<chrono::Utc>,
+    ) -> anyhow::Result<Vec<Unroutable>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT c.name, MIN(u.since), MAX(c.note), MAX(p.number)
+             FROM check_run c
+             JOIN check_unroutable u ON u.check_id = c.id
+             JOIN pr p
+               ON p.project_id = c.project_id AND p.head_sha = c.sha AND p.state = 'open'
+             WHERE c.project_id = ?1 AND c.required = 1 AND c.result = 'queued'
+             GROUP BY c.name ORDER BY c.name",
+        )?;
+        let rows = stmt
+            .query_map(params![project_id], |r| {
+                Ok(Unroutable {
+                    name: r.get(0)?,
+                    since: parse_ts(&r.get::<_, String>(1)?),
+                    note: r.get::<_, Option<String>>(2)?.unwrap_or_default(),
+                    pr: r.get(3)?,
+                })
+            })?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        Ok(rows.into_iter().filter(|r| r.since <= before).collect())
     }
 
     /// The tools of every computer that reported any, with when it last did.

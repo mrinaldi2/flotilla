@@ -14,7 +14,7 @@ use common::peers::wait_until;
 use common::repo::{git, remote};
 use hermesd::board::release::machines;
 use hermesd::machine_tools as tool_probe;
-use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
+use hermesd::prs::check_jobs::{dispatch, hold_for_tests, SYSTEM_RUNNER};
 use hermesd::prs::check_model::{CheckResult, NewCheck};
 
 #[tokio::test]
@@ -69,6 +69,7 @@ async fn a_windows_check_runs_on_the_linked_windows_computer() {
         needs: vec!["cargo".into()],
         machine: Some("windows".into()),
         required: true,
+        heavy: None,
         result: CheckResult::Queued,
         note: None,
     };
@@ -124,4 +125,83 @@ async fn a_windows_check_runs_on_the_linked_windows_computer() {
     let job = std::path::Path::new(path).parent().unwrap();
     assert!(!job.join("check").exists(), "the PC removes its checkout");
     assert_eq!(db.board_read(|t| t.open_jobs_on("win")).unwrap(), 0);
+}
+
+/// H-334 M1: the PC restarts mid-job (every install does), losing the run
+/// and its result. When the link comes back the Mac asks which jobs it
+/// still holds: the lost one ends at once, an `error` retried once, so the
+/// PC's only heavy slot frees without waiting out the 7-hour deadline. One
+/// it still runs stays open.
+#[tokio::test]
+async fn a_job_the_linked_computer_lost_ends_when_its_link_comes_back() {
+    let b = board().await;
+    let mac = &b.p.mac;
+    let db = &mac.app.db;
+    let sha = "a".repeat(40);
+    let queued = |name: &str| NewCheck {
+        name: name.into(),
+        run: "cargo test".into(),
+        needs: vec!["cargo".into()],
+        machine: Some("windows".into()),
+        required: true,
+        heavy: None,
+        result: CheckResult::Queued,
+        note: None,
+    };
+    db.board_tx(|t| {
+        t.queue_checks(
+            &b.mac_app,
+            "https://example.invalid/app.git",
+            &sha,
+            &"b".repeat(40),
+            &[queued("lost"), queued("held")],
+        )
+    })
+    .unwrap();
+    let run = |name: &str| {
+        db.board_read(|t| t.check_run(&b.mac_app, &sha, name))
+            .unwrap()
+            .unwrap()
+    };
+    // Both were routed to the PC over the link that is up now.
+    let job = |name: &str| {
+        let check = run(name);
+        db.board_tx(|t| {
+            let job = t.assign_check_job(&check, "win")?;
+            t.dispatch_check(&check.id, SYSTEM_RUNNER)?;
+            Ok(job)
+        })
+        .unwrap()
+    };
+    let (lost, held) = (job("lost"), job("held"));
+    hold_for_tests(&held, true);
+    assert_eq!(db.board_read(|t| t.open_jobs_on("win")).unwrap(), 2);
+
+    // The PC restarts: its link drops, and the Mac redials.
+    tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    for p in db.list_peers().unwrap() {
+        mac.app.peers.disconnect(&p.id);
+    }
+    let ended = |id: &str| {
+        db.board_read(|t| t.check_job(id))
+            .unwrap()
+            .is_some_and(|j| j.ended_at.is_some())
+    };
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(60);
+    while !ended(&lost) {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "the lost job never ended"
+        );
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    }
+    let after = run("lost");
+    assert!(
+        after.runner.is_none(),
+        "queued again for its one retry: {after:?}"
+    );
+    assert_eq!(after.result, CheckResult::Queued, "{after:?}");
+    assert!(!ended(&held), "the PC still runs it");
+    assert_eq!(db.board_read(|t| t.open_jobs_on("win")).unwrap(), 1);
+    hold_for_tests(&held, false);
 }

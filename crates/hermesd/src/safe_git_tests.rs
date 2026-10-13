@@ -161,6 +161,27 @@ fn a_local_run_reaches_no_remote_and_inherits_no_git_env() {
     }
 }
 
+/// H-321 AC2: the daemon's own fetch still refuses ssh, GitHub's included.
+/// Only the check runner turns a GitHub remote into its https URL first.
+#[test]
+fn a_fetch_over_ssh_is_refused_before_it_connects() {
+    let (_dir, repo) = repo();
+    for url in [
+        "git@github.com:mrinaldi2/gravity.git",
+        "ssh://git@github.com/mrinaldi2/gravity.git",
+    ] {
+        let error = SafeGit::fetching(&repo, url)
+            .unwrap()
+            .args(&["ls-remote", url])
+            .run()
+            .unwrap_err();
+        assert!(
+            format!("{error:#}").contains("transport 'ssh' not allowed"),
+            "{url}: {error:#}"
+        );
+    }
+}
+
 /// The variables git is started with.
 fn env_of(git: &SafeGit) -> Vec<(String, Option<String>)> {
     git.cmd

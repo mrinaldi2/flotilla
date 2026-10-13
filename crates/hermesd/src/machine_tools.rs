@@ -4,6 +4,7 @@
 //! it knows this one by. Check routing reads them (§7).
 
 use std::collections::BTreeMap;
+use std::ffi::OsStr;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
@@ -32,12 +33,19 @@ pub const FRAME: &str = "machine_tools";
 /// The longest one tool may take to say its version.
 const TOOL_TIMEOUT: Duration = Duration::from_secs(15);
 
-/// The tools found on this computer's `PATH` with their versions, plus its
-/// OS and the free disk where `home` is.
+/// The tools found on the checks' `PATH` ([`tool_path`], worked out again
+/// now) with their versions, plus its OS and the free disk where `home` is.
+///
+/// [`tool_path`]: crate::tool_path::tool_path
 pub fn probe(home: &Path) -> BTreeMap<String, String> {
+    probe_on(home, &crate::tool_path::refresh())
+}
+
+/// [`probe`] with `path` as the `PATH` the tools are found on and run with.
+pub fn probe_on(home: &Path, path: &OsStr) -> BTreeMap<String, String> {
     let mut found: BTreeMap<String, String> = TOOLS
         .iter()
-        .filter_map(|(tool, flag)| Some((tool.to_string(), version_of(tool, flag)?)))
+        .filter_map(|(tool, flag)| Some((tool.to_string(), version_of(tool, flag, path)?)))
         .collect();
     found.insert(OS.to_string(), std::env::consts::OS.to_string());
     if let Some(free) = crate::migrate_home::disk::free_bytes(home) {
@@ -46,10 +54,13 @@ pub fn probe(home: &Path) -> BTreeMap<String, String> {
     found
 }
 
-/// `tool flag`'s version, or `None` when it isn't there or doesn't answer.
-fn version_of(tool: &str, flag: &str) -> Option<String> {
-    let mut child = Command::new(tool)
+/// `tool flag`'s version, or `None` when it isn't on `path` or doesn't
+/// answer. The tool runs with `path` as its `PATH`, as a check would.
+fn version_of(tool: &str, flag: &str, path: &OsStr) -> Option<String> {
+    let program = crate::tool_path::which(tool, path)?;
+    let mut child = Command::new(program)
         .arg(flag)
+        .env("PATH", path)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -162,6 +173,9 @@ pub fn spawn(app: Arc<AppState>) {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
+    use std::path::Path;
+
     use super::parse_version;
 
     #[test]
@@ -190,5 +204,50 @@ mod tests {
         assert!(tools.keys().all(|k| k == super::OS
             || k == super::DISK_FREE_GB
             || super::TOOLS.iter().any(|(t, _)| t == k)));
+    }
+
+    /// H-318: cargo only in the rustup toolchain under HOME, a bare PATH,
+    /// and the probe still finds it through the derived PATH.
+    #[cfg(unix)]
+    #[test]
+    fn cargo_in_the_rustup_toolchain_is_found_with_a_bare_path() {
+        use std::os::unix::fs::PermissionsExt;
+        let home = tempfile::tempdir().unwrap();
+        let rustup = home.path().join(".rustup");
+        let bin = rustup.join("toolchains").join("stable-x").join("bin");
+        std::fs::create_dir_all(&bin).unwrap();
+        std::fs::write(
+            rustup.join("settings.toml"),
+            "default_toolchain = \"stable-x\"\n",
+        )
+        .unwrap();
+        let cargo = bin.join("cargo");
+        std::fs::write(&cargo, "#!/bin/sh\necho 'cargo 1.97.0 (fake 2026-01-01)'\n").unwrap();
+        std::fs::set_permissions(&cargo, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+        let env = |k: &str| (k == "PATH").then(|| "/usr/bin:/bin".into());
+        // Only folders under the fake HOME: this computer's own rustup and
+        // Homebrew stay out of it.
+        let is_dir = |p: &Path| {
+            p.starts_with(home.path()) && std::fs::symlink_metadata(p).is_ok_and(|m| m.is_dir())
+        };
+        let read = |p: &Path| std::fs::read_to_string(p).ok();
+        let host = crate::tool_path::Host {
+            env: &env,
+            home: Some(home.path().to_path_buf()),
+            is_dir: &is_dir,
+            read: &read,
+        };
+        let path = crate::tool_path::derive(&host);
+        let bare = super::probe_on(home.path(), std::ffi::OsStr::new("/usr/bin:/bin"));
+        assert!(!bare.contains_key("cargo") || which_cargo_on_bare_path());
+        let tools = super::probe_on(home.path(), &path);
+        assert_eq!(tools.get("cargo").map(String::as_str), Some("1.97.0"));
+    }
+
+    /// The test computer itself may have cargo in /usr/bin.
+    #[cfg(unix)]
+    fn which_cargo_on_bare_path() -> bool {
+        crate::tool_path::which("cargo", std::ffi::OsStr::new("/usr/bin:/bin")).is_some()
     }
 }

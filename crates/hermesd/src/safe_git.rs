@@ -155,25 +155,32 @@ impl SafeGit {
     }
 
     /// git in `dir` for the daemon's own fetch from `url`: https and local
-    /// paths, nothing else. Only an https fetch gets the daemon's GitHub
-    /// token, and never in git's environment: a credential helper reads it
-    /// from an owner-only file under [`run_dir`], removed after the run.
+    /// paths, nothing else. Only a fetch from github.com over https gets
+    /// the daemon's GitHub token, and never in git's environment: a
+    /// credential helper reads it from an owner-only file under [`run_dir`],
+    /// removed after the run.
     pub fn fetching(dir: &Path, url: &str) -> anyhow::Result<Self> {
+        Self::fetching_with(dir, daemon_token(url))
+    }
+
+    /// [`SafeGit::fetching`] with `token` for github.com. The helper is
+    /// scoped to `https://github.com` (H-321 S1), so git asks it for no
+    /// other host, not even one the repository's `url.*.insteadOf` sends a
+    /// github.com URL to.
+    pub(crate) fn fetching_with(dir: &Path, token: Option<String>) -> anyhow::Result<Self> {
         let mut git = Self::base(dir)?;
         git.config("protocol.allow=never");
         git.config("protocol.https.allow=always");
         git.config("protocol.file.allow=always");
-        if url.starts_with("https://") {
-            if let Some(token) = github_token() {
-                let file = write_token(&token)?;
-                git.config(&format!(
-                    "credential.helper=!f() {{ test \"$1\" = get && \
-                     echo username=x-access-token && \
-                     printf 'password=%s\\n' \"$(cat {})\"; }}; f",
-                    sh_quote(&file.display().to_string())
-                ));
-                git.token_file = Some(file);
-            }
+        if let Some(token) = token {
+            let file = write_token(&token)?;
+            git.config(&format!(
+                "credential.{GITHUB}.helper=!f() {{ test \"$1\" = get && \
+                 echo username=x-access-token && \
+                 printf 'password=%s\\n' \"$(cat {})\"; }}; f",
+                sh_quote(&file.display().to_string())
+            ));
+            git.token_file = Some(file);
         }
         Ok(git)
     }
@@ -321,47 +328,18 @@ fn filter_drivers(tree: &Path) -> anyhow::Result<Vec<String>> {
     Ok(drivers)
 }
 
-/// Writes `token` to a new owner-only file under [`run_dir`].
-fn write_token(token: &str) -> anyhow::Result<PathBuf> {
-    let file = run_dir()?.join(format!(
-        "token-{}-{:016x}",
-        std::process::id(),
-        rand::random::<u64>()
-    ));
-    let mut options = std::fs::OpenOptions::new();
-    options.write(true).create_new(true);
-    #[cfg(unix)]
-    std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
-    options.open(&file)?.write_all(token.as_bytes())?;
-    Ok(file)
-}
-
-/// `s` as one single-quoted shell word.
-fn sh_quote(s: &str) -> String {
-    format!("'{}'", s.replace('\'', r"'\''"))
-}
-
-/// The daemon's GitHub token: from its environment, else gh's (asked
-/// outside any repository).
-fn github_token() -> Option<String> {
-    for key in ["GH_TOKEN", "GITHUB_TOKEN"] {
-        if let Some(t) = std::env::var(key).ok().filter(|t| !t.is_empty()) {
-            return Some(t);
-        }
-    }
-    let out = Command::new("gh")
-        .args(["auth", "token", "--hostname", "github.com"])
-        .current_dir(std::env::temp_dir())
-        .stdin(Stdio::null())
-        .output()
-        .ok()?;
-    let token = String::from_utf8_lossy(&out.stdout).trim().to_string();
-    (out.status.success() && !token.is_empty()).then_some(token)
-}
+#[path = "safe_git_token.rs"]
+mod token;
+pub(crate) use token::daemon_token;
+use token::{sh_quote, write_token, GITHUB};
 
 #[cfg(test)]
 #[path = "safe_git_tests.rs"]
 pub(crate) mod tests;
+
+#[cfg(test)]
+#[path = "safe_git_token_tests.rs"]
+mod token_tests;
 
 #[path = "safe_git_line_endings.rs"]
 mod line_endings;

@@ -66,6 +66,7 @@ const ORDER: Readonly<Record<Shown["kind"], number>> = {
   // Your review comes after the bots' and is ranked like a release ruling (§4.3).
   pr_review: 1,
   pr_merge_stuck: 2,
+  check_unroutable: 2,
   main_moved_outside: 0,
   // Under 20 GB free stops builds for every bot; a held cleanup can wait.
   disk_low: 2,

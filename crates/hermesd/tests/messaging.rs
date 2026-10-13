@@ -233,8 +233,9 @@ async fn input_flows_without_lease_and_delivery_defers_while_bot_is_down() {
     let project_id = project["project"]["id"].as_str().expect("pid").to_string();
     let bot = create_bot(&mut c, &project_id, "bob").await;
     let bot_id = bot["id"].as_str().expect("bid").to_string();
-    c.wait_for(|v| v["type"] == "bot_state" && v["state"] == "ready")
-        .await;
+    // Its state, not a pushed frame: `request` skips pushes while it waits
+    // for its reply, so a `bot_state` sent during one is gone (H-333).
+    ready(&d, &bot_id).await;
     // Take the session away the way archival does, so nothing restarts it.
     d.app.supervisor.stop_bot(&bot_id).expect("stop");
 
@@ -261,13 +262,31 @@ async fn input_flows_without_lease_and_delivery_defers_while_bot_is_down() {
     assert_eq!(row["attempt_count"], 0, "defer must not burn attempts");
 
     d.app.supervisor.start_bot(&bot_id).expect("start");
-    c.wait_for(|v| v["type"] == "bot_state" && v["state"] == "ready")
-        .await;
-    c.request(json!({"type": "attach", "bot_id": bot_id, "after_seq": 0}))
-        .await;
-
-    // Once running again, the deferred delivery lands through the inbox socket.
-    c.wait_for(|v| v["type"] == "delivery_update" && v["delivery"]["state"] == "delivered")
+    ready(&d, &bot_id).await;
+    // Once running again, the deferred delivery lands through the inbox
+    // socket: read from the deliveries, since its push can come while a
+    // request waits for its reply.
+    let deadline = std::time::Instant::now() + setup_wait();
+    loop {
+        let deliveries = c
+            .request(json!({"type": "list_deliveries", "bot_id": bot_id}))
+            .await;
+        let delivered = deliveries["deliveries"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .any(|r| r["message_id"] == message_id && r["state"] == "delivered");
+        if delivered {
+            break;
+        }
+        assert!(
+            std::time::Instant::now() < deadline,
+            "never delivered: {deliveries}"
+        );
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    }
+    // Attach without waiting for its reply, so no replayed frame is skipped.
+    c.send(json!({"type": "attach", "bot_id": bot_id, "after_seq": 0}))
         .await;
     c.wait_for(|v| {
         v["type"] == "term" && v["data"].as_str().is_some_and(|s| s.contains("early bird"))
@@ -351,4 +370,13 @@ async fn a_forced_resize_at_the_same_size_still_reaches_the_runtime() {
         2,
         "{output}"
     );
+}
+
+/// Waits until `bot_id`'s session is ready, by its state.
+async fn ready(d: &TestDaemon, bot_id: &str) {
+    let deadline = std::time::Instant::now() + setup_wait();
+    while d.app.supervisor.state(bot_id).0 != bus::BotState::Ready {
+        assert!(std::time::Instant::now() < deadline, "{bot_id} never ready");
+        tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+    }
 }

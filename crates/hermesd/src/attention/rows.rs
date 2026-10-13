@@ -108,6 +108,7 @@ pub(crate) fn rows(
         super::prs::owner_reviews(app, &mut b)?;
         super::prs::stuck_merges(app, &mut b)?;
         super::prs::mains_moved(app, &mut b)?;
+        super::prs::unroutable_checks(app, &mut b)?;
         super::cleanup::held(app, &mut b)?;
     }
     if scope.local {

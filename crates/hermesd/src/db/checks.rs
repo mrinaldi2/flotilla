@@ -14,7 +14,9 @@ use crate::prs::check_model::{CheckResult, CheckRun, NewCheck, Report};
 pub(super) const COLUMNS: &str =
     "id, project_id, repo, sha, tree, name, run, needs, machine, required,
     result, note, runner, ran_on, log_artifact, tool_versions, queued_at, started_at,
-    finished_at";
+    finished_at,
+    (SELECT since FROM check_unroutable WHERE check_id = id) AS unroutable_since,
+    (SELECT heavy FROM check_heavy WHERE check_id = id) AS heavy";
 
 pub(super) fn check_row(r: &Row<'_>) -> rusqlite::Result<CheckRun> {
     let opt_ts = |i: usize| -> rusqlite::Result<_> {
@@ -32,6 +34,7 @@ pub(super) fn check_row(r: &Row<'_>) -> rusqlite::Result<CheckRun> {
         needs: serde_json::from_str(&r.get::<_, String>(7)?).unwrap_or_default(),
         machine: r.get(8)?,
         required: r.get(9)?,
+        heavy: r.get(20)?,
         result: CheckResult::parse(&result).unwrap_or(CheckResult::Error),
         note: r.get(11)?,
         runner: r.get(12)?,
@@ -41,6 +44,7 @@ pub(super) fn check_row(r: &Row<'_>) -> rusqlite::Result<CheckRun> {
         queued_at: parse_ts(&r.get::<_, String>(16)?),
         started_at: opt_ts(17)?,
         finished_at: opt_ts(18)?,
+        unroutable_since: opt_ts(19)?,
         tree_of: None,
     })
 }
@@ -82,6 +86,14 @@ impl BoardTx<'_> {
                 ],
             )?;
             if added == 1 {
+                if let Some(heavy) = c.heavy {
+                    self.conn.execute(
+                        "INSERT OR REPLACE INTO check_heavy(check_id, heavy)
+                         SELECT id, ?4 FROM check_run
+                         WHERE project_id = ?1 AND sha = ?2 AND name = ?3",
+                        params![project_id, sha, c.name, heavy],
+                    )?;
+                }
                 self.note_check(project_id, sha, &c.name)?;
             }
         }
