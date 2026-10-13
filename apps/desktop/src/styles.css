@@ -29,6 +29,7 @@
 @import "./styles/board-boards.css";
 @import "./styles/board-settings.css";
 @import "./styles/board-items.css";
+@import "./styles/board-proposals.css";
 @import "./styles/releases.css";
 @import "./styles/release-install.css";
 @import "./styles/dashboard.css";

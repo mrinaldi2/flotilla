@@ -13,7 +13,7 @@ import {
 import type { MoveCheck } from "../../../protocol/gen/hermes/board/v1/requests_pb";
 
 /** The flow's steps, in order; Cancelled is off the path. */
-export const STEPS: readonly { readonly category: ColumnCategory; readonly word: string }[] = [
+const STEPS: readonly { readonly category: ColumnCategory; readonly word: string }[] = [
   { category: ColumnCategory.INBOX, word: "Inbox" },
   { category: ColumnCategory.READY, word: "Ready" },
   { category: ColumnCategory.DOING, word: "Doing" },
