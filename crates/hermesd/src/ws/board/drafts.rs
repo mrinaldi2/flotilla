@@ -21,7 +21,10 @@ impl Conn {
         // can read, so these take the app's ticket or a paired device, as
         // every act of the owner's own does (`owner_auth`).
         let owners_own = match &req {
-            Request::ItemInvite(_) | Request::ItemFinalize(_) | Request::ItemDiscard(_) => true,
+            Request::ItemInvite(_)
+            | Request::ItemFinalize(_)
+            | Request::ItemDiscard(_)
+            | Request::ItemDraftUndo(_) => true,
             Request::ItemDraftChanges(r) => r.mark_seen == Some(true),
             _ => false,
         };
@@ -29,7 +32,7 @@ impl Conn {
             return Err(refuse(
                 "forbidden",
                 "only the owner, from the app or a paired device, invites to, finalizes, \
-                 discards or marks seen a draft; not with the owner token",
+                 discards, undoes in or marks seen a draft; not with the owner token",
             ));
         }
         let actor = self.actor();
