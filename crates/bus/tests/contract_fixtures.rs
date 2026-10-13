@@ -206,6 +206,7 @@ fn arm_of(envelope: &bus::contract::wire::Envelope) -> String {
                 board_request::Request::ItemFinalize(_) => "item_finalize",
                 board_request::Request::ItemDiscard(_) => "item_discard",
                 board_request::Request::ItemDraftChanges(_) => "item_draft_changes",
+                board_request::Request::ItemDraftUndo(_) => "item_draft_undo",
             }
         ),
         Body::BoardResponse(r) => format!(

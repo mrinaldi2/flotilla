@@ -9,9 +9,9 @@ use super::item_edits::refusal;
 use super::reads::item_detail;
 use super::{refuse, Refusal};
 use crate::kanban::attach::{read_chunk, Source};
-use crate::kanban::drafts;
 use crate::kanban::edit::Edited;
 use crate::kanban::moves::Moved;
+use crate::kanban::{draft_undo, drafts};
 use crate::ws::Conn;
 
 impl Conn {
@@ -67,6 +67,9 @@ impl Conn {
             )),
             Request::ItemDiscard(r) => Response::Edited(edit_result(
                 drafts::discard(&self.app, &actor, &r).map_err(refusal)?,
+            )),
+            Request::ItemDraftUndo(r) => Response::Edited(edit_result(
+                draft_undo::undo(&self.app, &actor, &r).map_err(refusal)?,
             )),
             Request::ItemDraftChanges(r) => {
                 Response::DraftChanges(drafts::changes(&self.app, &r).map_err(refusal)?)
