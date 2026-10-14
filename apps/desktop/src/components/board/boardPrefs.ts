@@ -9,6 +9,8 @@ export interface BoardPrefs {
   readonly inboxOpen: boolean;
   /** Hidden columns, such as Cancelled. */
   readonly showHidden: boolean;
+  /** The board last open in this project (0.19.0); the default board when unset. */
+  readonly board?: string;
 }
 
 const DEFAULT_PREFS: BoardPrefs = { filters: NO_FILTERS, inboxOpen: false, showHidden: false };
@@ -24,10 +26,12 @@ export function loadBoardPrefs(projectId: string): BoardPrefs {
     if (typeof parsed !== "object" || parsed === null) {
       return DEFAULT_PREFS;
     }
+    const board: unknown = Reflect.get(parsed, "board");
     return {
       filters: parseFilters(Reflect.get(parsed, "filters")),
       inboxOpen: Reflect.get(parsed, "inboxOpen") === true,
       showHidden: Reflect.get(parsed, "showHidden") === true,
+      ...(typeof board === "string" && board !== "" ? { board } : {}),
     };
   } catch {
     return DEFAULT_PREFS;

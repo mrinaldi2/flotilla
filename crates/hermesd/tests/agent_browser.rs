@@ -214,10 +214,12 @@ async fn a_stalled_viewer_skips_frames_instead_of_queuing_them() {
     tokio::time::sleep(Duration::from_millis(500)).await;
     let req_id = c.send(json!({"type": "list_projects"})).await;
     let frames_first = Cell::new(0);
+    let newest_first = Cell::new(false);
     let reply = c
         .wait_for_within(slow, |v| {
             if v["type"] == "browser_frame" {
                 frames_first.set(frames_first.get() + 1);
+                newest_first.set(newest_first.get() || frame_number(v) == FRAMES - 1);
             }
             v["req_id"] == req_id.as_str()
         })
@@ -229,11 +231,15 @@ async fn a_stalled_viewer_skips_frames_instead_of_queuing_them() {
         "{} of {FRAMES} frames queued ahead of the reply",
         frames_first.get()
     );
-    // The newest screen still arrives.
-    c.wait_for_within(slow, |v| {
-        v["type"] == "browser_frame" && frame_number(v) == FRAMES - 1
-    })
-    .await;
+    // The newest screen still arrives, once. A roomy link (Windows grows a
+    // loopback socket's buffer to megabytes) may have taken it before the
+    // reply; a frame already sent is never sent again.
+    if !newest_first.get() {
+        c.wait_for_within(slow, |v| {
+            v["type"] == "browser_frame" && frame_number(v) == FRAMES - 1
+        })
+        .await;
+    }
 }
 
 #[tokio::test]

@@ -117,6 +117,8 @@ export type ClientRequestBody =
       readonly type: "send_user_message";
       readonly to_bot_id: string;
       readonly body: string;
+      /** The card it is about: a draft's discussion, or the owner's word on a card. */
+      readonly item_id?: string;
     }
   | {
       readonly type: "list_messages";

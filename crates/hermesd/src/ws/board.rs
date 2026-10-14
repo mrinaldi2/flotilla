@@ -184,7 +184,8 @@ impl Conn {
             | Request::ItemInvite(_)
             | Request::ItemFinalize(_)
             | Request::ItemDiscard(_)
-            | Request::ItemDraftChanges(_)) => self.draft_request(req)?,
+            | Request::ItemDraftChanges(_)
+            | Request::ItemDraftUndo(_)) => self.draft_request(req)?,
         }))
     }
 

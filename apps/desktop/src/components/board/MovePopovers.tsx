@@ -4,7 +4,7 @@ import type { BoardColumn, ItemCard, Unmet } from "../../protocol/gen/hermes/boa
 import OverlayShell from "../overlay/OverlayShell";
 import type { ColumnChecks } from "./moves";
 import { planMove, reasonChip } from "./moves";
-import type { Anchor } from "./useBoardMoves";
+import type { Anchor, BoardMoves } from "./useBoardMoves";
 
 const MARGIN = 8;
 
@@ -185,6 +185,25 @@ interface RefusalPopoverProps {
   readonly onClose: () => void;
 }
 
+/** Every unmet guard or rule, with its fix, as the Hermes service words them. */
+export function UnmetList({ unmet }: { readonly unmet: readonly Unmet[] }): ReactElement {
+  return (
+    <ul className="board-refusal-list">
+      {unmet.map((u) => (
+        <li key={`${u.code}:${u.text}`}>
+          <span className="board-refusal-mark" aria-hidden="true">
+            ✗
+          </span>
+          <span>
+            <span className="board-refusal-text">{u.text}</span>
+            {u.fix === undefined ? null : <span className="board-refusal-fix">{u.fix}</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** "Can't move H-024 to Ready": every unmet guard, as the Hermes service words it (H-018 O2). */
 export function RefusalPopover({
   card,
@@ -203,19 +222,7 @@ export function RefusalPopover({
       className="board-refusal"
     >
       <h2 className="board-popover-title">{title}</h2>
-      <ul className="board-refusal-list">
-        {unmet.map((u) => (
-          <li key={`${u.code}:${u.text}`}>
-            <span className="board-refusal-mark" aria-hidden="true">
-              ✗
-            </span>
-            <span>
-              <span className="board-refusal-text">{u.text}</span>
-              {u.fix === undefined ? null : <span className="board-refusal-fix">{u.fix}</span>}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <UnmetList unmet={unmet} />
       <div className="board-popover-actions">
         <button type="button" className="btn btn-small" autoFocus onClick={onClose}>
           OK
@@ -312,4 +319,50 @@ export function MoveDialog(props: MoveDialogProps): ReactElement {
       </form>
     </OverlayShell>
   );
+}
+
+/** Whichever of Move to…, its refusal or its reason dialog is open. */
+export function MovePopups(props: {
+  readonly moves: BoardMoves;
+  readonly columns: readonly BoardColumn[];
+}): ReactElement | null {
+  const { moves } = props;
+  const { ui } = moves;
+  switch (ui.kind) {
+    case "menu":
+      return (
+        <MoveMenu
+          card={ui.card}
+          anchor={ui.anchor}
+          columns={props.columns}
+          checks={ui.checks}
+          onChoose={(toKey) => moves.requestMove(ui.card, toKey, ui.anchor)}
+          onClose={moves.close}
+        />
+      );
+    case "refused":
+      return (
+        <RefusalPopover
+          card={ui.card}
+          to={ui.to}
+          anchor={ui.anchor}
+          unmet={ui.unmet}
+          onClose={moves.close}
+        />
+      );
+    case "input":
+      return (
+        <MoveDialog
+          card={ui.card}
+          to={ui.to}
+          needsReason={ui.needsReason}
+          needsOverride={ui.needsOverride}
+          unmet={ui.unmet}
+          onConfirm={moves.confirm}
+          onCancel={moves.close}
+        />
+      );
+    default:
+      return null;
+  }
 }

@@ -82,6 +82,11 @@ async fn the_owner_token_a_bot_can_read_neither_finalizes_discards_invites_nor_m
             since: None,
             mark_seen: Some(true),
         }),
+        Request::ItemDraftUndo(c::ItemDraftUndo {
+            id: draft.id.clone(),
+            expected_version: version,
+            revision: 1,
+        }),
     ];
     for request in attempts {
         let code = error_code(call(&mut token, request).await);

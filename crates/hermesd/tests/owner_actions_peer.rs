@@ -57,8 +57,14 @@ async fn setup() -> Setup {
 }
 
 /// A shell the "PC" (this same test machine) runs: the target refuses a
-/// shell its OS doesn't have.
-const SHELL: &str = if cfg!(windows) { "powershell" } else { "zsh" };
+/// shell its OS doesn't have, and a Linux runner may not have zsh.
+const SHELL: &str = if cfg!(windows) {
+    "powershell"
+} else if cfg!(target_os = "macos") {
+    "zsh"
+} else {
+    "bash"
+};
 
 impl Setup {
     async fn propose_raw(&mut self, content: &str) -> Value {
@@ -133,7 +139,9 @@ async fn an_action_for_the_pc_runs_there_once_as_shown() {
 
     let run = json!({"type": "owner_action_run", "id": id, "sha256": sha});
     let started = app.request(run.clone()).await;
-    assert_eq!(started["action"]["state"], "running", "{started}");
+    // A quick action may have finished on the PC by the time it answers.
+    let state = started["action"]["state"].as_str().unwrap_or_default();
+    assert!(["running", "succeeded"].contains(&state), "{started}");
     // Output streams to the Mac's clients as it runs on the PC, in as many
     // chunks as the shell writes (WIN-CHK-7): all of them until it's done.
     let mut streamed = String::new();

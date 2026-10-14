@@ -24,7 +24,10 @@ interface ReadingPaneProps {
   readonly botAvatar: (botId: string) => { avatar: string; name: string } | undefined;
   readonly textareaRef: RefObject<HTMLTextAreaElement>;
   readonly onDelete: (decision: Decision) => void;
-  /** A release decision's review, which replaces the ruling UI (H-018 §1). */
+  /**
+   * A release decision's review (H-018 §1), or a lead's board proposal
+   * (0.19.0): either replaces the ruling UI.
+   */
   readonly release?: ReactElement;
   /** The decision's commands for the owner to run (H-117). */
   readonly ownerActions?: ReactElement;

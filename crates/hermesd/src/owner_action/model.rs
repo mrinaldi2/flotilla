@@ -31,12 +31,15 @@ impl Shell {
         Self::ALL.into_iter().find(|s| s.as_str() == text)
     }
 
-    /// This computer's default.
+    /// This computer's default: zsh on macOS, bash on Linux and other Unix
+    /// systems (which may not have zsh), PowerShell on Windows.
     pub fn here() -> Self {
         if cfg!(windows) {
             Shell::Powershell
-        } else {
+        } else if cfg!(target_os = "macos") {
             Shell::Zsh
+        } else {
+            Shell::Bash
         }
     }
 }
@@ -85,6 +88,16 @@ impl State {
 
     pub fn is_open(self) -> bool {
         self == State::Proposed
+    }
+
+    /// How far along it is: proposed, running, then ended. A copy that
+    /// follows another never goes back a stage.
+    pub fn stage(self) -> u8 {
+        match self {
+            State::Proposed => 0,
+            State::Running => 1,
+            _ => 2,
+        }
     }
 }
 
