@@ -92,3 +92,33 @@ async fn a_card_the_owner_moved_back_isnt_started_again_by_a_read() {
     assert!(read.get("started").is_none(), "{read}");
     assert_eq!(f.now(&item.id).column_key, "todo");
 }
+
+#[tokio::test]
+async fn an_assignee_without_a_role_cant_block_another_card() {
+    let (mut f, _) = fresh(&["Lead", "Helper"]).await;
+    let mine = f.item("Login form").await;
+    let other = f.item("Signup form").await;
+    f.assign(&mine.id, Some("Helper")).await;
+    let blocks = f.bots[1]
+        .call_raw(
+            "item_link",
+            json!({"id": mine.id, "kind": "item:blocks", "ref": other.id}),
+        )
+        .await;
+    assert!(error_text(&blocks).contains("board role"), "{blocks}");
+    assert!(f
+        .d
+        .app
+        .db
+        .board_read(|t| t.blockers_of(&other.id))
+        .unwrap()
+        .is_empty());
+    // Saying the cards are related changes nothing about the other card.
+    let relates = f.bots[1]
+        .call_raw(
+            "item_link",
+            json!({"id": mine.id, "kind": "item:relates", "ref": other.id}),
+        )
+        .await;
+    assert_ne!(relates["isError"], json!(true), "{relates}");
+}

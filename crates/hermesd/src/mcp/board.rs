@@ -74,11 +74,16 @@ pub(super) fn call(
         .find(|t| t.name == name)
         .expect("checked by is_board_tool");
     let invited = super::board_drafts::admits(app, &bot, name, args)?;
-    if !(invited
-        || tool.audience.admits(&roles)
-        || (OWN_ITEM_TOOLS.contains(&name) && works_on(app, &bot, args)?))
-    {
+    let by_role = invited || tool.audience.admits(&roles);
+    if !(by_role || (OWN_ITEM_TOOLS.contains(&name) && works_on(app, &bot, args)?)) {
         anyhow::bail!(no_right(name));
+    }
+    // A card's own rights stay on the card: blocking another is a member's.
+    if !by_role && name == "item_link" && blocks_another(args, &bot.project_id)? {
+        anyhow::bail!(
+            "item_link item:blocks holds up another card, which needs a board role you don't \
+             have; comment on your card, or ask the lead"
+        );
     }
     let me = Me { bot };
     let project = me.bot.project_id.as_str();
@@ -122,6 +127,13 @@ fn no_right(name: &str) -> String {
             OWN_ITEM_TOOLS.join(", ")
         )
     }
+}
+
+/// Whether an `item_link` call says its card blocks another.
+fn blocks_another(args: &Value, project: &str) -> anyhow::Result<bool> {
+    let req: c::ItemAddLink = decode("ItemAddLink", args, project)?;
+    Ok(crate::kanban::model::LinkKind::from_wire(req.kind)?
+        == crate::kanban::model::LinkKind::ItemBlocks)
 }
 
 /// The item named in `args` is the bot's to work on: assigned to it, or
