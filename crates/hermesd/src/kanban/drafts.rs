@@ -20,6 +20,7 @@ use bus::MessageKind;
 use super::draft_talk;
 use super::edit::{not_live, project_bot, Edited};
 use super::feed::{card_after_commit, Change, ChangeKind, FeedWriter};
+use super::kickoffs::Stamp;
 use super::model::{ColumnKind, Item, ItemState, LinkKind, Role, Unmet};
 use super::moves::{self, MoveRequest, Moved};
 use crate::actor::Actor;
@@ -86,8 +87,10 @@ fn lead_of(app: &AppState, project_id: &str) -> anyhow::Result<Option<String>> {
 
 /// Invite a bot (the lead by default) to discuss a draft, or take the
 /// invitation back. Invited, even again, the bot is sent the draft to start
-/// the discussion (`draft_talk`); the item links its chat. Uninvited, it is
-/// told the discussion has ended; the link stays, for the history.
+/// the discussion (`draft_talk`), unless it was sent this same draft moments
+/// ago (`kickoffs`); the item links its chat. Uninvited, it is told the
+/// discussion has ended; the link stays, for the history. The reply is the
+/// same whether a kickoff went out or not.
 pub fn invite(app: &Arc<AppState>, actor: &Actor<'_>, req: &c::ItemInvite) -> anyhow::Result<()> {
     let project_id = project_of(app, &req.id)?;
     let bot_id = match req.bot.as_deref().filter(|b| !b.trim().is_empty()) {
@@ -103,7 +106,7 @@ pub fn invite(app: &Arc<AppState>, actor: &Actor<'_>, req: &c::ItemInvite) -> an
         None => return Err(invalid(format!("bot {bot_id} is archived"))),
     };
     let mut feed = app.board.writer();
-    let (item, changed) = app.db.board_tx(|t| {
+    let (item, changed, stamp) = app.db.board_tx(|t| {
         let item = t
             .item(&req.id)?
             .ok_or_else(|| not_found(format!("no item {}", req.id)))?;
@@ -115,18 +118,27 @@ pub fn invite(app: &Arc<AppState>, actor: &Actor<'_>, req: &c::ItemInvite) -> an
             ))
         );
         if remove {
-            return Ok((item, t.uninvite(&req.id, &bot_id, actor)?));
+            let removed = t.uninvite(&req.id, &bot_id, actor)?;
+            return Ok((item, removed, None));
         }
         let added = t.invite(&req.id, &bot_id, actor)?;
         let name = bot.as_ref().map(|b| b.name.as_str());
         t.add_item_link(&req.id, LinkKind::Thread, &bot_id, name, actor)?;
-        Ok((item, added))
+        // What the kickoff describes, read after the link it may add.
+        let stamp = Stamp {
+            version: item.version,
+            revision: t.draft_newest(&req.id)?,
+        };
+        Ok((item, added, Some(stamp)))
     })?;
     publish_draft(app, &mut feed, &project_id, &req.id);
     drop(feed);
-    match bot {
-        Some(bot) if !remove => draft_talk::kick_off(app, &project_id, &bot, &item),
-        Some(bot) if changed => draft_talk::end(app, &bot.id, &item),
+    if remove {
+        app.kickoffs.forget(&req.id, &bot_id);
+    }
+    match (bot, stamp) {
+        (Some(bot), Some(stamp)) => draft_talk::kick_off(app, &project_id, &bot, &item, stamp),
+        (Some(bot), None) if changed => draft_talk::end(app, &bot.id, &item),
         _ => {}
     }
     Ok(())

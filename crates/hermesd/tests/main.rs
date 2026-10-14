@@ -22,6 +22,7 @@ mod board_blocked_by;
 mod board_close;
 mod board_compat018;
 mod board_draft_discussion;
+mod board_draft_kickoffs;
 mod board_draft_rights;
 mod board_draft_undo;
 mod board_drafts;

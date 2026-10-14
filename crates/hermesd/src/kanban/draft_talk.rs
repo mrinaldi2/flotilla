@@ -5,7 +5,9 @@
 //!   answer, carrying the draft as it stands, its attachments, the board's
 //!   template for its type and what it may do. A `note` reaches and wakes
 //!   the session the same way, but the prompt meets a note with silence and
-//!   never takes work from one, so it is the wrong kind here.
+//!   never takes work from one, so it is the wrong kind here. The same
+//!   draft, unchanged, is sent once per window (`kickoffs`): a double click
+//!   is one kickoff.
 //! - The owner's chat about the draft then leads with a short
 //!   `[draft RB-20 “title”]` tag, never the whole context again.
 //! - Uninvited, it is told the discussion has ended, as a note: there is
@@ -20,6 +22,7 @@ use serde_json::Value;
 
 use super::attach::artifacts_of;
 use super::attachments::{listing, listing_kept, one_line, render_refs};
+use super::kickoffs::Stamp;
 use super::model::{Item, TemplateKind};
 use crate::app::AppState;
 use crate::messaging::{self, Dm};
@@ -45,20 +48,36 @@ pub fn tag(id: &str, title: &str) -> String {
 }
 
 /// Send `text` to a bot about a draft. Delivery failing is logged, not
-/// refused: the change it reports has been made.
-pub(super) fn tell(app: &AppState, bot_id: &str, kind: MessageKind, text: &str) {
+/// refused: the change it reports has been made. `false` when it failed.
+pub(super) fn tell(app: &AppState, bot_id: &str, kind: MessageKind, text: &str) -> bool {
     let sender = messaging::user_sender();
     let dm = Dm::new(bot_id, &sender, kind, text);
-    if let Err(e) = messaging::send_dm(&app.db, &app.events, dm) {
-        tracing::warn!(bot_id, error = %e, "draft message not delivered");
+    match messaging::send_dm(&app.db, &app.events, dm) {
+        Ok(_) => true,
+        Err(e) => {
+            tracing::warn!(bot_id, error = %e, "draft message not delivered");
+            false
+        }
     }
 }
 
-/// Start, or start again, the discussion of `item` with `bot`.
-pub(super) fn kick_off(app: &AppState, project_id: &str, bot: &Bot, item: &Item) {
-    match kickoff(app, project_id, bot, item) {
+/// Start, or start again, the discussion of `item` with `bot`, as `stamp`
+/// describes it: skipped when the bot was just sent this same draft.
+pub(super) fn kick_off(app: &AppState, project_id: &str, bot: &Bot, item: &Item, stamp: Stamp) {
+    if !app.kickoffs.claim(&item.id, &bot.id, stamp) {
+        tracing::debug!(item = %item.id, bot = %bot.id, "draft kickoff just sent; skipped");
+        return;
+    }
+    let sent = match kickoff(app, project_id, bot, item) {
         Ok(text) => tell(app, &bot.id, MessageKind::Chat, &text),
-        Err(e) => tracing::warn!(item = %item.id, error = %e, "draft kickoff not built"),
+        Err(e) => {
+            tracing::warn!(item = %item.id, error = %e, "draft kickoff not built");
+            false
+        }
+    };
+    // One that never went out covers nothing: the next invite tries again.
+    if !sent {
+        app.kickoffs.forget(&item.id, &bot.id);
     }
 }
 

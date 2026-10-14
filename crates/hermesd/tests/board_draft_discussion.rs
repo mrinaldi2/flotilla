@@ -20,20 +20,20 @@ use common::{terminal, TestDaemon, WsClient};
 use hermesd::kanban::presets::Preset;
 use serde_json::json;
 
-const KICKOFF: &str = "The owner wants to discuss draft";
-const ENDED: &str = "The owner ended the discussion of draft";
+pub(crate) const KICKOFF: &str = "The owner wants to discuss draft";
+pub(crate) const ENDED: &str = "The owner ended the discussion of draft";
 
-struct Draft {
-    project_id: String,
-    id: String,
-    lead_id: String,
-    builder_id: String,
+pub(crate) struct Draft {
+    pub project_id: String,
+    pub id: String,
+    pub lead_id: String,
+    pub builder_id: String,
 }
 
 /// A project with a lead and a builder, and the owner's draft on its
 /// Recipes board: a description pointing at its screenshot, a label and a
 /// criterion.
-async fn draft(d: &TestDaemon, ids: &[String], owner: &mut WsClient) -> Draft {
+pub(crate) async fn draft(d: &TestDaemon, ids: &[String], owner: &mut WsClient) -> Draft {
     let db = &d.app.db;
     let lead_id = ids[0].clone();
     let project_id = db.get_bot(&lead_id).unwrap().unwrap().project_id;
@@ -89,7 +89,7 @@ async fn draft(d: &TestDaemon, ids: &[String], owner: &mut WsClient) -> Draft {
     }
 }
 
-fn invite(id: &str, bot: &str, remove: bool) -> Request {
+pub(crate) fn invite(id: &str, bot: &str, remove: bool) -> Request {
     Request::ItemInvite(c::ItemInvite {
         id: id.into(),
         bot: Some(bot.into()),
@@ -97,7 +97,7 @@ fn invite(id: &str, bot: &str, remove: bool) -> Request {
     })
 }
 
-fn detail(body: bus::contract::wire::envelope::Body) -> c::ItemDetail {
+pub(crate) fn detail(body: bus::contract::wire::envelope::Body) -> c::ItemDetail {
     match response(body) {
         Response::Item(detail) => detail,
         other => panic!("expected an item, got {other:?}"),
@@ -122,7 +122,7 @@ async fn tray_card(owner: &mut WsClient, project_id: &str, id: &str) -> c::ItemC
 }
 
 /// Waits until the bot's session has shown `needle` `times` times.
-async fn shown(d: &TestDaemon, bot_id: &str, needle: &str, times: usize) -> String {
+pub(crate) async fn shown(d: &TestDaemon, bot_id: &str, needle: &str, times: usize) -> String {
     wait_until(&format!("{needle} shown {times}×"), || {
         terminal(d, bot_id).matches(needle).count() >= times
     })
@@ -201,7 +201,9 @@ async fn the_invited_bot_is_sent_the_draft_and_the_owners_chat_names_it() {
     );
     assert_eq!(term.matches(KICKOFF).count(), 1, "sent once: {term}");
 
-    // Opening the discussion again, the bot already invited, starts it again.
+    // Opening the discussion again, the bot already invited, starts it
+    // again: here at once, with no window (board_draft_kickoffs has it).
+    d.app.kickoffs.window_for_tests(std::time::Duration::ZERO);
     let again = detail(call(&mut owner, invite(id, "Lead", false)).await);
     assert_eq!(again.invited, std::slice::from_ref(&x.lead_id));
     shown(d, &x.lead_id, KICKOFF, 2).await;
