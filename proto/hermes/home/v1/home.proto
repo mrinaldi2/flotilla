@@ -226,6 +226,7 @@ enum BoardActivityKind {
   BOARD_ACTIVITY_KIND_UNASSIGNED = 3;
   BOARD_ACTIVITY_KIND_MOVE_REFUSED = 4;     // to_column wasn't allowed: unmet says why
   BOARD_ACTIVITY_KIND_DRAFT_UPDATED = 5;    // note names the fields changed
+  BOARD_ACTIVITY_KIND_CHECKED = 6;          // the board keeper, actor daemon: asked `assignee` about the card, or raised a Needs-you row; note says why
 }
 message BoardActivity {
   string project_id = 1;

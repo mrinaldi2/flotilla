@@ -56,12 +56,21 @@ pub fn spawn(app: Arc<AppState>) {
         loop {
             match pushes.recv().await {
                 Ok(Push::BotState {
-                    bot_id, state, at, ..
+                    bot_id,
+                    state,
+                    at,
+                    item_id,
+                    ..
                 }) => {
                     let at = DateTime::parse_from_rfc3339(&at)
                         .map_or_else(|_| Utc::now(), |t| t.with_timezone(&Utc));
                     if let Some(started) = watched.keeper.on_state(&bot_id, state, at) {
-                        after_turn(&watched, &watched.keeper, &bot_id, started, Utc::now());
+                        let turn = Turn {
+                            bot_id: &bot_id,
+                            started,
+                            card: item_id.as_deref(),
+                        };
+                        after_turn(&watched, &watched.keeper, &turn, Utc::now());
                         watched.keeper.judged_turn();
                     }
                 }
@@ -114,27 +123,32 @@ pub fn step(app: &Arc<AppState>, keeper: &Keeper, now: DateTime<Utc>) -> anyhow:
     Ok(())
 }
 
-/// After a turn of `bot_id` that began at `started`: its cards are judged
-/// again, and each it changed without moving any is asked about (rule 3).
-pub fn after_turn(
-    app: &Arc<AppState>,
-    keeper: &Keeper,
-    bot_id: &str,
-    started: DateTime<Utc>,
-    now: DateTime<Utc>,
-) {
-    if let Err(e) = try_after_turn(app, keeper, bot_id, started, now) {
-        tracing::warn!(bot_id, error = %e, "board keeper turn check failed");
+/// A bot's turn that just ended.
+pub struct Turn<'a> {
+    pub bot_id: &'a str,
+    pub started: DateTime<Utc>,
+    /// The card `bot_state` named for it (`supervisor::WorkingOn`): the one
+    /// a delivery named, or the last one the bot changed.
+    pub card: Option<&'a str>,
+}
+
+/// After a turn: the bot's cards are judged again, and each it changed
+/// without anyone moving it is asked about (rule 3), the turn's own card
+/// first. The card's history is the proof of work: a delivery that named a
+/// card the bot then left alone asks nothing.
+pub fn after_turn(app: &Arc<AppState>, keeper: &Keeper, turn: &Turn<'_>, now: DateTime<Utc>) {
+    if let Err(e) = try_after_turn(app, keeper, turn, now) {
+        tracing::warn!(bot_id = turn.bot_id, error = %e, "board keeper turn check failed");
     }
 }
 
 fn try_after_turn(
     app: &Arc<AppState>,
     keeper: &Keeper,
-    bot_id: &str,
-    started: DateTime<Utc>,
+    turn: &Turn<'_>,
     now: DateTime<Utc>,
 ) -> anyhow::Result<()> {
+    let bot_id = turn.bot_id;
     if !awake(app)? {
         return Ok(());
     }
@@ -150,7 +164,9 @@ fn try_after_turn(
     };
     let mut asks = Budget::for_turn(ASKS_PER_TURN);
     let mut reach = gather::Reach::default();
-    for work in app.db.keeper_turn_work(bot_id, started)? {
+    let mut worked = app.db.keeper_turn_work(bot_id, turn.started)?;
+    worked.sort_by_key(|w| Some(w.item_id.as_str()) != turn.card);
+    for work in worked {
         let Some(card) = loaded.card(&work.item_id) else {
             continue;
         };

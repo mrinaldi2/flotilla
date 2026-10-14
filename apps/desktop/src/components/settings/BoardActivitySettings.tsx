@@ -11,6 +11,10 @@ const KINDS: Readonly<Record<BoardActivityKind, { label: string; help: string }>
   refused: { label: "Refused moves", help: "A move wasn't allowed, with why." },
   turns: { label: "Bots working", help: "A bot started or finished a turn on a card." },
   drafts: { label: "Draft updates", help: "A bot updated a draft you're discussing." },
+  checks: {
+    label: "Automatic checks",
+    help: "A bot was reminded about a quiet card, or a card started waiting for you.",
+  },
 };
 
 /**

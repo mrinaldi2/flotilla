@@ -230,6 +230,11 @@ async fn a_card_past_the_boards_stale_time_is_flagged_and_pushed() {
     let pushed = feed.try_recv().expect("the card is pushed");
     assert_eq!(pushed.item_id, id);
     assert!(pushed.card.as_ref().is_some_and(|c| c.stale), "{pushed:?}");
+    assert_eq!(
+        pushed.actor.as_deref(),
+        Some("daemon"),
+        "the daemon's change"
+    );
     assert!(f.card(&id).await.stale);
     // Once only.
     step(&app, &long_running());
@@ -237,4 +242,53 @@ async fn a_card_past_the_boards_stale_time_is_flagged_and_pushed() {
     // It moves on: no longer stale.
     f.bot_move(0, &id, "review").await;
     assert!(!f.card(&id).await.stale);
+}
+
+#[tokio::test]
+async fn the_owner_hears_what_the_keeper_did_as_automatic() {
+    use bus::contract::home::BoardActivityKind;
+    use hermesd::events::Push;
+
+    let (mut f, _) = fresh(&["Builder"]).await;
+    let app = f.d.app.clone();
+    let id = f.started_card(0, "Buttons").await;
+    let mut pushes = app.events.subscribe_push();
+    let mut checked = || {
+        let mut out = Vec::new();
+        while let Ok(push) = pushes.try_recv() {
+            if let Push::BoardActivity { activity, .. } = push {
+                if activity.kind == BoardActivityKind::Checked as i32 {
+                    out.push(*activity);
+                }
+            }
+        }
+        out
+    };
+    age(&app, &id, Duration::hours(2));
+    step(&app, &long_running());
+    let asked = checked();
+    assert_eq!(asked.len(), 1, "{asked:?}");
+    assert_eq!(asked[0].actor, "daemon");
+    assert_eq!(asked[0].item_id, id);
+    assert_eq!(asked[0].title, format!("Asked Builder about {id}"));
+    assert!(
+        asked[0]
+            .body
+            .ends_with("In Doing, nothing has happened for 2 h"),
+        "{}",
+        asked[0].body
+    );
+    age(&app, &id, Duration::hours(4));
+    step(&app, &long_running());
+    let raised = checked();
+    assert_eq!(raised.len(), 1, "{raised:?}");
+    assert_eq!(raised[0].title, format!("{id} needs you"));
+    assert!(raised[0].assignee.is_empty());
+    assert!(
+        raised[0].body.contains("nothing has happened for 6 h"),
+        "{}",
+        raised[0].body
+    );
+    step(&app, &long_running());
+    assert!(checked().is_empty(), "said once");
 }

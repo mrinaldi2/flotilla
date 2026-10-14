@@ -158,6 +158,14 @@ function lineFor(a: BoardActivity): { pref: BoardActivityKind; line: ActivityLin
       };
     case Kind.DRAFT_UPDATED:
       return { pref: "drafts", line: { glyph: "✎", word: "Updated the draft", detail: a.note } };
+    // The board keeper: the daemon asked the assignee, or raised a row.
+    case Kind.CHECKED:
+      return a.assignee === ""
+        ? { pref: "checks", line: { glyph: "◷", word: "Needs you", detail: a.note } }
+        : {
+            pref: "checks",
+            line: { glyph: "◷", word: `Asked ${a.assigneeName}`, detail: a.note },
+          };
     default:
       return null;
   }

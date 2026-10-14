@@ -14,6 +14,7 @@ use super::rules::{Act, Plan, Rule, Say};
 use super::text::{self, About};
 use crate::app::AppState;
 use crate::db::KeeperCard;
+use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 use crate::kanban::notice_text::{self, Card};
 use crate::messaging::{self, Dm};
 
@@ -106,9 +107,26 @@ pub(super) fn apply(
     }
     if plan.publish {
         budget.publishes -= 1;
-        crate::kanban::stuck::publish_card(app, &project.id, &card.id);
+        publish(app, &project.id, &card.id);
     }
     Ok(done)
+}
+
+/// Push the card as it is now, as the daemon's change: its stale flag or
+/// its row changed, nothing else.
+fn publish(app: &AppState, project_id: &str, item_id: &str) {
+    let mut feed = app.board.writer();
+    let card = card_after_commit(&app.db, item_id);
+    if card.is_none() {
+        return;
+    }
+    feed.publish_by_daemon(Change {
+        project_id,
+        kind: ChangeKind::ItemUpserted,
+        item_id,
+        card,
+        from_column: None,
+    });
 }
 
 fn rule_of(say: &Say) -> Rule {

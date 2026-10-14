@@ -431,6 +431,18 @@ flow are unchanged.
   "Your cards" says a `[card KEY-12] Automatic check:` note is the daemon's,
   about a card that is already the bot's, to act on. No product name is in
   any text.
+- **The owner hears of it.** Each note and each row the keeper raises is a
+  `board_activity` push (#28) of the new kind `CHECKED` (6, additive), actor
+  `daemon`, which the apps show as "Automatic": "Asked Builder about RB-12 ·
+  In Doing, nothing has happened for 2 h", or "RB-12 needs you · Can't move
+  to Done: …". The desktop toasts it under "Automatic checks" (a new switch in
+  Settings, on by default). A card pushed for its stale flag or a row is the
+  daemon's change on the board feed (`publish_by_daemon`), never an
+  `ITEM_MOVED`.
+- **Turns.** A turn is `bot_state` from working to ready; the card that push
+  names (`supervisor::WorkingOn`, #28) is asked about first. Whether the bot
+  worked on a card comes from the card's history, which survives a restart: a
+  delivery that named a card the bot then left alone asks nothing.
 - **Rows.** `AttentionKind.CARD_WAITING` (18, additive), weight 1, row id
   `card_waiting:<daemon>:<card>:<review|quiet|blocked>`, target the card. They
   can't be dismissed; they go when the card moves on. The desktop opens the

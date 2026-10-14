@@ -175,6 +175,12 @@ pub fn refused(app: &AppState, item_id: &str, to: &str, actor: &Actor<'_>, unmet
     push(app, activity, super::feed_by::origin());
 }
 
+/// Something the daemon did on its own about a card (the board keeper), as
+/// no connection asked for it.
+pub fn by_daemon(app: &AppState, activity: BoardActivity) {
+    push(app, activity, None);
+}
+
 fn push(app: &AppState, mut activity: BoardActivity, origin: Option<u64>) {
     super::activity_text::fill(app, &mut activity);
     app.events.push(Push::BoardActivity {

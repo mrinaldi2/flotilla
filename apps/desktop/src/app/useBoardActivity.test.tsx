@@ -16,6 +16,7 @@ const ALL_ON: BoardActivityPrefs = {
   refused: true,
   turns: true,
   drafts: true,
+  checks: true,
 };
 
 /** A `board_activity` push as the daemon writes it: proto3 JSON, proto field names. */

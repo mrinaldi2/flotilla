@@ -57,6 +57,7 @@ const ALL_ON: BoardActivityPrefs = {
   refused: true,
   turns: true,
   drafts: true,
+  checks: true,
 };
 
 describe("board activity notices", () => {
@@ -85,6 +86,26 @@ describe("board activity notices", () => {
       word: "Updated the draft",
       detail: "description",
     });
+  });
+
+  it("say what the board keeper did, as Automatic", () => {
+    const asked = notice({
+      kind: Kind.CHECKED,
+      actor: "daemon",
+      assignee: "b1",
+      assigneeName: "New Bot",
+      note: "In Doing, nothing has happened for 2 h",
+    });
+    expect(asked.pref).toBe("checks");
+    expect(asked.actorLabel).toBe("Automatic");
+    expect(asked.line).toEqual({
+      glyph: "◷",
+      word: "Asked New Bot",
+      detail: "In Doing, nothing has happened for 2 h",
+    });
+    const row = notice({ kind: Kind.CHECKED, actor: "daemon", note: "Can't move to Done" });
+    expect(row.line.word).toBe("Needs you");
+    expect(allowed(row, { ...ALL_ON, checks: false })).toBe(false);
   });
 
   it("skip what this app asked for itself, and kinds it doesn't know", () => {
