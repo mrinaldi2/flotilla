@@ -53,3 +53,42 @@ async fn the_lead_cant_approve_its_own_card_by_handing_it_on() {
     let approved = f.bot_move(0, &other.id, "done").await;
     assert_ne!(approved["isError"], json!(true), "{approved}");
 }
+
+#[tokio::test]
+async fn a_read_never_starts_a_card_past_the_doing_limit() {
+    let (mut f, _) = fresh(&["Builder"]).await;
+    let mut ids = Vec::new();
+    for title in ["One", "Two", "Three", "Four"] {
+        let item = f.item(title).await;
+        f.assign(&item.id, Some("Builder")).await;
+        ids.push(item.id);
+    }
+    for id in &ids[..3] {
+        let got = f.bots[0].call("item_get", json!({"id": id})).await;
+        assert_eq!(got["item"]["column_key"], "doing", "{got}");
+    }
+    // Doing holds 3: the fourth stays in To do, and the reply says why.
+    let fourth = f.bots[0].call("item_get", json!({"id": ids[3]})).await;
+    assert_eq!(f.now(&ids[3]).column_key, "todo");
+    assert!(fourth.get("started").is_none(), "{fourth}");
+    let why = fourth["not_started"].as_str().unwrap_or_default();
+    assert!(why.contains("Doing"), "{fourth}");
+}
+
+#[tokio::test]
+async fn a_card_the_owner_moved_back_isnt_started_again_by_a_read() {
+    let (mut f, _) = fresh(&["Builder"]).await;
+    let item = f.item("Search box").await;
+    f.assign(&item.id, Some("Builder")).await;
+    let got = f.bots[0].call("item_get", json!({"id": item.id})).await;
+    assert_eq!(got["item"]["column_key"], "doing", "{got}");
+
+    // The owner says "not now": back to To do. The bot reads the notice
+    // and the card; the card stays where the owner put it.
+    let back = f.owner_move(&item.id, "todo", None).await;
+    assert!(back.outcome.is_some());
+    let read = f.bots[0].call("item_get", json!({"id": item.id})).await;
+    assert_eq!(read["item"]["column_key"], "todo", "{read}");
+    assert!(read.get("started").is_none(), "{read}");
+    assert_eq!(f.now(&item.id).column_key, "todo");
+}

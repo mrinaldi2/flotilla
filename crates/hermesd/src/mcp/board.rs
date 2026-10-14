@@ -295,8 +295,8 @@ fn item_get(app: &Arc<AppState>, me: &Me, req: c::ItemGet) -> anyhow::Result<Val
     let mut reply = json!({ "item": item_out(item)?, "links": out(links)?,
                             "history": out(history)?, "comments": comments });
     super::board_drafts::item_get_extras(app, &me.bot.project_id, &req.id, &mut reply)?;
-    if let Some(column) = started {
-        reply["started"] = json!(super::board_edit::started_note(&column));
+    if let Some((key, text)) = started.reply() {
+        reply[key] = json!(text);
     }
     Ok(reply)
 }

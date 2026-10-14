@@ -84,8 +84,16 @@ pub(super) fn call(
     let mut reply = reply(edited)?;
     // The assignee's first edit of its card in an open column starts it.
     if name == "item_update" {
-        if let Some(to) = crate::kanban::starts::on_touch(app, &me.bot, id) {
-            reply["started"] = json!(started_note(&to));
+        let touch = crate::kanban::starts::on_touch(app, &me.bot, id);
+        if let Some((key, text)) = touch.reply() {
+            reply[key] = json!(text);
+        }
+        // Started, the card moved after the edit: the item as it is now,
+        // so its version is the one the next write needs.
+        if matches!(touch, crate::kanban::starts::Touch::Started(_)) {
+            if let Some(item) = app.db.get_item(id)? {
+                reply["item"] = item_out(item)?;
+            }
         }
     }
     Ok(reply)
@@ -96,16 +104,6 @@ fn told(app: &Arc<AppState>, me: &Me, id: &str, what: &str) {
     if let Ok(Some(item)) = app.db.get_item(id) {
         tell_assignee(app, &item, &me.actor(), Notice::Changed(what));
     }
-}
-
-/// What the reply says when the call started the bot's work on its card.
-pub(super) fn started_note(column: &str) -> String {
-    format!(
-        "You started work on this card, so it moved to {column}. When the work is done, \
-         comment the result, link or attach what you made and move it on with item_move. If \
-         it isn't ready or something is unclear, move it back and ask the owner \
-         (message_owner with asks: true and item)."
-    )
 }
 
 /// An edit's outcome as a tool result: the item, or a refusal or conflict

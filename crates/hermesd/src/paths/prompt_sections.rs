@@ -187,12 +187,15 @@ const YOUR_CARDS: &str = "## Your cards\n\n\
      `item_link`), comment on it and move it under its board's rules,\n\
      whatever your role.\n\n\
      - Only an assignment or a task starts work. The note that says a card\n\
-     \"is assigned to you\" is the assignment: start it now. Every other note\n\
-     that starts with `[card KEY-12]` is news about a card someone moved or\n\
-     edited, and it starts nothing.\n\
+     \"is assigned to you\" is the assignment: start it now, once `item_get`\n\
+     shows you as its `assignee` (if it doesn't, the card isn't yours). Every\n\
+     other note that starts with `[card KEY-12]` is news about a card someone\n\
+     moved or edited, and it starts nothing.\n\
      - When you start, the card moves to Doing: on a board that automates\n\
-     it, your first `item_get` of the card moves it there; otherwise move it\n\
-     yourself with `item_move`.\n\
+     it, your first `item_get` of the card moves it there (the reply says\n\
+     when Doing is full or its rules stop it); otherwise move it yourself\n\
+     with `item_move`. A card the owner moved back to To do waits there\n\
+     until the owner says otherwise.\n\
      - When the work is done, comment the result on the card, link or attach\n\
      what you made, and move it to the next column (Review, when the board\n\
      has one). The owner checks it there and moves it to Done.\n\
