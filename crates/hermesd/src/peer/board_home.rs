@@ -193,6 +193,10 @@ pub fn spawn_relay(app: Arc<AppState>) {
 }
 
 fn relay(app: &AppState, change: &BoardChange) {
+    // Drafts stay on the home: only the owner's apps hear of them.
+    if change.kind == ChangeKind::DraftChanged {
+        return;
+    }
     let db = &app.db;
     if db
         .board_settings(&change.project_id)
@@ -253,6 +257,7 @@ pub(super) fn kind_name(kind: ChangeKind) -> &'static str {
         ChangeKind::ItemRemoved => "item_removed",
         ChangeKind::ColumnsChanged => "columns_changed",
         ChangeKind::SettingsChanged => "settings_changed",
+        ChangeKind::DraftChanged => "draft_changed",
     }
 }
 

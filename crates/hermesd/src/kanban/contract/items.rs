@@ -34,6 +34,7 @@ impl From<m::Item> for c::Item {
             state_entered_at: stamp(v.state_entered_at),
             done_at: v.done_at.and_then(stamp),
             version: v.version,
+            state: v.state.as_str().to_string(),
         }
     }
 }
@@ -69,6 +70,11 @@ impl TryFrom<c::Item> for m::Item {
             state_entered_at: at(v.state_entered_at, "Item.state_entered_at")?,
             done_at: maybe_at(v.done_at, "Item.done_at")?,
             version: v.version,
+            // A home older than 0.19 sends none: every item there is live.
+            state: match v.state.as_str() {
+                "" => m::ItemState::Live,
+                text => m::ItemState::parse(text).ok_or(MapError::UnknownEnum("ItemState"))?,
+            },
         })
     }
 }
@@ -93,6 +99,7 @@ impl From<m::ItemCard> for c::ItemCard {
             ac_total: v.ac_total,
             version: v.version,
             owner_commented_at: v.owner_commented_at.and_then(stamp),
+            draft: v.draft,
         }
     }
 }
@@ -119,6 +126,7 @@ impl TryFrom<c::ItemCard> for m::ItemCard {
             ac_total: v.ac_total,
             version: v.version,
             owner_commented_at: maybe_at(v.owner_commented_at, "owner_commented_at")?,
+            draft: v.draft,
         })
     }
 }

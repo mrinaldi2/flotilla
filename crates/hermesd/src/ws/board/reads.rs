@@ -5,6 +5,7 @@ use bus::Capability;
 
 use super::{not_found, refuse, Refusal};
 use crate::app::AppState;
+use crate::kanban::attachments::to_wire;
 use crate::kanban::contract::MapError;
 use crate::kanban::model as m;
 use crate::kanban::moves;
@@ -33,6 +34,13 @@ impl Conn {
         };
         // A WS connection is the owner's (token or device): the grant decides.
         board.can_rule = self.caps.contains(&Capability::Approve);
+        board.drafts = self
+            .app
+            .db
+            .board_read(|t| t.draft_cards(project_id))?
+            .into_iter()
+            .map(Into::into)
+            .collect();
         Ok(board)
     }
 
@@ -121,7 +129,14 @@ impl Conn {
 }
 
 /// One item with its links, comments and first page of history.
+/// Its attachments carry this computer's paths, and a draft names the bots
+/// invited to it.
 pub(super) fn item_detail(app: &AppState, id: &str) -> Result<c::ItemDetail, Refusal> {
+    let project_id = app
+        .db
+        .board_read(|t| t.item_project(id))?
+        .ok_or_else(|| not_found(id))?;
+    let artifacts = crate::kanban::attach::artifacts_of(app, &project_id)?;
     app.db
         .board_read(|t| {
             let Some(item) = t.item(id)? else {
@@ -134,6 +149,12 @@ pub(super) fn item_detail(app: &AppState, id: &str) -> Result<c::ItemDetail, Ref
                 comments: t.item_comments(id)?.into_iter().map(Into::into).collect(),
                 history: history.into_iter().map(Into::into).collect(),
                 history_next: next,
+                attachments: t
+                    .attachments(id)?
+                    .into_iter()
+                    .map(|a| to_wire(a, &artifacts))
+                    .collect(),
+                invited: t.invited(id)?,
             }))
         })?
         .ok_or_else(|| not_found(id))
@@ -211,6 +232,8 @@ pub(super) fn snapshot(
             .into_iter()
             .map(Into::into)
             .collect(),
+        // The owner's connection adds them; a linked computer never sees one.
+        drafts: Vec::new(),
     }))
 }
 

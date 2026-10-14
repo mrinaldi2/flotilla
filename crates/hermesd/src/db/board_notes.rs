@@ -7,6 +7,7 @@ use bus::{new_id, now};
 use rusqlite::{params, Connection};
 
 use super::board::to_text;
+use super::board_drafts::revision;
 use super::board_edit::versioned;
 use super::board_items::{record, Event, Write};
 use super::board_tx::BoardTx;
@@ -84,6 +85,8 @@ impl BoardTx<'_> {
                     note: None,
                 },
             )?;
+            let what = format!("{}:{target}", to_text(&kind));
+            revision(tx, item_id, actor, "link", None, Some(&what))?;
         }
         Ok(link)
     }
@@ -109,6 +112,8 @@ impl BoardTx<'_> {
                 note: None,
             };
             record(self.conn, item_id, actor, event)?;
+            let what = format!("{}:{target}", to_text(&kind));
+            revision(self.conn, item_id, actor, "link", Some(&what), None)?;
         }
         Ok(removed > 0)
     }
@@ -139,6 +144,57 @@ impl BoardTx<'_> {
                 note: machine,
             };
             record(tx, id, actor, event)?;
+            Ok(())
+        })
+    }
+
+    /// Block an item (`Some((by, reason))`) or unblock it (`None`).
+    pub fn block_item(
+        &self,
+        id: &str,
+        expected: u64,
+        block: Option<(Option<&str>, &str)>,
+        actor: &Actor<'_>,
+    ) -> anyhow::Result<Write<Item>> {
+        versioned(self.conn, id, expected, |tx| {
+            match block {
+                Some((by, reason)) => {
+                    tx.execute(
+                        "UPDATE item SET blocked_by = ?2, blocked_reason = ?3, blocked_since = ?4 WHERE id = ?1",
+                        params![id, by, reason, ts(now())],
+                    )?;
+                    record(
+                        tx,
+                        id,
+                        actor,
+                        Event {
+                            kind: ItemEventKind::Blocked,
+                            from: None,
+                            to: by.or(Some("blocked")),
+                            field: None,
+                            note: Some(reason),
+                        },
+                    )?;
+                }
+                None => {
+                    tx.execute(
+                        "UPDATE item SET blocked_by = NULL, blocked_reason = NULL, blocked_since = NULL WHERE id = ?1",
+                        params![id],
+                    )?;
+                    record(
+                        tx,
+                        id,
+                        actor,
+                        Event {
+                            kind: ItemEventKind::Blocked,
+                            from: Some("blocked"),
+                            to: None,
+                            field: None,
+                            note: None,
+                        },
+                    )?;
+                }
+            }
             Ok(())
         })
     }

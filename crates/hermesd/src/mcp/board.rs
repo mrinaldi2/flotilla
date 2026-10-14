@@ -10,13 +10,13 @@ use serde_json::{json, Value};
 
 use crate::actor::Actor;
 use crate::app::AppState;
-use crate::db::Write;
 use crate::kanban::contract::model_list;
 use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 use crate::kanban::model::{Item, ItemType, Platform, Priority, Role, Unmet};
 use crate::kanban::moves::{item_move as move_item, item_move_check, MoveRequest, Moved};
 
-use super::board_schema::{all_tools, decode, friendly, OWN_ITEM_TOOLS};
+use super::board_drafts::OWN_ITEM_TOOLS;
+use super::board_schema::{all_tools, decode, friendly};
 use super::caller;
 
 /// The calling bot, in a project that has a board.
@@ -69,8 +69,10 @@ pub(super) fn call(
     let tool = all_tools()
         .find(|t| t.name == name)
         .expect("checked by is_board_tool");
+    let invited = super::board_drafts::admits(app, &bot, name, args)?;
     anyhow::ensure!(
-        tool.audience.admits(&roles)
+        invited
+            || tool.audience.admits(&roles)
             || (OWN_ITEM_TOOLS.contains(&name) && works_on(app, &bot, args)?),
         "{name} needs a board role you don't have, or an item assigned to you or a \
          task linked to it; ask the lead"
@@ -136,14 +138,6 @@ pub(super) fn refused(unmet: Vec<Unmet>) -> anyhow::Error {
         })
         .collect();
     anyhow::anyhow!("refused:\n{}", lines.join("\n"))
-}
-
-/// A versioned write's result: the item, or a conflict naming the current one.
-pub(super) fn written(write: Write<Item>) -> anyhow::Result<Value> {
-    match write {
-        Write::Done(item) => Ok(json!({ "item": item_out(item)? })),
-        Write::Conflict(current) => Err(conflict(*current)),
-    }
 }
 
 pub(super) fn conflict(current: Item) -> anyhow::Error {
@@ -217,11 +211,14 @@ pub(super) fn published<T>(
 }
 
 /// An item of the caller's project; another project's items don't exist here.
+/// A draft counts only for the bots invited to it.
 pub(super) fn own_item(app: &Arc<AppState>, me: &Me, id: &str) -> anyhow::Result<()> {
-    match app.db.item_project(id)? {
-        Some(p) if p == me.bot.project_id => Ok(()),
-        _ => anyhow::bail!("no item {id} in this project"),
+    crate::kanban::edit::Editor {
+        app,
+        project_id: &me.bot.project_id,
+        actor: me.actor(),
     }
+    .own_item(id)
 }
 
 /// The optional `item` argument of a bus tool (`send_message`,
@@ -253,15 +250,7 @@ pub(super) fn bot_actor(bot: &bus::Bot) -> Actor<'_> {
 
 /// A bot of the caller's project, by id or name.
 pub(super) fn bot_id(app: &Arc<AppState>, me: &Me, name_or_id: &str) -> anyhow::Result<String> {
-    let bots = app.db.list_bots(Some(&me.bot.project_id))?;
-    bots.iter()
-        .find(|b| b.id == name_or_id)
-        .or_else(|| {
-            bots.iter()
-                .find(|b| b.name.eq_ignore_ascii_case(name_or_id))
-        })
-        .map(|b| b.id.clone())
-        .ok_or_else(|| anyhow::anyhow!("no bot '{name_or_id}' in this project"))
+    crate::kanban::edit::project_bot(app, &me.bot.project_id, name_or_id)
 }
 
 fn board_get(app: &Arc<AppState>, me: &Me) -> anyhow::Result<Value> {
@@ -307,10 +296,10 @@ fn item_get(app: &Arc<AppState>, me: &Me, req: c::ItemGet) -> anyhow::Result<Val
     let skip = history.len().saturating_sub(20);
     let history: Vec<c::ItemEvent> = history.drain(skip..).map(Into::into).collect();
     let comments = super::board_comments::comments(app, &req.id)?;
-    Ok(
-        json!({ "item": item_out(item)?, "links": out(links)?, "history": out(history)?,
-               "comments": comments }),
-    )
+    let mut reply = json!({ "item": item_out(item)?, "links": out(links)?,
+                            "history": out(history)?, "comments": comments });
+    super::board_drafts::item_get_extras(app, &me.bot.project_id, &req.id, &mut reply)?;
+    Ok(reply)
 }
 
 fn item_query(app: &Arc<AppState>, me: &Me, req: c::ItemQuery) -> anyhow::Result<Value> {

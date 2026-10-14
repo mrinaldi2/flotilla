@@ -122,8 +122,12 @@ text_enum!(VerificationResult { Pass => "pass", Fail => "fail", Blocked => "bloc
 text_enum!(LinkKind {
     Task => "task", Decision => "decision", Artifact => "artifact", Branch => "branch", Pr => "pr",
     Meeting => "meeting", ItemBlocks => "item:blocks", ItemRelates => "item:relates",
-    ItemDuplicates => "item:duplicates",
+    ItemDuplicates => "item:duplicates", Thread => "thread",
 });
+text_enum!(
+    /// Where an item stands (0.19.0 K4b): a draft is on no column yet.
+    ItemState { Draft => "draft", Live => "live", Discarded => "discarded" }
+);
 text_enum!(ItemEventKind {
     Created => "created", Moved => "moved", Edited => "edited", Commented => "commented",
     Linked => "linked", Assigned => "assigned", Blocked => "blocked", Ranked => "ranked",
@@ -251,6 +255,7 @@ pub struct Item {
     pub state_entered_at: DateTime<Utc>,
     pub done_at: Option<DateTime<Utc>>,
     pub version: u64,
+    pub state: ItemState,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -274,6 +279,8 @@ pub struct ItemCard {
     pub version: u64,
     /// The owner's latest comment on it (H-211).
     pub owner_commented_at: Option<DateTime<Utc>>,
+    /// A draft's card, for the owner's drafts tray.
+    pub draft: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -284,6 +291,39 @@ pub struct ItemLink {
     pub label: Option<String>,
     pub created_by: String,
     pub at: DateTime<Utc>,
+}
+
+text_enum!(AttachmentKind { Image => "image", File => "file", Doc => "doc" });
+
+/// A screenshot, a file or a linked document on an item (0.19.0 K4b).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ItemAttachment {
+    pub id: String,
+    pub item_id: String,
+    pub kind: AttachmentKind,
+    pub name: String,
+    pub mime: String,
+    pub bytes: u64,
+    pub sha256: String,
+    /// Relative to the project's artifacts folder; empty for a URL.
+    pub path: String,
+    pub url: String,
+    pub caption: String,
+    pub added_by: String,
+    pub at: DateTime<Utc>,
+    pub removed: bool,
+}
+
+/// One change to a draft, with its author.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DraftRevision {
+    pub id: i64,
+    pub item_id: String,
+    pub actor: String,
+    pub at: DateTime<Utc>,
+    pub field: String,
+    pub from: Option<String>,
+    pub to: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

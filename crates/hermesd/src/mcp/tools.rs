@@ -223,7 +223,12 @@ pub(super) fn send(
                 .clamp(1, 168);
             let deadline_at = chrono::Utc::now() + chrono::Duration::hours(deadline_hours);
             let sender = bot_sender(&me);
-            let mut dm = Dm::new(&target.id, &sender, kind, body);
+            // The task carries its card's attachments (0.19.0 K4b).
+            let body = match &card {
+                Some(card) => task_card::with_attachments(app, &me.project_id, card, body),
+                None => body.to_string(),
+            };
+            let mut dm = Dm::new(&target.id, &sender, kind, &body);
             dm.ref_message_id = ref_id;
             let msg = messaging::send_dm(&app.db, &app.events, dm)?;
             let task = app.db.create_task(

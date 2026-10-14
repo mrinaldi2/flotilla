@@ -7,8 +7,12 @@
 
 pub mod admin;
 pub mod api;
+pub mod attach;
+pub mod attachments;
 pub mod contract;
 pub mod defaults;
+pub mod drafts;
+pub mod edit;
 pub mod facts;
 pub mod feed;
 pub mod flow;
@@ -19,6 +23,7 @@ pub mod metrics;
 pub mod mirror;
 pub mod model;
 pub mod moves;
+pub mod notices;
 pub mod presets;
 pub mod rank;
 pub mod team;

@@ -80,7 +80,9 @@ pub(super) fn collect(app: &Arc<AppState>, sender: &Bot, body: &str) -> Vec<Arti
         .collect()
 }
 
-fn allowed_roots(app: &Arc<AppState>, sender: &Bot) -> Vec<PathBuf> {
+/// The folders a bot's listed files may come from: its own and its
+/// project's artifacts.
+pub(crate) fn allowed_roots(app: &Arc<AppState>, sender: &Bot) -> Vec<PathBuf> {
     let mut roots = Vec::new();
     if let Some(bot_root) = Path::new(&sender.workspace_path).parent() {
         roots.extend(bot_root.canonicalize().ok());

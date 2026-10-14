@@ -72,7 +72,7 @@ impl BoardTx<'_> {
             .conn
             .prepare(
                 "SELECT id, title FROM item
-                 WHERE project_id = ?1 AND category <> 'cancelled'
+                 WHERE project_id = ?1 AND category <> 'cancelled' AND state = 'live'
                    AND (title LIKE 'REL-%' OR title LIKE 'REL %')
                  ORDER BY created_at DESC",
             )?

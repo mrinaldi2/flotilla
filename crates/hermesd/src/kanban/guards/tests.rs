@@ -92,6 +92,7 @@ fn item(category: Cat) -> Item {
         state_entered_at: now,
         done_at: None,
         version: 1,
+        state: crate::kanban::model::ItemState::Live,
     }
 }
 
@@ -258,8 +259,7 @@ fn only_the_owner_closes_verify_without_a_release_and_never_a_released_item() {
     c.who = Who::Owner;
     c.item.release_id = Some("R-1".into());
     assert_eq!(run(&c, Cat::Done), ["done.flow", "done.outcome"]);
-    // The lead may close spikes and code-free chores (H-154), but a feature
-    // still goes through a release.
+    // The lead may close spikes and code-free chores (H-154), not features.
     c.who = bot("lead", LEAD);
     assert_eq!(run(&c, Cat::Done), ["done.flow", "done.outcome"]);
     // The escape is out of Verify only.

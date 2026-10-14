@@ -86,19 +86,24 @@ async fn a_bot_without_a_role_lists_the_reads_and_its_own_items_tools() {
     let mut reads = tool_names(&writer.tools().await);
     reads.retain(|n| n.starts_with("board_") || n.starts_with("item_"));
     reads.sort();
-    // The reads, and what it may do on an item it works on or was tasked
-    // through (H-099); every other tool needs a role.
+    // The reads, what it may do on an item it works on or was tasked
+    // through (H-099), and on a draft it is invited to (0.19.0 K4b); every
+    // other tool needs a role.
     assert_eq!(
         reads,
         [
             "board_get",
             "board_list",
+            "item_attach",
             "item_comment",
+            "item_detach",
             "item_get",
             "item_link",
             "item_move",
             "item_move_check",
-            "item_query"
+            "item_query",
+            "item_unlink",
+            "item_update"
         ]
     );
     let board = writer.call("board_get", json!({})).await;

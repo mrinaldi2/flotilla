@@ -27,6 +27,9 @@ pub enum ChangeKind {
     ItemRemoved,
     ColumnsChanged,
     SettingsChanged,
+    /// A draft was created, changed, finalized or discarded (0.19.0 K4b):
+    /// only the owner's apps hear of it, never a linked computer.
+    DraftChanged,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -116,14 +119,24 @@ pub struct Change<'a> {
 
 impl FeedWriter<'_> {
     /// Number the change and send it to every watcher; returns its number.
+    /// A change to a draft's card goes out as `DraftChanged`, whatever the
+    /// writer called it, so no board lists a draft.
     pub fn publish(&mut self, change: Change<'_>) -> u64 {
+        let kind = match change.kind {
+            ChangeKind::ItemUpserted | ChangeKind::ItemMoved
+                if change.card.as_ref().is_some_and(|card| card.draft) =>
+            {
+                ChangeKind::DraftChanged
+            }
+            kind => kind,
+        };
         let seq = self.seqs.entry(change.project_id.to_string()).or_insert(0);
         *seq += 1;
         // No receiver is no watcher, which is fine.
         let _ = self.tx.send(Arc::new(BoardChange {
             project_id: change.project_id.to_string(),
             seq: *seq,
-            kind: change.kind,
+            kind,
             item_id: change.item_id.to_string(),
             card: change.card,
             from_column: change.from_column,

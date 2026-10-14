@@ -16,13 +16,14 @@ use tokio::task::JoinHandle;
 use super::binary;
 use super::Conn;
 use crate::actor::Actor;
-use crate::kanban::feed::{card_after_commit, BoardChange, BoardFeed, Change, ChangeKind};
-use crate::kanban::moves::{self, MoveRequest, Moved};
+use crate::kanban::feed::{BoardChange, BoardFeed, ChangeKind};
 use crate::kanban::team;
 
+mod drafts;
 mod edits;
 mod enable;
 mod forward;
+mod item_edits;
 mod mirrored;
 mod reads;
 mod structure;
@@ -94,7 +95,9 @@ impl Conn {
             | Request::ItemMoveCheck(_)
             | Request::BoardWatch(_)
             | Request::BoardUnwatch(_)
-            | Request::BoardList(_) => Capability::Read,
+            | Request::BoardList(_)
+            | Request::AttachmentRead(_)
+            | Request::ItemDraftChanges(_) => Capability::Read,
             // Choosing the board's home is the owner's call (H-037), and so
             // is the boards' structure (0.19.0).
             Request::BoardEnable(_)
@@ -162,9 +165,8 @@ impl Conn {
             Request::ItemMove(r) => Response::Moved(self.item_move(&r)?),
             // The owner's comment from the item drawer (U4).
             Request::ItemComment(r) => Response::Edited(self.item_comment(&r)?),
-            // Bots make these edits over MCP (B5); the owner's inline edits
-            // in the drawer come later.
-            Request::ItemCreate(_)
+            // The owner's edits from the item drawer (0.19.0 K4b).
+            req @ (Request::ItemCreate(_)
             | Request::ItemUpdate(_)
             | Request::ItemLink(_)
             | Request::ItemUnlink(_)
@@ -173,57 +175,22 @@ impl Conn {
             | Request::ItemAssign(_)
             | Request::ItemRank(_)
             | Request::ItemCheckAc(_)
-            | Request::ItemFlagAc(_) => {
-                return Err(refuse(
-                    "unsupported",
-                    "item edits aren't served over WebSocket yet",
-                ))
-            }
+            | Request::ItemFlagAc(_)) => self.owner_edit(req)?,
+            // Attachments and drafts (0.19.0 K4b).
+            req @ (Request::ItemAttach(_)
+            | Request::ItemDetach(_)
+            | Request::AttachmentUpload(_)
+            | Request::AttachmentRead(_)
+            | Request::ItemInvite(_)
+            | Request::ItemFinalize(_)
+            | Request::ItemDiscard(_)
+            | Request::ItemDraftChanges(_)) => self.draft_request(req)?,
         }))
     }
 
     /// The owner, on the owner token or through a device.
     pub(super) fn actor(&self) -> Actor<'_> {
         self.device_id.as_deref().map_or(Actor::User, Actor::Device)
-    }
-
-    /// Run the move through the guards in one transaction, holding the feed
-    /// so its push is numbered in commit order.
-    fn item_move(&self, r: &c::ItemMove) -> Result<c::MoveResult, Refusal> {
-        use c::move_result::Outcome;
-        let db = &self.app.db;
-        let mut feed = self.app.board.writer();
-        let (project_id, from) = db
-            .board_read(|t| Ok(t.item_project(&r.id)?.zip(t.item(&r.id)?)))?
-            .map(|(project, item)| (project, item.column_key))
-            .ok_or_else(|| not_found(&r.id))?;
-        let request = MoveRequest {
-            id: &r.id,
-            to: &r.to,
-            expected_version: r.expected_version,
-            reason: r.reason.as_deref(),
-            override_reason: r.override_reason.as_deref(),
-        };
-        let outcome = match moves::item_move(db, &request, &self.actor())? {
-            Moved::Done(item) => {
-                let card = card_after_commit(db, &item.id);
-                feed.publish(Change {
-                    project_id: &project_id,
-                    kind: ChangeKind::ItemMoved,
-                    item_id: &item.id,
-                    card,
-                    from_column: Some(from),
-                });
-                Outcome::Done((*item).into())
-            }
-            Moved::Refused(unmet) => Outcome::Refused(c::MoveRefused {
-                unmet: unmet.into_iter().map(Into::into).collect(),
-            }),
-            Moved::Conflict(item) => Outcome::Conflict((*item).into()),
-        };
-        Ok(c::MoveResult {
-            outcome: Some(outcome),
-        })
     }
 
     /// Start forwarding the project's pushes and answer with the snapshot
@@ -305,6 +272,7 @@ fn push(change: &BoardChange) -> c::BoardPush {
         ChangeKind::ItemRemoved => c::BoardEventKind::ItemRemoved,
         ChangeKind::ColumnsChanged => c::BoardEventKind::ColumnsChanged,
         ChangeKind::SettingsChanged => c::BoardEventKind::SettingsChanged,
+        ChangeKind::DraftChanged => c::BoardEventKind::DraftChanged,
     };
     event(c::BoardEvent {
         project_id: change.project_id.clone(),
@@ -344,6 +312,7 @@ mod tests {
     use prost::Message;
 
     use super::*;
+    use crate::kanban::feed::Change;
 
     fn change<'a>(project_id: &'a str, item_id: &'a str) -> Change<'a> {
         Change {

@@ -8,6 +8,8 @@ use chrono::{DateTime, Duration, Utc};
 use rusqlite::{params, Connection, OptionalExtension};
 
 pub use crate::actor::Actor;
+pub use board_attachments::NewAttachment;
+pub use board_drafts::UnseenDraft;
 pub use board_edit::{ItemEdit, MoveTo};
 pub use board_import::{Created, ImportReport, Warned};
 pub use board_items::{NewItem, Write};
@@ -35,7 +37,10 @@ pub use workers::NewWorker;
 pub mod agent_talk;
 mod board;
 mod board_admin;
+mod board_attachments;
+mod board_cards;
 mod board_columns;
+mod board_drafts;
 mod board_edit;
 mod board_flow;
 #[cfg(test)]

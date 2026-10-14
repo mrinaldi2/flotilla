@@ -45,13 +45,16 @@ impl BoardTx<'_> {
         Ok(rows)
     }
 
-    /// The items linked as blocking this one, and where each stands.
+    /// The live items linked as blocking this one, and where each stands.
+    /// A draft is on no column, and a discarded one never will be, so
+    /// neither blocks: an invited bot holds no rights over the board.
     pub fn blockers_of(&self, item_id: &str) -> anyhow::Result<Vec<Blocker>> {
         let conn = self.conn;
         let rows = conn
             .prepare(
                 "SELECT i.id, i.category FROM item_link l JOIN item i ON i.id = l.item_id
-                 WHERE l.kind = 'item:blocks' AND l.ref = ?1 ORDER BY i.seq",
+                 WHERE l.kind = 'item:blocks' AND l.ref = ?1 AND i.state = 'live'
+                 ORDER BY i.seq",
             )?
             .query_map(params![item_id], |r| {
                 Ok(Blocker {
@@ -63,7 +66,8 @@ impl BoardTx<'_> {
         Ok(rows)
     }
 
-    /// How full each column of the project is, `item` itself left out.
+    /// How full each column of the project is, `item` itself and drafts left
+    /// out.
     fn column_loads(
         &self,
         project_id: &str,
@@ -73,7 +77,7 @@ impl BoardTx<'_> {
         let rows = conn
             .prepare(
                 "SELECT column_key, count(*), coalesce(sum(assignee IS ?3), 0) FROM item
-                 WHERE project_id = ?1 AND id != ?2 GROUP BY column_key",
+                 WHERE project_id = ?1 AND id != ?2 AND state = 'live' GROUP BY column_key",
             )?
             .query_map(params![project_id, item.id, item.assignee], |r| {
                 Ok((
