@@ -114,7 +114,13 @@ export interface AttentionRowJson {
     | "cleanup_held"
     | "disk_low"
     /** A bot changed a draft since the owner last looked (0.19.0). */
-    | "draft_updated";
+    | "draft_updated"
+    /**
+     * The board keeper (0.19.0): a card waits for the owner's review, nothing
+     * happened on it for hours, or its move is refused. The id ends with
+     * `:review`, `:quiet` or `:blocked`.
+     */
+    | "card_waiting";
   readonly id: string;
   /** One line, set by the daemon. */
   readonly title: string;

@@ -66,6 +66,7 @@ pub fn started_note(column: &str) -> String {
 /// Start `item_id` for `bot` if this touch starts it. A failure is logged
 /// and moves nothing; the bot's own call stands.
 pub fn on_touch(app: &Arc<AppState>, bot: &bus::Bot, item_id: &str) -> Touch {
+    app.keeper.read(&bot.id, item_id, chrono::Utc::now());
     match start(app, bot, item_id) {
         Ok(touch) => touch,
         Err(e) => {

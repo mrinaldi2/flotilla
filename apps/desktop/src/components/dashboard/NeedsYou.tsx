@@ -72,6 +72,8 @@ const ORDER: Readonly<Record<Shown["kind"], number>> = {
   disk_low: 2,
   // A bot's change to a draft waits on the owner like a question does.
   draft_updated: 4,
+  // The board keeper's: a card waiting on the owner, like a question.
+  card_waiting: 4,
   cleanup_held: 6,
   routines_without_card: 7,
   // Sorted by the kind it carries (`orderOf`); this is the fallback.

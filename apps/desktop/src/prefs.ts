@@ -32,6 +32,8 @@ export interface BoardActivityPrefs {
   readonly turns: boolean;
   /** A bot updated a draft. */
   readonly drafts: boolean;
+  /** The board keeper asked a bot about its card, or raised a row for you. */
+  readonly checks: boolean;
 }
 
 export type BoardActivityKind = keyof BoardActivityPrefs;
@@ -42,6 +44,7 @@ export const BOARD_ACTIVITY_KINDS: readonly BoardActivityKind[] = [
   "refused",
   "turns",
   "drafts",
+  "checks",
 ];
 
 const DEFAULT_BOARD_ACTIVITY: BoardActivityPrefs = {
@@ -50,6 +53,7 @@ const DEFAULT_BOARD_ACTIVITY: BoardActivityPrefs = {
   refused: true,
   turns: true,
   drafts: true,
+  checks: true,
 };
 
 export const DEFAULT_PREFS: Prefs = {
@@ -96,6 +100,7 @@ function boardActivityFrom(value: unknown): BoardActivityPrefs {
     refused: kind("refused"),
     turns: kind("turns"),
     drafts: kind("drafts"),
+    checks: kind("checks"),
   };
 }
 

@@ -9,10 +9,13 @@ use rusqlite::{params, Connection, OptionalExtension};
 
 pub use crate::actor::Actor;
 pub use board_attachments::NewAttachment;
+/// The column categories a card goes stale in.
+pub(crate) use board_cards::is_active as ages_in;
 pub use board_drafts::UnseenDraft;
 pub use board_edit::{ItemEdit, MoveTo};
 pub use board_import::{Created, ImportReport, Warned};
 pub use board_items::{NewItem, Write};
+pub use board_keeper::{KeeperCard, KeeperMark, TurnWork};
 pub use board_proposals::BoardProposal;
 pub use board_reads::BoardSnapshot;
 pub use board_tx::BoardTx;
@@ -50,6 +53,7 @@ mod board_import;
 #[cfg(test)]
 mod board_import_tests;
 mod board_items;
+mod board_keeper;
 mod board_links;
 mod board_moves;
 mod board_notes;

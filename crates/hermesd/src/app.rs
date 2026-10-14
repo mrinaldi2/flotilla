@@ -88,6 +88,8 @@ pub struct AppState {
     pub kickoffs: crate::kanban::kickoffs::Kickoffs,
     /// Boards whose home is a peer, as last seen (B9).
     pub board_mirror: crate::kanban::mirror::BoardMirror,
+    /// The board keeper's memory of this run.
+    pub keeper: crate::kanban::keeper::Keeper,
     /// The projects home's peer answers and liveness (H-128).
     pub overview: crate::overview::Overview,
     /// Bots that used a bearer token, and when (H-044 phase 1).
@@ -154,6 +156,7 @@ impl AppState {
             board,
             kickoffs: Default::default(),
             board_mirror: crate::kanban::mirror::BoardMirror::default(),
+            keeper: Default::default(),
             overview: crate::overview::Overview::default(),
             bearers: crate::bus_auth::BearerLog::default(),
             owner: crate::bus_auth::owner::Owner::new(&cfg_home),

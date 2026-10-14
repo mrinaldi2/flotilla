@@ -5,11 +5,13 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
 mod overridden;
+mod sections;
 mod task_limits;
 #[cfg(any(test, feature = "test-support"))]
 mod test_support;
 
 pub use overridden::{home_notice, home_override_var};
+pub use sections::{DeliveryConfig, RetentionConfig, SchedulerConfig};
 pub use task_limits::{TaskLimits, TaskLimitsConfig};
 
 #[cfg(test)]
@@ -155,6 +157,8 @@ pub struct Config {
     pub quiesce: crate::quiesce::services::QuiesceConfig,
     /// Where checks run: per-machine cap, disk floor, probe (H-283).
     pub checks: crate::prs::check_jobs::ChecksConfig,
+    /// The board keeper (0.19.0); see [`crate::kanban::keeper`].
+    pub keeper: crate::kanban::keeper::KeeperConfig,
     /// Phone push (0.19.0, design only): off until set; see [`crate::push`].
     pub push: crate::push::PushConfig,
     /// The *user's* home (Claude Code's `~/.claude/projects` transcripts), not
@@ -162,96 +166,11 @@ pub struct Config {
     pub user_home: PathBuf,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(default)]
-pub struct RetentionConfig {
-    pub enabled: bool,
-    pub message_days: i64,
-    pub delivery_days: i64,
-    pub routine_run_days: i64,
-    /// How long emitted signals are kept once no run references them.
-    pub signal_days: i64,
-    /// How long identity revisions are kept. This is the undo buffer for
-    /// changes bots make to themselves, so it outlives ordinary chat.
-    pub revision_days: i64,
-    /// How long an archived bot's workspace stays on disk before reclamation.
-    pub archived_bot_days: i64,
-    /// How often the pruning task runs.
-    pub interval_hours: u64,
-}
-
-impl Default for RetentionConfig {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            message_days: 180,
-            delivery_days: 30,
-            routine_run_days: 90,
-            signal_days: 30,
-            revision_days: 365,
-            archived_bot_days: 30,
-            interval_hours: 24,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RuntimeKind {
     Pty,
     Double,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(default)]
-pub struct DeliveryConfig {
-    pub poll_interval_ms: u64,
-    pub lease_seconds: i64,
-    pub max_attempts: i64,
-    pub base_backoff_seconds: i64,
-    /// Type the owner's app chat into a bot's composer as their own turn
-    /// (H-195 D2 + D2b, one switch). See `bus_auth::composer_delivery`.
-    pub composer: bool,
-    /// The same, for these bots only (by name or id) while `composer` is
-    /// off: the live check on one test bot (H-209). Every other bot keeps
-    /// inbox delivery.
-    pub composer_bots: Vec<String>,
-}
-
-impl Default for DeliveryConfig {
-    fn default() -> Self {
-        Self {
-            poll_interval_ms: 1_000,
-            lease_seconds: 60,
-            max_attempts: 10,
-            base_backoff_seconds: 5,
-            composer: false,
-            composer_bots: Vec::new(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(default)]
-pub struct SchedulerConfig {
-    pub tick_interval_ms: u64,
-    /// Default deadline for one occurrence, when its routine sets none.
-    pub lease_seconds: i64,
-    /// How far back to schedule missed occurrences on startup.
-    pub catch_up_window_minutes: i64,
-    /// First retry delay for a failed occurrence; doubled per attempt.
-    pub base_backoff_seconds: i64,
-}
-
-impl Default for SchedulerConfig {
-    fn default() -> Self {
-        Self {
-            tick_interval_ms: 30_000,
-            lease_seconds: 300,
-            catch_up_window_minutes: 60,
-            base_backoff_seconds: 30,
-        }
-    }
 }
 
 impl Default for Config {
@@ -291,6 +210,7 @@ impl Default for Config {
             auth: Default::default(),
             quiesce: Default::default(),
             checks: Default::default(),
+            keeper: Default::default(),
             push: Default::default(),
             scheduler: SchedulerConfig::default(),
             supervision_interval_ms: 5_000,

@@ -206,6 +206,11 @@ const YOUR_CARDS: &str = "## Your cards\n\n\
      yourself and carry on.\n\
      - A notice about a card whose work you already finished asks for\n\
      nothing: don't redo the work.\n\
+     - A note that starts `[card KEY-12] Automatic check:` (or\n\
+     `Automatic reminder:`) comes from the daemon, not the owner: it\n\
+     watches the board and asks about a card that is already yours. Do what\n\
+     it asks on that card (carry on, move it, or say on the card why it\n\
+     can't move); it asks once.\n\
      - `item_move_check` shows what each move needs before you try it.\n\n";
 
 /// Code goes through pull requests (H-286, the Context Engineer's text;

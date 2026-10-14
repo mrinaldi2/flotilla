@@ -121,6 +121,14 @@ pub(super) fn words(a: &BoardActivity) -> (String, String) {
             let title = format!("{who} updated draft {id}");
             (title.trim_start().to_string(), with(&[&quoted, &a.note]))
         }
+        // The board keeper: a note to the assignee, or a row for the owner.
+        Kind::Checked if a.assignee_name.is_empty() => {
+            (format!("{id} needs you"), with(&[&quoted, &a.note]))
+        }
+        Kind::Checked => (
+            format!("Asked {} about {id}", a.assignee_name),
+            with(&[&quoted, &a.note]),
+        ),
         Kind::Unspecified => (id.clone(), quoted),
     }
 }
@@ -176,5 +184,20 @@ mod tests {
         };
         assert_eq!(words(&draft).0, "New Bot updated draft P2-001");
         assert_eq!(words(&activity(Kind::Moved, "user")).0, "You moved P2-001");
+        let asked = BoardActivity {
+            assignee: "b1".into(),
+            assignee_name: "New Bot".into(),
+            note: "In Doing, nothing has happened for 2 h".into(),
+            ..activity(Kind::Checked, DAEMON)
+        };
+        assert_eq!(words(&asked).0, "Asked New Bot about P2-001");
+        assert!(words(&asked)
+            .1
+            .ends_with("· In Doing, nothing has happened for 2 h"));
+        let row = BoardActivity {
+            note: "Can't move to Done".into(),
+            ..activity(Kind::Checked, DAEMON)
+        };
+        assert_eq!(words(&row).0, "P2-001 needs you");
     }
 }

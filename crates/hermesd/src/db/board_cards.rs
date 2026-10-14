@@ -10,7 +10,7 @@ use super::board::{from_json, from_text, parse_at, settings_in};
 use crate::kanban::model::{ColumnCategory, ItemCard};
 
 /// Active columns flag an item that has sat in them too long.
-fn is_active(category: ColumnCategory) -> bool {
+pub(crate) fn is_active(category: ColumnCategory) -> bool {
     matches!(
         category,
         ColumnCategory::Ready
@@ -75,10 +75,14 @@ fn cards_with(
                     SELECT json_group_array(bot_id) FROM (
                         SELECT d.bot_id FROM item_draft_invite d WHERE d.item_id = i.id
                          ORDER BY d.at, d.bot_id))
-                ELSE '[]' END
+                ELSE '[]' END,
+                EXISTS(SELECT 1 FROM keeper_mark k WHERE k.item_id = i.id
+                    AND k.rule IN ('stale', 'silent_stale') AND k.fired_at IS NOT NULL
+                    AND {holds})
          FROM item i JOIN board_column c ON c.project_id = i.project_id AND c.key = i.column_key
          WHERE i.project_id = ?1 AND {states} {filter}
-         ORDER BY c.ord, i.rank"
+         ORDER BY c.ord, i.rank",
+        holds = super::board_keeper::MARK_HOLDS
     );
     let mut stmt = conn.prepare(&sql)?;
     let map = |r: &rusqlite::Row<'_>| -> rusqlite::Result<ItemCard> {
@@ -96,8 +100,11 @@ fn cards_with(
             assignee: r.get(7)?,
             labels: from_json(r.get(8)?)?,
             blocked: r.get(9)?,
-            // A draft is in no column, so it never goes stale.
-            stale: !draft && is_active(category) && parse_at(r.get(11)?) < stale_before,
+            // A draft is in no column, so it never goes stale. The keeper's
+            // mark says so on its clock, and when its assignee went quiet.
+            stale: !draft
+                && (r.get::<_, bool>(19)?
+                    || is_active(category) && parse_at(r.get(11)?) < stale_before),
             version: r.get(12)?,
             ac_checked: r.get(13)?,
             ac_total: r.get(14)?,

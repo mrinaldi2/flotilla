@@ -79,13 +79,13 @@ pub fn state_word(kind: ColumnKind) -> &'static str {
 /// The longest stretch of the assignee's last comment a notice quotes.
 const QUOTE_MAX: usize = 160;
 /// The longest title, or column name, a notice shows.
-const NAME_MAX: usize = 120;
+pub(crate) const NAME_MAX: usize = 120;
 
 /// Text someone else wrote (a title, a column's name, a comment), as a
 /// notice quotes it: on one line, cut to `max` characters, with no quote
 /// mark that could end the quote early and no bracket that could start a
 /// `[card …]` line of its own, so it can't read as the notice's text.
-fn inline(text: &str, max: usize) -> String {
+pub(crate) fn inline(text: &str, max: usize) -> String {
     let text: String = super::attachments::one_line(text)
         .chars()
         .map(|ch| match ch {
@@ -155,7 +155,7 @@ pub fn text(card: &Card<'_>, notice: Notice<'_>) -> String {
 }
 
 /// What an assignment asks of the bot, on this board.
-fn assigned_next(card: &Card<'_>) -> String {
+pub(crate) fn assigned_next(card: &Card<'_>) -> String {
     let id = &card.item.id;
     let ask = format!(
         "If anything is unclear or it isn't ready, ask the owner with message_owner (asks: \

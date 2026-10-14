@@ -14,6 +14,7 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 
 mod cleanup;
+mod keeper;
 mod legacy;
 mod prs;
 mod rows;
@@ -22,7 +23,7 @@ mod tests;
 mod waiting;
 
 pub(crate) use legacy::{needs_you, routines_without_card, NeedsYou};
-pub(crate) use rows::{rows, Scope};
+pub(crate) use rows::{is_home, rows, Scope};
 pub(crate) use waiting::waiting_bots;
 
 /// Each kind's weight in the score (H-128 §1). A product choice, kept in one
@@ -44,7 +45,8 @@ pub(crate) fn weight(kind: AttentionKind) -> u32 {
         | AttentionKind::OffBoard
         | AttentionKind::OwnerQuestion
         | AttentionKind::CleanupHeld
-        | AttentionKind::DraftUpdated => 1,
+        | AttentionKind::DraftUpdated
+        | AttentionKind::CardWaiting => 1,
         // A decision's weight is its priority's (`decision_weight`).
         AttentionKind::Decision => 1,
         AttentionKind::Unspecified => 0,
