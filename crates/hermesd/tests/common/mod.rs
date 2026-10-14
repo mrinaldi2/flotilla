@@ -39,6 +39,7 @@ pub mod roles;
 pub mod supersede;
 pub mod tasks;
 pub mod team;
+pub mod transcripts;
 pub mod waits;
 
 pub use waits::{frame_wait, setup_wait, timeout_scale};
