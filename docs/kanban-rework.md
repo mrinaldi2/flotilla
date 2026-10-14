@@ -196,6 +196,13 @@ The flow, from the desktop or the phone:
      discussion has ended, every path then refuses it the draft, its docked
      chat closes, and the `thread` link stays for the history. A draft's
      card carries `invited`, so the apps follow a removal live.
+   - One kickoff per discussion, even on a double click: the daemon skips a
+     kickoff when the same bot was sent one for the same draft in the last
+     30 s and the draft (its version and newest revision) hasn't changed
+     since. An edit, a file, the window passing or an uninvite in between
+     send it again; the invite's reply is the same either way. The desktop
+     also disables "Discuss with a bot" while an invite is on its way, and a
+     bot's Remove while its removal is.
 3. While invited, the bot may use these tools on the draft:
    - `item_update`: title, description, acceptance criteria, type, size,
      labels;
