@@ -15,9 +15,10 @@ use common::k9::*;
 use serde_json::json;
 
 /// Step 2: the lead proposes a Simple board under `owner_confirms`; the
-/// owner approves it in Needs you. A fresh project's first board is the
-/// release-gated Main the owner starts (gap G1), so the owner then makes
-/// the new board the default and archives Main.
+/// owner approves it in Needs you. A fresh project's first board is Main,
+/// Simple + Review, which the owner starts (G1, closed: see
+/// `k9_g1_a_fresh_projects_first_board_is_simple_with_review`); the owner
+/// then makes the lead's board the default and archives Main.
 async fn step2(k: &mut K9) -> c::BoardSnapshot {
     let reply = k
         .lead
@@ -65,7 +66,7 @@ async fn step2(k: &mut K9) -> c::BoardSnapshot {
         .await,
     );
     let main = board(&s, "Main").clone();
-    assert_eq!(main.flow, "release_gated");
+    assert_eq!(main.flow, "custom");
     applied(
         call(
             &mut k.p.mac_client,
@@ -168,39 +169,60 @@ async fn k9_recipe_box_end_to_end() {
     assert!(found.is_empty(), "{}", found.join("\n"));
 }
 
-/// G1: a fresh project's first board is always the release-gated Main the
-/// owner starts ("Start the board on this computer"); before it exists the
-/// lead's board tools are refused. Step 2 as the plan writes it needs the
-/// lead's `board_create` to make a project's first board, which the owner
-/// approves, and the apps to show that proposal for a project with no board.
+/// G1, closed (0.19.0 card flow): a fresh project's first board is Main
+/// from the Simple + Review preset, started by the owner's first read, and
+/// its first bot leads it without being made the lead, so the lead's
+/// board tools work from the start: its `board_create` is a proposal the
+/// owner approves. The plan's other reading of G1, the lead's
+/// `board_create` making a project's very first board, isn't needed once
+/// every project starts with this one.
 #[tokio::test]
-#[ignore = "K9 gap G1: a project's first board can only be the release-gated Main the owner \
-            starts; a lead's board_create needs a board to exist (design decision, see PR)"]
-async fn k9_gap_the_leads_board_create_starts_a_fresh_projects_board() {
+async fn k9_g1_a_fresh_projects_first_board_is_simple_with_review() {
     let d = common::spawn_daemon().await;
     let mut desktop = common::WsClient::connect(&d).await;
     let project = common::peers::project(&mut desktop, "Recipe Box").await;
     let lead = common::create_bot(&mut desktop, &project, "Lead").await;
     let lead_id = lead["id"].as_str().expect("id");
-    d.app.db.set_project_lead(&project, Some(lead_id)).unwrap();
+    let led = d.app.db.get_project(&project).unwrap().expect("project");
+    assert_eq!(
+        led.lead_bot_id.as_deref(),
+        Some(lead_id),
+        "the first bot leads"
+    );
+    let s = common::board::snapshot(
+        call(
+            &mut desktop,
+            Request::BoardGet(c::BoardGet {
+                project_id: project.clone(),
+            }),
+        )
+        .await,
+    );
+    let main = board(&s, "Main");
+    assert_eq!(main.flow, "custom");
+    assert_eq!(main.automations["work.started"], "doing");
+    let names: Vec<&str> = s.columns.iter().map(|col| col.name.as_str()).collect();
+    assert_eq!(names, ["To do", "Doing", "Review", "Done", "Cancelled"]);
+    assert!(
+        s.roles.iter().any(|r| r.bot_id == lead_id),
+        "the lead holds the board's Lead role: {:?}",
+        s.roles
+    );
     let token = d.app.secrets.bot_token(lead_id).expect("token");
     let mut lead = common::McpClient::new(&d, &token);
-    let raw = lead
-        .call_raw(
+    let reply = lead
+        .call(
             "board_create",
             json!({"name": "Recipes", "key": "RB", "preset": "simple"}),
         )
         .await;
-    assert_ne!(raw["isError"], json!(true), "{raw}");
-    let reply: serde_json::Value =
-        serde_json::from_str(raw["content"][0]["text"].as_str().unwrap_or("{}")).unwrap();
     let s = approve(&mut desktop, &proposed(&reply)).await;
-    let flows: Vec<(&str, &str, &str)> = s
+    let flows: Vec<(&str, &str)> = s
         .boards
         .iter()
-        .map(|b| (b.name.as_str(), b.key.as_str(), b.flow.as_str()))
+        .map(|b| (b.name.as_str(), b.flow.as_str()))
         .collect();
-    assert_eq!(flows, [("Recipes", "RB", "custom")]);
+    assert_eq!(flows, [("Main", "custom"), ("Recipes", "custom")]);
 }
 
 /// G2: the prompt's bus sections and the tools of Projects & Bots and

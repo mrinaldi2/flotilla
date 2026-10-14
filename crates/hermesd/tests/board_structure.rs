@@ -32,6 +32,12 @@ async fn the_owner_shapes_a_custom_board_over_websocket() {
     let d = spawn_daemon().await;
     let mut owner = WsClient::connect(&d).await;
     let project_id = common::peers::project(&mut owner, "Recipe Box").await;
+    // A board from before 0.19's first-board preset: the release-gated Main,
+    // which stays as it is.
+    d.app
+        .db
+        .ensure_board(&project_id, &d.app.db.daemon_id().unwrap(), None)
+        .unwrap();
     let first = snapshot(
         call(
             &mut owner,
