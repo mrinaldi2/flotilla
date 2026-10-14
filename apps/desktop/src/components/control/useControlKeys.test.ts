@@ -69,6 +69,20 @@ describe("useControlKeys", () => {
     expect(e.select).toHaveBeenLastCalledWith("d2");
   });
 
+  it("leaves ↩ to a button in the reading pane, such as a proposal's Approve", () => {
+    const d = mount();
+    const reader = document.createElement("section");
+    reader.className = "cc-reader";
+    const approve = document.createElement("button");
+    reader.append(approve);
+    document.body.append(reader);
+    const event = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    approve.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+    expect(d.select).not.toHaveBeenCalled();
+    reader.remove();
+  });
+
   it("saves with ⌘↩ and asks with ⇧⌘↩, even while typing", () => {
     const d = mount();
     const field = document.createElement("textarea");

@@ -352,9 +352,7 @@ describe("BoardView", () => {
         addToast={vi.fn<AddToast>()}
       />,
     );
-    expect(
-      await screen.findByRole("heading", { name: "This board isn't set up yet" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "No board yet" })).toBeInTheDocument();
 
     const old = new FakeDaemon();
     old.encodings = [];

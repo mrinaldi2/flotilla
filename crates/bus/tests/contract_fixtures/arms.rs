@@ -39,6 +39,7 @@ pub const ARMS: &[&str] = &[
     "request.item_finalize",
     "request.item_discard",
     "request.item_draft_changes",
+    "request.item_draft_undo",
     "response.board",
     "response.item",
     "response.history",

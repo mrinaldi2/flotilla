@@ -17,6 +17,10 @@ export interface ItemDetailState {
   /** Posts the owner's comment, a reply when `replyTo` is set, and resolves
    * with the bots told; rejects with the daemon's refusal. */
   readonly comment: PostComment;
+  /** Takes the item as a request answered with it (an attach, a detach). */
+  readonly setDetail: (detail: ItemDetail) => void;
+  /** Reads the item again. */
+  readonly reload: () => void;
 }
 
 /** The owner's comment with this text is on the card and wasn't before. */
@@ -118,5 +122,6 @@ export function useItemDetail(
     [api, itemId],
   );
 
-  return { detail, check, error, comment };
+  const reload = useCallback((): void => setReads((n) => n + 1), []);
+  return { detail, check, error, comment, setDetail, reload };
 }

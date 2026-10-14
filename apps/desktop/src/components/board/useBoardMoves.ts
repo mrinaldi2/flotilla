@@ -47,7 +47,7 @@ interface Options {
   readonly addToast: AddToast;
 }
 
-interface BoardMoves {
+export interface BoardMoves {
   readonly ui: MoveUi;
   /** The guards for every column `card` could move to (cached for drags). */
   readonly checksFor: (card: ItemCard) => Promise<ColumnChecks>;

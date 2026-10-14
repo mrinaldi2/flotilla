@@ -21,6 +21,7 @@ mod board_attachments;
 mod board_blocked_by;
 mod board_close;
 mod board_draft_rights;
+mod board_draft_undo;
 mod board_drafts;
 mod board_drawer;
 mod board_home;
