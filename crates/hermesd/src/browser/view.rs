@@ -113,6 +113,7 @@ pub async fn watch(app: Arc<AppState>, bot: bus::Bot, chosen: Option<String>, ou
                     "following": chosen.is_none(),
                     "tabs": open.iter().map(|t| json!({ "id": t.id, "title": t.title, "url": t.url })).collect::<Vec<_>>()
                 });
+                tracing::debug!("DIAG view tabs {}", listing);
                 if !out.push(listing) {
                     break;
                 }
@@ -139,6 +140,7 @@ pub async fn watch(app: Arc<AppState>, bot: bus::Bot, chosen: Option<String>, ou
                 let Some(frame) = frames.borrow_and_update().clone() else {
                     continue;
                 };
+                tracing::debug!("DIAG view frame {}", &frame.data[..frame.data.len().min(6)]);
                 let sent = out.frame(json!({
                     "type": "browser_frame", "bot_id": bot.id, "tab_id": tab_id,
                     "data": &*frame.data, "width": frame.width, "height": frame.height

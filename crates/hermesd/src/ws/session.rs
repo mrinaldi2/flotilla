@@ -226,6 +226,13 @@ async fn serve(
                 break;
             }
         };
+        tracing::debug!(
+            "DIAG session read {}",
+            match &frame {
+                WsMessage::Text(t) => t.chars().take(80).collect::<String>(),
+                other => format!("{other:?}"),
+            }
+        );
         match frame {
             WsMessage::Text(text) => {
                 if text.len() > MAX_FRAME_BYTES {

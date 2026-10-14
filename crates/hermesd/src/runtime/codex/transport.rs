@@ -72,14 +72,17 @@ pub(super) fn connect(
                 .enable_all()
                 .build()?;
             runtime.block_on(async {
+                let diag_start = Instant::now();
+                let mut diag_attempts = 0;
                 let deadline = Instant::now() + Duration::from_secs(10);
                 let socket = loop {
+                    diag_attempts += 1;
                     if child.lock().unwrap_or_else(|e| e.into_inner()).try_wait()?.is_some() {
                         anyhow::bail!("Codex App Server exited before accepting connections");
                     }
                     match tokio_tungstenite::connect_async(request.clone()).await {
-                        Ok((socket, _)) => break socket,
-                        Err(error) if Instant::now() >= deadline => return Err(error.into()),
+                        Ok((socket, _)) => { eprintln!("DIAG codex connected after {diag_attempts} attempts in {:?}", diag_start.elapsed()); break socket },
+                        Err(error) if Instant::now() >= deadline => { eprintln!("DIAG codex gave up after {diag_attempts} attempts in {:?}: {error}", diag_start.elapsed()); return Err(error.into()) },
                         Err(_) => tokio::time::sleep(Duration::from_millis(40)).await,
                     }
                 };
