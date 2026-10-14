@@ -102,6 +102,12 @@ impl From<m::ItemCard> for c::ItemCard {
             owner_commented_at: v.owner_commented_at.and_then(stamp),
             draft: v.draft,
             invited: v.invited,
+            move_block: v.move_block.map(|b| c::MoveBlock {
+                to_column: b.to_column,
+                reason: b.reason,
+                more: b.more,
+                refused: b.refused,
+            }),
             ..Default::default()
         };
         crate::compat018::card_out(&mut card);
@@ -133,6 +139,12 @@ impl TryFrom<c::ItemCard> for m::ItemCard {
             owner_commented_at: maybe_at(v.owner_commented_at, "owner_commented_at")?,
             draft: v.draft,
             invited: v.invited,
+            move_block: v.move_block.map(|b| m::MoveBlock {
+                to_column: b.to_column,
+                reason: b.reason,
+                more: b.more,
+                refused: b.refused,
+            }),
         })
     }
 }

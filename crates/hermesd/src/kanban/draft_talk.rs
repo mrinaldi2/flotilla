@@ -133,13 +133,14 @@ pub fn kickoff(app: &AppState, project_id: &str, bot: &Bot, item: &Item) -> anyh
         listing(id, &atts, &artifacts)
     });
     out.push_str(&template(app, project_id, item)?);
-    out.push_str(
+    out.push_str(&format!(
         "\n\nWhile you discuss it you may change it with item_update (title, description, \
          acceptance criteria, type, size, labels), add or remove files with item_attach and \
          item_detach, and link what you write with item_link. The owner sees every change. You \
          can't move it or put tasks on it: only the owner finalizes or discards it. Answer the \
-         owner with message_owner.",
-    );
+         owner with message_owner (item: {id}); a question you ask that way (asks: true) closes \
+         when the discussion ends."
+    ));
     Ok(out)
 }
 

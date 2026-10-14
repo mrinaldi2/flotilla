@@ -136,9 +136,9 @@ pub(super) fn board_work(limits: &crate::config::TaskLimits) -> String {
     } = limits;
     format!(
         "## Work is on the board\n\n\
-     All work is a task linked to a board card, never a note. A note never\n\
-     authorises work, and one over {max_note} bytes is refused: put long\n\
-     content in an artifact.\n\n\
+     All work is on a board card: a card assigned to you, or a task linked\n\
+     to one. A note never starts work, and one\n\
+     over {max_note} bytes is refused: put long content in an artifact.\n\n\
      A project can have several boards, each with its own columns. On a\n\
      custom board a column's movers and rules decide who may move a card in\n\
      and what it needs first; `board_list` shows every board with its\n\
@@ -164,7 +164,8 @@ pub(super) fn board_work(limits: &crate::config::TaskLimits) -> String {
      holding one inherits its card; when you hold several, pass\n\
      `parent_task` to say which one it is part of.\n\
      - If a note asks you to do work, do not start it. Send the sender a\n\
-     short note asking for a task on a card, then carry on.\n\
+     short note asking for a task on a card, then carry on. A card notice\n\
+     is not such a request (see \"Your cards\").\n\
      - Work the owner asks for in your terminal gets a card too, unless it\n\
      is a quick answer.\n\
      - If you find yourself working with no open task, stop and ask the\n\
@@ -172,9 +173,37 @@ pub(super) fn board_work(limits: &crate::config::TaskLimits) -> String {
      as working off-board, and the lead is told.\n\
      - Holding no task, you may have {per_card} open tasks on one card and\n\
      {root} across the project ({root_lead} for the lead). A routine names a\n\
-     card too (`item`).\n\n"
+     card too (`item`).\n\n{cards}",
+        cards = YOUR_CARDS
     )
 }
+
+/// How a bot works the cards assigned to it (0.19.0 card flow): the
+/// assignment starts the work, a notice never does, and the card moves as
+/// the work does.
+const YOUR_CARDS: &str = "## Your cards\n\n\
+     A card assigned to you is yours to work, with or without a task: you may\n\
+     edit it (`item_update`), attach and link what you make (`item_attach`,\n\
+     `item_link`), comment on it and move it under its board's rules,\n\
+     whatever your role.\n\n\
+     - Only an assignment or a task starts work. The note that says a card\n\
+     \"is assigned to you\" is the assignment: start it now. Every other note\n\
+     that starts with `[card KEY-12]` is news about a card someone moved or\n\
+     edited, and it starts nothing.\n\
+     - When you start, the card moves to Doing: on a board that automates\n\
+     it, your first `item_get` of the card moves it there; otherwise move it\n\
+     yourself with `item_move`.\n\
+     - When the work is done, comment the result on the card, link or attach\n\
+     what you made, and move it to the next column (Review, when the board\n\
+     has one). The owner checks it there and moves it to Done.\n\
+     - If the card isn't ready, or you need answers before you can do it,\n\
+     move it back to To do and ask the owner your questions: `message_owner`\n\
+     with `asks: true` and `item` set to the card, or `raise_decision` when\n\
+     only the owner can settle it. When they answer, move it to Doing again\n\
+     yourself and carry on.\n\
+     - A notice about a card whose work you already finished asks for\n\
+     nothing: don't redo the work.\n\
+     - `item_move_check` shows what each move needs before you try it.\n\n";
 
 /// Code goes through pull requests (H-286, the Context Engineer's text;
 /// H-261 §4, §5): only for a project cut over to PRs (`pr_flow_projects`).
@@ -214,10 +243,12 @@ pub(super) fn pull_requests(on: bool) -> &'static str {
 /// refused for leaving the card out).
 pub(super) fn owner_reporting() -> &'static str {
     "## Owner requests on a card\n\n\
-     A message from the owner may start with `[card KEY-12]`: the request is\n\
-     work on that card. Do it there — comment, link and move the card — and\n\
-     answer the owner with `message_owner`. A message from the owner without\n\
-     a card is just as much yours to act on: a conversation needs no card\n\
+     A chat message from the owner may start with `[card KEY-12]`: it is\n\
+     about that card. Work it asks for is done there — comment, link and\n\
+     move the card as \"Your cards\" says — and you answer the owner with\n\
+     `message_owner`. A note that starts with `[card KEY-12]` is a card\n\
+     notice, not a request. A message from the owner without a card is\n\
+     just as much yours to act on: a conversation needs no card\n\
      until it becomes work.\n\n\
      ## Report to the owner where the owner looks\n\n\
      The owner reads the project's dashboard, the board, releases, meeting\n\

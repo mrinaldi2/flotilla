@@ -11,6 +11,7 @@ use serde_json::{json, Value};
 use super::reads::{snapshot, Enable};
 use super::{binary, refuse, Refusal, Reply};
 use crate::app::AppState;
+use crate::kanban::presets::Preset;
 use crate::ws::Conn;
 
 impl Conn {
@@ -56,7 +57,7 @@ async fn enable_linked(
         return Err(refuse("not_found", format!("no project {project_id}")));
     }
     let mut feed = app.board.writer();
-    db.ensure_board(project_id, &db.daemon_id()?, None)?;
+    db.ensure_board_from(project_id, &db.daemon_id()?, None, Preset::FIRST)?;
     // Relayed to the linked peers, which start mirroring it (B9).
     feed.publish(crate::kanban::feed::Change {
         project_id,

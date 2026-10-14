@@ -47,6 +47,7 @@ pub(crate) fn load_in(
     let project_id = t.item_project(id)?.ok_or_else(missing)?;
     let who = match actor {
         Actor::User | Actor::Device(_) => Who::Owner,
+        Actor::Daemon => Who::Daemon,
         Actor::Bot {
             id: bot,
             project_id: own,
@@ -99,17 +100,21 @@ pub(crate) fn move_in(
         override_reason: req.override_reason,
     };
     let over = guards::over_limit(&item, to, &ctx).is_some() && who != Who::Daemon;
+    let refuse = |unmet: Vec<Unmet>| -> anyhow::Result<Moved> {
+        super::stuck::remember(&project_id, &item.id, &to.key, &who);
+        Ok(Moved::Refused(unmet))
+    };
     let (note, first) = if let Some(from) = custom_from(t, &item, &columns)? {
         let refused = flow::evaluate(&item, from, &to.policy, &mv, &who, &ctx);
         if !refused.is_empty() {
-            return Ok(Moved::Refused(refused));
+            return refuse(refused);
         }
         let first = flow::is_return(from, to);
         (custom_note(&mv, over, first), first)
     } else {
         let refused = guards::evaluate(&item, &mv, &who, &ctx);
         if !refused.is_empty() {
-            return Ok(Moved::Refused(refused));
+            return refuse(refused);
         }
         let rule = guards::rule(item.category, to.category);
         let escape = guards::closes_without_release(&item, &mv, &who, &ctx);
@@ -135,7 +140,10 @@ pub(crate) fn move_in(
             },
             actor,
         )? {
-            Write::Done(item) => Moved::Done(Box::new(item)),
+            Write::Done(item) => {
+                super::stuck::forget(&project_id, &item.id);
+                Moved::Done(Box::new(item))
+            }
             Write::Conflict(current) => Moved::Conflict(current),
         },
     )
@@ -248,6 +256,49 @@ pub fn item_move_check(
             out.push((to.clone(), refused));
         }
         Ok(out)
+    })
+}
+
+/// What stands between `item` and `to` for `who`, with no reason or
+/// override given, inside the caller's read.
+pub(crate) fn unmet_for(
+    t: &BoardTx<'_>,
+    project_id: &str,
+    item: &Item,
+    columns: &[BoardColumn],
+    to: &BoardColumn,
+    who: &Who,
+) -> anyhow::Result<Vec<Unmet>> {
+    let ctx = t.move_context(project_id, item)?;
+    let mv = Move {
+        to,
+        reason: None,
+        override_reason: None,
+    };
+    Ok(match custom_from(t, item, columns)? {
+        Some(from) => flow::evaluate(item, from, &to.policy, &mv, who, &ctx),
+        None => guards::evaluate(item, &mv, who, &ctx),
+    })
+}
+
+/// The columns an item on a release-gated board reaches only by a move its
+/// rules don't list: the owner's override, with a reason. None on a custom
+/// board, whose columns list every move they take.
+pub fn owner_overrides(db: &Db, id: &str) -> anyhow::Result<Vec<String>> {
+    db.board_read(|t| {
+        let Some(item) = t.item(id)? else {
+            return Ok(Vec::new());
+        };
+        let columns = board_columns(t, &item)?;
+        if custom_from(t, &item, &columns)?.is_some() || super::edit::not_live(&item).is_some() {
+            return Ok(Vec::new());
+        }
+        Ok(columns
+            .iter()
+            .filter(|c| c.key != item.column_key)
+            .filter(|c| guards::rule(item.category, c.category) == Rule::Unlisted)
+            .map(|c| c.key.clone())
+            .collect())
     })
 }
 

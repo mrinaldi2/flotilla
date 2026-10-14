@@ -96,6 +96,23 @@ pub fn message_owner(
     Ok((msg, question))
 }
 
+/// A draft's discussion ended for every bot not in `invited` (removed,
+/// or the draft was finalized or discarded): their questions about it
+/// (asked in the thread with the draft's tag) close, and their threads
+/// refresh.
+pub fn close_draft_questions(app: &AppState, item_id: &str, invited: &[String]) {
+    match app.db.close_draft_questions(item_id, invited) {
+        Ok(bots) => {
+            for bot_id in bots {
+                if let Ok(Some(bot)) = app.db.get_bot(&bot_id) {
+                    updated(app, &bot);
+                }
+            }
+        }
+        Err(e) => tracing::warn!(item_id, error = %e, "draft questions not closed"),
+    }
+}
+
 /// `item_comment asks_owner`: a question on the card, after the comment.
 pub fn ask_on_card(
     app: &AppState,

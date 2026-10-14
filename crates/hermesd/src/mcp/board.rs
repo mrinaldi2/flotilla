@@ -14,8 +14,12 @@ use crate::kanban::contract::model_list;
 use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 use crate::kanban::model::{Item, ItemType, Priority, Role, Unmet};
 use crate::kanban::moves::{item_move as move_item, item_move_check, MoveRequest, Moved};
+use crate::kanban::notice_text::Notice;
+use crate::kanban::notices::tell_assignee;
 
 use super::board_drafts::OWN_ITEM_TOOLS;
+pub(super) use super::board_output::conflict;
+pub use super::board_output::Conflict;
 use super::board_schema::{all_tools, decode, friendly};
 use super::caller;
 
@@ -70,13 +74,12 @@ pub(super) fn call(
         .find(|t| t.name == name)
         .expect("checked by is_board_tool");
     let invited = super::board_drafts::admits(app, &bot, name, args)?;
-    anyhow::ensure!(
-        invited
-            || tool.audience.admits(&roles)
-            || (OWN_ITEM_TOOLS.contains(&name) && works_on(app, &bot, args)?),
-        "{name} needs a board role you don't have, or an item assigned to you or a \
-         task linked to it; ask the lead"
-    );
+    if !(invited
+        || tool.audience.admits(&roles)
+        || (OWN_ITEM_TOOLS.contains(&name) && works_on(app, &bot, args)?))
+    {
+        anyhow::bail!(no_right(name));
+    }
     let me = Me { bot };
     let project = me.bot.project_id.as_str();
     match name {
@@ -100,6 +103,24 @@ pub(super) fn call(
             super::board_import::call(app, &me, decode("BoardImport", args, project)?)
         }
         _ => super::board_edit::call(app, &me, name, args),
+    }
+}
+
+/// Why a bot without a board role was refused a tool: on its own cards it
+/// may use only `OWN_ITEM_TOOLS`, so the text says which, rather than that
+/// being assigned would have been enough.
+fn no_right(name: &str) -> String {
+    if OWN_ITEM_TOOLS.contains(&name) {
+        format!(
+            "{name} on this item needs a board role you don't have: it isn't assigned to \
+             you and no task of yours is linked to it. Ask the lead to assign it to you"
+        )
+    } else {
+        format!(
+            "{name} needs a board role you don't have; on a card assigned to you, you may \
+             use {} without one. Ask the lead for the role",
+            OWN_ITEM_TOOLS.join(", ")
+        )
     }
 }
 
@@ -139,51 +160,6 @@ pub(super) fn refused(unmet: Vec<Unmet>) -> anyhow::Error {
         .collect();
     anyhow::anyhow!("refused:\n{}", lines.join("\n"))
 }
-
-pub(super) fn conflict(current: Item) -> anyhow::Error {
-    let version = current.version;
-    let item = item_out(current).unwrap_or(Value::Null);
-    Conflict { version, item }.into()
-}
-
-/// A stale write and the item as it is now. Typed, so the board's home can
-/// send it to a linked computer as data and have its ids rewritten like any
-/// result's, rather than as text that keeps the home's ids (H-113).
-#[derive(Debug)]
-pub struct Conflict {
-    pub version: u64,
-    pub item: Value,
-}
-
-impl Conflict {
-    /// As the home sends it in a `board_call` result.
-    pub fn to_result(&self) -> Value {
-        json!({ "conflict": self.item, "version": self.version })
-    }
-
-    /// From such a result, once its ids are this computer's.
-    pub fn from_result(result: &Value) -> Option<Self> {
-        let item = result.get("conflict").filter(|c| c.is_object())?;
-        Some(Self {
-            version: result["version"].as_u64()?,
-            item: item.clone(),
-        })
-    }
-}
-
-impl std::fmt::Display for Conflict {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let version = self.version;
-        write!(
-            f,
-            "conflict: the item changed since you read it; it is now version {version}. \
-             Check it and retry with expected_version {version}.\n{}",
-            self.item
-        )
-    }
-}
-
-impl std::error::Error for Conflict {}
 
 /// Run a bot's board write holding the feed (B4), and push the changed
 /// item's card once it has committed, so open boards see bots' changes. The
@@ -299,6 +275,8 @@ fn board_get(app: &Arc<AppState>, me: &Me) -> anyhow::Result<Value> {
 
 fn item_get(app: &Arc<AppState>, me: &Me, req: c::ItemGet) -> anyhow::Result<Value> {
     own_item(app, me, &req.id)?;
+    // The assignee's first read of its card in an open column starts it.
+    let started = crate::kanban::starts::on_touch(app, &me.bot, &req.id);
     let item = app
         .db
         .get_item(&req.id)?
@@ -317,6 +295,9 @@ fn item_get(app: &Arc<AppState>, me: &Me, req: c::ItemGet) -> anyhow::Result<Val
     let mut reply = json!({ "item": item_out(item)?, "links": out(links)?,
                             "history": out(history)?, "comments": comments });
     super::board_drafts::item_get_extras(app, &me.bot.project_id, &req.id, &mut reply)?;
+    if let Some(column) = started {
+        reply["started"] = json!(super::board_edit::started_note(&column));
+    }
     Ok(reply)
 }
 
@@ -359,17 +340,28 @@ fn item_move(app: &Arc<AppState>, me: &Me, req: c::ItemMove) -> anyhow::Result<V
     };
     let from = app.db.get_item(&req.id)?.map(|item| item.column_key);
     let project = me.bot.project_id.as_str();
-    published(
+    let mut after = None;
+    let reply = published(
         app,
         project,
         ChangeKind::ItemMoved,
         from,
         || match move_item(&app.db, &request, &me.actor())? {
-            Moved::Done(item) => Ok((super::board_edit::moved(*item)?, req.id.clone())),
+            Moved::Done(item) => {
+                after = Some((*item).clone());
+                Ok((super::board_edit::moved(*item)?, req.id.clone()))
+            }
             Moved::Refused(unmet) => Err(refused(unmet)),
             Moved::Conflict(current) => Err(conflict(*current)),
         },
-    )
+    );
+    if let Some(item) = &after {
+        tell_assignee(app, item, &me.actor(), Notice::Moved);
+    } else if reply.is_err() {
+        // A refused move shows on its card ("can't move: …").
+        crate::kanban::stuck::publish_card(app, project, &req.id);
+    }
+    reply
 }
 
 fn check(app: &Arc<AppState>, me: &Me, req: c::ItemMoveCheck) -> anyhow::Result<Value> {

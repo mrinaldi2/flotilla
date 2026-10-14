@@ -278,4 +278,6 @@ fn independent(item: &Item, who: &Who, ctx: &Context) -> Vec<Unmet> {
 pub mod tokens;
 
 #[cfg(test)]
+mod first_board_tests;
+#[cfg(test)]
 mod tests;

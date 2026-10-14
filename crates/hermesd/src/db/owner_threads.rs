@@ -215,6 +215,39 @@ impl Db {
             .optional()?)
     }
 
+    /// Closes the open thread questions about draft `item_id` (their
+    /// message leads with its tag, `[draft KEY-12 …`) asked by bots not in
+    /// `keep`: its discussion ended for them. The bots whose questions
+    /// closed.
+    pub fn close_draft_questions(
+        &self,
+        item_id: &str,
+        keep: &[String],
+    ) -> anyhow::Result<Vec<String>> {
+        let tag = format!("[draft {item_id} ");
+        let conn = self.lock();
+        let open: Vec<(String, String)> = conn
+            .prepare(
+                "SELECT q.id, q.bot_id FROM owner_question q
+                   JOIN conversation c ON c.bot_id = q.bot_id
+                   JOIN message m ON m.conversation_id = c.id AND m.num = q.message_num
+                  WHERE q.dismissed_at IS NULL AND substr(m.body, 1, length(?1)) = ?1",
+            )?
+            .query_map(params![tag], |r| Ok((r.get(0)?, r.get(1)?)))?
+            .collect::<Result<_, _>>()?;
+        let mut bots = Vec::new();
+        for (id, bot_id) in open.into_iter().filter(|(_, b)| !keep.contains(b)) {
+            conn.execute(
+                "UPDATE owner_question SET dismissed_at = ?2 WHERE id = ?1",
+                params![id, ts(now())],
+            )?;
+            if !bots.contains(&bot_id) {
+                bots.push(bot_id);
+            }
+        }
+        Ok(bots)
+    }
+
     /// Closes the question for the owner; `false` when it was already.
     pub fn dismiss_owner_question(&self, id: &str) -> anyhow::Result<bool> {
         Ok(self.lock().execute(

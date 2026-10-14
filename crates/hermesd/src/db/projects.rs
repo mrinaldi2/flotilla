@@ -74,6 +74,33 @@ impl Db {
         Ok(())
     }
 
+    /// Make `bot_id` the project's lead when the project has none and no
+    /// other live bot of its own (0.19.0: a project's first bot leads it).
+    /// A project with a board gives it the board's Lead role too. True when
+    /// it became the lead.
+    pub fn claim_first_lead(&self, project_id: &str, bot_id: &str) -> anyhow::Result<bool> {
+        let mut conn = self.lock();
+        let tx = conn.transaction()?;
+        let claimed = tx.execute(
+            "UPDATE project SET lead_bot_id = ?2
+             WHERE id = ?1 AND lead_bot_id IS NULL AND deleted_at IS NULL
+               AND NOT EXISTS (SELECT 1 FROM bot
+                               WHERE project_id = ?1 AND id != ?2 AND peer_id IS NULL
+                                 AND temporary = 0 AND deleted_at IS NULL)",
+            params![project_id, bot_id],
+        )? == 1;
+        if claimed {
+            tx.execute(
+                "INSERT OR IGNORE INTO project_role(project_id, role, bot_id)
+                 SELECT ?1, 'lead', ?2 WHERE EXISTS (
+                     SELECT 1 FROM board_settings WHERE project_id = ?1)",
+                params![project_id, bot_id],
+            )?;
+        }
+        tx.commit()?;
+        Ok(claimed)
+    }
+
     /// The bot to tell about a decision in this project.
     ///
     /// Falls back to whoever created the raising bot — Chief of Staff hired

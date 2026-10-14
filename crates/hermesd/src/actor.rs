@@ -17,6 +17,9 @@ pub enum Actor<'a> {
     /// A bot over MCP. The project comes from the bearer token that
     /// authenticated the call, never from an argument, so it cannot be forged.
     Bot { id: &'a str, project_id: &'a str },
+    /// The daemon itself, acting on a fact rather than for anyone: the
+    /// move of a card to Doing when its assignee starts work on it.
+    Daemon,
 }
 
 impl Actor<'_> {
@@ -25,6 +28,7 @@ impl Actor<'_> {
             Actor::User => "user".to_string(),
             Actor::Device(id) => format!("device:{id}"),
             Actor::Bot { id, .. } => format!("bot:{id}"),
+            Actor::Daemon => "daemon".to_string(),
         }
     }
 

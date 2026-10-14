@@ -11,6 +11,8 @@ use crate::app::AppState;
 use crate::kanban::edit::{Edited, Editor};
 use crate::kanban::feed::ChangeKind;
 use crate::kanban::model::{ColumnCategory, Item};
+use crate::kanban::notice_text::Notice;
+use crate::kanban::notices::{tell_assignee, tell_reassigned};
 
 use super::board::{conflict, item_out, out, own_item, published, refused, Me};
 use super::board_schema::decode;
@@ -27,16 +29,26 @@ pub(super) fn call(
         project_id: project,
         actor: me.actor(),
     };
+    let id = args.get("id").and_then(Value::as_str).unwrap_or_default();
+    // Who held it before an assignment, so both ends are told.
+    let before = match name {
+        "item_assign" => Some(app.db.get_item(id)?.and_then(|item| item.assignee)),
+        _ => None,
+    };
     let edited = match name {
         "item_create" => ed.create(&decode("ItemCreate", args, project)?)?,
         "item_update" => ed.update(&decode("ItemUpdate", args, project)?)?,
         "item_comment" => return comment(app, me, decode("ItemAddComment", args, project)?),
         "item_link" => {
             let link = ed.link(&decode("ItemAddLink", args, project)?)?;
+            told(app, me, id, "linked something to it");
             return Ok(json!({ "link": out(c::ItemLink::from(link))? }));
         }
         "item_unlink" => {
             let removed = ed.unlink(&decode("ItemRemoveLink", args, project)?)?;
+            if removed {
+                told(app, me, id, "removed a link");
+            }
             return Ok(json!({ "removed": removed }));
         }
         "item_block" => ed.block(&decode("ItemBlock", args, project)?)?,
@@ -51,7 +63,49 @@ pub(super) fn call(
         "item_attach" | "item_detach" => return super::board_attach::call(app, me, name, args),
         other => anyhow::bail!("unknown tool: {other}"),
     };
-    reply(edited)
+    if let Edited::Done(item) = &edited {
+        let what = match name {
+            "item_update" => "edited it",
+            "item_block" => "blocked it",
+            "item_unblock" => "unblocked it",
+            "item_rank" => "ranked it",
+            "item_check_ac" => "checked an acceptance criterion",
+            "item_flag_ac" => "flagged an acceptance criterion",
+            _ => "",
+        };
+        match &before {
+            Some(before) => tell_reassigned(app, before.as_deref(), item, &me.actor()),
+            None if !what.is_empty() => {
+                tell_assignee(app, item, &me.actor(), Notice::Changed(what));
+            }
+            None => {}
+        }
+    }
+    let mut reply = reply(edited)?;
+    // The assignee's first edit of its card in an open column starts it.
+    if name == "item_update" {
+        if let Some(to) = crate::kanban::starts::on_touch(app, &me.bot, id) {
+            reply["started"] = json!(started_note(&to));
+        }
+    }
+    Ok(reply)
+}
+
+/// Tell the item's assignee about an unversioned edit, as it is now.
+fn told(app: &Arc<AppState>, me: &Me, id: &str, what: &str) {
+    if let Ok(Some(item)) = app.db.get_item(id) {
+        tell_assignee(app, &item, &me.actor(), Notice::Changed(what));
+    }
+}
+
+/// What the reply says when the call started the bot's work on its card.
+pub(super) fn started_note(column: &str) -> String {
+    format!(
+        "You started work on this card, so it moved to {column}. When the work is done, \
+         comment the result, link or attach what you made and move it on with item_move. If \
+         it isn't ready or something is unclear, move it back and ask the owner \
+         (message_owner with asks: true and item)."
+    )
 }
 
 /// An edit's outcome as a tool result: the item, or a refusal or conflict
