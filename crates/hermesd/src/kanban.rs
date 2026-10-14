@@ -20,6 +20,7 @@ pub mod feed;
 pub mod flow;
 pub mod guards;
 pub mod handback;
+pub mod keeper;
 pub mod kickoffs;
 pub mod labels;
 pub mod metrics;

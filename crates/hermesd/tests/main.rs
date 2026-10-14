@@ -29,6 +29,8 @@ mod board_drafts;
 mod board_drawer;
 mod board_home;
 mod board_import;
+mod board_keeper;
+mod board_keeper_turns;
 mod board_mcp;
 mod board_peer;
 mod board_peer_boards;

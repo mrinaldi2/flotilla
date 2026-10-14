@@ -116,6 +116,7 @@ enum AttentionKind {
   DISK_LOW = 15;                            // a computer is under 20 GB free: Clean up (H-275)
   CHECK_UNROUTABLE = 16;                    // a required check no computer can run, for 1 h (H-318)
   DRAFT_UPDATED = 17;                       // a bot changed a draft since the owner last looked (0.19.0)
+  CARD_WAITING = 18;                        // the board keeper: a card waits for the owner's review, went quiet, or can't move (0.19.0)
 }
 
 message AttentionRow {

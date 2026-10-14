@@ -22,6 +22,7 @@ mod grants;
 mod history;
 mod home;
 mod item_drafts;
+mod keeper;
 mod meetings;
 mod merge_queue;
 mod owner_actions;
@@ -61,6 +62,7 @@ use home::{
     MIGRATION_CARD_QUESTIONS, MIGRATION_OWNER_ANSWER, MIGRATION_OWNER_READ, MIGRATION_PROJECT_PIN,
 };
 use item_drafts::MIGRATION_ITEM_DRAFTS;
+use keeper::MIGRATION_BOARD_KEEPER;
 use meetings::MIGRATION_MEETINGS;
 use merge_queue::{MIGRATION_MERGE_QUEUE, MIGRATION_PR_MERGE};
 use owner_actions::MIGRATION_OWNER_ACTIONS;
@@ -154,6 +156,7 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_BOARD_PROPOSALS,
     MIGRATION_ITEM_DRAFTS,
     MIGRATION_PLATFORM_LABELS,
+    MIGRATION_BOARD_KEEPER,
 ];
 
 #[cfg(test)]

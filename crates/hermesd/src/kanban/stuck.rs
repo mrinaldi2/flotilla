@@ -74,6 +74,12 @@ fn remembered(project_id: &str, item_id: &str) -> Option<(String, Who)> {
         .map(|r| (r.to.clone(), r.who.clone()))
 }
 
+/// Whether a refused move of the item is remembered (the board keeper reads
+/// the ones that would still be refused through `mark`).
+pub fn has_refusal(project_id: &str, item_id: &str) -> bool {
+    remembered(project_id, item_id).is_some()
+}
+
 /// Whether an unmet rule says something about the card itself.
 fn about_the_card(u: &Unmet) -> bool {
     let whose = ["reason.", "role.", "wip."]
