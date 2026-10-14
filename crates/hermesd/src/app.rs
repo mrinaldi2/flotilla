@@ -84,6 +84,8 @@ pub struct AppState {
     pub workers: crate::workers::Workers,
     /// Board changes, numbered per project, for the clients watching them.
     pub board: crate::kanban::feed::BoardFeed,
+    /// The draft kickoffs sent lately, so a double click sends one.
+    pub kickoffs: crate::kanban::kickoffs::Kickoffs,
     /// Boards whose home is a peer, as last seen (B9).
     pub board_mirror: crate::kanban::mirror::BoardMirror,
     /// The projects home's peer answers and liveness (H-128).
@@ -149,6 +151,7 @@ impl AppState {
             browsers: crate::browser::streams::BrowserStreams::default(),
             workers: crate::workers::Workers::default(),
             board: crate::kanban::feed::BoardFeed::default(),
+            kickoffs: Default::default(),
             board_mirror: crate::kanban::mirror::BoardMirror::default(),
             overview: crate::overview::Overview::default(),
             bearers: crate::bus_auth::BearerLog::default(),

@@ -3,9 +3,11 @@
 // under the description, the footer with the changes strip, Discard and
 // Finalize, the bot's chat docked beside it, and the Discard and Remove
 // dialogs. A bot no longer invited, here or from another device, has its
-// docked chat closed.
+// docked chat closed. While an invite or a removal is on its way, its
+// control is disabled and further clicks are ignored, so a double click
+// sends one request.
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { BoardApi } from "../../../protocol/board";
 import { boardCall } from "../../../protocol/board";
@@ -82,10 +84,41 @@ function finalized(
   }
 }
 
+/**
+ * One request at a time per key: `run` ignores a key already on its way.
+ * The ref answers at once, before React re-renders the disabled control;
+ * the state is what the control shows.
+ */
+function useInFlight(): {
+  readonly pending: readonly string[];
+  readonly run: (key: string, work: () => Promise<void>) => void;
+} {
+  const flying = useRef(new Set<string>());
+  const [pending, setPending] = useState<readonly string[]>([]);
+  const run = (key: string, work: () => Promise<void>): void => {
+    if (flying.current.has(key)) {
+      return;
+    }
+    flying.current.add(key);
+    setPending([...flying.current]);
+    void (async () => {
+      try {
+        await work();
+      } finally {
+        flying.current.delete(key);
+        setPending([...flying.current]);
+      }
+    })();
+  };
+  return { pending, run };
+}
+
 /** Finalize, Discard and Discuss: their busy state and their refusals. */
 function useDraftActions(p: DraftDrawerParams, draft: DraftState) {
   const [discussWith, setDiscussWith] = useState<string | null>(p.initialDiscuss ?? null);
-  const [removing, setRemoving] = useState<Invitee | null>(null);
+  const [asking, setAsking] = useState<Invitee | null>(null);
+  const inviting = useInFlight();
+  const uninviting = useInFlight();
   const [discarding, setDiscarding] = useState(false);
   const [busy, setBusy] = useState(false);
   const [unmet, setUnmet] = useState<readonly Unmet[] | null>(null);
@@ -99,12 +132,18 @@ function useDraftActions(p: DraftDrawerParams, draft: DraftState) {
   return {
     discussWith,
     closeDiscuss: () => setDiscussWith(null),
-    removing,
-    setRemoving,
+    removing: asking,
+    /** Asks before removing; not again for a bot whose removal is on its way. */
+    setRemoving: (invitee: Invitee | null): void => {
+      if (invitee === null || !uninviting.pending.includes(invitee.id)) {
+        setAsking(invitee);
+      }
+    },
+    uninviting: uninviting.pending,
     remove: (invitee: Invitee): void => {
-      setRemoving(null);
-      setFailure(null);
-      void (async () => {
+      setAsking(null);
+      uninviting.run(invitee.id, async () => {
+        setFailure(null);
         try {
           const uninvite = { id, bot: invitee.id, remove: true };
           p.setDetail(await boardCall(p.api, { case: "itemInvite", value: uninvite }, "item"));
@@ -112,16 +151,18 @@ function useDraftActions(p: DraftDrawerParams, draft: DraftState) {
         } catch (error) {
           setFailure(errText(error));
         }
-      })();
+      });
     },
     discarding,
     setDiscarding,
     busy,
     unmet,
     error: failure ?? draft.error,
+    inviting: inviting.pending.length > 0,
     discuss: (chosen: Bot): void => {
-      setFailure(null);
-      void (async () => {
+      // One invite at a time, whichever bot: the menu is one control.
+      inviting.run("invite", async () => {
+        setFailure(null);
         try {
           const invite = { id, bot: chosen.id };
           p.setDetail(await boardCall(p.api, { case: "itemInvite", value: invite }, "item"));
@@ -129,7 +170,7 @@ function useDraftActions(p: DraftDrawerParams, draft: DraftState) {
         } catch (error) {
           setFailure(errText(error));
         }
-      })();
+      });
     },
     finalize: (column: string): void => {
       setBusy(true);
@@ -188,9 +229,14 @@ export function useDraftDrawer(p: DraftDrawerParams): DraftSlots {
             bots={p.bots}
             leadId={p.leadId}
             invited={invited}
+            busy={actions.inviting}
             onDiscuss={actions.discuss}
           />
-          <DiscussedWith invitees={invitees(invited, p.bots)} onRemove={actions.setRemoving} />
+          <DiscussedWith
+            invitees={invitees(invited, p.bots)}
+            removing={actions.uninviting}
+            onRemove={actions.setRemoving}
+          />
         </>
       ),
     footer: (

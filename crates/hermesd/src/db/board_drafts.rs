@@ -200,13 +200,18 @@ impl BoardTx<'_> {
         Ok(())
     }
 
-    /// Mark every revision of a draft seen.
-    pub fn see_all(&self, item_id: &str) -> anyhow::Result<()> {
-        let newest: i64 = self.conn.query_row(
+    /// The draft's newest revision; 0 for none.
+    pub fn draft_newest(&self, item_id: &str) -> anyhow::Result<i64> {
+        Ok(self.conn.query_row(
             "SELECT coalesce(max(id), 0) FROM item_draft_revision WHERE item_id = ?1",
             params![item_id],
             |r| r.get(0),
-        )?;
+        )?)
+    }
+
+    /// Mark every revision of a draft seen.
+    pub fn see_all(&self, item_id: &str) -> anyhow::Result<()> {
+        let newest = self.draft_newest(item_id)?;
         self.set_draft_seen(item_id, newest)
     }
 

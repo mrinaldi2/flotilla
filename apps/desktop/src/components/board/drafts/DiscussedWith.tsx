@@ -21,6 +21,8 @@ export function invitees(invited: readonly string[], bots: readonly Bot[]): read
 
 export function DiscussedWith(props: {
   readonly invitees: readonly Invitee[];
+  /** The bots whose removal is on its way: their Remove waits for it. */
+  readonly removing?: readonly string[];
   readonly onRemove: (invitee: Invitee) => void;
 }): ReactElement | null {
   if (props.invitees.length === 0) {
@@ -37,6 +39,7 @@ export function DiscussedWith(props: {
               type="button"
               className="btn btn-small"
               aria-label={`Remove ${invitee.name} from the discussion`}
+              disabled={props.removing?.includes(invitee.id)}
               onClick={() => props.onRemove(invitee)}
             >
               Remove
