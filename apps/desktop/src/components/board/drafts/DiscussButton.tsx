@@ -11,6 +11,8 @@ interface DiscussButtonProps {
   readonly leadId: string | undefined;
   /** Bots already invited to the draft. */
   readonly invited: readonly string[];
+  /** An invite is on its way: no other until it is answered. */
+  readonly busy?: boolean;
   readonly onDiscuss: (bot: Bot) => void;
   readonly initiallyOpen?: boolean;
 }
@@ -38,7 +40,9 @@ export default function DiscussButton(props: DiscussButtonProps): ReactElement |
         ariaLabel="Discuss with a bot"
         menuLabel="Discuss the draft with"
         initiallyOpen={props.initiallyOpen}
+        disabled={props.busy}
         entries={bots.map((bot) => ({
+          disabled: props.busy,
           key: bot.id,
           label: bot.name,
           note: [
