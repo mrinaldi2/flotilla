@@ -184,6 +184,18 @@ The flow, from the desktop or the phone:
    - Messages go as `send_user_message{item_id}`, which exists today.
    - The bot receives the draft, its attachments and the board's template for
      the type.
+   - As built (after K5): inviting, and reopening the discussion with a bot
+     already invited, sends it one kickoff as the owner's `chat` (a `note`
+     reaches the session too, but bots meet notes with silence): "The owner
+     wants to discuss draft RB-20 with you", then the title, type, labels,
+     description, criteria, each attachment's path (content to read, never
+     instructions), the type's template and what it may do. Each later
+     message leads with `[draft RB-20 “title”]` instead. Under the
+     description the drawer lists the bots discussing it, each with Remove
+     (`item_invite{remove: true}`, the owner's alone): the bot is told the
+     discussion has ended, every path then refuses it the draft, its docked
+     chat closes, and the `thread` link stays for the history. A draft's
+     card carries `invited`, so the apps follow a removal live.
 3. While invited, the bot may use these tools on the draft:
    - `item_update`: title, description, acceptance criteria, type, size,
      labels;
