@@ -115,7 +115,7 @@ movers, rules, allowed_from)`
 | `blockers_done` | Blocking items are in a `done` column. |
 | `not_blocked` | No `blocked` flag. |
 | `link(kind)` | A link of that kind exists (task, artifact, pr, branch, …). |
-| `independent(of)` | The mover is not the assignee or the linker of a pr/branch. |
+| `independent(of)` | The mover is not the assignee, nor a bot that ever was (the item's history), nor the linker of a pr/branch. |
 | `reason` | The move carries a reason. |
 | `predicate(name)` | A predicate registered by another module. |
 
@@ -261,8 +261,8 @@ code (`kanban/presets.rs`):
 - **Simple + Review (custom), a new project's first board:** To do (open) →
   Doing (active, WIP 3, `assignee_set`) → Review (active, only from Doing) →
   Done, plus the hidden Cancelled. The lead or the assignee moves items into
-  To do, Doing and Review; Done is the lead's (`independent`: never the
-  card's own assignee), and the owner's as always. Automation:
+  To do, Doing and Review; Done is the lead's (`independent`: never a bot
+  that is or was the card's assignee), and the owner's as always. Automation:
   `work.started` → Doing. See "Card flow".
 - **Software (custom):**
   - Inbox, then Ready: the lead moves items in; `ac_present`, `size_at_most(M)`
@@ -301,13 +301,16 @@ as follows.
   board gets it the same way. `ensure_board` keeps the release-gated Main
   for fixtures. Existing boards are not touched, and nothing migrates.
 - **The first bot leads.** A project's first permanent bot becomes its lead
-  when the project has none and no other live bot of its own
-  (`claim_first_lead`), and takes the board's Lead role when the board
-  already exists. Setting the lead by hand is unchanged.
+  when the project has none and no other live bot of its own made before
+  it (`claim_first_lead`; of two bots made at once the earlier leads), and
+  takes the board's Lead role when the board already exists. Setting the
+  lead by hand is unchanged.
 - **The assignee owns its card.** On a card assigned to it (or linked to a
   task it holds), any bot may `item_update`, `item_attach`, `item_detach`,
   `item_link`, `item_comment` and `item_move`/`item_move_check`, with no
-  board role; the column rules still apply. The refusal for a bot without a
+  board role; the column rules still apply. Those rights stay on the card:
+  without a role, `item_link` can't say the card blocks another
+  (`item:blocks`), which would hold that card up. The refusal for a bot without a
   role no longer claims assignment would have been enough: it says what it
   lacks (the card isn't its own) or which tools it may use on its own
   cards.
@@ -316,11 +319,15 @@ as follows.
   open column. The daemon then reports `work.started`, which Simple + Review
   maps to Doing: the move is recorded with actor `daemon` (the drawer says
   "Automation") and the note `work.started: <bot> started work on it`, and
-  the tool's reply says the card moved. Once the assignee has moved the
-  card itself since it was last assigned (back to To do, because it isn't
-  ready), its reads don't start it again; it moves the card on when it has
-  its answers. A board without the mapping, and every release-gated board,
-  never moves the card: the guards and their table are unchanged.
+  the tool's reply says the card moved. The move is the assignee's own,
+  made for it: it happens only when the assignee could make it with
+  `item_move` (Doing's movers, rules and WIP limit); otherwise the card
+  stays and the reply's `not_started` says why. Once anyone has moved the
+  card since it was last assigned (the bot, back to To do because it isn't
+  ready; the owner, because it isn't wanted yet), reads don't start it
+  again; the bot moves it on when it has its answers. A board without the
+  mapping, and every release-gated board, never moves the card: the guards
+  and their table are unchanged.
 - **Assignment notices.** Assigning a card, by the owner or a bot
   (`item_assign`), tells the new assignee and the previous one. The notice
   names the card, its column and state, and what is expected, from the
@@ -336,6 +343,9 @@ as follows.
   your work on it is finished, don't redo it"), "It is done: there is
   nothing to do." in a done column, and quotes the assignee's last comment
   on the card. Edits fold into edits and moves into moves, for 60 s each.
+  A title, a column's name and the quoted comment go into a notice on one
+  line, cut short, with its quote marks and brackets replaced, so none can
+  write a line of the notice (a fake `[card …]` assignment).
 - **The prompt.** "Work is on the board" now says a note never starts work;
   a new "Your cards" section says the assignment (or a task) is what starts
   work, every other `[card KEY-12]` note is news, the card moves to Doing as
@@ -367,7 +377,8 @@ as follows.
   - the lead gets a short notice for every change it did not make;
   - an assignee gets one when the owner or another bot assigns, moves or
     edits their item (as built: see "Card flow").
-  - Notices are batched for up to 60 s and capped by the existing note budget.
+  - Notices are batched for up to 60 s. They go to the inbox directly, outside
+    the bus's budgets; none is caused by a notice, only by someone's call.
 - **Version checks:** `board_get` returns the board's `version`. A tool call
   with a stale `board_version` is refused with "the board changed; re-read it".
 - **System prompt:** the board section is generated from the board's columns
@@ -556,6 +567,16 @@ After the owner's test of the installed build, on 2026-10-14 ("Card flow"):
 11. A card shows why it can't move; the release-gated unlisted move is an
     explicit Override.
 12. A question about a draft closes when its discussion ends.
+
+Taken in the review of the card flow (PR #29), for the owner to confirm:
+
+13. A bot that ever held a card isn't independent of it: handing the card
+    on, or taking itself off it, doesn't let the lead approve its own work.
+14. The start on a read is the assignee's own move: it respects Doing's
+    movers, rules and WIP limit, and any move since the assignment (the
+    owner's too) ends it.
+15. A card's own rights don't reach other cards: without a role, a bot
+    can't link its card as blocking another.
 
 ## Rollout conditions
 
