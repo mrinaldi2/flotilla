@@ -109,6 +109,9 @@ pub struct Context {
     /// even if it has since been unlinked (ARCH-R62 M1): such work takes the
     /// release path whatever its type is now.
     pub ever_had_code: bool,
+    /// Every bot the item was ever assigned to, from its history: one that
+    /// held it did its work, so it isn't independent of it.
+    pub past_assignees: Vec<String>,
 }
 
 impl Context {

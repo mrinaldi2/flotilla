@@ -88,7 +88,7 @@ async fn an_owner_move_names_its_actor_and_tells_each_app_whose_it_was() {
             a["from_column"].as_str(),
             a["to_column"].as_str()
         ),
-        (Some(id.as_str()), Some("inbox"), Some("cancelled"))
+        (Some(id.as_str()), Some("todo"), Some("cancelled"))
     );
     assert_eq!(a["item_title"], "Toasts");
     assert_eq!(a["from_this_client"], true);
@@ -156,11 +156,20 @@ async fn a_bots_assignment_move_and_refusal_reach_every_app() {
             .starts_with("Team Lead couldn't move"),
         "{refused}"
     );
-    let quiet = next_envelope(&mut watcher, Duration::from_millis(600)).await;
-    assert!(
-        quiet.is_none(),
-        "a refusal takes no place in the board's sequence"
-    );
+    // The refusal itself is an activity, never a move. The board may push
+    // the card again, so its "can't move" line shows (card flow, #29).
+    while let Some(envelope) = next_envelope(&mut watcher, Duration::from_millis(600)).await {
+        if let Some(Body::BoardPush(c::BoardPush {
+            push: Some(c::board_push::Push::BoardEvent(event)),
+        })) = envelope.body
+        {
+            assert_ne!(
+                event.kind,
+                c::BoardEventKind::ItemMoved as i32,
+                "a refusal moves nothing: {event:?}"
+            );
+        }
+    }
 
     // Assigned by the lead.
     let item = lead.call("item_get", json!({ "id": id })).await["item"].clone();

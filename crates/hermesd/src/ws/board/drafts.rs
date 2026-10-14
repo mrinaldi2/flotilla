@@ -1,7 +1,7 @@
 //! Attachments and drafts from the owner's apps (0.19.0 K4b): uploading a
 //! file in chunks and attaching it, linking a document, reading an
 //! attachment's bytes, and a draft's invitations, revisions, finalize and
-//! discard.
+//! discard. A discussion that ends closes the bots' questions about it.
 
 use bus::contract::board::{self as c, board_request::Request, board_response::Response};
 
@@ -12,6 +12,7 @@ use crate::kanban::attach::{read_chunk, Source};
 use crate::kanban::edit::Edited;
 use crate::kanban::moves::Moved;
 use crate::kanban::{draft_undo, drafts};
+use crate::owner_threads::close_draft_questions;
 use crate::ws::Conn;
 
 impl Conn {
@@ -79,14 +80,26 @@ impl Conn {
             }
             Request::ItemInvite(r) => {
                 drafts::invite(&self.app, &actor, &r).map_err(refusal)?;
+                if r.remove == Some(true) {
+                    let invited = self.app.db.board_read(|t| t.invited(&r.id))?;
+                    close_draft_questions(&self.app, &r.id, &invited);
+                }
                 Response::Item(item_detail(&self.app, &r.id)?)
             }
-            Request::ItemFinalize(r) => Response::Moved(move_result(
-                drafts::finalize(&self.app, &actor, &r).map_err(refusal)?,
-            )),
-            Request::ItemDiscard(r) => Response::Edited(edit_result(
-                drafts::discard(&self.app, &actor, &r).map_err(refusal)?,
-            )),
+            Request::ItemFinalize(r) => {
+                let moved = drafts::finalize(&self.app, &actor, &r).map_err(refusal)?;
+                if matches!(moved, Moved::Done(_)) {
+                    close_draft_questions(&self.app, &r.id, &[]);
+                }
+                Response::Moved(move_result(moved))
+            }
+            Request::ItemDiscard(r) => {
+                let edited = drafts::discard(&self.app, &actor, &r).map_err(refusal)?;
+                if matches!(edited, Edited::Done(_)) {
+                    close_draft_questions(&self.app, &r.id, &[]);
+                }
+                Response::Edited(edit_result(edited))
+            }
             Request::ItemDraftUndo(r) => Response::Edited(edit_result(
                 draft_undo::undo(&self.app, &actor, &r).map_err(refusal)?,
             )),

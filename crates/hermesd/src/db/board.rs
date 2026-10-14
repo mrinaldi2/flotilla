@@ -16,6 +16,7 @@ use serde_json::Value;
 use super::boards::{default_board_id, free_key};
 use super::{parse_ts, ts, Db};
 use crate::kanban::defaults;
+use crate::kanban::presets::Preset;
 
 /// A value-set member as stored.
 pub(super) fn to_text<T: TextValue>(value: &T) -> &'static str {
@@ -77,14 +78,27 @@ impl Db {
         Ok(settings_in(&self.lock(), project_id)?)
     }
 
-    /// Enable the board for a project, or return the existing one unchanged.
-    /// A new board gets the default columns, the item-type templates and the
-    /// project's lead as its lead.
+    /// [`Db::ensure_board_from`] with the release-gated columns every board
+    /// had before 0.19: what fixtures and older paths start from. A project's
+    /// first board in the product comes from [`Preset::FIRST`].
     pub fn ensure_board(
         &self,
         project_id: &str,
         home_daemon_id: &str,
         key: Option<&str>,
+    ) -> anyhow::Result<BoardSettings> {
+        self.ensure_board_from(project_id, home_daemon_id, key, Preset::ReleaseGated)
+    }
+
+    /// Enable the board for a project, or return the existing one unchanged.
+    /// A new board, "Main", gets the preset's columns and automations, the
+    /// item-type templates and the project's lead as its lead.
+    pub fn ensure_board_from(
+        &self,
+        project_id: &str,
+        home_daemon_id: &str,
+        key: Option<&str>,
+        preset: Preset,
     ) -> anyhow::Result<BoardSettings> {
         let mut conn = self.lock();
         if let Some(existing) = settings_in(&conn, project_id)? {
@@ -111,29 +125,21 @@ impl Db {
         )?;
         let board_id = default_board_id(project_id);
         tx.execute(
-            "INSERT INTO board(id, project_id, name, key, is_default, created_at, updated_at)
-             VALUES (?1, ?2, 'Main', ?3, 1, ?4, ?4)",
-            params![board_id, project_id, key, at],
+            "INSERT INTO board(id, project_id, name, key, is_default, flow, automations,
+                               created_at, updated_at)
+             VALUES (?1, ?2, 'Main', ?3, 1, ?4, ?5, ?6, ?6)",
+            params![
+                board_id,
+                project_id,
+                key,
+                to_text(&preset.flow()),
+                serde_json::to_string(&preset.automations())?,
+                at
+            ],
         )?;
-        for (ord, c) in defaults::COLUMNS.iter().enumerate() {
-            tx.execute(
-                "INSERT INTO board_column(project_id, key, name, ord, category, wip_limit,
-                                          wip_scope, visible, board_id, kind)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
-                params![
-                    project_id,
-                    c.key,
-                    c.name,
-                    ord as u32,
-                    to_text(&c.category),
-                    c.wip_limit,
-                    to_text(&c.wip_scope),
-                    c.visible,
-                    board_id,
-                    to_text(&c.category.kind())
-                ],
-            )?;
-        }
+        // A release-gated board's columns are its H-017 categories; every
+        // other preset's are ruled by their own movers and rules.
+        super::board_flow::insert_columns(&tx, project_id, &board_id, preset, 0, &|k| k.clone())?;
         for (item_type, body) in defaults::item_templates() {
             tx.execute(
                 "INSERT INTO template(project_id, kind, name, version, body, created_at)

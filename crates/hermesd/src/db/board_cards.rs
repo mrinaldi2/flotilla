@@ -104,6 +104,7 @@ fn cards_with(
             owner_commented_at: r.get::<_, Option<String>>(15)?.map(parse_at),
             draft,
             invited: from_json(r.get(18)?)?,
+            move_block: None,
         })
     };
     let cards = match arg {

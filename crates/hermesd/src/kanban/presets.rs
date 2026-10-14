@@ -1,7 +1,7 @@
-//! What a new board starts from (0.19.0 K3): data, not code paths. Simple
-//! and Software are custom boards ruled by their columns; Release-gated is
-//! the flow every board had before 0.19. Everything can be changed
-//! afterwards.
+//! What a new board starts from (0.19.0 K3): data, not code paths. Simple,
+//! Simple + Review and Software are custom boards ruled by their columns;
+//! Release-gated is the flow every board had before 0.19. Everything can be
+//! changed afterwards. A project's first board is Simple + Review.
 
 use std::collections::BTreeMap;
 
@@ -13,6 +13,9 @@ use super::model::{BoardFlow, ColumnCategory, ColumnKind, Size, WipScope};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Preset {
     Simple,
+    /// A project's first board: the bot works a card and moves it to
+    /// Review; the owner checks it and moves it to Done.
+    SimpleReview,
     Software,
     ReleaseGated,
 }
@@ -45,11 +48,20 @@ impl PresetColumn {
 }
 
 impl Preset {
-    pub const ALL: &'static [Preset] = &[Preset::Simple, Preset::Software, Preset::ReleaseGated];
+    pub const ALL: &'static [Preset] = &[
+        Preset::Simple,
+        Preset::SimpleReview,
+        Preset::Software,
+        Preset::ReleaseGated,
+    ];
+
+    /// What a project's first board is made from.
+    pub const FIRST: Preset = Preset::SimpleReview;
 
     pub fn name(self) -> &'static str {
         match self {
             Preset::Simple => "simple",
+            Preset::SimpleReview => "simple_review",
             Preset::Software => "software",
             Preset::ReleaseGated => "release_gated",
         }
@@ -62,7 +74,7 @@ impl Preset {
     pub fn flow(self) -> BoardFlow {
         match self {
             Preset::ReleaseGated => BoardFlow::ReleaseGated,
-            Preset::Simple | Preset::Software => BoardFlow::Custom,
+            Preset::Simple | Preset::SimpleReview | Preset::Software => BoardFlow::Custom,
         }
     }
 
@@ -92,6 +104,7 @@ impl Preset {
                 ),
                 cancelled(),
             ],
+            Preset::SimpleReview => simple_review(),
             Preset::Software => vec![
                 col(
                     "inbox",
@@ -186,6 +199,7 @@ impl Preset {
                 (Fact::PrClosed, "doing"),
                 (Fact::PrChangesRequested, "doing"),
             ],
+            Preset::SimpleReview => &[(Fact::WorkStarted, "doing")],
             Preset::Simple | Preset::ReleaseGated => &[],
         };
         pairs
@@ -211,6 +225,61 @@ fn col(
         visible: true,
         policy,
     }
+}
+
+/// To do → Doing → Review → Done. The assignee moves its own card To do ↔
+/// Doing and Doing → Review; the daemon moves it to Doing when the assignee
+/// starts (`work.started`). Done is the owner's, or the lead's when the
+/// lead isn't the card's assignee, so a bot never approves its own work.
+fn simple_review() -> Vec<PresetColumn> {
+    let assignee_or_lead = || vec![Mover::Lead, Mover::Assignee];
+    vec![
+        col(
+            "todo",
+            "To do",
+            ColumnKind::Open,
+            None,
+            ColumnPolicy {
+                movers: assignee_or_lead(),
+                rules: Vec::new(),
+                allowed_from: Vec::new(),
+            },
+        ),
+        col(
+            "doing",
+            "Doing",
+            ColumnKind::Active,
+            Some(3),
+            ColumnPolicy {
+                movers: assignee_or_lead(),
+                rules: vec![EntryRule::AssigneeSet],
+                allowed_from: Vec::new(),
+            },
+        ),
+        col(
+            "review",
+            "Review",
+            ColumnKind::Active,
+            None,
+            ColumnPolicy {
+                movers: assignee_or_lead(),
+                rules: Vec::new(),
+                allowed_from: vec!["doing".into()],
+            },
+        ),
+        col(
+            "done",
+            "Done",
+            ColumnKind::Done,
+            None,
+            ColumnPolicy {
+                movers: vec![Mover::Lead],
+                rules: vec![EntryRule::Independent],
+                allowed_from: Vec::new(),
+            },
+        ),
+        cancelled(),
+    ]
 }
 
 fn cancelled() -> PresetColumn {

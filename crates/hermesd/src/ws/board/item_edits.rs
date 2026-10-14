@@ -8,7 +8,8 @@ use super::{not_found, refuse, Refusal};
 use crate::kanban::edit::{Edited, Editor};
 use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 use crate::kanban::moves::{self, MoveRequest, Moved};
-use crate::kanban::notices::tell_assignee;
+use crate::kanban::notice_text::Notice;
+use crate::kanban::notices::{tell_assignee, tell_reassigned};
 use crate::messaging;
 use crate::ws::Conn;
 
@@ -52,6 +53,16 @@ impl Conn {
     pub(super) fn owner_edit(&self, req: Request) -> Result<Response, Refusal> {
         let project_id = self.edit_project(&req)?;
         let ed = self.editor(&project_id);
+        // Who held it before an assignment, so both ends are told.
+        let before = match &req {
+            Request::ItemAssign(r) => Some(
+                self.app
+                    .db
+                    .board_read(|t| t.item(&r.id))?
+                    .and_then(|i| i.assignee),
+            ),
+            _ => None,
+        };
         let (edited, what) = match &req {
             Request::ItemCreate(r) => (ed.create(r), ""),
             Request::ItemUpdate(r) => (ed.update(r), "edited it"),
@@ -75,8 +86,14 @@ impl Conn {
             _ => return Err(refuse("invalid_request", "not an item edit")),
         };
         let edited = edited.map_err(refusal)?;
-        if let (Edited::Done(item), false) = (&edited, what.is_empty()) {
-            tell_assignee(&self.app, item, what);
+        if let Edited::Done(item) = &edited {
+            match &before {
+                Some(before) => tell_reassigned(&self.app, before.as_deref(), item, &self.actor()),
+                None if !what.is_empty() => {
+                    tell_assignee(&self.app, item, &self.actor(), Notice::Changed(what));
+                }
+                None => {}
+            }
         }
         Ok(Response::Edited(super::drafts::edit_result(edited)))
     }
@@ -88,7 +105,7 @@ impl Conn {
             .db
             .board_read(|t| t.item(id))?
             .ok_or_else(|| not_found(id))?;
-        tell_assignee(&self.app, &item, what);
+        tell_assignee(&self.app, &item, &self.actor(), Notice::Changed(what));
         Ok(Response::Edited(c::EditResult {
             outcome: Some(c::edit_result::Outcome::Done(item.into())),
             told: Vec::new(),
@@ -125,7 +142,16 @@ impl Conn {
                 from_column: Some(from),
             });
             drop(feed);
-            tell_assignee(&self.app, item, &format!("moved it to {}", item.column_key));
+            tell_assignee(&self.app, item, &self.actor(), Notice::Moved);
+        } else if let Moved::Refused(_) = &moved {
+            // The refusal shows on the card ("can't move: …").
+            feed.publish(Change {
+                project_id: &project_id,
+                kind: ChangeKind::ItemUpserted,
+                item_id: &r.id,
+                card: card_after_commit(db, &r.id),
+                from_column: None,
+            });
         }
         Ok(super::drafts::move_result(moved))
     }

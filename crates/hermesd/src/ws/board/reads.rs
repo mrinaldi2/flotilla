@@ -9,6 +9,7 @@ use crate::kanban::attachments::to_wire;
 use crate::kanban::contract::MapError;
 use crate::kanban::model as m;
 use crate::kanban::moves;
+use crate::kanban::presets::Preset;
 use crate::ws::Conn;
 
 /// History events per page when the client names no limit, and the most it
@@ -72,7 +73,7 @@ impl Conn {
                 ));
             }
         }
-        db.ensure_board(project_id, &db.daemon_id()?, None)?;
+        db.ensure_board_from(project_id, &db.daemon_id()?, None, Preset::FIRST)?;
         Ok(())
     }
 
@@ -194,11 +195,17 @@ pub(super) fn move_check(
         return Err(not_found(id));
     }
     let columns = moves::item_move_check(&app.db, id, actor)?;
+    // The owner's override of a release-gated board's usual path.
+    let overrides = match actor.is_owner() {
+        true => moves::owner_overrides(&app.db, id)?,
+        false => Vec::new(),
+    };
     Ok(c::MoveCheck {
         item_id: id.to_string(),
         columns: columns
             .into_iter()
             .map(|(column, unmet)| c::ColumnCheck {
+                owner_override: overrides.contains(&column.key),
                 column_key: column.key,
                 unmet: unmet.into_iter().map(Into::into).collect(),
             })

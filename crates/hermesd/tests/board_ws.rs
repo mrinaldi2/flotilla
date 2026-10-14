@@ -35,7 +35,10 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
     );
     let settings = board.settings.expect("settings");
     assert_eq!(settings.home_daemon_id, d.app.db.daemon_id().expect("id"));
-    assert_eq!(board.columns.len(), 9);
+    // A new project's first board is Simple + Review (0.19.0).
+    let names: Vec<&str> = board.columns.iter().map(|col| col.name.as_str()).collect();
+    assert_eq!(names, ["To do", "Doing", "Review", "Done", "Cancelled"]);
+    assert_eq!(board.boards[0].flow, "custom");
     assert!(board.cards.is_empty());
     assert_eq!(board.seq, 0);
 
@@ -73,16 +76,28 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
     assert_eq!(watched.cards.len(), 1);
     assert_eq!(watched.cards[0].id, item.id);
 
-    // A move the guards refuse writes nothing and pushes nothing.
+    // A move the column's rules refuse writes nothing; its card is pushed
+    // with why it can't move.
     let Outcome::Refused(refused) =
-        moved(call(&mut owner, move_to(&item.id, "ready", item.version, None)).await)
+        moved(call(&mut owner, move_to(&item.id, "review", item.version, None)).await)
     else {
-        panic!("refining without a Definition of Ready is refused");
+        panic!("Review takes items only from Doing");
     };
     assert!(
-        refused.unmet.iter().any(|u| u.code.starts_with("dor.")),
+        refused.unmet.iter().any(|u| u.code == "move.from"),
         "{refused:?}"
     );
+    let event = next_push(&mut watcher).await.expect("the refused card");
+    assert_eq!(
+        (event.seq, event.kind),
+        (1, c::BoardEventKind::ItemUpserted as i32)
+    );
+    let block = event
+        .card
+        .and_then(|card| card.move_block)
+        .expect("a block");
+    assert_eq!((block.to_column.as_str(), block.refused), ("review", true));
+    assert_eq!(block.reason, "Items come to Review only from doing.");
 
     // A stale version is a conflict, with the item as it is.
     let Outcome::Conflict(current) =
@@ -104,7 +119,11 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
     ) else {
         panic!("expected a move check");
     };
-    assert_eq!(check.columns.len(), 8, "every column but its own");
+    assert_eq!(check.columns.len(), 4, "every column but its own");
+    assert!(
+        check.columns.iter().all(|col| !col.owner_override),
+        "a custom board lists every move it takes"
+    );
     let cancel = check
         .columns
         .iter()
@@ -112,7 +131,7 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
         .expect("cancelled");
     assert!(cancel.unmet.iter().any(|u| u.code == "reason.required"));
 
-    // A move that holds commits, and the watcher hears it under seq 1.
+    // A move that holds commits, and the watcher hears it under seq 2.
     let Outcome::Done(done) = moved(
         call(
             &mut owner,
@@ -129,10 +148,10 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
     };
     assert_eq!(done.column_key, "cancelled");
     let event = next_push(&mut watcher).await.expect("a push");
-    assert_eq!(event.seq, 1);
+    assert_eq!(event.seq, 2);
     assert_eq!(event.kind, c::BoardEventKind::ItemMoved as i32);
     assert_eq!(event.item_id, item.id);
-    assert_eq!(event.from_column.as_deref(), Some("inbox"));
+    assert_eq!(event.from_column.as_deref(), Some("todo"));
     let card = event.card.expect("card");
     assert_eq!(
         (card.column_key.as_str(), card.version),
@@ -194,7 +213,7 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
         panic!("expected items");
     };
     assert_eq!(hit.cards.len(), 1);
-    let Response::Items(miss) = response(call(&mut owner, query(&["inbox"])).await) else {
+    let Response::Items(miss) = response(call(&mut owner, query(&["todo"])).await) else {
         panic!("expected items");
     };
     assert!(miss.cards.is_empty());
@@ -223,7 +242,7 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
         )
         .await,
     );
-    assert_eq!(again.seq, 1);
+    assert_eq!(again.seq, 2);
 
     // After unwatching, the next change is not pushed.
     let Response::Unwatched(_) = response(
@@ -240,11 +259,11 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
     let Outcome::Done(_) = moved(
         call(
             &mut owner,
-            move_to(&item.id, "inbox", done.version, Some("Back to the inbox")),
+            move_to(&item.id, "todo", done.version, Some("Back to To do")),
         )
         .await,
     ) else {
-        panic!("the owner may make an unlisted move with a reason");
+        panic!("the owner may bring a cancelled item back");
     };
     assert!(next_push(&mut watcher).await.is_none());
 }
@@ -268,7 +287,7 @@ async fn grants_and_bad_requests_are_refused() {
     assert_eq!(error_code(call(&mut reader, get()).await), "no_board");
     snapshot(call(&mut owner, get()).await);
     let board = snapshot(call(&mut reader, get()).await);
-    assert_eq!(board.columns.len(), 9);
+    assert_eq!(board.columns.len(), 5);
 
     // Moving needs control.
     assert_eq!(

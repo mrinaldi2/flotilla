@@ -61,6 +61,8 @@ export default function BoardColumns(props: BoardColumnsProps): ReactElement {
   const [drag, setDrag] = useState<Drag | null>(null);
   const [announce, setAnnounce] = useState("");
   const columns = props.columns.filter((column) => column.visible || prefs.showHidden);
+  const columnNameOf = (key: string): string =>
+    props.columns.find((column) => column.key === key)?.name ?? key;
 
   const onDragStart = (card: ItemCard): void => {
     setDrag({ card, checks: null });
@@ -139,6 +141,7 @@ export default function BoardColumns(props: BoardColumnsProps): ReactElement {
                   }}
                   dragging={drag?.card.id === card.id}
                   chipGroups={props.chipGroups}
+                  columnNameOf={columnNameOf}
                 />
               ))}
             </BoardColumnView>

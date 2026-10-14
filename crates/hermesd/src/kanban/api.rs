@@ -59,7 +59,9 @@ pub fn report_fact(
             }
         },
         None => {
-            let to = fact.release_gated();
+            let Some(to) = fact.release_gated() else {
+                return Ok(None);
+            };
             columns
                 .iter()
                 .find(|c| c.category == to)

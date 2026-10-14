@@ -132,7 +132,8 @@ message BoardList {
   string project_id = 1;
 }
 
-// A new board from a preset: "simple", "software" or "release_gated".
+// A new board from a preset: "simple", "simple_review", "software" or
+// "release_gated".
 message BoardCreate {
   string project_id = 1;
   string name = 2;
@@ -677,6 +678,9 @@ message ColumnCheck {
   string column_key = 1;
   // Empty when the move is allowed as it stands.
   repeated Unmet unmet = 2;
+  // On a release-gated board, a move none of its rules lists: only the owner
+  // makes it, with a reason, as an override of the usual path (0.19.0).
+  bool owner_override = 3;
 }
 
 message MoveResult {

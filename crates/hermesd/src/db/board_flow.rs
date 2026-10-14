@@ -44,9 +44,50 @@ impl BoardTx<'_> {
     }
 }
 
+/// A preset's columns on board `board_id`, from `first_ord` on, each key
+/// passed through `rename`.
+pub(super) fn insert_columns(
+    tx: &rusqlite::Connection,
+    project_id: &str,
+    board_id: &str,
+    preset: Preset,
+    first_ord: u32,
+    rename: &dyn Fn(&String) -> String,
+) -> anyhow::Result<()> {
+    let columns = preset.columns();
+    for ((i, c), category) in columns.iter().enumerate().zip(preset.categories()) {
+        let movers = (!c.policy.movers.is_empty())
+            .then(|| serde_json::to_string::<Vec<Mover>>(&c.policy.movers))
+            .transpose()?;
+        let allowed: Vec<String> = c.policy.allowed_from.iter().map(rename).collect();
+        tx.execute(
+            "INSERT INTO board_column(project_id, key, name, ord, category, wip_limit,
+                                      wip_scope, visible, board_id, kind, movers, rules,
+                                      allowed_from)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+            params![
+                project_id,
+                rename(&c.key.to_string()),
+                c.name,
+                first_ord + i as u32,
+                to_text(&category),
+                c.wip_limit,
+                to_text(&c.wip_scope),
+                c.visible,
+                board_id,
+                to_text(&c.kind),
+                movers,
+                serde_json::to_string(&c.policy.rules)?,
+                serde_json::to_string(&allowed)?
+            ],
+        )?;
+    }
+    Ok(())
+}
+
 impl Db {
     /// A new board for a project that already has a board, from a preset.
-    /// The first board of a project is made by `ensure_board`. Column keys
+    /// The first board of a project is made by `ensure_board_from`. Column keys
     /// stay unique in the project: a board's columns are prefixed with its
     /// key when another board uses the plain ones.
     pub fn create_board(
@@ -114,33 +155,7 @@ impl Db {
             params![project_id],
             |r| r.get(0),
         )?;
-        for ((i, c), category) in columns.iter().enumerate().zip(preset.categories()) {
-            let movers = (!c.policy.movers.is_empty())
-                .then(|| serde_json::to_string::<Vec<Mover>>(&c.policy.movers))
-                .transpose()?;
-            let allowed: Vec<String> = c.policy.allowed_from.iter().map(&rename).collect();
-            tx.execute(
-                "INSERT INTO board_column(project_id, key, name, ord, category, wip_limit,
-                                          wip_scope, visible, board_id, kind, movers, rules,
-                                          allowed_from)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
-                params![
-                    project_id,
-                    rename(&c.key.to_string()),
-                    c.name,
-                    next_ord + i as u32,
-                    to_text(&category),
-                    c.wip_limit,
-                    to_text(&c.wip_scope),
-                    c.visible,
-                    id,
-                    to_text(&c.kind),
-                    movers,
-                    serde_json::to_string(&c.policy.rules)?,
-                    serde_json::to_string(&allowed)?
-                ],
-            )?;
-        }
+        insert_columns(&tx, project_id, &id, preset, next_ord, &rename)?;
         let board = board_in(&tx, &id)?.expect("just inserted");
         tx.commit()?;
         Ok(board)

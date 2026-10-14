@@ -16,9 +16,18 @@ use crate::kanban::model::{ItemState, TemplateKind};
 use super::board::out;
 
 /// Tools a bot may use on an item it works on, its board roles aside: the
-/// assignee (a worker) or a bot tasked through the item (H-099).
-pub(super) const OWN_ITEM_TOOLS: [&str; 4] =
-    ["item_move", "item_move_check", "item_link", "item_comment"];
+/// assignee (a worker) or a bot tasked through the item (H-099). The card
+/// is theirs: they edit it, attach and link what they made, and move it
+/// under the column rules.
+pub(super) const OWN_ITEM_TOOLS: [&str; 7] = [
+    "item_move",
+    "item_move_check",
+    "item_update",
+    "item_attach",
+    "item_detach",
+    "item_link",
+    "item_comment",
+];
 
 /// Listed for every bot, since its roles don't decide them: a session reads
 /// its list once, before it is assigned an item or invited to a draft.
