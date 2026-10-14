@@ -15,6 +15,7 @@ use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 use tokio_tungstenite::tungstenite::Message as TungMessage;
 
+use super::outgoing::Outgoing;
 use crate::app::AppState;
 
 /// Version of the frames exchanged on a peer link.
@@ -49,6 +50,7 @@ async fn accept(app: Arc<AppState>, socket: WebSocket) {
         Ok(Some(Ok(WsMessage::Text(text)))) => serde_json::from_str::<Value>(&text).ok(),
         _ => None,
     };
+    let theirs = hello.as_ref().map_or(1, super::compat::spoken);
     let peer_id = match hello.as_ref().map(|hello| authenticate(&app, hello)) {
         Some(Ok(peer_id)) => peer_id,
         Some(Err(e)) => {
@@ -62,16 +64,24 @@ async fn accept(app: Arc<AppState>, socket: WebSocket) {
     let Ok(daemon_id) = app.db.daemon_id() else {
         return;
     };
-    let ok = json!({ "type": "peer_hello_ok", "protocol": PEER_PROTOCOL, "daemon_id": daemon_id });
+    let ok = json!({
+        "type": "peer_hello_ok", "protocol": PEER_PROTOCOL, "daemon_id": daemon_id,
+        "kanban": app.peers.own_kanban(),
+    });
     if sink.send(WsMessage::Text(ok.to_string())).await.is_err() {
         return;
     }
 
     let (in_tx, in_rx) = mpsc::unbounded_channel();
-    let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Value>();
+    let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Outgoing>();
     let writer = tokio::spawn(async move {
-        while let Some(frame) = out_rx.recv().await {
-            if sink.send(WsMessage::Text(frame.to_string())).await.is_err() {
+        // Each frame, and any slot it holds, is let go once it is sent.
+        while let Some(next) = out_rx.recv().await {
+            if sink
+                .send(WsMessage::Text(next.frame.to_string()))
+                .await
+                .is_err()
+            {
                 break;
             }
         }
@@ -91,7 +101,9 @@ async fn accept(app: Arc<AppState>, socket: WebSocket) {
             }
         }
     });
-    app.peers.serve(app.clone(), peer_id, in_rx, out_tx).await;
+    app.peers
+        .serve(app.clone(), peer_id, theirs, in_rx, out_tx)
+        .await;
     reader.abort();
     writer.abort();
 }
@@ -186,6 +198,7 @@ async fn dial(app: &Arc<AppState>, peer_id: &str, url: &str, token: &str) -> any
         "protocol": PEER_PROTOCOL,
         "token": token,
         "daemon_id": app.db.daemon_id()?,
+        "kanban": app.peers.own_kanban(),
     });
     sink.send(TungMessage::Text(hello.to_string())).await?;
     let reply = match tokio::time::timeout(HELLO_TIMEOUT, stream.next()).await {
@@ -209,11 +222,11 @@ async fn dial(app: &Arc<AppState>, peer_id: &str, url: &str, token: &str) -> any
     );
 
     let (in_tx, in_rx) = mpsc::unbounded_channel();
-    let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Value>();
+    let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Outgoing>();
     let writer = tokio::spawn(async move {
-        while let Some(frame) = out_rx.recv().await {
+        while let Some(next) = out_rx.recv().await {
             if sink
-                .send(TungMessage::Text(frame.to_string()))
+                .send(TungMessage::Text(next.frame.to_string()))
                 .await
                 .is_err()
             {
@@ -236,8 +249,9 @@ async fn dial(app: &Arc<AppState>, peer_id: &str, url: &str, token: &str) -> any
             }
         }
     });
+    let theirs = super::compat::spoken(&reply);
     app.peers
-        .serve(app.clone(), peer_id.to_string(), in_rx, out_tx)
+        .serve(app.clone(), peer_id.to_string(), theirs, in_rx, out_tx)
         .await;
     reader.abort();
     writer.abort();

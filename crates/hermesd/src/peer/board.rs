@@ -47,6 +47,12 @@ fn has_own_board(app: &AppState, project_id: &str) -> bool {
 /// Mirrors the board the link's peer holds for the project, and tells the
 /// project's watchers here to refetch it.
 pub async fn fetch(app: &AppState, link: &ProjectLink) {
+    let turn = app.board_mirror.fetch_turn(&link.project_id);
+    let _turn = turn.lock().await;
+    fetch_whole(app, link).await;
+}
+
+async fn fetch_whole(app: &AppState, link: &ProjectLink) {
     // Ids in a frame are the sender's own (see `frames`).
     let frame = json!({ "type": "board_snapshot", "project_id": link.project_id });
     match app.peers.request(&link.peer_id, frame).await {
@@ -121,10 +127,72 @@ pub(super) fn receive_event(app: &Arc<AppState>, peer_id: &str, frame: &Value) {
                 });
             }
         }
-        // Columns, settings, a resync, or a board not mirrored yet (just
-        // started there): fetch it whole.
+        // A board's columns or settings: that board alone (0.19.0 K6).
+        Some(ChangeKind::ColumnsChanged | ChangeKind::SettingsChanged)
+            if mirrored && super::compat::many_boards(app, peer_id) =>
+        {
+            match frame.get("board_id").and_then(Value::as_str) {
+                Some(board_id) => refetch_board(app, &link, board_id),
+                None => refetch(app, &link),
+            }
+        }
+        // A resync, or a board not mirrored yet (just started there): fetch
+        // it whole.
         _ => refetch(app, &link),
     }
+}
+
+/// Mirrors one board of the project again, or the whole project when the
+/// mirror can't take it alone.
+pub async fn fetch_board(app: &AppState, link: &ProjectLink, board_id: &str) {
+    let turn = app.board_mirror.fetch_turn(&link.project_id);
+    let _turn = turn.lock().await;
+    let frame = json!({
+        "type": "board_snapshot", "project_id": link.project_id, "board_id": board_id,
+    });
+    let part = match app.peers.request(&link.peer_id, frame).await {
+        Ok(reply) if reply["board_id"].as_str() == Some(board_id) => {
+            serde_json::from_value::<c::BoardSnapshot>(reply["board"].clone()).ok()
+        }
+        // Archived away or removed there: it leaves the mirror.
+        Err(PeerError::Refused { code, .. }) if code == "not_found" => {
+            Some(c::BoardSnapshot::default())
+        }
+        Err(PeerError::Offline) => return,
+        _ => None,
+    };
+    let Some(mut part) = part else {
+        return fetch_whole(app, link).await;
+    };
+    board_ids::snapshot(&mut part, &link.project_id, |id| {
+        board_ids::from_home(&app.db, &link.peer_id, &link.project_id, id)
+    });
+    let mut feed = app.board.writer();
+    if !app
+        .board_mirror
+        .set_board(&link.project_id, &link.peer_id, board_id, part)
+    {
+        drop(feed);
+        return fetch_whole(app, link).await;
+    }
+    feed.publish_on(
+        Some(board_id),
+        Change {
+            project_id: &link.project_id,
+            kind: ChangeKind::SettingsChanged,
+            item_id: "",
+            card: None,
+            from_column: None,
+        },
+    );
+}
+
+fn refetch_board(app: &Arc<AppState>, link: &ProjectLink, board_id: &str) {
+    let Ok(runtime) = tokio::runtime::Handle::try_current() else {
+        return;
+    };
+    let (app, link, board_id) = (app.clone(), link.clone(), board_id.to_string());
+    runtime.spawn(async move { fetch_board(&app, &link, &board_id).await });
 }
 
 /// Fetches in the background: events and links are applied off the async

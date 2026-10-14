@@ -10,6 +10,7 @@ use futures::FutureExt;
 use serde_json::{json, Value};
 use tokio::sync::{mpsc, oneshot, Notify};
 
+use super::outgoing::{answer_later, file_slots, Out};
 use crate::app::AppState;
 use crate::contain;
 use crate::events::Push;
@@ -62,7 +63,7 @@ impl std::error::Error for PeerError {}
 type Pending = Arc<Mutex<HashMap<u64, oneshot::Sender<Value>>>>;
 
 struct Link {
-    out: mpsc::UnboundedSender<Value>,
+    out: Out,
     pending: Pending,
     /// Distinguishes this link from a newer one for the same peer, so the old
     /// one closing does not unregister its replacement.
@@ -71,6 +72,8 @@ struct Link {
     /// When this link came up. Anything recorded through it since, the peer
     /// knows about.
     since: chrono::DateTime<chrono::Utc>,
+    /// The kanban contract the peer said it speaks (0.19.0 K6).
+    kanban: u64,
 }
 
 #[derive(Clone, Default)]
@@ -83,6 +86,9 @@ pub struct PeerHub {
     pub terms: Arc<super::term::Terms>,
     /// Bot browsers watched for peers, and peers' bot browsers watched here.
     pub browsers: Arc<super::browser::Browsers>,
+    /// The kanban contract this daemon says it speaks; 0 is the current one.
+    /// Only tests speak an older one, to stand for a 0.18 computer.
+    own_kanban: Arc<AtomicU64>,
 }
 
 impl PeerHub {
@@ -94,6 +100,28 @@ impl PeerHub {
         self.lock().contains_key(peer_id)
     }
 
+    /// The kanban contract this daemon speaks on its links (0.19.0 K6).
+    pub fn own_kanban(&self) -> u64 {
+        match self.own_kanban.load(Ordering::Relaxed) {
+            0 => super::compat::KANBAN_CONTRACT,
+            older => older,
+        }
+    }
+
+    /// Speak `contract` on the links made from now on, as a computer of
+    /// that version would.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn speak_kanban_for_tests(&self, contract: u64) {
+        self.own_kanban.store(contract, Ordering::Relaxed);
+    }
+
+    /// The kanban contract both ends of the live link to this peer speak:
+    /// the older of the two. 1 (one board, no board ids) when it is down.
+    pub fn kanban(&self, peer_id: &str) -> u64 {
+        let theirs = self.lock().get(peer_id).map_or(1, |link| link.kanban);
+        theirs.min(self.own_kanban())
+    }
+
     /// When the live link to this peer came up.
     pub fn online_since(&self, peer_id: &str) -> Option<chrono::DateTime<chrono::Utc>> {
         self.lock().get(peer_id).map(|link| link.since)
@@ -102,7 +130,7 @@ impl PeerHub {
     /// Sends an event frame: no `req_id`, and no answer expected.
     pub fn notify(&self, peer_id: &str, frame: Value) {
         if let Some(link) = self.lock().get(peer_id) {
-            let _ = link.out.send(frame);
+            let _ = link.out.send(frame.into());
         }
     }
 
@@ -146,7 +174,7 @@ impl PeerHub {
         let (tx, rx) = oneshot::channel();
         lock_pending(&pending).insert(req_id, tx);
         frame["req_id"] = json!(req_id);
-        if out.send(frame).is_err() {
+        if out.send(frame.into()).is_err() {
             lock_pending(&pending).remove(&req_id);
             return Err(PeerError::Offline);
         }
@@ -182,11 +210,13 @@ impl PeerHub {
         &self,
         app: Arc<AppState>,
         peer_id: String,
+        kanban: u64,
         mut inbound: mpsc::UnboundedReceiver<Value>,
-        out: mpsc::UnboundedSender<Value>,
+        out: Out,
     ) {
         let generation = self.counter.fetch_add(1, Ordering::Relaxed);
         let pending: Pending = Arc::default();
+        let file_slots = file_slots();
         let closed = Arc::new(Notify::new());
         let replaced = self.lock().insert(
             peer_id.clone(),
@@ -196,6 +226,7 @@ impl PeerHub {
                 generation,
                 closed: closed.clone(),
                 since: chrono::Utc::now(),
+                kanban,
             },
         );
         if let Some(old) = replaced {
@@ -277,12 +308,9 @@ impl PeerHub {
                 }
                 // Handled off the read loop, so one slow request (a result with
                 // artifacts to write) does not hold up the responses behind it.
-                let app = app.clone();
-                let peer_id = peer_id.clone();
-                let out = out.clone();
-                tokio::task::spawn_blocking(move || {
-                    let _ = out.send(answer(&app, &peer_id, &frame));
-                });
+                let (app, peer_id) = (app.clone(), peer_id.clone());
+                let answer = move |frame: &Value| answer(&app, &peer_id, frame);
+                answer_later(&file_slots, out.clone(), frame, answer);
             }
         };
         if let Err(panic) = std::panic::AssertUnwindSafe(read).catch_unwind().await {

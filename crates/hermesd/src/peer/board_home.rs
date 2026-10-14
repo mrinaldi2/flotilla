@@ -12,7 +12,7 @@ use bus::{Peer, ProjectLink};
 use serde_json::{json, Value};
 use tokio::sync::broadcast::error::RecvError;
 
-use super::{board_ids, refuse};
+use super::{board_ids, compat, refuse};
 use crate::app::AppState;
 use crate::kanban::feed::{BoardChange, ChangeKind};
 
@@ -58,16 +58,11 @@ pub(super) fn serve_call(app: &Arc<AppState>, peer: &Peer, frame: &Value) -> any
              The Hermes on the installing computer",
         ));
     }
-    let stand_in = app
-        .db
-        .linked_bot(&peer.id, bot_id, &link.project_id)?
-        .ok_or_else(|| {
-            refuse(
-                "forbidden",
-                "you aren't on this project's team on the board's home; ask the owner to link you",
-            )
-        })?;
+    let stand_in = stand_in(app, peer, &link, bot_id)?;
     let args = frame.get("args").cloned().unwrap_or_else(|| json!({}));
+    if tool == "item_attach" {
+        super::files_home::check_attach(&stand_in, &args)?;
+    }
     // A PR's worktree, checked on the bot's computer (H-285).
     let found = frame.get("worktree").filter(|w| w.is_object());
     if let Some(found) = found {
@@ -88,8 +83,30 @@ pub(super) fn serve_call(app: &Arc<AppState>, peer: &Peer, frame: &Value) -> any
         // peer's ids below like any result (H-113).
         Err(error) => error.downcast::<crate::mcp::Conflict>()?.to_result(),
     };
+    if !compat::many_boards(app, &peer.id) {
+        if let Some(default) = compat::default_board(app, &link.project_id) {
+            compat::single_board_result(&mut result, &default);
+        }
+    }
     board_ids::json(&mut result, &|id| board_ids::to_peer(&app.db, &peer.id, id));
     Ok(result)
+}
+
+/// The stand-in here for the peer's bot `bot_id` in the linked project.
+pub(super) fn stand_in(
+    app: &AppState,
+    peer: &Peer,
+    link: &ProjectLink,
+    bot_id: &str,
+) -> anyhow::Result<bus::Bot> {
+    app.db
+        .linked_bot(&peer.id, bot_id, &link.project_id)?
+        .ok_or_else(|| {
+            refuse(
+                "forbidden",
+                "you aren't on this project's team on the board's home; ask the owner to link you",
+            )
+        })
 }
 
 /// A tester on another computer can't read the home's disk: it installs
@@ -160,7 +177,9 @@ pub(super) fn serve_needs_you(
     Ok(answer)
 }
 
-/// `board_snapshot {project_id}`: the whole board, in the peer's ids.
+/// `board_snapshot {project_id, board_id?}`: the whole board, or the one
+/// board named (0.19.0 K6), in the peer's ids. A 0.18 peer is sent the
+/// default board alone. Drafts stay here.
 pub(super) fn serve_snapshot(
     app: &Arc<AppState>,
     peer: &Peer,
@@ -169,10 +188,21 @@ pub(super) fn serve_snapshot(
     let link = home_link(app, peer, frame)?;
     let mut board = crate::ws::home_snapshot(app, &link.project_id)?
         .ok_or_else(|| refuse("no_board", "this computer doesn't hold that board"))?;
+    board.drafts.clear();
+    let many = compat::many_boards(app, &peer.id);
+    let named = frame.get("board_id").and_then(Value::as_str);
+    match named.filter(|_| many) {
+        Some(id) if !compat::only_board(&mut board, id) => {
+            return Err(refuse("not_found", format!("no board {id}")));
+        }
+        Some(_) => {}
+        None if !many => compat::single_board(&mut board),
+        None => {}
+    }
     board_ids::snapshot(&mut board, &link.remote_project_id, |id| {
         board_ids::to_peer(&app.db, &peer.id, id)
     });
-    Ok(json!({ "board": board }))
+    Ok(json!({ "board": board, "board_id": named.filter(|_| many) }))
 }
 
 /// Relays every change to a board homed here to the peers linked to its
@@ -206,8 +236,17 @@ fn relay(app: &AppState, change: &BoardChange) {
     {
         return;
     }
+    let default = compat::default_board(app, &change.project_id);
+    let board_id = change
+        .board_id
+        .clone()
+        .or_else(|| change.card.as_ref().map(|card| card.board_id.clone()));
     for link in db.project_links(&change.project_id).unwrap_or_default() {
         if !app.peers.is_online(&link.peer_id) {
+            continue;
+        }
+        let many = compat::many_boards(app, &link.peer_id);
+        if !many && !compat::on_single_board(change, default.as_deref()) {
             continue;
         }
         let card = change.card.clone().map(|card| {
@@ -224,6 +263,7 @@ fn relay(app: &AppState, change: &BoardChange) {
                 "item_id": change.item_id,
                 "card": card,
                 "from_column": change.from_column,
+                "board_id": board_id.as_ref().filter(|_| many),
             }),
         );
     }

@@ -40,6 +40,9 @@ pub struct BoardChange {
     pub item_id: String,
     pub card: Option<ItemCard>,
     pub from_column: Option<String>,
+    /// The board a structure change was to (0.19.0 K6), so a linked
+    /// computer refetches that board alone. An item's is on its card.
+    pub board_id: Option<String>,
 }
 
 /// How many changes a slow connection may fall behind before it is told to
@@ -122,6 +125,11 @@ impl FeedWriter<'_> {
     /// A change to a draft's card goes out as `DraftChanged`, whatever the
     /// writer called it, so no board lists a draft.
     pub fn publish(&mut self, change: Change<'_>) -> u64 {
+        self.publish_on(None, change)
+    }
+
+    /// [`Self::publish`], naming the board a structure change was to.
+    pub fn publish_on(&mut self, board_id: Option<&str>, change: Change<'_>) -> u64 {
         let kind = match change.kind {
             ChangeKind::ItemUpserted | ChangeKind::ItemMoved
                 if change.card.as_ref().is_some_and(|card| card.draft) =>
@@ -140,6 +148,7 @@ impl FeedWriter<'_> {
             item_id: change.item_id.to_string(),
             card: change.card,
             from_column: change.from_column,
+            board_id: board_id.map(str::to_string),
         }));
         *seq
     }

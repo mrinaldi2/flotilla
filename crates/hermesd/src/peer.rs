@@ -12,12 +12,16 @@ mod board_ids;
 pub mod browser;
 pub mod chat;
 pub mod cli;
+pub mod compat;
+pub(crate) mod files_cache;
+mod files_home;
 mod forward;
 mod frames;
 mod hub;
 mod inbound;
 pub mod links;
 pub mod mirror;
+mod outgoing;
 pub mod owner_actions;
 pub mod owner_trust;
 #[cfg(test)]

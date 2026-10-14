@@ -156,8 +156,21 @@ pub async fn paired_trusting() -> Paired {
 }
 
 async fn paired_with(trust: bool) -> Paired {
-    let mac = spawn_computer(trust).await;
-    let win = spawn_computer(trust).await;
+    paired_from(spawn_computer(trust).await, spawn_computer(trust).await).await
+}
+
+/// A computer as [`paired`] makes them, with its config tweaked.
+pub async fn computer(tweak: impl FnOnce(&mut hermesd::config::Config)) -> TestDaemon {
+    spawn_daemon_with(|cfg| {
+        cfg.user_home = cfg.home.join("user");
+        tweak(cfg);
+    })
+    .await
+}
+
+/// [`paired`] from two computers made by the caller, set up as it needs
+/// (another config, an older kanban contract) before the link comes up.
+pub async fn paired_from(mac: TestDaemon, win: TestDaemon) -> Paired {
     let mut mac_client = WsClient::connect(&mac).await;
     let mut win_client = WsClient::connect(&win).await;
     let (win_peer_id, mac_peer_id) = pair(&mac, &win, &mut mac_client, &mut win_client).await;

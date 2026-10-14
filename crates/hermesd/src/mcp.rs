@@ -22,6 +22,7 @@ mod board_edit;
 mod board_import;
 mod board_listing;
 mod board_remote;
+mod board_remote_files;
 mod board_roles;
 mod board_schema;
 mod board_structure;

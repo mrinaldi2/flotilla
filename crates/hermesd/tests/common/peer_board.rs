@@ -23,7 +23,11 @@ pub struct Board {
 /// The Mac's "app" holds the board with item H-1 assigned to the PC's
 /// tester; the PC's "app" is linked to it and has mirrored the board.
 pub async fn board() -> Board {
-    let mut p = paired().await;
+    board_on(paired().await).await
+}
+
+/// [`board`] on two computers the caller paired.
+pub async fn board_on(mut p: Paired) -> Board {
     let mac_app = project(&mut p.mac_client, "app").await;
     create_bot(&mut p.mac_client, &mac_app, "lead").await;
     let win_app = project(&mut p.win_client, "app").await;

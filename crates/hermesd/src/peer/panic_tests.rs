@@ -9,15 +9,17 @@ use serde_json::{json, Value};
 use tokio::sync::mpsc;
 
 use super::inbound::TEST_EVENTS;
+use super::outgoing::Outgoing;
 use crate::contain::testing::daemon;
 
 /// The response to `req_id`, skipping what this daemon asks the peer.
-async fn response(out: &mut mpsc::UnboundedReceiver<Value>, req_id: u64) -> Value {
+async fn response(out: &mut mpsc::UnboundedReceiver<Outgoing>, req_id: u64) -> Value {
     loop {
         let frame = tokio::time::timeout(Duration::from_secs(5), out.recv())
             .await
             .expect("a response in time")
-            .expect("the link is up");
+            .expect("the link is up")
+            .frame;
         if frame["type"] == "response" && frame["req_id"] == json!(req_id) {
             return frame;
         }
@@ -32,7 +34,7 @@ async fn a_peer_request_that_panics_answers_internal_and_the_link_goes_on() {
     let (out, mut from_link) = mpsc::unbounded_channel();
     let app = d.app.clone();
     let link =
-        tokio::spawn(async move { app.peers.serve(app.clone(), peer.id, inbound, out).await });
+        tokio::spawn(async move { app.peers.serve(app.clone(), peer.id, 2, inbound, out).await });
 
     to_link
         .send(json!({"type": "test_panic", "req_id": 1}))
