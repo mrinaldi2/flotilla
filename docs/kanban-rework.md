@@ -370,6 +370,77 @@ as follows.
   discussion ends for that bot: uninvited, or the draft finalized or
   discarded.
 
+### Board keeper (as built)
+
+The owner approved a keeper on 2026-10-14: a deterministic loop in the
+daemon, with no model and no token cost, that keeps each board in step with
+what its bots actually do (`kanban/keeper`). It runs every
+`[keeper] tick_seconds` (5 min) and after each turn of a bot, and only on a
+board's home computer: a linked computer never keeps a board it mirrors. It
+never moves a card. Per live card:
+
+1. **Quiet in Doing.** A card in its board's work column (where
+   `work.started` moves it, else the first active column) whose assignee has
+   had no turn, and on which nothing happened, for 2 h: the assignee gets one
+   note, "[card RB-12] Automatic check: RB-12 “…” is assigned to you and is in
+   Doing (in progress), and nothing has happened on it for 2 h. If the work
+   is done, … move it to Review with item_move. If you are still on it, carry
+   on. If it can't go on, move it back to To do and ask the owner …". Still
+   quiet at 6 h (counted from the same start, and at least 4 h after the
+   note), the card is marked stale and the owner gets one Needs-you row,
+   "RB-12 is in Doing and nothing has happened for 6 h". Anything on the card
+   after the note (a comment, an edit, a move) clears both; a new quiet spell
+   can bring a new note. A bot in a turn is never nudged.
+2. **Never picked up.** An assigned card in an open column that its assignee
+   hasn't touched (no change by it, and no `item_get`/`item_update` read since
+   the assignment) for 30 min: the assignment is told again, once per
+   assignment, as "[card RB-12] Automatic reminder: … is assigned to you and
+   is still in To do …" followed by the assignment notice's own instructions.
+3. **Work done, card not moved.** When a bot's turn ends (`bot_state` from
+   working to ready) having changed one of its cards (an edit, a comment, a
+   link, a block) while nobody moved it, and the card is in To do or Doing:
+   one note asking it to move the card on, or to say on the card why not.
+   At most 3 per turn; again only once the card moves or changes hands.
+4. **Waiting on the owner.** A card in a review column (an active column
+   after the work column) has one row, "RB-12 waits for your review: …",
+   while it is there.
+5. **Blocked.** A refused move that would still be refused (the card's
+   "can't move" line, when it is a refusal) for 1 h: one row naming the rule,
+   "RB-12 can't move to Done: The mover can't be its assignee…". It goes when
+   the move would pass or the card moves.
+6. **Staleness.** A card past the board's `stale_after_hours` in a column
+   that ages has its `stale` flag set, and the card is pushed when it goes
+   stale while the daemon runs; it clears when the card moves.
+
+A release-gated board gets only 1's row (no note), 5 and 6: its guards and
+flow are unchanged.
+
+- **Once, and across restarts.** What the keeper did is a row of
+  `keeper_mark` (migration 69, `CREATE TABLE IF NOT EXISTS`, no foreign key):
+  card, rule, the assignee and column it was about, when the condition began
+  and when the keeper acted. A mark whose card moved or changed hands no
+  longer holds (`stale` keeps only its column), so a card read stops showing
+  its flag at once. A restart reads the marks and sends nothing again.
+- **No storm.** Every timer counts from the daemon's start at the earliest,
+  so after a long downtime nothing fires at once. A pass sends at most
+  `max_messages_per_tick` (5) notes and one per bot, and pushes at most 50
+  cards; the rest wait for the next pass, unmarked. Cards that went stale
+  while the daemon was down are marked without a push.
+- **Truthful.** The notes are the daemon's (`system`), `note`s, and say they
+  are automatic, "from the daemon, not the owner, and only once". The prompt's
+  "Your cards" says a `[card KEY-12] Automatic check:` note is the daemon's,
+  about a card that is already the bot's, to act on. No product name is in
+  any text.
+- **Rows.** `AttentionKind.CARD_WAITING` (18, additive), weight 1, row id
+  `card_waiting:<daemon>:<card>:<review|quiet|blocked>`, target the card. They
+  can't be dismissed; they go when the card moves on. The desktop opens the
+  card; the projects home counts "cards waiting for you".
+- **Config.** `[keeper]`: `enabled` (true), `tick_seconds` (300; 0 = only
+  after turns), `idle_nudge_minutes` (120), `idle_needs_you_minutes` (360),
+  `not_started_minutes` (30), `blocked_minutes` (60),
+  `max_messages_per_tick` (5), and `[keeper.projects."<name>"]` overriding
+  `enabled` and the four thresholds. Off for a project drops its marks.
+
 ### Bots find out
 
 - Structure changes and owner edits to items create **board events**.
@@ -529,9 +600,9 @@ These are the next steps, each with its own plan:
 - One active release per project, the always-visible release chip, and the
   rule "Doing only for items in the active release".
 - The SDLC planning run that ends in a release proposal.
-- Watchdogs: the daemon detects stale items, unmoved cards, unreviewed or
-  unmerged PRs and missed release dates, and nudges the right bot, then the
-  lead, then the owner. Bots fix; the daemon re-checks.
+- Watchdogs beyond the board keeper (see "Board keeper"): unreviewed or
+  unmerged PRs and missed release dates, and nudging the lead before the
+  owner. Bots fix; the daemon re-checks.
 - Code-host integration (PR state from GitHub, later GitLab), and branch
   protection keyed to the project's configured branch beyond K0.
 - Removing the remaining repository-specific values in Projects & Bots:
@@ -577,6 +648,34 @@ Taken in the review of the card flow (PR #29), for the owner to confirm:
     owner's too) ends it.
 15. A card's own rights don't reach other cards: without a role, a bot
     can't link its card as blocking another.
+
+Taken building the board keeper, for the owner to confirm:
+
+16. The keeper never moves a card and runs only on the board's home. Idle
+    means no turn of the assignee and nothing on the card since the later of
+    its entry into the column, its last change, the bot's last turn and the
+    daemon's start; a bot in a turn is not idle.
+17. The second threshold counts from the same quiet start (6 h), at least 4 h
+    after the note; anything on the card after the note starts both over.
+18. "Touched" (rule 2) is a change by the assignee or its read of the card
+    since the assignment; each new assignment may be reminded once.
+19. "Worked on a card" (rule 3) is the bot's own change to it during the
+    turn, read from the card's history, not a delivery that named the card;
+    the turn is `bot_state` working to ready. A comment answering the ask
+    doesn't re-arm it: only a move or a new assignee does.
+20. A review column is an active column after the work column on a custom
+    board. Release-gated boards have no review rows: their owner's step,
+    Awaiting owner, is already a release row.
+21. Blocked means a refused move that would still be refused, not the
+    computed next-column line: a card in Doing with no PR yet is in progress,
+    not stuck. Refusals are remembered per process, as before, so the row goes
+    after a restart until someone tries the move again.
+22. The only `stale_after_hours` is the board settings' (per project); there
+    is no per-column one, so the keeper applies it to every column that ages.
+23. The daemon's notes still reach a bot as `from USER · note` (the envelope
+    renders every daemon note so); the keeper's text says it is the daemon's.
+    Rendering daemon notes as their own sender is left for the owner, since it
+    changes every daemon note and the chat view that parses them.
 
 ## Rollout conditions
 
