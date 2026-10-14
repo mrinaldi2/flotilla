@@ -7,7 +7,7 @@ use bus::contract::board as c;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
-use crate::kanban::team::{set_role, Assigner};
+use crate::project_roles::{set_role, Assigner};
 
 use super::board::{out, Me};
 

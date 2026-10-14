@@ -3,7 +3,7 @@
 
 use hermesd::actor::Actor;
 use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
+use hermesd::kanban::model::{ItemType, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 use super::tasks::{project_with_bots_on, Pair};
@@ -28,6 +28,7 @@ pub async fn releases_on(d: super::TestDaemon, items: usize) -> Releases {
     let project = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     db.ensure_board(&project, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(db, &project);
     db.set_project_role(&ProjectRole {
         project_id: project.clone(),
         role: Role::Tester,
@@ -46,10 +47,9 @@ pub async fn releases_on(d: super::TestDaemon, items: usize) -> Releases {
                         item_type: ItemType::Feature,
                         title: &title,
                         description: "",
-                        platforms: &[Platform::Daemon],
                         size: None,
                         priority: Priority::P1,
-                        labels: &[],
+                        labels: &["platform:daemon".to_string()],
                         parent_id: None,
                         acceptance_criteria: &[],
                     },

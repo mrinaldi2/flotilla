@@ -24,6 +24,7 @@ async fn an_uncarded_routine_and_a_bot_on_approval_count_the_same_everywhere() {
     bots[1].call("create_routine", routine).await;
     let me = app.db.daemon_id().unwrap();
     app.db.ensure_board(&project_id, &me, Some("H")).unwrap();
+    crate::common::roles::by_name(&app.db, &project_id);
     // Stopped on a prompt only its terminal shows (H-172, CE-024).
     app.supervisor
         .set_state(&pair.ids[1], BotState::WaitingForApproval, "");

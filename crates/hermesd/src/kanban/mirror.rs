@@ -1,4 +1,4 @@
-//! Boards whose home is a peer (B9, H-020 §1.3). A linked project's board
+//! Boards whose home is a peer. A linked project's board
 //! lives on one daemon; the others keep its last snapshot here, in their own
 //! ids, kept current by the home's `board_event` relay. They serve reads from
 //! it, so it is also the read-only board while the home is unreachable. It
@@ -49,7 +49,8 @@ impl BoardMirror {
         self.lock().get(project_id).map(|m| m.peer_id.clone())
     }
 
-    pub fn set(&self, project_id: &str, peer_id: &str, snapshot: c::BoardSnapshot) {
+    pub fn set(&self, project_id: &str, peer_id: &str, mut snapshot: c::BoardSnapshot) {
+        crate::compat018::mirrored_snapshot(&mut snapshot);
         self.lock().insert(
             project_id.to_string(),
             Mirrored {
@@ -68,8 +69,9 @@ impl BoardMirror {
         project_id: &str,
         peer_id: &str,
         board_id: &str,
-        part: c::BoardSnapshot,
+        mut part: c::BoardSnapshot,
     ) -> bool {
+        crate::compat018::mirrored_snapshot(&mut part);
         let mut boards = self.lock();
         let Some(held) = boards.get_mut(project_id).filter(|m| m.peer_id == peer_id) else {
             return false;
@@ -117,7 +119,8 @@ impl BoardMirror {
     /// Takes a pushed card unless the mirror already holds a newer version
     /// (a refetch can overtake the pushes behind it). False when nothing
     /// changed, or the project isn't mirrored.
-    pub fn apply_card(&self, project_id: &str, card: c::ItemCard) -> bool {
+    pub fn apply_card(&self, project_id: &str, mut card: c::ItemCard) -> bool {
+        crate::compat018::mirrored_card(&mut card);
         let mut boards = self.lock();
         let Some(board) = boards.get_mut(project_id) else {
             return false;

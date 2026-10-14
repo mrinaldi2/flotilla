@@ -5,15 +5,12 @@
 
 use crate::kanban::model::{
     AcceptanceCriterion, Blocked, ColumnCategory, Item, ItemCard, ItemEvent, ItemEventKind,
-    ItemPerson, ItemType, ItemVerification, Platform, Priority, Size,
+    ItemPerson, ItemType, ItemVerification, Priority, Size,
 };
 use bus::now;
 use rusqlite::{params, Connection, OptionalExtension};
 
-use super::board::{
-    from_json, from_json_list, from_text, item_template, parse_at, settings_in, to_json_list,
-    to_text,
-};
+use super::board::{from_json, from_text, item_template, parse_at, settings_in, to_text};
 use super::board_ranks::rank_last;
 use super::board_tx::BoardTx;
 use super::boards::{board_in, default_board_in};
@@ -36,7 +33,6 @@ pub struct NewItem<'a> {
     pub title: &'a str,
     /// Empty means the type's template sections.
     pub description: &'a str,
-    pub platforms: &'a [Platform],
     pub size: Option<Size>,
     pub priority: Priority,
     pub labels: &'a [String],
@@ -76,7 +72,7 @@ pub(super) fn record(
     Ok(())
 }
 
-const ITEM_COLUMNS: &str = "id, seq, type, title, description, platforms, size, priority, rank, \
+const ITEM_COLUMNS: &str = "id, seq, type, title, description, size, priority, rank, \
      column_key, category, blocked_by, blocked_reason, blocked_since, assignee, parent_id, \
      release_id, labels, created_by, created_at, updated_at, state_entered_at, done_at, version, \
      board_id, state";
@@ -87,40 +83,39 @@ pub(super) fn item_in(conn: &Connection, id: &str) -> rusqlite::Result<Option<It
             &format!("SELECT {ITEM_COLUMNS} FROM item WHERE id = ?1"),
             params![id],
             |r| {
-                let blocked_reason: Option<String> = r.get(12)?;
-                let blocked_since: Option<String> = r.get(13)?;
+                let blocked_reason: Option<String> = r.get(11)?;
+                let blocked_since: Option<String> = r.get(12)?;
                 Ok(Item {
                     id: r.get(0)?,
-                    board_id: r.get::<_, Option<String>>(24)?.unwrap_or_default(),
+                    board_id: r.get::<_, Option<String>>(23)?.unwrap_or_default(),
                     seq: r.get(1)?,
                     item_type: from_text(r.get(2)?)?,
                     title: r.get(3)?,
                     description: r.get(4)?,
-                    platforms: from_json_list(r.get(5)?)?,
-                    size: r.get::<_, Option<String>>(6)?.map(from_text).transpose()?,
-                    priority: from_text(r.get(7)?)?,
-                    rank: r.get(8)?,
-                    column_key: r.get(9)?,
-                    category: from_text(r.get(10)?)?,
+                    size: r.get::<_, Option<String>>(5)?.map(from_text).transpose()?,
+                    priority: from_text(r.get(6)?)?,
+                    rank: r.get(7)?,
+                    column_key: r.get(8)?,
+                    category: from_text(r.get(9)?)?,
                     blocked: match (blocked_reason, blocked_since) {
                         (Some(reason), Some(since)) => Some(Blocked {
-                            by: r.get(11)?,
+                            by: r.get(10)?,
                             reason,
                             since: parse_at(since),
                         }),
                         _ => None,
                     },
-                    assignee: r.get(14)?,
-                    parent_id: r.get(15)?,
-                    release_id: r.get(16)?,
-                    labels: from_json(r.get(17)?)?,
-                    created_by: r.get(18)?,
-                    created_at: parse_at(r.get(19)?),
-                    updated_at: parse_at(r.get(20)?),
-                    state_entered_at: parse_at(r.get(21)?),
-                    done_at: r.get::<_, Option<String>>(22)?.map(parse_at),
-                    version: r.get(23)?,
-                    state: from_text(r.get(25)?)?,
+                    assignee: r.get(13)?,
+                    parent_id: r.get(14)?,
+                    release_id: r.get(15)?,
+                    labels: from_json(r.get(16)?)?,
+                    created_by: r.get(17)?,
+                    created_at: parse_at(r.get(18)?),
+                    updated_at: parse_at(r.get(19)?),
+                    state_entered_at: parse_at(r.get(20)?),
+                    done_at: r.get::<_, Option<String>>(21)?.map(parse_at),
+                    version: r.get(22)?,
+                    state: from_text(r.get(24)?)?,
                     acceptance_criteria: Vec::new(),
                     people: Vec::new(),
                     verifications: Vec::new(),
@@ -231,12 +226,12 @@ impl BoardTx<'_> {
         let rank = rank_last(tx, new.project_id, &inbox)?;
         tx.execute(
             &format!(
-                "INSERT INTO item(id, project_id, seq, type, title, description, platforms, size,
+                "INSERT INTO item(id, project_id, seq, type, title, description, size,
                                   priority, rank, column_key, category, labels, parent_id,
                                   created_by, created_at, updated_at, state_entered_at, board_id,
                                   state)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, '{}', ?12, ?13, ?14, ?15, ?15, ?15,
-                         ?16, ?17)",
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, '{}', ?11, ?12, ?13, ?14, ?14, ?14,
+                         ?15, ?16)",
                 to_text(&ColumnCategory::Inbox)
             ),
             params![
@@ -246,7 +241,6 @@ impl BoardTx<'_> {
                 item_type,
                 new.title,
                 description,
-                to_json_list(new.platforms),
                 new.size.map(|s| to_text(&s)),
                 to_text(&new.priority),
                 rank,

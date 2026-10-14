@@ -1,7 +1,7 @@
 //! Backlog cells to board fields. Each mapping covers the spellings the
 //! backlog uses; anything else is reported by the caller, not guessed.
 
-use crate::kanban::model::{ColumnCategory, ItemType, Platform, Size};
+use crate::kanban::model::{ColumnCategory, ItemType, Size};
 
 /// A state cell's column, and the label that keeps a state the board can't
 /// hold: its leading words, as the backlog writes them.
@@ -22,7 +22,7 @@ pub(super) fn state(text: &str) -> Option<(ColumnCategory, Option<&'static str>)
     } else if starts(&["ready", "next"]) {
         (Ready, None)
     } else if starts(&["doing", "changes needed"]) {
-        // Changes needed is a review sent back: rework, in Doing (H-017 §3).
+        // Changes needed is a review sent back: rework, in Doing.
         (Doing, None)
     } else if starts(&["review"]) {
         (Review, None)
@@ -55,22 +55,23 @@ pub(super) fn item_type(title: &str) -> ItemType {
     }
 }
 
-/// The platforms a cell names, and the words that name none.
-pub(super) fn platforms(text: &str) -> (Vec<Platform>, Vec<String>) {
-    let mut out = Vec::new();
+/// The platforms a cell names, as the values of the `platform` label group,
+/// and the words that name none.
+pub(super) fn platforms(text: &str) -> (Vec<&'static str>, Vec<String>) {
+    let mut out: Vec<&'static str> = Vec::new();
     let mut unknown = Vec::new();
     let words = text
         .split(|c: char| !c.is_alphanumeric())
         .filter(|w| !w.is_empty())
         .map(str::to_lowercase);
     for word in words {
-        let found: &[Platform] = match word.as_str() {
-            "desktop" | "windows" | "dashboard" => &[Platform::Desktop],
-            "ios" => &[Platform::Ios],
-            "daemon" => &[Platform::Daemon],
-            "infra" | "ops" => &[Platform::Infra],
+        let found: &[&'static str] = match word.as_str() {
+            "desktop" | "windows" | "dashboard" => &["desktop"],
+            "ios" => &["ios"],
+            "daemon" => &["daemon"],
+            "infra" | "ops" => &["infra"],
             // The backlog's "both" is the two apps (ux-audit.md).
-            "both" => &[Platform::Desktop, Platform::Ios],
+            "both" => &["desktop", "ios"],
             _ => {
                 unknown.push(word);
                 continue;
@@ -78,7 +79,7 @@ pub(super) fn platforms(text: &str) -> (Vec<Platform>, Vec<String>) {
         };
         for p in found {
             if !out.contains(p) {
-                out.push(*p);
+                out.push(p);
             }
         }
     }

@@ -41,7 +41,7 @@ fn core_tools() -> Vec<Value> {
                  "kind": {"type": "string", "enum": ["task", "reply", "note"]},
                  "ref": {"type": "string", "description": "Message id this replies to"},
                  "deadline_hours": {"type": "integer", "description": "Deadline for a kind 'task' send, in hours (default 24, max 168)"},
-                 "item": {"type": "string", "description": "Board card this task is for (e.g. H-017). Required for a task unless you hold one: a task sent while you hold one inherits its card. Links the task there; its completion or expiry goes into the card's history"},
+                 "item": {"type": "string", "description": "Board card this task is for (e.g. RB-12). Required for a task unless you hold one: a task sent while you hold one inherits its card. Links the task there; its completion or expiry goes into the card's history"},
                  "parent_task": {"type": "string", "description": "Optional: the open task assigned to you that this task is part of, when you hold several. It picks the chain and the inherited card; default is your newest open task"}
              }),
              vec!["to", "body"]),
@@ -86,7 +86,7 @@ fn core_tools() -> Vec<Value> {
                  "busy_policy": {"type": "string", "enum": ["skip", "queue_one", "queue_all", "replace"]},
                  "max_duration_seconds": {"type": "integer", "description": "Give up on one run after this long. Defaults to the daemon's scheduler lease."},
                  "max_attempts": {"type": "integer", "description": "Attempts per occurrence, including the first. 1 (the default) never retries."},
-                 "item": {"type": "string", "description": "Board card this routine's runs are for (e.g. H-017). Required when your project has a board; a recurring job can use a standing card such as 'Ops: nightly checks'."},
+                 "item": {"type": "string", "description": "Board card this routine's runs are for (e.g. RB-12). Required when your project has a board; a recurring job can use a standing card such as 'Ops: nightly checks'."},
              }),
              vec!["name", "trigger", "prompt"]),
         tool("list_routines", "List your routines, each with the card it is for.", json!({}), vec![]),
@@ -177,7 +177,7 @@ fn core_tools() -> Vec<Value> {
                  "runtime": {"type": "string", "enum": ["claude_code", "codex_cli"], "description": "Optional. Defaults to your runtime here, or the other machine's default there."},
                  "machine": {"type": "string", "description": "Optional. 'here', or a linked machine's name, to pin the worker; omitted runs it on whichever machine has a free slot first."},
                  "deadline_hours": {"type": "integer", "description": "Optional. Hours before the task expires (default 24, max 168)."},
-                 "item": {"type": "string", "description": "Board card the worker works on (e.g. H-017): required unless you hold a task, whose card it then inherits. Its task is linked there once it starts, as send_message's item does."}
+                 "item": {"type": "string", "description": "Board card the worker works on (e.g. RB-12): required unless you hold a task, whose card it then inherits. Its task is linked there once it starts, as send_message's item does."}
              }),
              vec!["task"]),
         tool("list_workers",

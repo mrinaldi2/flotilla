@@ -154,4 +154,25 @@ async fn a_0_19_computer_falls_back_to_one_board_with_a_0_18_home() {
         .await;
     let id = filed["item"]["id"].as_str().expect("id");
     assert!(b.p.mac.app.db.get_item(id).unwrap().is_some(), "{filed}");
+
+    // Its platforms go as a 0.18 home reads them, and come back as labels.
+    let filed = b
+        .tester
+        .call(
+            "item_create",
+            json!({"type": "bug", "title": "On iOS", "labels": ["urgent", "platform:ios"]}),
+        )
+        .await;
+    let id = filed["item"]["id"].as_str().expect("id");
+    let item = b.p.mac.app.db.get_item(id).unwrap().expect("filed");
+    assert_eq!(item.labels, ["urgent", "platform:ios"], "{filed}");
+    // A 0.18 home filters by platform only.
+    let raw = b
+        .tester
+        .call_raw("item_query", json!({"labels": ["urgent"]}))
+        .await;
+    assert!(
+        error_text(&raw).contains("filters by platform only"),
+        "{raw}"
+    );
 }

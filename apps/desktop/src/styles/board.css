@@ -20,7 +20,12 @@
 
 .board-filter-group {
   display: flex;
+  align-items: center;
   gap: 4px;
+}
+
+.board-filter-group-name {
+  color: var(--text-dim);
 }
 
 .board-filter-button,

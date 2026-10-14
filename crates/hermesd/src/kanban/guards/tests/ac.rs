@@ -1,4 +1,4 @@
-//! Acceptance criteria outside moves, and post-install ones (H-116, ARCH-R53).
+//! Acceptance criteria outside moves, and post-install ones.
 
 use super::*;
 

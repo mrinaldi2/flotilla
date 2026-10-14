@@ -48,6 +48,7 @@ async fn bots_work_an_item_through_the_board_over_mcp() {
         .db
         .ensure_board(&project, &pair.d.app.db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&pair.d.app.db, &project);
     let dev_tools = tool_names(&dev.tools().await);
     assert!(dev_tools.contains(&"item_move".to_string()));
     assert!(!dev_tools.contains(&"item_assign".to_string()));
@@ -68,7 +69,7 @@ async fn bots_work_an_item_through_the_board_over_mcp() {
     let created = dev
         .call(
             "item_create",
-            json!({"type": "feature", "title": "Board tools", "platforms": ["daemon"],
+            json!({"type": "feature", "title": "Board tools", "labels": ["area:daemon"],
                    "size": "M", "acceptance_criteria": ["bots can move cards"]}),
         )
         .await;
@@ -95,10 +96,7 @@ async fn bots_work_an_item_through_the_board_over_mcp() {
             json!({"id": id, "to": "ready", "expected_version": version(item)}),
         )
         .await;
-    assert!(
-        error_text(&raw).contains("dor.spec_link_for_ui_or_daemon"),
-        "{raw}"
-    );
+    assert!(error_text(&raw).contains("dor.spec_link"), "{raw}");
     lead.call(
         "item_link",
         json!({"id": id, "kind": "artifact", "ref": "artifacts/spec.md"}),
@@ -247,6 +245,7 @@ async fn bot_writes_over_mcp_reach_watching_boards() {
         .db
         .ensure_board(&project, &pair.d.app.db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(&pair.d.app.db, &project);
     let mut watcher = WsClient::connect(&pair.d).await;
     call(
         &mut watcher,

@@ -1,12 +1,12 @@
 //! The rules for acceptance criteria outside moves: checking, flagging
-//! post-install (H-116) and editing.
+//! post-install and editing.
 
 use super::{has_text, unmet, Who};
 use crate::kanban::model::{ColumnCategory as Cat, Item, Role, Unmet};
 
 /// Checking an acceptance criterion: a tester, a verifier named on the item,
 /// the lead or the owner. A lead bot that doesn't verify gives the evidence
-/// it checked against (H-116); it is posted as a comment.
+/// it checked against; it is posted as a comment.
 pub fn check_ac(item: &Item, who: &Who, evidence: Option<&str>) -> Vec<Unmet> {
     if !(who.leads() || *who == Who::Daemon || who.verifies(item)) {
         vec![unmet(
@@ -31,7 +31,7 @@ pub fn needs_evidence(item: &Item, who: &Who) -> bool {
     who.has(Role::Lead) && !who.verifies(item)
 }
 
-/// Flagging an acceptance criterion post-install (H-116): the lead (or the
+/// Flagging an acceptance criterion post-install: the lead (or the
 /// owner) until the item is done; its assignee until it reaches Verify. Past
 /// Verify the item is in a submitted package, which skipped its flagged
 /// criteria, so the flag can't be cleared there (ARCH-R53 M1).

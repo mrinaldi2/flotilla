@@ -149,7 +149,7 @@ async fn main() -> anyhow::Result<()> {
             return Ok(());
         }
         Some("board") => {
-            hermesd::kanban::import::cli::run(&cfg, &args[1..]).await?;
+            hermesd::backlog_import::cli::run(&cfg, &args[1..]).await?;
             return Ok(());
         }
         Some("release") => {

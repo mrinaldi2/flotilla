@@ -4,6 +4,7 @@ use bus::contract::board as c;
 use bus::contract::pbjson_types::Struct;
 
 use super::super::flow::{tokens, ColumnPolicy};
+use super::super::labels::LabelGroup;
 use super::super::model as m;
 use super::{at, maybe_at, stamp, MapError};
 
@@ -14,10 +15,11 @@ impl From<m::BoardSettings> for c::BoardSettings {
             key: v.key,
             next_seq: v.next_seq,
             stale_after_hours: v.stale_after_hours,
-            required_machines: v
+            required_machines: crate::compat018::machines_out(&v.required_machines),
+            required_machines_by_label: v
                 .required_machines
                 .into_iter()
-                .map(|(p, values)| (p.as_str().to_string(), c::StringList { values }))
+                .map(|(label, values)| (label, c::StringList { values }))
                 .collect(),
             home_daemon_id: v.home_daemon_id,
             version: v.version,
@@ -29,20 +31,13 @@ impl TryFrom<c::BoardSettings> for m::BoardSettings {
     type Error = MapError;
 
     fn try_from(v: c::BoardSettings) -> Result<Self, MapError> {
+        let required_machines = crate::compat018::machines_in(&v);
         Ok(m::BoardSettings {
             project_id: v.project_id,
             key: v.key,
             next_seq: v.next_seq,
             stale_after_hours: v.stale_after_hours,
-            required_machines: v
-                .required_machines
-                .into_iter()
-                .map(|(p, list)| {
-                    m::Platform::parse(&p)
-                        .map(|p| (p, list.values))
-                        .ok_or(MapError::UnknownEnum("Platform"))
-                })
-                .collect::<Result<_, _>>()?,
+            required_machines,
             home_daemon_id: v.home_daemon_id,
             version: v.version,
         })
@@ -64,6 +59,25 @@ impl From<m::Board> for c::Board {
             automations: v.automations.into_iter().collect(),
             archived: v.archived_at.is_some(),
             version: v.version,
+            label_groups: v.label_groups.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<LabelGroup> for c::LabelGroup {
+    fn from(v: LabelGroup) -> Self {
+        c::LabelGroup {
+            name: v.name,
+            values: v.values,
+        }
+    }
+}
+
+impl From<c::LabelGroup> for LabelGroup {
+    fn from(v: c::LabelGroup) -> Self {
+        LabelGroup {
+            name: v.name,
+            values: v.values,
         }
     }
 }

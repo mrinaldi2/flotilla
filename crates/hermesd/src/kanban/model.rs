@@ -82,8 +82,8 @@ text_enum!(
     ColumnKind { Open => "open", Active => "active", Done => "done", Cancelled => "cancelled" }
 );
 text_enum!(
-    /// How a board decides moves (0.19.0 K3): the H-017 flow every board had
-    /// before 0.19, or its columns' own movers and rules.
+    /// How a board decides moves (0.19.0 K3): the release-gated flow every
+    /// board had before 0.19, or its columns' own movers and rules.
     BoardFlow { ReleaseGated => "release_gated", Custom => "custom" }
 );
 text_enum!(
@@ -114,7 +114,6 @@ text_enum!(Role {
     ReviewerCe => "reviewer.ce",
 });
 text_enum!(ItemType { Epic => "epic", Feature => "feature", Bug => "bug", Spike => "spike", Chore => "chore" });
-text_enum!(Platform { Desktop => "desktop", Ios => "ios", Daemon => "daemon", Infra => "infra" });
 text_enum!(Size { S => "S", M => "M", L => "L" });
 text_enum!(Priority { P0 => "P0", P1 => "P1", P2 => "P2", P3 => "P3" });
 text_enum!(PersonRole { Reviewer => "reviewer", Verifier => "verifier" });
@@ -142,7 +141,8 @@ pub struct BoardSettings {
     pub key: String,
     pub next_seq: u32,
     pub stale_after_hours: u32,
-    pub required_machines: BTreeMap<Platform, Vec<String>>,
+    /// The machines that must verify an item carrying the label, by label.
+    pub required_machines: BTreeMap<String, Vec<String>>,
     pub home_daemon_id: String,
     pub version: u64,
 }
@@ -161,6 +161,8 @@ pub struct Board {
     pub flow: BoardFlow,
     /// Fact name (`pr.merged`) → the column key a custom board moves to.
     pub automations: BTreeMap<String, String>,
+    /// The label groups it declares, for filters and pickers.
+    pub label_groups: Vec<super::labels::LabelGroup>,
     pub archived_at: Option<DateTime<Utc>>,
     pub version: u64,
 }
@@ -206,8 +208,7 @@ pub struct AcceptanceCriterion {
     pub checked_by: Option<String>,
     pub checked_at: Option<DateTime<Utc>>,
     pub machine: Option<String>,
-    /// Provable only once installed (H-116): open at submit, required for
-    /// Done.
+    /// Provable only once installed: open at submit, required for Done.
     pub post_install: bool,
 }
 
@@ -235,7 +236,6 @@ pub struct Item {
     pub item_type: ItemType,
     pub title: String,
     pub description: String,
-    pub platforms: Vec<Platform>,
     pub size: Option<Size>,
     pub priority: Priority,
     pub rank: String,
@@ -270,14 +270,13 @@ pub struct ItemCard {
     pub rank: String,
     pub column_key: String,
     pub assignee: Option<String>,
-    pub platforms: Vec<Platform>,
     pub labels: Vec<String>,
     pub blocked: bool,
     pub stale: bool,
     pub ac_checked: u32,
     pub ac_total: u32,
     pub version: u64,
-    /// The owner's latest comment on it (H-211).
+    /// The owner's latest comment on it.
     pub owner_commented_at: Option<DateTime<Utc>>,
     /// A draft's card, for the owner's drafts tray.
     pub draft: bool,

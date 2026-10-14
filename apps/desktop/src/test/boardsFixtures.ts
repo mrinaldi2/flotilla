@@ -18,6 +18,7 @@ import {
   ItemAttachmentSchema,
   ItemSchema,
   ItemType,
+  LabelGroupSchema,
   LinkKind,
   Priority,
   WipScope,
@@ -60,6 +61,9 @@ export function board(over: MessageInitShape<typeof BoardSchema> = {}): Board {
     structurePolicy: "owner_confirms",
     flow: "release_gated",
     version: 4n,
+    labelGroups: [
+      create(LabelGroupSchema, { name: "platform", values: ["desktop", "ios", "daemon", "infra"] }),
+    ],
     ...over,
   });
 }

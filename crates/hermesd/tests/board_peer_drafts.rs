@@ -31,7 +31,6 @@ async fn a_linked_computer_reads_no_draft_from_the_home() {
                     item_type: ItemType::Bug,
                     title: "Not on the board yet",
                     description: "",
-                    platforms: &[],
                     size: None,
                     priority: Priority::P2,
                     labels: &[],

@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use rusqlite::params;
 
 use super::{parse_ts, ts, Db};
-use crate::kanban::import::NOT_IMPORTED_SQL;
+use crate::backlog_import::NOT_IMPORTED_SQL;
 use crate::kanban::metrics::Entry;
 
 impl Db {

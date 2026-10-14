@@ -3,7 +3,7 @@
 
 use hermesd::actor::Actor;
 use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
+use hermesd::kanban::model::{ItemType, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 use super::tasks::{error_text, project_with_bots, Pair};
@@ -24,7 +24,7 @@ pub struct Team {
     pub item: String,
 }
 
-pub async fn team(platform: Platform) -> Team {
+pub async fn team(platform: &str) -> Team {
     let (pair, mut bots) = project_with_bots(&[
         "Team Lead",
         "DevOps",
@@ -38,6 +38,7 @@ pub async fn team(platform: Platform) -> Team {
     let project = db.get_bot(&pair.ids[LEAD]).unwrap().unwrap().project_id;
     db.ensure_board(&project, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(db, &project);
     db.set_project_lead(&project, Some(&pair.ids[LEAD]))
         .unwrap();
     db.set_project_role(&ProjectRole {
@@ -71,10 +72,9 @@ pub async fn team(platform: Platform) -> Team {
                 item_type: ItemType::Feature,
                 title: "Per platform",
                 description: "",
-                platforms: &[platform],
                 size: None,
                 priority: Priority::P1,
-                labels: &[],
+                labels: &[format!("platform:{platform}")],
                 parent_id: None,
                 acceptance_criteria: &[],
             },

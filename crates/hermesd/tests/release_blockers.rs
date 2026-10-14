@@ -10,7 +10,7 @@ use common::releases::{releases, Releases};
 use hermesd::actor::Actor;
 use hermesd::db::NewItem;
 use hermesd::events::Push;
-use hermesd::kanban::model::{ItemType, Platform, Priority};
+use hermesd::kanban::model::{ItemType, Priority};
 use hermesd::releases::blockers_watch;
 use serde_json::{json, Value};
 
@@ -27,10 +27,9 @@ fn card(r: &Releases, title: &str) -> String {
                 item_type: ItemType::Chore,
                 title,
                 description: "",
-                platforms: &[Platform::Daemon],
                 size: None,
                 priority: Priority::P1,
-                labels: &[],
+                labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
             },

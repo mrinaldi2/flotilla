@@ -12,7 +12,7 @@ use common::McpClient;
 use hermesd::actor::Actor;
 use hermesd::db::{MoveTo, NewItem};
 use hermesd::kanban::feed::{Change, ChangeKind};
-use hermesd::kanban::model::{ItemType, Platform, Priority, ProjectRole, Role};
+use hermesd::kanban::model::{ItemType, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 const RELEASE_TOOLS: [&str; 3] = ["release_test", "install_release", "deploy_confirm"];
@@ -96,10 +96,9 @@ async fn a_tester_on_a_linked_computer_lists_and_records_release_tests() {
                 item_type: ItemType::Feature,
                 title: "On the phone",
                 description: "",
-                platforms: &[Platform::Ios],
                 size: None,
                 priority: Priority::P1,
-                labels: &[],
+                labels: &["platform:ios".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
             },

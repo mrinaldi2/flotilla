@@ -16,12 +16,20 @@ pub(super) fn board() -> (Db, String) {
     let lead = db
         .create_bot(&p.id, "Team Lead", "", "", "", "/tmp/a", "team-lead", None)
         .unwrap();
-    db.create_bot(&p.id, "Architect", "", "", "", "/tmp/b", "architect", None)
+    let architect = db
+        .create_bot(&p.id, "Architect", "", "", "", "/tmp/b", "architect", None)
         .unwrap();
     db.create_bot(&p.id, "Writer", "", "", "", "/tmp/c", "writer", None)
         .unwrap();
     db.set_project_lead(&p.id, Some(&lead.id)).unwrap();
     db.ensure_board(&p.id, "d-mac", Some("H")).unwrap();
+    db.set_project_role(&ProjectRole {
+        project_id: p.id.clone(),
+        role: Role::ReviewerArch,
+        bot_id: architect.id,
+        machine: None,
+    })
+    .unwrap();
     (db, p.id)
 }
 
@@ -32,7 +40,6 @@ pub(super) fn new_item<'a>(project_id: &'a str, title: &'a str) -> NewItem<'a> {
         item_type: ItemType::Feature,
         title,
         description: "",
-        platforms: &[Platform::Daemon],
         size: Some(Size::M),
         priority: Priority::P2,
         labels: &[],
@@ -49,7 +56,7 @@ fn done<T: std::fmt::Debug>(write: Write<T>) -> T {
 }
 
 #[test]
-fn a_new_board_gets_columns_templates_and_guessed_roles_once() {
+fn a_new_board_gets_columns_templates_and_its_lead_once() {
     let (db, p) = board();
     let columns = db.board_columns(&p).unwrap();
     let keys: Vec<&str> = columns.iter().map(|c| c.key.as_str()).collect();
@@ -78,6 +85,15 @@ fn a_new_board_gets_columns_templates_and_guessed_roles_once() {
         .collect();
     assert!(roles.contains(&Role::Lead) && roles.contains(&Role::ReviewerArch));
     assert_eq!(roles.len(), 2, "the writer gets no role");
+    let templates = db.templates(&p, TemplateKind::ItemType).unwrap();
+    assert!(
+        templates
+            .iter()
+            .all(|t| t.body["ready"].as_array().is_some_and(|r| r
+                .iter()
+                .all(|f| f.as_str().is_some_and(|f| !f.contains(':'))))),
+        "a new board's templates ask for no label group"
+    );
 
     let again = db.ensure_board(&p, "elsewhere", Some("X")).unwrap();
     assert_eq!(
@@ -87,9 +103,10 @@ fn a_new_board_gets_columns_templates_and_guessed_roles_once() {
     assert_eq!(db.board_columns(&p).unwrap().len(), 9);
 }
 
-/// A tester verifies on its own machine: a linked tester's is its peer's.
+/// No role comes from a bot's name: the project's lead leads, and the owner
+/// or the lead gives every other role.
 #[test]
-fn a_linked_tester_is_seeded_with_its_machine() {
+fn no_role_is_guessed_from_a_bots_name() {
     let db = Db::open_in_memory().unwrap();
     let p = db.create_project("Gravity", "gravity").unwrap();
     let pc = db.create_peer("win-pc", None).unwrap();
@@ -103,12 +120,20 @@ fn a_linked_tester_is_seeded_with_its_machine() {
         temporary: false,
     };
     db.create_linked_bot(&p.id, &remote, &pc.id).unwrap();
+    for name in ["DevOps", "Architect", "Desktop Dev"] {
+        db.create_bot(&p.id, name, "", "", "", "/tmp/x", name, None)
+            .unwrap();
+    }
+    let writer = db
+        .create_bot(&p.id, "Writer", "", "", "", "/tmp/w", "writer", None)
+        .unwrap();
+    db.set_project_lead(&p.id, Some(&writer.id)).unwrap();
     db.ensure_board(&p.id, "d-mac", None).unwrap();
     let roles = db.project_roles(&p.id).unwrap();
     assert_eq!(roles.len(), 1);
     assert_eq!(
-        (roles[0].role, roles[0].machine.as_deref()),
-        (Role::Tester, Some("win-pc"))
+        (roles[0].role, roles[0].bot_id.as_str()),
+        (Role::Lead, writer.id.as_str())
     );
 }
 

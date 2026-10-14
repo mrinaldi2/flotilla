@@ -1,4 +1,4 @@
-// Meetings and action items, contract version 1 (H-017 §1.5, H-020 §4).
+// Meetings and action items, contract version 1.
 //
 // What bots send as MCP tools; their schemas are generated from these
 // messages (see requests.proto for the rules). The owner sends the same
@@ -223,7 +223,7 @@ export type MeetingContribute = Message<"hermes.board.v1.MeetingContribute"> & {
   body: string;
 
   /**
-   * Item ids the contribution is about, e.g. "H-017".
+   * Item ids the contribution is about, e.g. "RB-12".
    *
    * @generated from field: repeated string item_refs = 4;
    */

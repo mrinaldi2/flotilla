@@ -86,9 +86,6 @@ fn stored_spellings_match_the_proto_names() {
     same("ITEM_TYPE", m::ItemType::ALL, m::ItemType::as_str, |n| {
         c::ItemType::try_from(n).ok().map(|e| e.as_str_name())
     });
-    same("PLATFORM", m::Platform::ALL, m::Platform::as_str, |n| {
-        c::Platform::try_from(n).ok().map(|e| e.as_str_name())
-    });
     same("SIZE", m::Size::ALL, m::Size::as_str, |n| {
         c::Size::try_from(n).ok().map(|e| e.as_str_name())
     });

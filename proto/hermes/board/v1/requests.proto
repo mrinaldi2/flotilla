@@ -154,6 +154,13 @@ message BoardUpdate {
   optional bool archived = 6;
   // "owner_confirms" or "lead_free"; the owner's alone.
   optional string structure_policy = 7;
+  // The board's label groups, replacing the old ones (0.19.0 K8).
+  LabelGroupList label_groups = 8;
+}
+
+// Label groups, where "unset" and "none" must differ.
+message LabelGroupList {
+  repeated LabelGroup values = 1;
 }
 
 // A new column, after `after` (a column key) or at the end.
@@ -244,8 +251,11 @@ message ItemQuery {
   optional string assignee = 4;
   repeated ItemType types = 5;
   repeated Priority priorities = 6;
+  // Deprecated (0.19.0 K8): `labels` with `platform:<name>`.
   repeated Platform platforms = 7;
   optional bool blocked = 8;
+  // Cards carrying any of these labels (`platform:web`).
+  repeated string labels = 9;
 }
 
 // What stands between the item and every other column, for this connection.
@@ -278,7 +288,7 @@ message BoardUnwatch {
 
 // --- Item edits -------------------------------------------------------------
 
-// Platforms, where "unset" and "none" must differ.
+// Deprecated (0.19.0 K8): platforms, where "unset" and "none" must differ.
 message PlatformList {
   repeated Platform values = 1;
 }
@@ -290,10 +300,13 @@ message ItemCreate {
   string title = 3;
   // Markdown; left out, the template's section headings.
   optional string description = 4;
+  // Deprecated (0.19.0 K8): added to `labels` as `platform:<name>`.
   repeated Platform platforms = 5;
   optional Size size = 6;
   // P2 when left out.
   optional Priority priority = 7;
+  // Free labels. `<group>:<value>` is a label of the board's group of that
+  // name: `platform:web` gives the item the platform web.
   repeated string labels = 8;
   // The epic this belongs to.
   optional string parent_id = 9;
@@ -312,9 +325,12 @@ message ItemUpdate {
   uint64 expected_version = 2;
   optional string title = 3;
   optional string description = 4;
+  // Deprecated (0.19.0 K8): replaces the item's `platform:` labels.
   PlatformList platforms = 5;
   optional Size size = 6;
   optional Priority priority = 7;
+  // The whole list, replacing the old one. `<group>:<value>` is a label of
+  // the board's group of that name: `platform:web` gives the platform web.
   StringList labels = 8;
   optional string parent_id = 9;
   // The whole list, replacing the old one. A criterion whose text stays the
@@ -561,7 +577,7 @@ message BoardSnapshot {
   repeated BoardProposal proposals = 9;
   // Whether this connection may rule on the project's releases: the owner's
   // own credentials with the approve grant (a board is served only on its
-  // home, where rulings are made). H-020 §6.5.
+  // home, where rulings are made).
   bool can_rule = 6;
 }
 

@@ -28,6 +28,7 @@ mod owner_actions;
 mod owner_messages;
 mod peers;
 mod permissions;
+mod platform_labels;
 mod prs;
 mod quiesce;
 mod release_pr;
@@ -69,6 +70,7 @@ use permissions::{
     MIGRATION_PERMISSIONS, MIGRATION_PERMISSION_EXTRAS_PR_MERGE,
     MIGRATION_PERMISSION_EXTRAS_QUIESCE, MIGRATION_PERMISSION_EXTRAS_RELEASE_MAIN,
 };
+use platform_labels::MIGRATION_PLATFORM_LABELS;
 use prs::MIGRATION_PR_CORE;
 use quiesce::MIGRATION_QUIESCE;
 use release_pr::MIGRATION_RELEASE_PR;
@@ -151,6 +153,7 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_BOARD_FLOW,
     MIGRATION_BOARD_PROPOSALS,
     MIGRATION_ITEM_DRAFTS,
+    MIGRATION_PLATFORM_LABELS,
 ];
 
 #[cfg(test)]

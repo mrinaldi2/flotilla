@@ -34,6 +34,7 @@ pub mod prs;
 pub mod release_phone;
 pub mod releases;
 pub mod repo;
+pub mod roles;
 pub mod supersede;
 pub mod tasks;
 pub mod team;

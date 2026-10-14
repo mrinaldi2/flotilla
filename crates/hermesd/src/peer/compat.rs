@@ -116,6 +116,7 @@ pub fn single_board_args(home: &str, name: &str, args: &Value) -> anyhow::Result
         fields.remove("board_id");
         fields.remove("board");
     }
+    crate::compat018::args_for_018_home(home, name, &mut args)?;
     Ok(args)
 }
 
@@ -194,5 +195,36 @@ mod tests {
         )
         .unwrap();
         assert_eq!(args, json!({"title": "t"}));
+    }
+
+    /// A 0.19 bot names platforms as labels; a 0.18 home reads them only
+    /// as platforms, and has no label filter at all.
+    #[test]
+    fn a_home_on_0_18_is_sent_platform_labels_as_platforms() {
+        let create =
+            json!({"title": "t", "labels": ["urgent", "platform:ios", "platform:android"]});
+        assert_eq!(
+            single_board_args("mac", "item_create", &create).unwrap(),
+            json!({"title": "t", "labels": ["urgent", "platform:android"], "platforms": ["ios"]})
+        );
+        // `labels` is the whole list, so it says which platforms are left.
+        let update = json!({"id": "H-1", "labels": ["urgent"]});
+        assert_eq!(
+            single_board_args("mac", "item_update", &update).unwrap(),
+            json!({"id": "H-1", "labels": ["urgent"], "platforms": []})
+        );
+        let untouched = json!({"id": "H-1", "title": "x"});
+        assert_eq!(
+            single_board_args("mac", "item_update", &untouched).unwrap(),
+            untouched
+        );
+        let query = json!({"labels": ["platform:desktop", "platform:daemon"]});
+        assert_eq!(
+            single_board_args("mac", "item_query", &query).unwrap(),
+            json!({"platforms": ["desktop", "daemon"]})
+        );
+        let other = json!({"labels": ["platform:ios", "urgent"]});
+        let refused = single_board_args("mac", "item_query", &other).unwrap_err();
+        assert!(refused.to_string().contains("by platform"), "{refused}");
     }
 }

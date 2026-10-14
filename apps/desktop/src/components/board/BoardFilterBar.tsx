@@ -5,7 +5,9 @@ import type { Bot } from "../../protocol/entities";
 import BotAvatar from "../BotAvatar";
 import type { BoardFilters } from "./filters";
 import { isFiltering, NO_FILTERS, toggled } from "./filters";
-import { FILTER_PLATFORMS, FILTER_TYPES, platformWord, typeLabel } from "./labels";
+import type { LabelGroupView } from "./labelGroups";
+import { groupLabel } from "./labelGroups";
+import { FILTER_TYPES, typeLabel } from "./labels";
 
 /** A bot the Bot filter offers: a project bot, or an assignee the sidebar doesn't know. */
 export interface BotOption {
@@ -17,6 +19,8 @@ interface BoardFilterBarProps {
   readonly filters: BoardFilters;
   readonly onChange: (filters: BoardFilters) => void;
   readonly botOptions: readonly BotOption[];
+  /** The board's label groups, each a row of chips. */
+  readonly labelGroups: readonly LabelGroupView[];
   readonly shown: number;
   readonly total: number;
   /** Names of the hidden columns ("Cancelled"), offered behind a toggle. */
@@ -123,7 +127,7 @@ function Chip({
   );
 }
 
-/** The one-row filter bar above the board (H-018 §3.5). */
+/** The one-row filter bar above the board. */
 export default function BoardFilterBar(props: BoardFilterBarProps): ReactElement {
   const { filters, onChange } = props;
   return (
@@ -135,18 +139,31 @@ export default function BoardFilterBar(props: BoardFilterBarProps): ReactElement
           onChange({ ...filters, bots: toggled(filters.bots, id) });
         }}
       />
-      <div className="board-filter-group" role="group" aria-label="Platform">
-        {FILTER_PLATFORMS.map((platform) => (
-          <Chip
-            key={platform}
-            label={platformWord(platform)}
-            pressed={filters.platforms.includes(platform)}
-            onToggle={() => {
-              onChange({ ...filters, platforms: toggled(filters.platforms, platform) });
-            }}
-          />
-        ))}
-      </div>
+      {props.labelGroups.map((group) =>
+        group.values.length === 0 ? null : (
+          <div
+            key={group.name}
+            className="board-filter-group"
+            role="group"
+            aria-label={`Label group ${group.name}`}
+          >
+            <span className="board-filter-group-name">{group.name}</span>
+            {group.values.map((value) => {
+              const label = groupLabel(group.name, value);
+              return (
+                <Chip
+                  key={label}
+                  label={value}
+                  pressed={filters.labels.includes(label)}
+                  onToggle={() => {
+                    onChange({ ...filters, labels: toggled(filters.labels, label) });
+                  }}
+                />
+              );
+            })}
+          </div>
+        ),
+      )}
       <div className="board-filter-group" role="group" aria-label="Type">
         {FILTER_TYPES.map((type) => {
           const label = typeLabel(type);

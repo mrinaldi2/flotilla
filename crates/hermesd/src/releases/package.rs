@@ -10,7 +10,8 @@ use serde_json::Value;
 use crate::app::AppState;
 use crate::db::{BoardTx, NewReleaseTest};
 use crate::decisions::{conflict, invalid};
-use crate::kanban::model::{Platform, Role};
+use crate::kanban::labels;
+use crate::kanban::model::Role;
 
 use super::machines;
 use super::model::{Release, ReleaseStatus};
@@ -25,34 +26,43 @@ pub fn required_machines(t: &BoardTx<'_>, release: &Release) -> anyhow::Result<V
     machines::tested_on(t, release)
 }
 
-fn item_platforms(t: &BoardTx<'_>, release: &Release) -> anyhow::Result<Vec<Platform>> {
+/// The label group that names what a build is for: an item labelled
+/// `platform:desktop` needs a `desktop` build.
+pub const PLATFORM_GROUP: &str = "platform";
+
+fn item_platforms(t: &BoardTx<'_>, release: &Release) -> anyhow::Result<Vec<String>> {
     let mut platforms = Vec::new();
     for ri in &release.items {
-        platforms.extend(
-            t.item(&ri.item_id)?
-                .map(|i| i.platforms)
-                .unwrap_or_default(),
-        );
+        if let Some(item) = t.item(&ri.item_id)? {
+            platforms.extend(
+                labels::values_in(&item.labels, PLATFORM_GROUP)
+                    .into_iter()
+                    .map(str::to_string),
+            );
+        }
     }
-    platforms.sort_unstable_by_key(|p| p.as_str());
+    platforms.sort_unstable();
     platforms.dedup();
     Ok(platforms)
 }
 
 /// The platforms `machine` tests this package for (ARCH-R25 F2): those whose
-/// `required_machines` list it, or with none listing it, the items'
-/// platforms when the machine is required as a tester machine.
+/// `platform:` label `required_machines` list it under, or with none listing
+/// it, the items' platforms when the machine is required as a tester machine.
 fn machine_platforms(
     t: &BoardTx<'_>,
     release: &Release,
     machine: &str,
-) -> anyhow::Result<Vec<Platform>> {
-    let configured: Vec<Platform> = t
+) -> anyhow::Result<Vec<String>> {
+    let configured: Vec<String> = t
         .settings(&release.project_id)?
         .iter()
         .flat_map(|s| s.required_machines.iter())
         .filter(|(_, machines)| machines.iter().any(|m| m == machine))
-        .map(|(p, _)| *p)
+        .filter_map(|(label, _)| match labels::split(label) {
+            Some((PLATFORM_GROUP, value)) => Some(value.to_string()),
+            _ => None,
+        })
         .collect();
     if !configured.is_empty() {
         return Ok(configured);
@@ -65,8 +75,7 @@ fn machine_platforms(
 
 /// A build is for a platform when it names it, alone or with a variant
 /// (`desktop-mac` is a desktop build).
-fn build_is_for(build_platform: &str, platform: Platform) -> bool {
-    let p = platform.as_str();
+fn build_is_for(build_platform: &str, p: &str) -> bool {
     build_platform == p
         || build_platform
             .strip_prefix(p)
@@ -189,13 +198,13 @@ pub fn record_test(
             ));
         };
         let platforms = machine_platforms(t, &release, result.machine)?;
-        if !platforms.iter().any(|p| build_is_for(&build.platform, *p)) {
-            let names: Vec<&str> = platforms.iter().map(|p| p.as_str()).collect();
+        if !platforms.iter().any(|p| build_is_for(&build.platform, p)) {
+            let names: Vec<&str> = platforms.iter().map(String::as_str).collect();
             // No build of the package is for this computer at all (S3).
             let any = release
                 .builds
                 .iter()
-                .any(|b| platforms.iter().any(|p| build_is_for(&b.platform, *p)));
+                .any(|b| platforms.iter().any(|p| build_is_for(&b.platform, p)));
             if !any && !names.is_empty() {
                 return Err(invalid(format!(
                     "release {} has no build for {} on {}; DevOps attaches one first",

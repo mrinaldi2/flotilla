@@ -45,6 +45,7 @@ async fn the_owners_comment_reaches_the_assignee_and_the_lead() {
     let project_id = db.get_bot(&pair.ids[LEAD]).unwrap().unwrap().project_id;
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(db, &project_id);
     db.set_project_lead(&project_id, Some(&pair.ids[LEAD]))
         .unwrap();
     let (card, version) = new_item(db, &project_id, "Comments", Priority::P1);
@@ -107,6 +108,7 @@ async fn a_dismissed_question_tells_the_bot_that_asked() {
     let project_id = db.get_bot(&pair.ids[LEAD]).unwrap().unwrap().project_id;
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(db, &project_id);
     let (card, _) = new_item(db, &project_id, "Questions", Priority::P1);
     let asked = bots[ASSIGNEE]
         .call(
@@ -149,6 +151,7 @@ async fn item_get_gives_bots_each_comments_body_and_author() {
     let project_id = db.get_bot(&pair.ids[LEAD]).unwrap().unwrap().project_id;
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
+    crate::common::roles::by_name(db, &project_id);
     let (card, _) = new_item(db, &project_id, "Comments", Priority::P1);
     let mut owner = WsClient::connect(&pair.d).await;
     response(call(&mut owner, comment(&card, "Why is this slow?")).await);

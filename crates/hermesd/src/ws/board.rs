@@ -142,7 +142,8 @@ impl Conn {
                 Response::Board(self.snapshot(&r.project_id)?)
             }
             Request::RoleSet(r) => {
-                team::set_role(&self.app, &r.project_id, &r, self.assigner()).map_err(invalid)?;
+                crate::project_roles::set_role(&self.app, &r.project_id, &r, self.assigner())
+                    .map_err(invalid)?;
                 Response::Board(self.snapshot(&r.project_id)?)
             }
             Request::BoardWatch(r) => {
