@@ -280,6 +280,8 @@ pub struct ItemCard {
     pub owner_commented_at: Option<DateTime<Utc>>,
     /// A draft's card, for the owner's drafts tray.
     pub draft: bool,
+    /// A draft's invited bots, by id; empty on a live card.
+    pub invited: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

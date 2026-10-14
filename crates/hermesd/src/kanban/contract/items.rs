@@ -101,6 +101,7 @@ impl From<m::ItemCard> for c::ItemCard {
             version: v.version,
             owner_commented_at: v.owner_commented_at.and_then(stamp),
             draft: v.draft,
+            invited: v.invited,
             ..Default::default()
         };
         crate::compat018::card_out(&mut card);
@@ -131,6 +132,7 @@ impl TryFrom<c::ItemCard> for m::ItemCard {
             version: v.version,
             owner_commented_at: maybe_at(v.owner_commented_at, "owner_commented_at")?,
             draft: v.draft,
+            invited: v.invited,
         })
     }
 }
