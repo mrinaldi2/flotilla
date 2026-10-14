@@ -366,7 +366,10 @@ fn item_move(app: &Arc<AppState>, me: &Me, req: c::ItemMove) -> anyhow::Result<V
         from,
         || match move_item(&app.db, &request, &me.actor())? {
             Moved::Done(item) => Ok((super::board_edit::moved(*item)?, req.id.clone())),
-            Moved::Refused(unmet) => Err(refused(unmet)),
+            Moved::Refused(unmet) => {
+                crate::kanban::activity::refused(app, &req.id, &req.to, &me.actor(), &unmet);
+                Err(refused(unmet))
+            }
             Moved::Conflict(current) => Err(conflict(*current)),
         },
     )

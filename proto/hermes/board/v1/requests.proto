@@ -746,4 +746,12 @@ message BoardEvent {
   // the daemon could not read it back: refetch the item.
   optional ItemCard card = 5;
   optional string from_column = 6;
+  // Who made the change (0.19.0): `user` (the owner on the owner token),
+  // `device:<id>` (the owner through a paired device), `bot:<id>`, or
+  // `daemon` (a fact or a system move). Unset when the daemon can't say, and
+  // from older daemons.
+  optional string actor = 7;
+  // The note the change was recorded with: a move's reason, or the fact
+  // that moved it ("PR merged").
+  optional string note = 8;
 }

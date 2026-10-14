@@ -21,6 +21,7 @@ use super::{
 };
 use crate::app::AppState;
 use crate::browser::view::Viewer;
+use crate::kanban::feed_by::on_connection;
 use crate::ws::{bot_view, project_view};
 
 /// A task stopped when its handle is dropped, so an unwinding connection
@@ -120,6 +121,8 @@ async fn serve(
         .as_deref()
         .map(|id| crate::releases::phone::Presence::enter(&app, id));
     let push_device = device_id.clone();
+    // The board changes this connection asks for are named its own (0.19.0).
+    let conn_no = presence.conn();
     let mut push_task = AbortOnDrop(tokio::spawn(async move {
         loop {
             let push = match push_rx.recv().await {
@@ -156,6 +159,14 @@ async fn serve(
                 crate::events::Push::ProjectUpdated { project } => Ok(
                     json!({ "type": "project_updated", "project": project_view(&push_app, project) }),
                 ),
+                // Told whether this connection asked for it, which already
+                // showed its own action.
+                crate::events::Push::BoardActivity { activity, origin } => {
+                    let mut activity = (**activity).clone();
+                    activity.from_this_client = *origin == Some(conn_no);
+                    serde_json::to_value(&activity)
+                        .map(|a| json!({ "type": "board_activity", "activity": a }))
+                }
                 other => serde_json::to_value(other),
             };
             if let Ok(v) = value {
@@ -238,11 +249,11 @@ async fn serve(
                 if req["type"] == super::probe::PANIC_CONNECTION {
                     panic!("a test connection task panicked");
                 }
-                conn.handle(&req);
+                on_connection(conn_no, || conn.handle(&req));
             }
             WsMessage::Binary(bytes) => {
                 if bytes.len() <= MAX_FRAME_BYTES {
-                    conn.handle_binary(&bytes);
+                    on_connection(conn_no, || conn.handle_binary(&bytes));
                 }
             }
             WsMessage::Close(_) => {

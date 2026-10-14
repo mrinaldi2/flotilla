@@ -155,6 +155,8 @@ pub struct Config {
     pub quiesce: crate::quiesce::services::QuiesceConfig,
     /// Where checks run: per-machine cap, disk floor, probe (H-283).
     pub checks: crate::prs::check_jobs::ChecksConfig,
+    /// Phone push (0.19.0, design only): off until set; see [`crate::push`].
+    pub push: crate::push::PushConfig,
     /// The *user's* home (Claude Code's `~/.claude/projects` transcripts), not
     /// the daemon's `home`; separate so tests can point it at a fixture tree.
     pub user_home: PathBuf,
@@ -289,6 +291,7 @@ impl Default for Config {
             auth: Default::default(),
             quiesce: Default::default(),
             checks: Default::default(),
+            push: Default::default(),
             scheduler: SchedulerConfig::default(),
             supervision_interval_ms: 5_000,
             startup: Default::default(),

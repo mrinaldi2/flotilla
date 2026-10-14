@@ -137,6 +137,7 @@ impl AppState {
             auto_compact.clone(),
         );
         let cfg_home = cfg.home.clone();
+        let board = crate::kanban::feed::BoardFeed::default().with_history(db.clone());
         let app = Arc::new(Self {
             cfg,
             db,
@@ -150,7 +151,7 @@ impl AppState {
             approvals: crate::approval::Approvals::default(),
             browsers: crate::browser::streams::BrowserStreams::default(),
             workers: crate::workers::Workers::default(),
-            board: crate::kanban::feed::BoardFeed::default(),
+            board,
             kickoffs: Default::default(),
             board_mirror: crate::kanban::mirror::BoardMirror::default(),
             overview: crate::overview::Overview::default(),

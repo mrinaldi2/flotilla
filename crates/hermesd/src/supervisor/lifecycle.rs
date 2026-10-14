@@ -212,12 +212,8 @@ impl Supervisor {
             handle.last_start = Instant::now();
             handle.term.clone()
         };
-        self.inner.events.push(Push::BotState {
-            bot_id: bot_id.to_string(),
-            state: BotState::Starting,
-            reason: "starting runtime".to_string(),
-            at: chrono::Utc::now().to_rfc3339(),
-        });
+        let starting = Push::bot_state(bot_id, BotState::Starting, "starting runtime");
+        self.inner.events.push(starting);
 
         // Consume session events until exit.
         tokio::spawn(super::session_events::consume(

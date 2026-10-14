@@ -64,6 +64,16 @@ impl BoardTx<'_> {
         Ok(rows)
     }
 
+    /// The newest history event's id on any item, 0 when there is none: where
+    /// the board feed starts reading who made each change (0.19.0).
+    pub fn last_item_event_id(&self) -> anyhow::Result<i64> {
+        Ok(self
+            .conn
+            .query_row("SELECT COALESCE(MAX(id), 0) FROM item_event", [], |r| {
+                r.get(0)
+            })?)
+    }
+
     /// Up to `limit` history events after event `after`, oldest first, and
     /// the cursor for the next page when there is more.
     pub fn item_history(

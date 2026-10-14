@@ -16,6 +16,7 @@ mod agent_browser;
 mod agent_conversations;
 mod approval_rows;
 mod board_ac;
+mod board_activity;
 mod board_attachment_store;
 mod board_attachments;
 mod board_blocked_by;

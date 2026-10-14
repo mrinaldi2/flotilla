@@ -218,15 +218,27 @@ fn apply_card(app: &Arc<AppState>, link: &ProjectLink, kind: ChangeKind, frame: 
         return;
     };
     let item_id = model.id.clone();
+    // Who made it, as the home said (0.19.0): a bot by this computer's id.
+    let actor = frame["actor"]
+        .as_str()
+        .map(|actor| match actor.strip_prefix("bot:") {
+            Some(bot) => format!(
+                "bot:{}",
+                board_ids::from_home(&app.db, &link.peer_id, &link.project_id, bot)
+            ),
+            None => actor.to_string(),
+        });
+    let note = frame["note"].as_str().map(str::to_string);
     let mut feed = app.board.writer();
     if app.board_mirror.apply_card(&link.project_id, card) {
-        feed.publish(Change {
+        let change = Change {
             project_id: &link.project_id,
             kind,
             item_id: &item_id,
             card: Some(model),
             from_column: frame["from_column"].as_str().map(str::to_string),
-        });
+        };
+        feed.publish_relayed(actor, note, change);
         drop(feed);
         // The owner may have answered a question asked here (H-211).
         crate::owner_threads::card_changed(app, &link.project_id, Some(&item_id));
