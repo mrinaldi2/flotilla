@@ -141,7 +141,21 @@ impl BoardTx<'_> {
             },
             task_holders: self.task_holders(&item.id)?,
             ever_had_code: self.ever_had_code(&item.id)?,
+            past_assignees: self.past_assignees(&item.id)?,
         })
+    }
+
+    /// The bots the item was ever assigned to, from its history.
+    fn past_assignees(&self, item_id: &str) -> anyhow::Result<Vec<String>> {
+        let rows = self
+            .conn
+            .prepare(
+                r#"SELECT DISTINCT "to" FROM item_event
+                   WHERE item_id = ?1 AND kind = 'assigned' AND "to" IS NOT NULL"#,
+            )?
+            .query_map(params![item_id], |r| r.get(0))?
+            .collect::<Result<_, _>>()?;
+        Ok(rows)
     }
 
     /// Whether a branch or PR was ever linked to the item, from its history,

@@ -68,11 +68,15 @@ export interface ItemDrawerProps {
   readonly initialDiscuss?: string;
 }
 
-/** "bot:<id>", "user", "device:…": who did something, in words. */
+/** "bot:<id>", "user", "device:…", "daemon": who did something, in words. */
 function whoNamer(bots: readonly Bot[]): (actor: string) => string {
   return (actor) => {
     if (actor === "user" || actor === "owner" || actor.startsWith("device:")) {
       return "You";
+    }
+    // The board's own move, on a fact such as the assignee starting work.
+    if (actor === "daemon") {
+      return "Automation";
     }
     const id = actor.startsWith("bot:") ? actor.slice(4) : actor;
     return bots.find((b) => b.id === id)?.name ?? "a bot";

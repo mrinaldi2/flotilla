@@ -84,8 +84,8 @@ function NoBoard(
         <>
           <p>
             {owner
-              ? "Start it on one computer only: that computer becomes the home of the project's boards. The lead can also propose a board."
-              : "The lead can propose a board for the owner to approve."}
+              ? "Start it on one computer only: that computer becomes the home of the project's boards. It starts with To do, Doing, Review and Done, which you can change later."
+              : "The owner starts it on the computer that will be its home."}
           </p>
           {owner ? (
             <button type="button" className="btn btn-small" disabled={starting} onClick={start}>

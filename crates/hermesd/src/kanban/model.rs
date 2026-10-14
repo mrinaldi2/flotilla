@@ -282,6 +282,17 @@ pub struct ItemCard {
     pub draft: bool,
     /// A draft's invited bots, by id; empty on a live card.
     pub invited: Vec<String>,
+    /// Why it can't move on, filled when the card is read (`kanban::stuck`).
+    pub move_block: Option<MoveBlock>,
+}
+
+/// What stops a card: its last refused move, or the next column's rules.
+#[derive(Debug, Clone, PartialEq)]
+pub struct MoveBlock {
+    pub to_column: String,
+    pub reason: String,
+    pub more: u32,
+    pub refused: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -50,6 +50,7 @@ pub(crate) fn visible_in(t: &BoardTx<'_>, id: &str, actor: &Actor<'_>) -> anyhow
         Some(_) => match actor {
             Actor::Bot { id: bot, .. } => t.invited(id)?.iter().any(|b| b == bot),
             Actor::User | Actor::Device(_) => true,
+            Actor::Daemon => false,
         },
     })
 }

@@ -191,7 +191,12 @@ fn system_md_states_this_machines_task_limits_and_the_note_cap() {
     assert!(md.contains("you may have 5 open tasks on one card"));
     assert!(md.contains("4 across the project (20 for the lead)"));
     assert!(md.contains(&format!("over {} bytes is refused", bus::MAX_NOTE_BYTES)));
-    assert!(md.contains("A note never\nauthorises work"));
+    assert!(md.contains("A note never starts work"));
+    // The cards assigned to a bot: the assignment starts work, a notice
+    // never does, and the card moves as the work does.
+    assert!(md.contains("## Your cards"));
+    assert!(md.contains("Only an assignment or a task starts work."));
+    assert!(md.contains("move it back to To do and ask the owner"));
     // An invited bot knows the owner's messages about a draft by their tag.
     assert!(md.contains("`[draft KEY-12 “title”]`"));
 }

@@ -8,6 +8,7 @@ use std::sync::Arc;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
+use crate::kanban::model::ItemState;
 use crate::owner_threads::{self, BODY_MAX};
 
 use super::schema::tool;
@@ -79,14 +80,23 @@ async fn message_owner(app: &Arc<AppState>, bot_id: &str, args: &Value) -> anyho
          and send its path",
         body.len()
     );
+    // A draft the bot discusses takes no comment: the message leads with
+    // its tag, and a question about it closes when the discussion ends.
+    let draft = match item {
+        Some(item_id) => discussed_draft(app, &bot, item_id)?,
+        None => None,
+    };
     // The card first: a card the bot can't comment on refuses the message.
-    let stored = match item {
-        Some(item_id) => {
+    let stored = match (item, &draft) {
+        (Some(item_id), Some(title)) => {
+            format!("{} {body}", crate::kanban::draft_talk::tag(item_id, title))
+        }
+        (Some(item_id), None) => {
             let note = json!({ "id": item_id, "body": format!("To the owner: {body}") });
             comment(app, bot_id, &note).await?;
             format!("[card {item_id}] {body}")
         }
-        None => body.to_string(),
+        (None, _) => body.to_string(),
     };
     let (msg, question) = owner_threads::message_owner(app, &bot, &stored, asks)?;
     Ok(json!({
@@ -95,6 +105,23 @@ async fn message_owner(app: &Arc<AppState>, bot_id: &str, args: &Value) -> anyho
         "asks": question.is_some(),
         "item": item,
     }))
+}
+
+/// The draft's title, when `item_id` is a draft of this computer's board
+/// that the bot is invited to discuss.
+fn discussed_draft(
+    app: &AppState,
+    bot: &bus::Bot,
+    item_id: &str,
+) -> anyhow::Result<Option<String>> {
+    app.db.board_read(|t| {
+        let Some(item) = t.item(item_id)? else {
+            return Ok(None);
+        };
+        let ours = t.item_project(item_id)?.as_deref() == Some(bot.project_id.as_str());
+        let invited = t.invited(item_id)?.contains(&bot.id);
+        Ok((ours && invited && item.state == ItemState::Draft).then_some(item.title))
+    })
 }
 
 async fn ask_on_card(app: &Arc<AppState>, bot_id: &str, args: &Value) -> anyhow::Result<Value> {

@@ -5,6 +5,7 @@ import type { ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
 import BotAvatar from "../BotAvatar";
 import { labelGroupOf, labelWord } from "./labelGroups";
 import { typeLabel, urgentPriority } from "./labels";
+import { stuckLine } from "./moves";
 import type { Anchor } from "./useBoardMoves";
 
 /** The label the daemon adds when the lead overrode a WIP limit. */
@@ -23,6 +24,8 @@ interface BoardCardProps {
   readonly dragging: boolean;
   /** The label groups whose labels show as chips: the board's own. */
   readonly chipGroups?: ReadonlySet<string>;
+  /** A column's name by key, for the "can't move" line. */
+  readonly columnNameOf?: (key: string) => string;
 }
 
 function assigneeName(card: ItemCard, assignee: Bot | undefined): string | null {
@@ -30,7 +33,12 @@ function assigneeName(card: ItemCard, assignee: Bot | undefined): string | null 
 }
 
 /** "H-017, Feature, Board and dashboard, Doing, Desktop Dev, blocked, stale" (H-018 §3.2). */
-function cardAccessibleName(card: ItemCard, columnName: string, assignee: Bot | undefined): string {
+function cardAccessibleName(
+  card: ItemCard,
+  columnName: string,
+  assignee: Bot | undefined,
+  stuck: string | null,
+): string {
   const parts = [card.id, typeLabel(card.type).word, card.title, columnName];
   parts.push(assigneeName(card, assignee) ?? "unassigned");
   const priority = urgentPriority(card.priority);
@@ -43,6 +51,9 @@ function cardAccessibleName(card: ItemCard, columnName: string, assignee: Bot | 
   if (card.stale) {
     parts.push("stale");
   }
+  if (stuck !== null) {
+    parts.push(stuck);
+  }
   return parts.join(", ");
 }
 
@@ -51,13 +62,56 @@ function anchorBelow(element: Element): Anchor {
   return { x: rect.left, y: rect.bottom + 4 };
 }
 
-/** One item on the board: at most six lines, each omitted when it has nothing to say. */
+/** The card's status lines: blocked, over WIP, can't move, criteria. Each is left out when it has nothing to say. */
+function CardLines({
+  card,
+  stuck,
+}: {
+  readonly card: ItemCard;
+  readonly stuck: string | null;
+}): ReactElement {
+  const overWip = card.labels.includes(WIP_OVERRIDE_LABEL);
+  const why =
+    card.moveBlock?.refused === true
+      ? "The last move was refused."
+      : "The next column's rules stop it moving on.";
+  return (
+    <>
+      {card.blocked ? (
+        <div className="board-card-line board-card-blocked-line">
+          <span aria-hidden="true">⛔</span> Blocked
+        </div>
+      ) : null}
+      {overWip ? (
+        <div className="board-card-line board-card-override">
+          <span aria-hidden="true">⚑</span> Over WIP
+        </div>
+      ) : null}
+      {stuck === null ? null : (
+        <div className="board-card-line board-card-stuck" title={why}>
+          <span aria-hidden="true">⚠</span> {stuck}
+        </div>
+      )}
+      {card.acTotal > 0 ? (
+        <div className="board-card-line board-card-meta">
+          <span aria-hidden="true">☑</span> {card.acChecked}/{card.acTotal} AC
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+/** One item on the board: at most seven lines, each omitted when it has nothing to say. */
 export default function BoardCard(props: BoardCardProps): ReactElement {
   const { card, columnName, assignee, onOpenMoveMenu, dragging } = props;
   const type = typeLabel(card.type);
   const priority = urgentPriority(card.priority);
   const name = assigneeName(card, assignee);
-  const overWip = card.labels.includes(WIP_OVERRIDE_LABEL);
+  const block = card.moveBlock;
+  const stuck =
+    block === undefined
+      ? null
+      : stuckLine(block, props.columnNameOf?.(block.toColumn) ?? block.toColumn);
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
     if (props.onOpen && event.target === event.currentTarget && event.key === "Enter") {
@@ -101,7 +155,7 @@ export default function BoardCard(props: BoardCardProps): ReactElement {
       className={className}
       // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex
       tabIndex={0}
-      aria-label={cardAccessibleName(card, columnName, assignee)}
+      aria-label={cardAccessibleName(card, columnName, assignee, stuck)}
       data-item-id={card.id}
       draggable={onOpenMoveMenu !== null}
       onDragStart={onDragStart}
@@ -154,21 +208,7 @@ export default function BoardCard(props: BoardCardProps): ReactElement {
           ))}
         </div>
       )}
-      {card.blocked ? (
-        <div className="board-card-line board-card-blocked-line">
-          <span aria-hidden="true">⛔</span> Blocked
-        </div>
-      ) : null}
-      {overWip ? (
-        <div className="board-card-line board-card-override">
-          <span aria-hidden="true">⚑</span> Over WIP
-        </div>
-      ) : null}
-      {card.acTotal > 0 ? (
-        <div className="board-card-line board-card-meta">
-          <span aria-hidden="true">☑</span> {card.acChecked}/{card.acTotal} AC
-        </div>
-      ) : null}
+      <CardLines card={card} stuck={stuck} />
       <div className="board-card-foot">
         {name === null ? (
           <span className="board-card-unassigned">Unassigned</span>

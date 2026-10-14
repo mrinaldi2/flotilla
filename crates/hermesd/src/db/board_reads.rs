@@ -26,20 +26,25 @@ impl BoardTx<'_> {
         let Some(settings) = settings_in(self.conn, project_id)? else {
             return Ok(None);
         };
+        let mut cards = cards_in(self.conn, project_id, "", None)?;
+        crate::kanban::stuck::mark(self, project_id, &mut cards)?;
         Ok(Some(BoardSnapshot {
             settings,
             columns: self.columns(project_id)?,
-            cards: cards_in(self.conn, project_id, "", None)?,
+            cards,
             roles: self.roles(project_id)?,
         }))
     }
 
-    /// One item's card, as a board push carries it: live or draft.
+    /// One item's card, as a board push carries it: live or draft, with
+    /// what stops it moving on.
     pub fn card(&self, id: &str) -> anyhow::Result<Option<ItemCard>> {
         let Some(project_id) = self.item_project(id)? else {
             return Ok(None);
         };
-        card_in(self.conn, &project_id, id)
+        let mut card = card_in(self.conn, &project_id, id)?;
+        crate::kanban::stuck::mark(self, &project_id, card.as_mut_slice())?;
+        Ok(card)
     }
 
     /// An item's comments, oldest first.

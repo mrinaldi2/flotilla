@@ -216,6 +216,7 @@ fn create(
         app.events.push(Push::BotUpdated { bot: bot.clone() });
         return Ok(Created { bot });
     }
+    first_lead(app, &bot);
 
     // Opening turn, so the new bot's window is not blank until someone types
     // at it. Queued rather than delivered here: the session may not be up yet,
@@ -239,6 +240,31 @@ fn create(
 
     app.events.push(Push::BotUpdated { bot: bot.clone() });
     Ok(Created { bot })
+}
+
+/// A project's first bot leads it when nobody does yet (0.19.0): the owner
+/// can then hand it a card and it may run the board. A failure costs only
+/// the default, never the creation.
+fn first_lead(app: &Arc<AppState>, bot: &Bot) {
+    match app.db.claim_first_lead(&bot.project_id, &bot.id) {
+        Ok(false) => {}
+        Ok(true) => {
+            if let Ok(Some(project)) = app.db.get_project(&bot.project_id) {
+                app.events.push(Push::ProjectUpdated { project });
+            }
+            // Open boards refetch the roles.
+            if matches!(app.db.board_settings(&bot.project_id), Ok(Some(_))) {
+                app.board.writer().publish(crate::kanban::feed::Change {
+                    project_id: &bot.project_id,
+                    kind: crate::kanban::feed::ChangeKind::SettingsChanged,
+                    item_id: "",
+                    card: None,
+                    from_column: None,
+                });
+            }
+        }
+        Err(e) => tracing::warn!(bot_id = %bot.id, error = %e, "first bot not made the lead"),
+    }
 }
 
 /// The stored avatar for a bot created without one: a built-in icon, dealt at

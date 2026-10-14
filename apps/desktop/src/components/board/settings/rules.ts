@@ -184,6 +184,7 @@ export const FACTS: readonly { readonly name: string; readonly word: string }[] 
   { name: "release.deployed", word: "Deployed" },
   { name: "release.deploy_failed", word: "Deploy failed" },
   { name: "release.left_out_reverted", word: "Left out of a release and reverted" },
+  { name: "work.started", word: "The assignee started work on it" },
 ];
 
 export function factWord(name: string): string {

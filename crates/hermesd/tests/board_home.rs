@@ -10,7 +10,7 @@ use bus::contract::board::{self as c, board_request::Request};
 use bus::contract::wire::envelope::Body;
 use common::board::*;
 use common::*;
-use hermesd::kanban::defaults::COLUMNS;
+use hermesd::kanban::presets::Preset;
 use serde_json::{json, Value};
 
 fn board_get(project_id: &str) -> Request {
@@ -91,7 +91,8 @@ async fn the_owner_starts_a_linked_board_on_one_computer_only() {
     let board = snapshot(call(&mut p.win_client, board_enable(&win_app)).await);
     let home = board.settings.expect("settings").home_daemon_id;
     assert_eq!(home, p.win.app.db.daemon_id().unwrap());
-    assert_eq!(board.columns.len(), COLUMNS.len());
+    // The first board: Simple + Review (To do, Doing, Review, Done, Cancelled).
+    assert_eq!(board.columns.len(), Preset::FIRST.columns().len());
     // Served from there from now on, and starting it again changes nothing.
     snapshot(call(&mut p.win_client, board_get(&win_app)).await);
     let again = snapshot(call(&mut p.win_client, board_enable(&win_app)).await);

@@ -25,6 +25,9 @@ pub enum Fact {
     ReleaseDeployFailed,
     /// Its revert was merged after the owner left it out of a release.
     ReleaseLeftOutReverted,
+    /// Its assignee started work on it (`kanban::starts`). Only a custom
+    /// board that maps it moves the card; it is never kept on a card.
+    WorkStarted,
 }
 
 impl Fact {
@@ -41,6 +44,7 @@ impl Fact {
         Fact::ReleaseDeployed,
         Fact::ReleaseDeployFailed,
         Fact::ReleaseLeftOutReverted,
+        Fact::WorkStarted,
     ];
 
     /// The name a board's `automations` key on.
@@ -58,6 +62,7 @@ impl Fact {
             Fact::ReleaseDeployed => "release.deployed",
             Fact::ReleaseDeployFailed => "release.deploy_failed",
             Fact::ReleaseLeftOutReverted => "release.left_out_reverted",
+            Fact::WorkStarted => "work.started",
         }
     }
 
@@ -76,6 +81,7 @@ impl Fact {
             Fact::ReleaseDeployed => "Deployed",
             Fact::ReleaseDeployFailed => "Deploy failed",
             Fact::ReleaseLeftOutReverted => "Left out of a release and reverted",
+            Fact::WorkStarted => "The assignee started work on it",
         }
     }
 
@@ -92,10 +98,12 @@ impl Fact {
         Fact::ALL.iter().copied().find(|f| f.name() == name)
     }
 
-    /// Where a release-gated board moves the item: what 0.18 did.
-    pub fn release_gated(self) -> ColumnCategory {
+    /// Where a release-gated board moves the item: what 0.18 did. `None`
+    /// for a fact 0.18 didn't have, which leaves a release-gated card where
+    /// it is.
+    pub fn release_gated(self) -> Option<ColumnCategory> {
         use ColumnCategory as C;
-        match self {
+        Some(match self {
             Fact::PrOpened => C::Review,
             Fact::PrMerged => C::Verify,
             Fact::PrClosed | Fact::PrChangesRequested => C::Doing,
@@ -105,7 +113,8 @@ impl Fact {
             Fact::ReleaseHeld => C::Ready,
             Fact::ReleaseRework | Fact::ReleaseLeftOutReverted => C::Doing,
             Fact::ReleaseDeployed => C::Done,
-        }
+            Fact::WorkStarted => return None,
+        })
     }
 }
 

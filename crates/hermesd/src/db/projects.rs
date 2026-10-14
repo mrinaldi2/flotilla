@@ -74,6 +74,40 @@ impl Db {
         Ok(())
     }
 
+    /// Make `bot_id` the project's lead when the project has none and no
+    /// other live bot of its own made before it (0.19.0: a project's first
+    /// bot leads it). Two bots made at once: the earlier one leads, rather
+    /// than each seeing the other and neither leading. A project with a
+    /// board gives it the board's Lead role too. True when it became the
+    /// lead.
+    pub fn claim_first_lead(&self, project_id: &str, bot_id: &str) -> anyhow::Result<bool> {
+        let mut conn = self.lock();
+        let tx = conn.transaction()?;
+        let claimed = tx.execute(
+            "UPDATE project SET lead_bot_id = ?2
+             WHERE id = ?1 AND lead_bot_id IS NULL AND deleted_at IS NULL
+               AND EXISTS (SELECT 1 FROM bot WHERE id = ?2 AND project_id = ?1
+                             AND peer_id IS NULL AND temporary = 0 AND deleted_at IS NULL)
+               AND NOT EXISTS (
+                   SELECT 1 FROM bot o, bot me
+                    WHERE me.id = ?2 AND o.project_id = ?1 AND o.id != ?2
+                      AND o.peer_id IS NULL AND o.temporary = 0 AND o.deleted_at IS NULL
+                      AND (o.created_at < me.created_at
+                           OR (o.created_at = me.created_at AND o.id < me.id)))",
+            params![project_id, bot_id],
+        )? == 1;
+        if claimed {
+            tx.execute(
+                "INSERT OR IGNORE INTO project_role(project_id, role, bot_id)
+                 SELECT ?1, 'lead', ?2 WHERE EXISTS (
+                     SELECT 1 FROM board_settings WHERE project_id = ?1)",
+                params![project_id, bot_id],
+            )?;
+        }
+        tx.commit()?;
+        Ok(claimed)
+    }
+
     /// The bot to tell about a decision in this project.
     ///
     /// Falls back to whoever created the raising bot — Chief of Staff hired
@@ -192,5 +226,43 @@ impl Db {
             ),
             None => project.name.clone(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Db;
+
+    #[test]
+    fn of_two_bots_made_at_once_the_earlier_leads() {
+        let db = Db::open_in_memory().unwrap();
+        let p = db.create_project("Shop", "shop").unwrap();
+        let first = db
+            .create_bot(&p.id, "First", "", "", "", "/tmp/f", "first", None)
+            .unwrap();
+        let second = db
+            .create_bot(&p.id, "Second", "", "", "", "/tmp/s", "second", None)
+            .unwrap();
+        // Both rows exist before either claims; the later one claims first.
+        assert!(!db.claim_first_lead(&p.id, &second.id).unwrap());
+        assert!(db.claim_first_lead(&p.id, &first.id).unwrap());
+        let lead = db.get_project(&p.id).unwrap().and_then(|p| p.lead_bot_id);
+        assert_eq!(lead.as_deref(), Some(first.id.as_str()));
+        // A third, with a lead already there, doesn't take it.
+        let third = db
+            .create_bot(&p.id, "Third", "", "", "", "/tmp/t", "third", None)
+            .unwrap();
+        assert!(!db.claim_first_lead(&p.id, &third.id).unwrap());
+    }
+
+    #[test]
+    fn a_worker_never_claims_the_lead() {
+        let db = Db::open_in_memory().unwrap();
+        let p = db.create_project("Shop", "shop").unwrap();
+        let worker = db
+            .create_bot(&p.id, "Worker", "", "", "", "/tmp/w", "worker", None)
+            .unwrap();
+        db.set_bot_temporary(&worker.id, true).unwrap();
+        assert!(!db.claim_first_lead(&p.id, &worker.id).unwrap());
     }
 }

@@ -272,7 +272,8 @@ async fn bot_writes_over_mcp_reach_watching_boards() {
     assert_eq!(event.item_id, id);
     assert_eq!(event.card.expect("card").title, "Pushed");
 
-    // A refusal writes nothing and pushes nothing; the next change is seq 2.
+    // A refusal writes nothing; its card is pushed with why it can't move,
+    // and the next change is seq 3.
     let raw = dev
         .call_raw(
             "item_move",
@@ -287,10 +288,19 @@ async fn bot_writes_over_mcp_reach_watching_boards() {
                    "expected_version": version(&created["item"])}),
         )
         .await;
+    let event = next_push(&mut watcher).await.expect("the refused card");
+    assert_eq!(
+        (event.seq, event.kind),
+        (2, c::BoardEventKind::ItemUpserted as i32)
+    );
+    assert!(event
+        .card
+        .and_then(|card| card.move_block)
+        .is_some_and(|b| b.refused));
     let event = next_push(&mut watcher).await.expect("a push for the move");
     assert_eq!(
         (event.seq, event.kind),
-        (2, c::BoardEventKind::ItemMoved as i32)
+        (3, c::BoardEventKind::ItemMoved as i32)
     );
     assert_eq!(event.from_column.as_deref(), Some("inbox"));
     assert_eq!(
