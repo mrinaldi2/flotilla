@@ -258,6 +258,12 @@ code (`kanban/presets.rs`):
 
 - **Simple (custom):** To do (open) → Doing (active, WIP 3) → Done, plus a
   hidden Cancelled column (lead, with a reason).
+- **Simple + Review (custom), a new project's first board:** To do (open) →
+  Doing (active, WIP 3, `assignee_set`) → Review (active, only from Doing) →
+  Done, plus the hidden Cancelled. The lead or the assignee moves items into
+  To do, Doing and Review; Done is the lead's (`independent`: never the
+  card's own assignee), and the owner's as always. Automation:
+  `work.started` → Doing. See "Card flow".
 - **Software (custom):**
   - Inbox, then Ready: the lead moves items in; `ac_present`, `size_at_most(M)`
     and `blockers_done` apply.
@@ -281,13 +287,86 @@ Structure means boards, columns, rules, automations, types and templates.
 Cosmetic edits (rename, reorder, WIP limit, visibility) always apply directly,
 with a notice. Every structure change is a board event in the board's history.
 
+### Card flow (as built after K9)
+
+The owner's test of the installed build (a fresh project, one bot, one card)
+showed the card stuck: the first board was the release-gated Main, the
+first bot held no role, assigning told it nothing, and the board showed
+none of it. The owner's decisions of 2026-10-14 (see "Decisions") are built
+as follows.
+
+- **First board.** `ensure_board_from(…, Preset::FIRST)` makes a project's
+  first board, "Main", from **Simple + Review**, on the owner's first
+  `board_get` and on "Start the board on this computer"; a project with no
+  board gets it the same way. `ensure_board` keeps the release-gated Main
+  for fixtures. Existing boards are not touched, and nothing migrates.
+- **The first bot leads.** A project's first permanent bot becomes its lead
+  when the project has none and no other live bot of its own
+  (`claim_first_lead`), and takes the board's Lead role when the board
+  already exists. Setting the lead by hand is unchanged.
+- **The assignee owns its card.** On a card assigned to it (or linked to a
+  task it holds), any bot may `item_update`, `item_attach`, `item_detach`,
+  `item_link`, `item_comment` and `item_move`/`item_move_check`, with no
+  board role; the column rules still apply. The refusal for a bot without a
+  role no longer claims assignment would have been enough: it says what it
+  lacks (the card isn't its own) or which tools it may use on its own
+  cards.
+- **Starting work moves the card.** "Starts working" is the assignee's
+  first `item_get` or `item_update` of its card while the card sits in an
+  open column. The daemon then reports `work.started`, which Simple + Review
+  maps to Doing: the move is recorded with actor `daemon` (the drawer says
+  "Automation") and the note `work.started: <bot> started work on it`, and
+  the tool's reply says the card moved. Once the assignee has moved the
+  card itself since it was last assigned (back to To do, because it isn't
+  ready), its reads don't start it again; it moves the card on when it has
+  its answers. A board without the mapping, and every release-gated board,
+  never moves the card: the guards and their table are unchanged.
+- **Assignment notices.** Assigning a card, by the owner or a bot
+  (`item_assign`), tells the new assignee and the previous one. The notice
+  names the card, its column and state, and what is expected, from the
+  board's own columns: "Start now: read it with item_get, which moves it to
+  Doing. When the work is done, comment the result…, and move it to Review
+  with item_move. If anything is unclear or it isn't ready, ask the owner
+  with message_owner (asks: true, item: KEY-1), after moving it back to To
+  do." A release-gated card's notice points at `item_move_check` instead.
+  An assignment is never folded; the edits right after it fold into it.
+- **Notices carry the card's state.** Every other notice (an edit or a
+  move, by the owner or another bot; never the assignee's own or the
+  daemon's) says where the card is now and that it is news, not work ("if
+  your work on it is finished, don't redo it"), "It is done: there is
+  nothing to do." in a done column, and quotes the assignee's last comment
+  on the card. Edits fold into edits and moves into moves, for 60 s each.
+- **The prompt.** "Work is on the board" now says a note never starts work;
+  a new "Your cards" section says the assignment (or a task) is what starts
+  work, every other `[card KEY-12]` note is news, the card moves to Doing as
+  work starts, goes to Review when done, and back to To do with a question
+  (`message_owner` with `asks` and `item`, or `raise_decision`) when it
+  isn't ready. "Owner requests on a card" now speaks of the owner's chat.
+- **Can't move.** A card carries `move_block` (`ItemCard` field 20,
+  additive): its last refused move, kept in memory per item with who tried
+  and checked again on every read, or else the next visible column's rules
+  judged as the owner would move it. Codes that only ask for a reason or a
+  WIP override, and who-may codes (a role, the daemon's own moves), don't
+  show. A refused move now pushes the card (`ITEM_UPSERTED`), so the line
+  appears live; a refusal still writes nothing. The card shows "Can't move to
+  Review: No pr is linked. (+1)".
+- **Override.** On a release-gated board, a move none of its rows lists is
+  the owner's override (with a reason): `ColumnCheck.owner_override`
+  (additive) marks it, and "Move to…" shows it as "⚑ Override · needs a
+  reason" rather than ✓; its dialog is titled "Override: move …".
+- **Draft questions.** An invited bot's `message_owner` with `item` set to
+  the draft no longer fails on the draft's comment: the message leads with
+  the draft's tag and no comment is made. Its question closes when the
+  discussion ends for that bot: uninvited, or the draft finalized or
+  discarded.
+
 ### Bots find out
 
 - Structure changes and owner edits to items create **board events**.
 - **Bot notices:**
   - the lead gets a short notice for every change it did not make;
-  - an assignee gets one when the owner or another bot moves or edits their
-    item.
+  - an assignee gets one when the owner or another bot assigns, moves or
+    edits their item (as built: see "Card flow").
   - Notices are batched for up to 60 s and capped by the existing note budget.
 - **Version checks:** `board_get` returns the board's `version`. A tool call
   with a stale `board_version` is refused with "the board changed; re-read it".
@@ -409,7 +488,7 @@ branch is reviewed as one PR into `main` at the end.
 | K6 | Linked computers: a mirror per board, `board_id` in peer frames, `attachment_fetch`, a 0.18 peer compatibility path. As built: the peer frames are JSON, so `hermes.board.v1` is unchanged. The mirror stays one entry per project, since every reader takes the project's snapshot, but each board in it is fetched and replaced on its own: `board_snapshot{board_id}` answers with that board alone, and `board_event` carries `board_id`, so a structure change refetches only its board. Each end of a peer link says in its hello which kanban contract it speaks (`kanban: 2`; a 0.18 computer says none), and a link speaks the older one. A 0.18 computer is sent the default board alone, hears no change on another board, and its `board_get` and `item_query` list the default board's columns and cards. A 0.19 computer whose home is on 0.18 answers `board_list` from its mirror, drops board ids from what it forwards, and refuses the structure tools and `item_attach`/`item_detach` before asking. `attachment_fetch` serves 512 KiB chunks of an image or file of a live item of a linked project, never a draft's, a discarded item's, another project's or a doc's. The linked computer copies them into its project's artifacts under `.cache/attachments/<sha256>.<ext>`, so its bots can read them, under its own caps and type allowlist. A copy is written to a fresh `.part` file, kept only if it hashes to the record's sha256, and hashed again on every use: a changed copy is removed and fetched again. `item_get` points each attachment and the description's references at the copies; one that isn't copied (a doc, over a cap, a failed hash) loses the home's path and says why. A task delegated with `item:` to a linked bot lists its attachments with "`item_get` gives you a copy" instead of the home's paths. A linked bot's `item_attach{file}` is checked and read on its own computer, which sends the bytes (`attachment_push`) into an upload the home names for that bot's stand-in, then attaches it with `item_attach{upload_id}`; the home refuses a forwarded `file` and any upload that isn't the stand-in's own. A draft's files stay on the home even for an invited linked bot, which still edits the draft through `board_call`. Board management by a linked lead was already forwarded as `board_call` and runs under the home's structure policy. Left out: the cache is not trimmed, and the owner's apps on a linked computer neither upload nor read attachment bytes there; they do that on the home. Review: a detached file isn't fetched either. A peer's staged uploads count toward the item's cap with what it stores, its chunks are written one at a time, and an upload idle for ten minutes is swept when that bot starts another. A link holds at most four `attachment_fetch` answers unsent, so a peer that never reads can't make the home queue every chunk. A project's fetches on the linked computer take turns, so an older snapshot can't land over a newer one. A file is opened without waiting, so a named pipe in a bot's folder or the cache is refused instead of hanging a worker. A home that is down is the read-only board, not a 0.18 home. A reference to a file that wasn't copied reads `attachment:<id>` again, not the home's path. | A bot on a linked computer edits a board homed on another computer and reads an item's screenshot. |
 | K7 | Phone app (separate repository): vendored `kanban.v1`, board picker, live sync, move, quick add with photos and screenshots, "Discuss with a bot", draft review and finalize, approving proposals. | Works against a 0.19 daemon and still reads a 0.18 one. |
 | K8 | Remove what was specific to this repository: the Platform enum, `spec_link_for_ui_or_daemon`, `H-017` examples, name-based role guessing, iOS-only machine constants in Kanban. As built: items carry labels only; a label `<group>:<value>` belongs to a board's label group (`Board.label_groups`, set with `board_update{label_groups}`, a cosmetic change the lead makes directly). Migration 68 adds every item's platforms to its labels as `platform:<name>`, after its own and once, and empties `item.platforms` (the column stays, unread); gives a board the group `platform: desktop, ios, daemon, infra` when its items use one or it is release-gated with a template that asks for one; rewrites the Definition of Ready fields `platforms` to `label:platform` and `spec_link_for_ui_or_daemon` to `spec_link:platform:desktop,platform:ios,platform:daemon`; and keys `required_machines` by label. It is safe to run again, and a copy of the owner's 0.18 database (372 items, 365 with platforms) migrated with every item, link and event kept and the label totals equal to labels plus platforms. The release-gated rules read the labels with the same outcomes and texts (`Pick its platforms.`); only two codes changed with the field names, `dor.label` and `dor.spec_link`. A new board's templates ask for no label group, and a feature asks for its spec (`spec_link`, any item). The wire is additive: `Item`/`ItemCard.platforms` and `BoardSettings.required_machines` are deprecated and filled from the labels for 0.18 readers, and `platforms` on create, update and query, from a 0.18 client or a forwarded 0.18 call, become `platform:` labels (`compat018`, outside Kanban); a linked computer stores a 0.18 home's cards with the labels filled, and sends a 0.18 home its bots' `platform:` labels as platforms (a query by other labels is refused there, not widened). Bots no longer see the deprecated fields; the `labels` descriptions say that `platform:ios` gives the platform ios. No role comes from a bot's name: a new board gives the project's lead the lead role and nothing else; the owner (and the lead, for its roles) gives the rest. Role setting moved out of Kanban to `project_roles`, with the iOS tester rule and its machine constant; the markdown backlog importer moved to `backlog_import`. Tool descriptions lose this repository's design references and `H-017` examples. The desktop filters by the board's label groups (any label within a group, every group), plus a group the board doesn't declare when its cards use at most 8 values (so an import's `was:<id>` tags don't fill the bar), and cards show the labels of the board's groups. Left: no desktop editor for label groups yet, and no request edits templates, so a board adds `label:<group>` rules only through its migrated templates; a 0.18 caller that sets platforms replaces the whole `platform` group, so it drops a `platform:` label outside the four it knows (none exist on a migrated board). | A search for these terms in `crates/hermesd/src/kanban` finds nothing. |
-| K9 | Acceptance on a **fresh test project unrelated to this app**, on this computer and one linked computer. As built: `tests/k9_acceptance.rs` runs the eight steps end to end on two linked test daemons, with "Recipe Box" homed on one and linked from the other. The lead is on the home and the cook on the linked computer; the owner uses the desktop's ticket and a paired phone, and the bots are MCP clients. It covers the lead's proposal and its Needs you row; QA added by the owner, with the lead's notice and its `board_get`; the phone's draft with a screenshot, the lead's criteria and spec, one undo and the finalize on the desktop; the cook's task listing both files; the flow, with the `rule.ac_all_checked` refusal; Research approved from the phone; the cook's move, and its reads and refused writes while the home is offline. Step 8 scans every Kanban surface: the snapshot, the bots' board reads, templates, labels, the bots' messages, the board tools and the prompt's board section. The run found two bugs, both fixed: `board_get` listed an archived board's columns and the project's first key, and `item_flag_ac` named `release_submit`. Two gaps stay ignored tests. G1: a project's first board is always the release-gated Main the owner starts, so the scenario makes the lead's board the default and archives Main, and its items are RC-n. G2: the bus prompt and the Projects & Bots and Releases tools still name the daemon and releases. The automatic backup before the migration ("Data migration") came after the run; the runbook checks it exists and keeps a manual backup as an option. Left for the owner's run ([kanban-k9-runbook.md](kanban-k9-runbook.md)): the desktop UI, the phone with K7, real bots, two physical computers, the installers, and the Windows bot's compile and install. | See below. |
+| K9 | Acceptance on a **fresh test project unrelated to this app**, on this computer and one linked computer. As built: `tests/k9_acceptance.rs` runs the eight steps end to end on two linked test daemons, with "Recipe Box" homed on one and linked from the other. The lead is on the home and the cook on the linked computer; the owner uses the desktop's ticket and a paired phone, and the bots are MCP clients. It covers the lead's proposal and its Needs you row; QA added by the owner, with the lead's notice and its `board_get`; the phone's draft with a screenshot, the lead's criteria and spec, one undo and the finalize on the desktop; the cook's task listing both files; the flow, with the `rule.ac_all_checked` refusal; Research approved from the phone; the cook's move, and its reads and refused writes while the home is offline. Step 8 scans every Kanban surface: the snapshot, the bots' board reads, templates, labels, the bots' messages, the board tools and the prompt's board section. The run found two bugs, both fixed: `board_get` listed an archived board's columns and the project's first key, and `item_flag_ac` named `release_submit`. Two gaps stayed ignored tests. G1, closed after K9 ("Card flow"): a project's first board was always the release-gated Main the owner starts; it is now Simple + Review, and `k9_g1_a_fresh_projects_first_board_is_simple_with_review` checks it, with the first bot leading and its `board_create` proposed and approved. The scenario still makes the lead's board the default and archives Main, and its items are RC-n. G2: the bus prompt and the Projects & Bots and Releases tools still name the daemon and releases. The automatic backup before the migration ("Data migration") came after the run; the runbook checks it exists and keeps a manual backup as an option. Left for the owner's run ([kanban-k9-runbook.md](kanban-k9-runbook.md)): the desktop UI, the phone with K7, real bots, two physical computers, the installers, and the Windows bot's compile and install. | See below. |
 
 ### Acceptance scenario (K9)
 
@@ -461,6 +540,22 @@ The owner approved the proposed answers to the open questions on 2026-10-13:
 5. Only the owner finalizes or discards a draft.
 6. Attachment caps: 10 MB per image, 25 MB per file, 100 MB per item. They are
    configurable.
+
+After the owner's test of the installed build, on 2026-10-14 ("Card flow"):
+
+7. A new project's first board, and a project with no board yet, is Simple +
+   Review. Existing boards are not changed.
+8. The assignee owns its card: any bot edits, attaches, links and moves its
+   own cards under the column rules, with no board role. A project's first
+   bot becomes its lead when the project has none.
+9. The daemon moves a card to Doing when its assignee starts working on it;
+   the bot moves it back to To do and asks the owner when it isn't ready.
+   Release-gated boards keep their guards.
+10. Assigning a card tells the assignee what to do; every notice carries the
+    card's state; a note never starts work, only an assignment or a task.
+11. A card shows why it can't move; the release-gated unlisted move is an
+    explicit Override.
+12. A question about a draft closes when its discussion ends.
 
 ## Rollout conditions
 

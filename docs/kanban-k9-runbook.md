@@ -10,8 +10,10 @@ cargo test -p hermesd --test integration k9_acceptance::
 This checklist is for what the test can't reach: the desktop app's UI, the
 real phone with K7 ([mrinaldi2/gravity_os#1](https://github.com/mrinaldi2/gravity_os/pull/1),
 branch `k7-boards`), real Claude bots, two physical computers, and the
-installers. Two known gaps are kept as ignored tests (`k9_gap_*`); they are
-marked **G1** and **G2** below, so a hit there is expected, not a new failure.
+installers. One known gap is kept as an ignored test (`k9_gap_*`), marked
+**G2** below, so a hit there is expected, not a new failure. **G1** (the first
+board was always release-gated) is closed: a project's first board is now
+Simple + Review, and its first bot leads it.
 
 You need:
 
@@ -156,8 +158,9 @@ Tick each step and note anything that differs.
    - [ ] On the PC, create **Recipe Box** with a bot **Cook**.
    - [ ] On the Mac, link the project to the PC's. Cook shows on the Mac as
      a linked bot.
-   - [ ] Board tab: **Start the board on this computer**. **G1:** the
-     project's first board is always the release-gated "Main", prefix RB.
+   - [ ] Board tab: **Start the board on this computer**. The project's
+     first board is "Main", prefix RB, with To do, Doing, Review and Done
+     (Simple + Review). Lead, the first bot, already leads it.
    - [ ] Pair the phone with the Mac (read, control and approve).
 2. **The lead's board.**
    - [ ] Ask Lead in chat: "Propose a Simple board named Recipes with key RC."
@@ -212,7 +215,7 @@ Tick each step and note anything that differs.
      board settings;
    - [ ] what Lead and Cook were told.
 
-   **G1:** the archived Main is release-gated. **G2:** the bots'
+   **G2:** the bots'
    instructions and their non-board tools still name the daemon and
    releases. Anything else is a finding.
 
