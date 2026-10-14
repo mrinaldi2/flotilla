@@ -189,19 +189,36 @@ fn offline(
             list
         }),
         "board_get" => {
+            // As the home's `board_get`: no archived board, and the default
+            // board's key (a home on 0.18 lists no boards).
+            let archived: Vec<&str> = snapshot
+                .boards
+                .iter()
+                .filter(|b| b.archived)
+                .map(|b| b.id.as_str())
+                .collect();
+            let live = |board_id: &str| !archived.contains(&board_id);
             let columns = snapshot
                 .columns
                 .iter()
-                .filter(|col| col.visible)
+                .filter(|col| col.visible && live(&col.board_id))
                 .map(|col| {
                     let mut v = out(col)?;
                     v["count"] = json!(cards_in(snapshot, &col.key).count());
                     Ok(v)
                 })
                 .collect::<anyhow::Result<Vec<_>>>()?;
-            let key = snapshot.settings.as_ref().map(|s| s.key.clone());
+            let cards: Vec<&c::ItemCard> = snapshot
+                .cards
+                .iter()
+                .filter(|card| live(&card.board_id))
+                .collect();
+            let key = match snapshot.boards.iter().find(|b| b.is_default) {
+                Some(b) => Some(b.key.clone()),
+                None => snapshot.settings.as_ref().map(|s| s.key.clone()),
+            };
             Ok(json!({
-                "key": key, "columns": columns, "cards": out(&snapshot.cards)?,
+                "key": key, "columns": columns, "cards": out(cards)?,
                 "offline": note,
             }))
         }

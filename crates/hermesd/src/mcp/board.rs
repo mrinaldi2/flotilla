@@ -253,15 +253,33 @@ pub(super) fn bot_id(app: &Arc<AppState>, me: &Me, name_or_id: &str) -> anyhow::
     crate::kanban::edit::project_bot(app, &me.bot.project_id, name_or_id)
 }
 
+/// The project's boards as a bot works them: the columns and cards of
+/// every board not archived, and the item-id prefix `item_create` uses
+/// when no board is named, the default board's.
 fn board_get(app: &Arc<AppState>, me: &Me) -> anyhow::Result<Value> {
     let project = &me.bot.project_id;
     let settings = app.db.board_settings(project)?.expect("checked in call");
-    let cards = app.db.board_cards(project)?;
+    let boards = app.db.boards(project)?;
+    let archived: Vec<&str> = boards
+        .iter()
+        .filter(|b| b.archived_at.is_some())
+        .map(|b| b.id.as_str())
+        .collect();
+    let key = boards
+        .iter()
+        .find(|b| b.is_default)
+        .map_or(settings.key, |b| b.key.clone());
+    let cards: Vec<_> = app
+        .db
+        .board_cards(project)?
+        .into_iter()
+        .filter(|card| !archived.contains(&card.board_id.as_str()))
+        .collect();
     let columns = app
         .db
         .board_columns(project)?
         .into_iter()
-        .filter(|col| col.visible)
+        .filter(|col| col.visible && !archived.contains(&col.board_id.as_str()))
         .map(|col| {
             let count = cards
                 .iter()
@@ -276,7 +294,7 @@ fn board_get(app: &Arc<AppState>, me: &Me) -> anyhow::Result<Value> {
         .into_iter()
         .map(|card| out(c::ItemCard::from(card)))
         .collect::<anyhow::Result<Vec<_>>>()?;
-    Ok(json!({ "key": settings.key, "columns": columns, "cards": cards }))
+    Ok(json!({ "key": key, "columns": columns, "cards": cards }))
 }
 
 fn item_get(app: &Arc<AppState>, me: &Me, req: c::ItemGet) -> anyhow::Result<Value> {

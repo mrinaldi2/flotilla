@@ -130,13 +130,13 @@ async fn main() -> anyhow::Result<()> {
         }
         Some("backup") => {
             let out = flag_value(&args, "--out").unwrap_or_else(|| {
-                cfg.home.join("backups").join(format!(
+                hermesd::backup::backups_dir(&cfg).join(format!(
                     "backup-{}",
                     chrono::Utc::now().format("%Y%m%d-%H%M%S")
                 ))
             });
-            let db = Db::open(&cfg.db_path())?;
-            let path = hermesd::backup::backup(&cfg, &db, &out)?;
+            // As stored: a newer binary backs up without migrating first.
+            let path = hermesd::backup::backup(&cfg, &out)?;
             println!("backup written to {}", path.display());
             return Ok(());
         }
@@ -304,6 +304,8 @@ async fn main() -> anyhow::Result<()> {
         "hermesd starting"
     );
 
+    // Opening the database migrates it, one way; back it up first or stop.
+    hermesd::backup::before_migrations(&cfg)?;
     let db = Db::open(&cfg.db_path())?;
     if !db.integrity_check()? {
         anyhow::bail!("SQLite integrity check failed; refusing to start");
