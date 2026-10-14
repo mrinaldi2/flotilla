@@ -34,6 +34,7 @@ export function emptyHandlers(): PushHandlerSets {
     projects_overview_changed: new Set(),
     owner_thread_updated: new Set(),
     project_pinned: new Set(),
+    board_activity: new Set(),
   };
 }
 

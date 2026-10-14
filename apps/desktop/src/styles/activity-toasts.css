@@ -1,0 +1,111 @@
+/* ---------- board activity: toasts dropping from the top (0.19.0) ---------- */
+
+.activity-toasts {
+  position: fixed;
+  top: calc(var(--titlebar-h) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 101;
+  width: min(420px, calc(100vw - 32px));
+  /* The empty live region must not catch clicks meant for the view below. */
+  pointer-events: none;
+}
+
+.activity-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  background: var(--bg-active);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  animation: activity-toast-drop 160ms ease-out;
+}
+
+.activity-toast-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.activity-toast-open:focus-visible,
+.activity-toast .toast-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.activity-toast-head {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.activity-toast-actor {
+  font-weight: 600;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+.activity-toast-card {
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-toast-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.activity-toast-glyph {
+  width: 12px;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.activity-toast-word {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.activity-toast-detail {
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+@keyframes activity-toast-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-toast {
+    animation: none;
+  }
+}
