@@ -141,15 +141,28 @@ pub fn delete_branch(repo: &Path, branch: &str, expect: &str) -> anyhow::Result<
     )
 }
 
+/// An empty file for `GIT_CONFIG_GLOBAL`, made once per process in the
+/// daemon's own git folder: Git for Windows can't open `NUL` as a config
+/// file ("unable to access 'NUL'"), and a file in the shared temp folder
+/// could be planted by a bot.
+fn empty_global_config() -> anyhow::Result<std::path::PathBuf> {
+    static FILE: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+    if let Some(file) = FILE.get() {
+        return Ok(file.clone());
+    }
+    let file = crate::safe_git::run_dir()?.join(format!("empty-{}.gitconfig", std::process::id()));
+    std::fs::write(&file, "")?;
+    Ok(FILE.get_or_init(|| file).clone())
+}
+
 /// What `url` has for each of `refs` (`refs/tags/x^{}` for a tag's commit),
 /// asked outside the checkout and with no git config of the user's or the
 /// checkout's, so no `insteadOf` or `pushurl` can redirect it (ARCH-R52 S1).
 pub fn remote_refs(url: &str, refs: &[String]) -> anyhow::Result<Vec<(String, String)>> {
-    let null = if cfg!(windows) { "NUL" } else { "/dev/null" };
     let url = github_https(url).unwrap_or_else(|| url.to_string());
     let out = Command::new("git")
         .current_dir(std::env::temp_dir())
-        .env("GIT_CONFIG_GLOBAL", null)
+        .env("GIT_CONFIG_GLOBAL", empty_global_config()?)
         .env("GIT_CONFIG_NOSYSTEM", "1")
         .args(no_hooks())
         .args(["-c", "credential.helper=!gh auth git-credential"])
