@@ -184,11 +184,6 @@ async fn the_owner_clicks_and_types_into_the_tab_on_show() {
 #[tokio::test]
 async fn a_stalled_viewer_skips_frames_instead_of_queuing_them() {
     const FRAMES: usize = 60;
-    let _ = tracing_subscriber::fmt()
-        .with_env_filter("hermesd=debug")
-        .with_test_writer()
-        .try_init();
-    let t0 = std::time::Instant::now();
     let d = spawn_daemon_with(|cfg| cfg.user_home = cfg.home.join("user")).await;
     let mut c = WsClient::connect(&d).await;
     let pid = project(&mut c, "web").await;
@@ -202,7 +197,6 @@ async fn a_stalled_viewer_skips_frames_instead_of_queuing_them() {
         .request(json!({"type": "watch_browser", "bot_id": id}))
         .await;
     assert_eq!(ok["type"], "ok", "{ok}");
-    eprintln!("DIAG watching at {:?}", t0.elapsed());
 
     // The phone stops reading (a dead zone) for as long as the screen keeps
     // changing, then asks for something once it is back. A debug build on a
@@ -216,37 +210,18 @@ async fn a_stalled_viewer_skips_frames_instead_of_queuing_them() {
             "the screencast stalled"
         );
         tokio::time::sleep(Duration::from_millis(50)).await;
-        eprintln!(
-            "DIAG stall sent={} at {:?}",
-            sent.load(Ordering::SeqCst),
-            t0.elapsed()
-        );
     }
-    eprintln!(
-        "DIAG stall loop done at {:?}, sent={}",
-        t0.elapsed(),
-        sent.load(Ordering::SeqCst)
-    );
     tokio::time::sleep(Duration::from_millis(500)).await;
     let req_id = c.send(json!({"type": "list_projects"})).await;
-    eprintln!("DIAG list_projects sent at {:?}", t0.elapsed());
     let frames_first = Cell::new(0);
     let reply = c
         .wait_for_within(slow, |v| {
             if v["type"] == "browser_frame" {
                 frames_first.set(frames_first.get() + 1);
-                eprintln!(
-                    "DIAG frame {} before reply at {:?}",
-                    frame_number(v),
-                    t0.elapsed()
-                );
-            } else {
-                eprintln!("DIAG other {} at {:?}", v["type"], t0.elapsed());
             }
             v["req_id"] == req_id.as_str()
         })
         .await;
-    eprintln!("DIAG reply at {:?}", t0.elapsed());
     assert_eq!(reply["type"], "projects", "{reply}");
     // Only what was already on the wire comes first, not every frame.
     assert!(
@@ -256,17 +231,9 @@ async fn a_stalled_viewer_skips_frames_instead_of_queuing_them() {
     );
     // The newest screen still arrives.
     c.wait_for_within(slow, |v| {
-        if v["type"] == "browser_frame" {
-            eprintln!(
-                "DIAG frame {} after reply at {:?}",
-                frame_number(v),
-                t0.elapsed()
-            );
-        }
         v["type"] == "browser_frame" && frame_number(v) == FRAMES - 1
     })
     .await;
-    eprintln!("DIAG done at {:?}", t0.elapsed());
 }
 
 #[tokio::test]

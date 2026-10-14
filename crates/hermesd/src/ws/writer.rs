@@ -46,24 +46,10 @@ pub(super) async fn write_out<S>(
             }
         };
         // `send` flushes, which also lets out any pong queued for the client.
-        let diag_kind = match &message {
-            WsMessage::Text(t) => format!(
-                "text {} {}",
-                t.len(),
-                t.chars().take(60).collect::<String>()
-            ),
-            WsMessage::Binary(b) => format!("binary {}", b.len()),
-            other => format!("{other:?}"),
-        };
-        let diag_start = std::time::Instant::now();
-        tracing::debug!("DIAG writer sending {diag_kind}");
         if sink.send(message).await.is_err() {
-            tracing::debug!("DIAG writer send failed after {:?}", diag_start.elapsed());
             break;
         }
-        tracing::debug!("DIAG writer sent in {:?}", diag_start.elapsed());
     }
-    tracing::debug!("DIAG writer loop ended");
     // A close frame, so the client sees the connection end at once and
     // reconnects (H-170).
     let _ = sink.close().await;

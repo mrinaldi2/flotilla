@@ -93,7 +93,6 @@ impl BotStream {
                 true
             })
             .await;
-            tracing::debug!("DIAG screencast ended {result:?}");
             if let Err(e) = result {
                 tracing::debug!(error = %e, "browser screencast ended");
             }
@@ -126,15 +125,8 @@ impl BrowserStreams {
         let (send, tabs) = watch::channel(None);
         let task = tokio::spawn(async move {
             loop {
-                let diag_t = std::time::Instant::now();
                 let open = match cdp::port(&profile) {
-                    Some(port) => match cdp::tabs(port).await {
-                        Ok(t) => t,
-                        Err(e) => {
-                            tracing::debug!("DIAG tabs failed {e:#} after {:?}", diag_t.elapsed());
-                            Vec::new()
-                        }
-                    },
+                    Some(port) => cdp::tabs(port).await.unwrap_or_default(),
                     None => Vec::new(),
                 };
                 send.send_if_modified(|seen| {
