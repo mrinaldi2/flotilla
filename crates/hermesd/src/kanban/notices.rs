@@ -5,7 +5,10 @@
 //! a move, is told once per item in any 60 s, and the edits (or moves) that
 //! follow in that window fold into it, which already asks the bot to read
 //! the item again. The edits right after an assignment fold into it.
-//! The note budget caps the rest, as for every note.
+//! Notices go straight to the bot's inbox, outside the bus's budgets: each
+//! follows a call of its own by the owner or another bot (only the lead
+//! assigns), never the assignee's own or the daemon's, so a notice never
+//! causes another by itself.
 
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};

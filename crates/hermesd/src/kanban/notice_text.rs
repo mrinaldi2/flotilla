@@ -50,16 +50,16 @@ impl Plan {
         let finish = start.and_then(|s| {
             cols.iter()
                 .find(|c| c.ord > s.ord && c.kind != ColumnKind::Cancelled)
-                .map(|c| c.name.clone())
+                .map(|c| inline(&c.name, NAME_MAX))
         });
         let back = start.and_then(|s| {
             cols.iter()
                 .rev()
                 .find(|c| c.ord < s.ord && c.kind == ColumnKind::Open)
-                .map(|c| c.name.clone())
+                .map(|c| inline(&c.name, NAME_MAX))
         });
         Some(Plan {
-            start: start.map(|s| (s.name.clone(), mapped.is_some())),
+            start: start.map(|s| (inline(&s.name, NAME_MAX), mapped.is_some())),
             finish,
             back,
         })
@@ -78,13 +78,31 @@ pub fn state_word(kind: ColumnKind) -> &'static str {
 
 /// The longest stretch of the assignee's last comment a notice quotes.
 const QUOTE_MAX: usize = 160;
+/// The longest title, or column name, a notice shows.
+const NAME_MAX: usize = 120;
 
-fn quote(text: &str) -> String {
-    let text = text.split_whitespace().collect::<Vec<_>>().join(" ");
-    match text.char_indices().nth(QUOTE_MAX) {
+/// Text someone else wrote (a title, a column's name, a comment), as a
+/// notice quotes it: on one line, cut to `max` characters, with no quote
+/// mark that could end the quote early and no bracket that could start a
+/// `[card …]` line of its own, so it can't read as the notice's text.
+fn inline(text: &str, max: usize) -> String {
+    let text: String = super::attachments::one_line(text)
+        .chars()
+        .map(|ch| match ch {
+            '“' | '”' => '"',
+            '[' => '(',
+            ']' => ')',
+            ch => ch,
+        })
+        .collect();
+    match text.char_indices().nth(max) {
         Some((at, _)) => format!("{}…", &text[..at]),
         None => text,
     }
+}
+
+fn quote(text: &str) -> String {
+    inline(text, QUOTE_MAX)
 }
 
 /// Everything the text needs, read by the caller.
@@ -106,8 +124,9 @@ pub fn text(card: &Card<'_>, notice: Notice<'_>) -> String {
     } = card;
     let id = &item.id;
     let head = format!("[card {id}]");
-    let named = format!("{id} “{}”", item.title);
-    let place = format!("{} ({})", column.name, state_word(column.kind));
+    let named = format!("{id} “{}”", inline(&item.title, NAME_MAX));
+    let column_name = inline(&column.name, NAME_MAX);
+    let place = format!("{column_name} ({})", state_word(column.kind));
     match notice {
         Notice::Assigned => format!(
             "{head} {by} assigned {named} to you. It is in {place}. {}",
@@ -120,7 +139,7 @@ pub fn text(card: &Card<'_>, notice: Notice<'_>) -> String {
         Notice::Moved | Notice::Changed(_) => {
             let what = match notice {
                 Notice::Changed(what) => what.to_string(),
-                _ => format!("moved it to {}", column.name),
+                _ => format!("moved it to {column_name}"),
             };
             let mut out = format!(
                 "{head} {by} changed {named}, which is assigned to you: {what}. It is now in \
