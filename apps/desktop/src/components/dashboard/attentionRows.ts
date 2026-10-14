@@ -97,6 +97,33 @@ function draftUpdated(r: AttentionRowJson, a: AttentionActions): RowViewProps {
   };
 }
 
+/** Why the board keeper raised a card's row, from its id's last part. */
+const CARD_WAITING_META: Readonly<Record<string, string>> = {
+  review: "Waiting for your review",
+  quiet: "Nothing has happened on it · checked automatically",
+  blocked: "Its next move is refused · checked automatically",
+};
+
+/** "RB-12 waits for your review": Open opens the card. */
+function cardWaiting(r: AttentionRowJson, a: AttentionActions): RowViewProps {
+  const item = r.item_id;
+  const why = r.id.slice(r.id.lastIndexOf(":") + 1);
+  return {
+    glyph: why === "review" ? "◎" : "◷",
+    tone: "you",
+    title: r.title,
+    meta: CARD_WAITING_META[why] ?? "On the board",
+    action: item === undefined || item.length === 0 ? undefined : "Open",
+    label: `Open ${item ?? "the card"}`,
+    onAction: (event) => {
+      if (item !== undefined && item.length > 0) {
+        a.onItem(item, event.currentTarget);
+      }
+    },
+    verb: "Open",
+  };
+}
+
 /** The row for one of the newer kinds; undefined for one shown elsewhere. */
 export function attentionRow(r: AttentionRowJson, a: AttentionActions): RowViewProps | undefined {
   switch (r.kind) {
@@ -122,6 +149,8 @@ export function attentionRow(r: AttentionRowJson, a: AttentionActions): RowViewP
       return undefined;
     case "draft_updated":
       return draftUpdated(r, a);
+    case "card_waiting":
+      return cardWaiting(r, a);
     default:
       return prRow(r, a) ?? cleanupRow(r, a);
   }

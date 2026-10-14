@@ -54,6 +54,38 @@ describe("attentionRow", () => {
     ).toBeUndefined();
   });
 
+  it("opens a card the board keeper says waits on the owner", () => {
+    const a = actions();
+    const review = attentionRow(
+      {
+        kind: "card_waiting",
+        id: "card_waiting:mac:RB-12:review",
+        title: "RB-12 waits for your review: Buttons",
+        item_id: "RB-12",
+      },
+      a,
+    );
+    expect(review).toMatchObject({
+      glyph: "◎",
+      meta: "Waiting for your review",
+      action: "Open",
+      label: "Open RB-12",
+    });
+    review?.onAction?.(click);
+    expect(a.onItem).toHaveBeenCalledWith("RB-12", expect.anything());
+    const quiet = attentionRow(
+      { kind: "card_waiting", id: "card_waiting:mac:RB-3:quiet", title: "x", item_id: "RB-3" },
+      a,
+    );
+    expect(quiet?.meta).toBe("Nothing has happened on it · checked automatically");
+    const blocked = attentionRow(
+      { kind: "card_waiting", id: "card_waiting:mac:RB-4:blocked", title: "x" },
+      a,
+    );
+    expect(blocked?.meta).toBe("Its next move is refused · checked automatically");
+    expect(blocked?.action).toBeUndefined();
+  });
+
   it("opens the card a question was asked on", () => {
     const a = actions();
     const view = attentionRow(
