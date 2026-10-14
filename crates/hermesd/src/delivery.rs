@@ -96,6 +96,7 @@ impl DeliveryWorker {
                 .mark_delivery_retry(delivery_id, "message missing", chrono::Utc::now(), 0)?;
             return Ok(());
         };
+        self.note_card(&delivery.bot_id, &msg);
         let outcome = match self.db.get_bot(&delivery.bot_id)? {
             // A bot that runs on a peer: the peer stores and delivers it.
             Some(target) if target.is_linked() => {
@@ -247,6 +248,23 @@ impl DeliveryWorker {
     }
 
     /// The envelope a local session reads for `msg`.
+    /// The card the message is about, for the turn it starts (0.19.0): one
+    /// its text names, or the item the task it opens was delegated for.
+    fn note_card(&self, bot_id: &str, msg: &Message) {
+        let card = match crate::supervisor::card_named(&msg.body) {
+            Some(id) => Some(id.to_string()),
+            None => self
+                .db
+                .open_task_for_message(&msg.id, bot_id)
+                .ok()
+                .flatten()
+                .and_then(|task| self.db.task_item(&task.id).ok().flatten()),
+        };
+        if let Some(card) = card {
+            self.supervisor.working_on().delivered(bot_id, &card);
+        }
+    }
+
     fn render(&self, delivery_id: &str, bot_id: &str, msg: &Message) -> anyhow::Result<String> {
         // A decision notice was already rendered by the registry, which owns
         // its header and its phase. Wrapping it in `[msg #N …]` would bury the

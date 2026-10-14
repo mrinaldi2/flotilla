@@ -274,6 +274,9 @@ export type ServerPush =
       readonly state: BotState;
       readonly reason: string;
       readonly at: string;
+      /** The card the turn starting or ending is about, when known (0.19.0). */
+      readonly item_id?: string;
+      readonly item_title?: string;
     }
   | { readonly type: "message_new"; readonly message: BusMessage }
   | { readonly type: "bot_updated"; readonly bot: Bot }

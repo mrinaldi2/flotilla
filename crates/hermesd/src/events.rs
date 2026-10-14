@@ -13,6 +13,21 @@ pub enum Push {
         state: BotState,
         reason: String,
         at: String,
+        /// The card the turn starting or ending is about, when the daemon
+        /// knows (0.19.0): the card a delivery that started it named, or the
+        /// one the bot changed during it.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        item_id: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        item_title: Option<String>,
+    },
+    /// Someone moved, assigned or edited a card, or a move was refused
+    /// (0.19.0), for the owner's toasts and phone notices.
+    BoardActivity {
+        activity: Box<bus::contract::home::BoardActivity>,
+        /// The connection that asked for it, which skips it; never sent.
+        #[serde(skip)]
+        origin: Option<u64>,
     },
     MessageNew {
         message: Message,
@@ -141,6 +156,18 @@ pub enum Push {
 }
 
 impl Push {
+    /// A bot's new state, about no card in particular.
+    pub fn bot_state(bot_id: &str, state: BotState, reason: &str) -> Self {
+        Push::BotState {
+            bot_id: bot_id.to_string(),
+            state,
+            reason: reason.to_string(),
+            at: chrono::Utc::now().to_rfc3339(),
+            item_id: None,
+            item_title: None,
+        }
+    }
+
     /// A toast: something happened the user should know about but need not act
     /// on. `botmgmt` says it best — "a toast, not a prompt".
     pub fn notice(level: &str, title: impl Into<String>, body: impl Into<String>) -> Self {

@@ -67,11 +67,8 @@ impl Supervisor {
             h.state = BotState::Stopped;
             h.reason = reason.to_string();
         }
-        self.inner.events.push(crate::events::Push::BotState {
-            bot_id: bot_id.to_string(),
-            state: BotState::Stopped,
-            reason: reason.to_string(),
-            at: chrono::Utc::now().to_rfc3339(),
-        });
+        let stopped = crate::events::Push::bot_state(bot_id, BotState::Stopped, reason);
+        self.inner.events.push(stopped);
+        self.inner.working.forget(bot_id);
     }
 }

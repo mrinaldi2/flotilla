@@ -159,6 +159,8 @@ pub struct Config {
     pub checks: crate::prs::check_jobs::ChecksConfig,
     /// The board keeper (0.19.0); see [`crate::kanban::keeper`].
     pub keeper: crate::kanban::keeper::KeeperConfig,
+    /// Phone push (0.19.0, design only): off until set; see [`crate::push`].
+    pub push: crate::push::PushConfig,
     /// The *user's* home (Claude Code's `~/.claude/projects` transcripts), not
     /// the daemon's `home`; separate so tests can point it at a fixture tree.
     pub user_home: PathBuf,
@@ -209,6 +211,7 @@ impl Default for Config {
             quiesce: Default::default(),
             checks: Default::default(),
             keeper: Default::default(),
+            push: Default::default(),
             scheduler: SchedulerConfig::default(),
             supervision_interval_ms: 5_000,
             startup: Default::default(),

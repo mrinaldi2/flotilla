@@ -6,11 +6,17 @@
 import { fromJson } from "@bufbuild/protobuf";
 import type { JsonValue } from "@bufbuild/protobuf";
 import {
+  BoardActivitySchema,
   OwnerThreadPageSchema,
   OwnerThreadsSchema,
   ProjectsOverviewSchema,
 } from "./gen/hermes/home/v1/home_pb";
-import type { OwnerThreadPage, OwnerThreads, ProjectsOverview } from "./gen/hermes/home/v1/home_pb";
+import type {
+  BoardActivity,
+  OwnerThreadPage,
+  OwnerThreads,
+  ProjectsOverview,
+} from "./gen/hermes/home/v1/home_pb";
 
 export type HomeRequestBody =
   | { readonly type: "projects_overview"; readonly project_ids?: readonly string[] }
@@ -50,7 +56,9 @@ export type HomePush =
       readonly bot_id?: string;
       readonly project_id?: string;
     }
-  | { readonly type: "project_pinned"; readonly project_id: string; readonly pinned: boolean };
+  | { readonly type: "project_pinned"; readonly project_id: string; readonly pinned: boolean }
+  /** Who did what on a board (0.19.0): a `BoardActivity` as proto3 JSON. */
+  | { readonly type: "board_activity"; readonly activity: JsonValue };
 
 const LENIENT = { ignoreUnknownFields: true } as const;
 
@@ -68,6 +76,10 @@ export function fromTheBot(message: {
 /** How a thread shows the owner's chat a linked computer sent unverified. */
 export function unverifiedLabel(computer: string): string {
   return `From ${computer}, unverified`;
+}
+
+export function decodeBoardActivity(json: JsonValue): BoardActivity {
+  return fromJson(BoardActivitySchema, json, LENIENT);
 }
 
 export function decodeOverview(json: JsonValue): ProjectsOverview {

@@ -88,11 +88,15 @@ the owner on any client, else the bot's name (H-201).
 `board_watch` answers with the snapshot the pushes continue from, and no push
 for that project is sent before it. Each committed board change is then pushed
 to the connections watching its project as `board_event {project_id, seq, kind,
-item_id, card?, from_column?}`, where `seq` rises by one per change in that
+item_id, card?, from_column?, actor?, note?}`, where `seq` rises by one per change in that
 project. A client applies pushes with `seq` above its snapshot's and refetches
 `board_get` when a push's `seq` is not the last one plus one (a lower number
 means the daemon restarted) or its kind is `columns_changed`,
 `settings_changed` or `resync` (sent when the connection fell behind).
+`actor` (0.19.0) is who made the change, in the stored form, or `daemon` for a
+fact's move (a PR merged, a release shipped); `note` is a move's note. Both are
+read from the history the change recorded, and a linked computer relays them
+with the bot ids rewritten like the card's.
 
 `contracts: {surface: N}` is the **highest** version each side speaks, and it
 stays an integer forever. A side that still serves older versions adds
@@ -309,7 +313,16 @@ breaking wire-shape change; v1 clients must upgrade before connecting.
   `seq` is then the newest read included, and it is the cursor to resume from. A replay
   arrives the same way, so a full ring is a handful of pushes rather than one per read, and
   `attached.seq` still marks where it ends.
-- `bot_state`: `{ "bot_id", "state", "reason", "at" }` — state ∈ `starting|ready|working|waiting_for_user|waiting_for_approval|rate_limited|auth_failed|crashed|stopping|stopped`.
+- `bot_state`: `{ "bot_id", "state", "reason", "at", "item_id"?, "item_title"? }` — state ∈ `starting|ready|working|waiting_for_user|waiting_for_approval|rate_limited|auth_failed|crashed|stopping|stopped`.
+  `item_id` (0.19.0) is the card the turn starting, going on or ending is about, when
+  known: the card a delivery that started it named (`[card …]`, or a task delegated for
+  an item), else the last card the bot changed during it. A chat turn names none.
+- `board_activity`: `{ "activity": BoardActivity }` (0.19.0, `hermes.home.v1` as proto3
+  JSON with the proto field names) — someone moved or assigned a card, a bot edited a
+  draft, or the guards refused a move. Sent to every connection, whatever it watches; a
+  refusal is sent only here, never as a `board_event`, so it takes no place in a board's
+  `seq`. `from_this_client` is true on the connection that asked for the change, which
+  already showed its own action. `title` and `body` are a notice ready to show.
 - `message_new`: `{ "message": {...} }` — any new bus message visible to the user.
 - `bot_updated`: `{ "bot": {...} }` — a bot was created, edited, or archived. Bots edit themselves unprompted, so clients must not cache identity across this push.
 - `project_updated`: `{ "project": {...} }` — a project was created, renamed, archived, or linked or unlinked through a peer. As with `bot_updated`, archival is signalled by `deleted_at` being set rather than by a separate frame.

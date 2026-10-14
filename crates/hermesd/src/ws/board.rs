@@ -283,6 +283,8 @@ fn push(change: &BoardChange) -> c::BoardPush {
         item_id: change.item_id.clone(),
         card: change.card.clone().map(Into::into),
         from_column: change.from_column.clone(),
+        actor: change.actor.clone(),
+        note: change.note.clone(),
     })
 }
 

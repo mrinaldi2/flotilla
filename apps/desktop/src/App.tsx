@@ -15,6 +15,7 @@ import { useToasts } from "./app/useToasts";
 import type { AddToast } from "./app/useToasts";
 import { useServiceRecovery } from "./app/useServiceRecovery";
 import { useUpdates } from "./app/useUpdates";
+import BoardActivityLayer from "./components/BoardActivityLayer";
 import CardsLayer from "./components/cards/CardsLayer";
 import CommandPalette from "./components/CommandPalette";
 import Rail from "./components/home/Rail";
@@ -241,6 +242,7 @@ export default function App(): ReactElement {
           ) : null}
           <SettingsLayer client={client} daemon={daemon} overlays={overlays} addToast={addToast} />
           <Toasts toasts={toasts} onDismiss={dismissToast} />
+          <BoardActivityLayer client={client} bots={bots} select={select} />
           <HomeMigrationConfirm />
         </div>
       </CardsLayer>

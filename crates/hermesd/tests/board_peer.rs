@@ -81,6 +81,8 @@ async fn the_home_relays_its_changes_to_a_linked_computers_clients() {
     };
     assert_eq!(push.project_id, b.win_app);
     assert_eq!(push.seq, seen + 1, "continues the client's seq");
+    // Its author in the PC's ids, as the card's are (0.19.0).
+    assert_eq!(push.actor, Some(format!("bot:{}", b.tester_id)));
     assert_eq!(
         push.card.expect("card").assignee.as_deref(),
         Some(b.tester_id.as_str())
