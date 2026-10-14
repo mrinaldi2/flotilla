@@ -28,7 +28,8 @@ pub fn now() -> Option<u64> {
     (ticks > 0).then(|| (secs * ticks as f64).ceil() as u64 + 1)
 }
 
-/// FILETIME, 100 ns since 1601, as `GetProcessTimes` reports creation.
+/// FILETIME, 100 ns since 1601, as `GetProcessTimes` reports creation, read
+/// from the same precise clock.
 #[cfg(windows)]
 pub fn now() -> Option<u64> {
     Some(windows::system_time())
@@ -128,7 +129,7 @@ mod windows {
         fn Process32FirstW(snapshot: RawHandle, entry: *mut ProcessEntry) -> i32;
         fn Process32NextW(snapshot: RawHandle, entry: *mut ProcessEntry) -> i32;
         fn OpenProcess(access: u32, inherit: i32, pid: u32) -> RawHandle;
-        fn GetSystemTimeAsFileTime(time: *mut u64);
+        fn GetSystemTimePreciseAsFileTime(time: *mut u64);
         fn GetProcessTimes(
             process: RawHandle,
             creation: *mut u64,
@@ -138,10 +139,14 @@ mod windows {
         ) -> i32;
     }
 
+    /// The precise clock, which creation times are stamped from. The plain
+    /// `GetSystemTimeAsFileTime` only moves once a timer tick (up to
+    /// 15.6 ms), so a process that started this tick would seem to have
+    /// started after now.
     pub(super) fn system_time() -> u64 {
         let mut time = 0u64;
         // SAFETY: `time` is a FILETIME-sized output.
-        unsafe { GetSystemTimeAsFileTime(&mut time) };
+        unsafe { GetSystemTimePreciseAsFileTime(&mut time) };
         time
     }
 
@@ -250,5 +255,23 @@ mod tests {
         assert!(OsProcessTable.info(u32::MAX - 1).is_none());
         // This process started before now, in the table's own units.
         assert!(me.start <= now().expect("now"), "{me:?}");
+    }
+
+    /// A process that has only just started already started before now: a
+    /// `bus-proxy` connects within a clock tick of starting (issue #14).
+    #[cfg(windows)]
+    #[test]
+    fn a_process_started_this_tick_started_before_now() {
+        for _ in 0..50 {
+            let mut child = std::process::Command::new("cmd")
+                .args(["/d", "/c", "exit"])
+                .spawn()
+                .expect("spawn");
+            let now = now().expect("now");
+            // Read while `child` holds its handle, even once it has exited.
+            let start = windows::created(child.id()).expect("its creation time");
+            let _ = child.wait();
+            assert!(start <= now, "started {start}, now {now}");
+        }
     }
 }

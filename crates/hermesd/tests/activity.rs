@@ -12,23 +12,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use common::transcripts::transcript_dir;
 use common::{spawn_daemon_with, TestDaemon, WsClient};
 use serde_json::{json, Value};
-
-/// Claude Code's transcript path for a workspace: every `/` and `.` becomes `-`.
-fn transcript_dir(user_home: &Path, workspace: &str) -> PathBuf {
-    let mangled: String = workspace
-        .chars()
-        .map(|c| {
-            if c == '/' || c == '.' || cfg!(windows) && (c == '\\' || c == ':') {
-                '-'
-            } else {
-                c
-            }
-        })
-        .collect();
-    user_home.join(".claude").join("projects").join(mangled)
-}
 
 /// Appends one assistant turn to a bot's transcript, as Claude Code would.
 fn write_turn(user_home: &Path, workspace: &str, text: &str, at: &str) {
