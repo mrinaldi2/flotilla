@@ -44,7 +44,12 @@ fn the_hash_covers_every_field() {
             ..base.clone()
         },
         Proposal {
-            shell: Shell::Bash,
+            // Any shell but this computer's default, which `base` has.
+            shell: if base.shell == Shell::Bash {
+                Shell::Zsh
+            } else {
+                Shell::Bash
+            },
             ..base.clone()
         },
         Proposal {

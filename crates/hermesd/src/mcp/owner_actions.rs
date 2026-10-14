@@ -28,7 +28,7 @@ pub(super) fn tools() -> Vec<Value> {
                  "content": {"type": "string", "description": "The command or script, verbatim."},
                  "reason": {"type": "string", "description": "Why the owner should run it, in one or two sentences."},
                  "cwd": {"type": "string", "description": "The folder it runs in, on the target computer."},
-                 "shell": {"type": "string", "enum": ["zsh", "bash", "powershell", "cmd"], "description": "Optional here: zsh on macOS, powershell on Windows by default. Required for another computer."},
+                 "shell": {"type": "string", "enum": ["zsh", "bash", "powershell", "cmd"], "description": "Optional here: zsh on macOS, bash on Linux, powershell on Windows by default. Required for another computer."},
                  "target_machine": {"type": "string", "description": "Optional. 'here' (default) or a linked computer's name."},
                  "item": {"type": "string", "description": "Optional. The board item whose card shows it, e.g. H-117."},
                  "decision_id": {"type": "string", "description": "Optional. The decision that shows it."},

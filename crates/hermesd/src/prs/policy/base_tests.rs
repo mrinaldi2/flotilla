@@ -9,13 +9,18 @@ use super::super::ReviewRole::{self, Architect, Ce, Owner};
 use super::read;
 use crate::releases::git_cache;
 
+/// An empty global git config for the test repositories: Git for Windows
+/// can't open `NUL` as a config file ("unable to access 'NUL'").
+fn empty_config() -> &'static Path {
+    static FILE: std::sync::OnceLock<tempfile::NamedTempFile> = std::sync::OnceLock::new();
+    FILE.get_or_init(|| tempfile::NamedTempFile::new().unwrap())
+        .path()
+}
+
 fn git(repo: &Path, args: &[&str]) {
     let out = Command::new("git")
         .current_dir(repo)
-        .env(
-            "GIT_CONFIG_GLOBAL",
-            if cfg!(windows) { "NUL" } else { "/dev/null" },
-        )
+        .env("GIT_CONFIG_GLOBAL", empty_config())
         .env("GIT_CONFIG_NOSYSTEM", "1")
         .args([
             "-c",

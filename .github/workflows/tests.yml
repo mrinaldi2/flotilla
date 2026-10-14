@@ -48,6 +48,13 @@ jobs:
   rust:
     name: crates (cargo test)
     runs-on: ubuntu-24.04
+    env:
+      # Tests tag, commit and revert in throwaway repositories, which needs
+      # an identity; a developer's machine has one, a runner doesn't.
+      GIT_AUTHOR_NAME: CI
+      GIT_AUTHOR_EMAIL: ci@example.invalid
+      GIT_COMMITTER_NAME: CI
+      GIT_COMMITTER_EMAIL: ci@example.invalid
     steps:
       - uses: actions/checkout@v4
 
