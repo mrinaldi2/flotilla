@@ -25,8 +25,9 @@ function useInvited(
   drafts: readonly ItemCard[],
 ): ReadonlyMap<string, readonly string[]> {
   const [invited, setInvited] = useState<ReadonlyMap<string, readonly string[]>>(new Map());
-  const key = drafts.map((d) => `${d.id}@${d.version}`).join(",");
-  // `key` names the drafts and their versions: a change reads them again.
+  const key = drafts.map((d) => `${d.id}@${d.version}@${d.invited.join("+")}`).join(",");
+  // `key` names the drafts, their versions and invitations: a change reads
+  // them again.
   useEffect(() => {
     let live = true;
     const ids = key === "" ? [] : key.split(",").map((part) => part.split("@")[0] ?? "");

@@ -195,7 +195,7 @@ async fn a_bot_shapes_a_draft_with_the_owner_who_finalizes_it() {
         .links
         .iter()
         .any(|l| l.kind == c::LinkKind::Thread as i32 && l.r#ref == lead_id));
-    let told = drain_until(lead, "invited you to discuss the draft").await;
+    let told = drain_until(lead, "The owner wants to discuss draft").await;
     assert!(
         told.iter()
             .any(|m| m["body"].as_str().is_some_and(|b| b.contains(&id))),

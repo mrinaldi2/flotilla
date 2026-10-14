@@ -3,7 +3,7 @@ import { create } from "@bufbuild/protobuf";
 import { useRef } from "react";
 import type { ReactElement } from "react";
 import { MoveResultSchema } from "../../../protocol/gen/hermes/board/v1/requests_pb";
-import { recipeColumns } from "../../../test/boardsFixtures";
+import { draftDetail, recipeColumns } from "../../../test/boardsFixtures";
 import { boardsClient, STORY_BOTS } from "../../../test/boardStory";
 import { unmet } from "../../../test/boardFixtures";
 import { DRAWER_NOW } from "../../../test/drawerFixtures";
@@ -52,6 +52,17 @@ export const Discuss: Story = () => <Drawer discuss="lead" />;
 
 /** The menu that picks the bot, the lead first. */
 export const DiscussMenu: Story = () => <Drawer click="Discuss with a bot" />;
+
+/** Two bots discussing it, each with Remove. */
+export const DiscussingWith: Story = () => {
+  const detail = draftDetail();
+  detail.invited = ["lead", "b2"];
+  const client = boardsClient().onBoard("itemGet", () => ({ case: "item", value: detail }));
+  return <Drawer client={client} />;
+};
+
+/** Remove asks first: the bot is told, and can no longer see or change the draft. */
+export const RemoveBot: Story = () => <Drawer click="Remove" />;
 
 /** Finalize refused: the column's unmet rules, in place. */
 export const FinalizeRefused: Story = () => {

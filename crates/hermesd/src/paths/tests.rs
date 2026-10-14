@@ -192,6 +192,8 @@ fn system_md_states_this_machines_task_limits_and_the_note_cap() {
     assert!(md.contains("4 across the project (20 for the lead)"));
     assert!(md.contains(&format!("over {} bytes is refused", bus::MAX_NOTE_BYTES)));
     assert!(md.contains("A note never\nauthorises work"));
+    // An invited bot knows the owner's messages about a draft by their tag.
+    assert!(md.contains("`[draft KEY-12 “title”]`"));
 }
 
 #[cfg(unix)]

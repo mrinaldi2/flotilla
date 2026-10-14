@@ -33,6 +33,8 @@ export interface ItemDrawerProps {
   readonly itemId: string;
   /** The card's version on the board: a push that moves it reads again. */
   readonly version?: bigint;
+  /** A draft card's invited bots: a push that changes them reads again. */
+  readonly invited?: readonly string[];
   readonly columns: readonly BoardColumn[];
   readonly bots: readonly Bot[];
   /** Whether this connection may comment (the control grant). */
@@ -110,7 +112,7 @@ function useDrawerKeys(onClose: () => void, onStep?: (direction: -1 | 1) => void
 /** Everything the drawer holds for one item. */
 function useItemDrawer(props: ItemDrawerProps) {
   const { api, itemId, columns, bots } = props;
-  const state = useItemDetail(api, itemId, props.version);
+  const state = useItemDetail(api, itemId, props.version, props.invited?.join(" "));
   const { detail, setDetail, reload } = state;
   const [editing, setEditing] = useState(props.initialEdit === true);
   const [viewing, setViewing] = useState<ItemAttachment | null>(null);

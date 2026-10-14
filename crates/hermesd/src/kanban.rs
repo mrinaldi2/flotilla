@@ -11,6 +11,7 @@ pub mod attach;
 pub mod attachments;
 pub mod contract;
 pub mod defaults;
+pub mod draft_talk;
 pub mod draft_undo;
 pub mod drafts;
 pub mod edit;

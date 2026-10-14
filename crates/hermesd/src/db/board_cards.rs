@@ -70,7 +70,12 @@ fn cards_with(
                 (SELECT count(*) FROM item_ac a WHERE a.item_id = i.id),
                 (SELECT max(at) FROM item_comment m WHERE m.item_id = i.id
                     AND (m.author = 'user' OR m.author LIKE 'device:%')),
-                i.board_id, i.state = 'draft'
+                i.board_id, i.state = 'draft',
+                CASE WHEN i.state = 'draft' THEN (
+                    SELECT json_group_array(bot_id) FROM (
+                        SELECT d.bot_id FROM item_draft_invite d WHERE d.item_id = i.id
+                         ORDER BY d.at, d.bot_id))
+                ELSE '[]' END
          FROM item i JOIN board_column c ON c.project_id = i.project_id AND c.key = i.column_key
          WHERE i.project_id = ?1 AND {states} {filter}
          ORDER BY c.ord, i.rank"
@@ -98,6 +103,7 @@ fn cards_with(
             ac_total: r.get(14)?,
             owner_commented_at: r.get::<_, Option<String>>(15)?.map(parse_at),
             draft,
+            invited: from_json(r.get(18)?)?,
         })
     };
     let cards = match arg {
