@@ -28,7 +28,7 @@ impl Conn {
             None => None,
         };
         let stored = match &card {
-            Some((item_id, ..)) => owner_card::with_card(item_id, body),
+            Some((item_id, board, _)) => owner_card::leading(item_id, board, body),
             None => body.to_string(),
         };
         // Recorded as the owner's own only when this connection proved it

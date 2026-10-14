@@ -83,7 +83,7 @@ async fn phone_drafts(k: &mut K9, board_id: &str) -> (String, Vec<u8>) {
 /// The lead reads the screenshot, sets criteria and a title, and attaches
 /// the spec it writes.
 async fn lead_shapes(k: &mut K9, id: &str, shot: &[u8]) {
-    let invited = k.lead_heard("invited you to discuss the draft").await;
+    let invited = k.lead_heard("The owner wants to discuss draft").await;
     assert!(invited.contains(id), "{invited}");
     let got = k.lead.call("item_get", json!({ "id": id })).await;
     let path = got["attachments"][0]["path"].as_str().expect("a path");

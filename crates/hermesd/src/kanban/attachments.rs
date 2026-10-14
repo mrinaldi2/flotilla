@@ -322,6 +322,18 @@ pub fn listing_elsewhere(item_id: &str, atts: &[ItemAttachment]) -> String {
     })
 }
 
+/// A draft's attachments for a bot on a linked computer: a draft's files
+/// stay on its board's computer, so each is named without a path.
+pub fn listing_kept(item_id: &str, atts: &[ItemAttachment]) -> String {
+    listing_with(item_id, atts, |a| {
+        if a.url.is_empty() {
+            "kept on the board's computer, not readable from yours".to_string()
+        } else {
+            a.url.clone()
+        }
+    })
+}
+
 fn listing_with(
     item_id: &str,
     atts: &[ItemAttachment],
@@ -352,7 +364,7 @@ fn listing_with(
 
 /// A name or a caption on one line of a listing: whoever wrote it can't
 /// add lines that read as the listing's, or as the message's own text.
-fn one_line(text: &str) -> String {
+pub(crate) fn one_line(text: &str) -> String {
     text.split(|ch: char| ch.is_control() || ch.is_whitespace())
         .filter(|w| !w.is_empty())
         .collect::<Vec<_>>()
