@@ -129,6 +129,9 @@ impl Conn {
             override_reason: r.override_reason.as_deref(),
         };
         let moved = moves::item_move(db, &request, &self.actor())?;
+        if let Moved::Refused(unmet) = &moved {
+            crate::kanban::activity::refused(&self.app, &r.id, &r.to, &self.actor(), unmet);
+        }
         if let Moved::Done(item) = &moved {
             let card = card_after_commit(db, &item.id);
             feed.publish(Change {

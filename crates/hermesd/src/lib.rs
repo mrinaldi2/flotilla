@@ -51,6 +51,7 @@ pub mod pr_cli;
 pub mod project_roles;
 pub mod projectmgmt;
 pub mod prs;
+pub mod push;
 pub mod quiesce;
 pub mod redact;
 pub mod releases;

@@ -115,7 +115,8 @@ fn system_move(
     }
 }
 
-/// Push each system move, once its transaction has committed.
+/// Push each system move, once its transaction has committed, as the
+/// daemon's: the fact moved it, whoever reported the fact.
 pub fn publish_moves(
     app: &Arc<AppState>,
     feed: &mut FeedWriter<'_>,
@@ -123,7 +124,7 @@ pub fn publish_moves(
     moved: &[(String, String)],
 ) {
     for (item_id, from) in moved {
-        feed.publish(Change {
+        feed.publish_by_daemon(Change {
             project_id,
             kind: ChangeKind::ItemMoved,
             item_id,

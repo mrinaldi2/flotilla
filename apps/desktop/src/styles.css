@@ -42,6 +42,7 @@
 @import "./styles/settings.css";
 @import "./styles/devices.css";
 @import "./styles/toasts.css";
+@import "./styles/activity-toasts.css";
 @import "./styles/service-recovery.css";
 @import "./styles/setup.css";
 @import "./styles/owner-actions.css";

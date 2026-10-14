@@ -43,10 +43,12 @@ mod termio;
 mod typing;
 mod typing_kinds;
 mod watchdog;
+mod working_on;
 
 pub use composer::{digest as prompt_digest, typed_body};
 pub use typing_kinds::{opens_modal, Outcome, TypeError};
 pub use watchdog::{StartupConfig, DIDNT_CONNECT};
+pub use working_on::{card_named, WorkingOn};
 
 /// The state reason of a bot stopped on a permission prompt in its own
 /// terminal: Claude Code's notification names no command.
@@ -219,6 +221,8 @@ struct SupervisorInner {
     gave_up: Mutex<watchdog::GaveUp>,
     /// Each bot's composer, for the owner's typed chat (H-195 D2).
     composers: Mutex<HashMap<String, Arc<typing::BotComposer>>>,
+    /// The card each bot's turn is about, for `bot_state` (0.19.0).
+    working: WorkingOn,
 }
 
 /// What runs before a bot's session starts: the bot id, and whether the
@@ -247,6 +251,7 @@ impl Supervisor {
                 roots: crate::bus_auth::session::SessionRoots::default(),
                 gave_up: Mutex::new(watchdog::GaveUp::default()),
                 composers: Mutex::new(HashMap::new()),
+                working: WorkingOn::default(),
             }),
         }
     }
@@ -278,7 +283,7 @@ impl Supervisor {
     }
 
     pub fn set_state(&self, bot_id: &str, state: BotState, reason: &str) {
-        {
+        let from = {
             let mut bots = self.lock_bots();
             let Some(h) = bots.get_mut(bot_id) else {
                 return;
@@ -286,16 +291,28 @@ impl Supervisor {
             if h.state == state {
                 return;
             }
-            h.state = state;
             h.reason = reason.to_string();
-        }
+            std::mem::replace(&mut h.state, state)
+        };
         tracing::info!(bot_id, state = state.as_str(), reason, "bot state");
+        let item_id = self.inner.working.on_state(bot_id, from, state);
+        let item_title = item_id
+            .as_deref()
+            .and_then(|id| self.inner.db.get_item(id).ok().flatten())
+            .map(|item| item.title);
         self.inner.events.push(Push::BotState {
             bot_id: bot_id.to_string(),
             state,
             reason: reason.to_string(),
             at: chrono::Utc::now().to_rfc3339(),
+            item_id,
+            item_title,
         });
+    }
+
+    /// The card each bot's turn is about.
+    pub fn working_on(&self) -> &WorkingOn {
+        &self.inner.working
     }
 
     /// True while the bot's runtime process is up, whatever the session

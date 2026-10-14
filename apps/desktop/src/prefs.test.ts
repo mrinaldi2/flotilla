@@ -1,5 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_PREFS, getPrefs, reloadPrefsForTest, subscribePrefs, updatePrefs } from "./prefs";
+import {
+  DEFAULT_PREFS,
+  getPrefs,
+  reloadPrefsForTest,
+  setBoardActivity,
+  subscribePrefs,
+  updatePrefs,
+} from "./prefs";
+import { writeStored } from "./storage";
 import { stubLocalStorage } from "./test/spies";
 
 describe("prefs", () => {
@@ -32,6 +40,25 @@ describe("prefs", () => {
     updatePrefs({ terminalFontSize: DEFAULT_PREFS.terminalFontSize });
 
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("shows every kind of board activity by default, and keeps one turned off", () => {
+    expect(Object.values(getPrefs().boardActivity).every(Boolean)).toBe(true);
+    const listener = vi.fn<() => void>();
+    subscribePrefs(listener);
+
+    setBoardActivity("turns", false);
+    setBoardActivity("turns", false);
+
+    expect(listener).toHaveBeenCalledOnce();
+    reloadPrefsForTest();
+    expect(getPrefs().boardActivity).toEqual({ ...DEFAULT_PREFS.boardActivity, turns: false });
+  });
+
+  it("reads a board activity pref it doesn't know as the default", () => {
+    writeStored("prefs", JSON.stringify({ boardActivity: { moved: "no", drafts: false } }));
+    reloadPrefsForTest();
+    expect(getPrefs().boardActivity).toEqual({ ...DEFAULT_PREFS.boardActivity, drafts: false });
   });
 
   it("rejects an out-of-range font size back to the default", () => {

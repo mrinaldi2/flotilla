@@ -254,6 +254,14 @@ fn relay(app: &AppState, change: &BoardChange) {
             board_ids::card(&mut card, |id| board_ids::to_peer(db, &link.peer_id, id));
             card
         });
+        // Who made it (0.19.0), a bot named by the peer's id for it.
+        let actor = change
+            .actor
+            .as_deref()
+            .map(|actor| match actor.strip_prefix("bot:") {
+                Some(bot) => format!("bot:{}", board_ids::to_peer(db, &link.peer_id, bot)),
+                None => actor.to_string(),
+            });
         app.peers.notify(
             &link.peer_id,
             json!({
@@ -264,6 +272,8 @@ fn relay(app: &AppState, change: &BoardChange) {
                 "card": card,
                 "from_column": change.from_column,
                 "board_id": board_id.as_ref().filter(|_| many),
+                "actor": actor,
+                "note": change.note,
             }),
         );
     }

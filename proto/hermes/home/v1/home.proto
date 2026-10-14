@@ -213,6 +213,42 @@ message MessageBrief {
 message ProjectsOverviewChanged { repeated string project_ids = 1; }   // [projects_overview_changed]
 message OwnerThreadUpdated { BotRef bot = 1; string project_id = 2; }  // [owner_thread_updated]
 
+// [board_activity] What someone just did on a board (0.19.0), for the
+// owner's toasts and phone notices: every connection gets it, whatever
+// boards it watches. Moves, assignments and bot edits to drafts come from
+// the history the change recorded; a refused move is pushed only here, never
+// as a `BoardEvent`, so it takes no place in a board's sequence.
+enum BoardActivityKind {
+  BOARD_ACTIVITY_KIND_UNSPECIFIED = 0;
+  BOARD_ACTIVITY_KIND_MOVED = 1;            // from_column -> to_column
+  BOARD_ACTIVITY_KIND_ASSIGNED = 2;         // assignee is the new one
+  BOARD_ACTIVITY_KIND_UNASSIGNED = 3;
+  BOARD_ACTIVITY_KIND_MOVE_REFUSED = 4;     // to_column wasn't allowed: unmet says why
+  BOARD_ACTIVITY_KIND_DRAFT_UPDATED = 5;    // note names the fields changed
+}
+message BoardActivity {
+  string project_id = 1;
+  string item_id = 2;
+  BoardActivityKind kind = 3;
+  string actor = 4;                         // user | device:<id> | bot:<id> | daemon
+  string actor_name = 5;                    // the bot's or device's name; empty for user and daemon
+  string item_title = 6;
+  string from_column = 7;                   // column keys
+  string to_column = 8;
+  string from_name = 9;                     // their names, as the board shows them
+  string to_name = 10;
+  string note = 11;                         // a move's reason, the fact, or the fields
+  repeated string unmet = 12;               // a refusal's reasons, one per guard
+  string assignee = 13;                     // bot id, on ASSIGNED
+  string assignee_name = 14;
+  google.protobuf.Timestamp at = 15;
+  // The change was asked for on the connection this push goes to: a client
+  // already showed its own action and skips it.
+  bool from_this_client = 16;
+  string title = 17;                        // a notification's title and body, ready to show
+  string body = 18;
+}
+
 // ---- peer (wire envelope, peer protocol v1 unchanged otherwise) ----
 message ProjectAttentionRequest { repeated string project_ids = 1; }   // [project_attention]
 message ProjectAttention {
