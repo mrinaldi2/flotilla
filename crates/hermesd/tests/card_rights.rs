@@ -35,7 +35,10 @@ async fn the_assignee_owns_its_card_without_a_board_role() {
                    "description": "Links to About and Contact."}),
         )
         .await;
-    assert_eq!(edited["item"]["column_key"], "doing", "the item as it is now: {edited}");
+    assert_eq!(
+        edited["item"]["column_key"], "doing",
+        "the item as it is now: {edited}"
+    );
     assert!(
         edited["started"].is_string(),
         "its first edit starts it: {edited}"
