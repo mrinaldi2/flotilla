@@ -4,7 +4,7 @@
 
 import { ColumnKind } from "../../protocol/gen/hermes/board/v1/board_pb";
 
-export type PresetName = "simple" | "software" | "release_gated";
+export type PresetName = "simple" | "simple_review" | "software" | "release_gated";
 
 interface PreviewColumn {
   readonly name: string;
@@ -33,6 +33,19 @@ export const PRESETS: readonly Preset[] = [
       { name: "To do", kind: OPEN },
       { name: "Doing", kind: ACTIVE, note: "WIP 3" },
       { name: "Done", kind: DONE },
+      cancelled,
+    ],
+  },
+  {
+    name: "simple_review",
+    title: "Simple + Review",
+    blurb:
+      "A new project's first board. The bot works a card and moves it to Review; you move it to Done.",
+    columns: [
+      { name: "To do", kind: OPEN, note: "assignee or lead" },
+      { name: "Doing", kind: ACTIVE, note: "assignee set · WIP 3 · starts with the work" },
+      { name: "Review", kind: ACTIVE, note: "from Doing" },
+      { name: "Done", kind: DONE, note: "you, or a lead who didn't do it" },
       cancelled,
     ],
   },

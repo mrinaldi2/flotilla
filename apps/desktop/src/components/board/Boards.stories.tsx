@@ -1,5 +1,8 @@
 import type { Story } from "@ladle/react";
+import { create } from "@bufbuild/protobuf";
+import type { MessageInitShape } from "@bufbuild/protobuf";
 import type { ReactElement } from "react";
+import { ItemCardSchema, MoveBlockSchema } from "../../protocol/gen/hermes/board/v1/board_pb";
 import { DaemonError } from "../../protocol/connection";
 import { boardsSnapshot, RECIPES_ID } from "../../test/boardsFixtures";
 import { BoardWindow, boardsClient } from "../../test/boardStory";
@@ -11,6 +14,29 @@ const created = (): Promise<void> => Promise.resolve();
 
 /** Recipes, a custom board: its own columns, the lead's change, two drafts. */
 export const CustomBoard: Story = () => <BoardWindow openBoard={RECIPES_ID} />;
+
+/**
+ * Cards that can't move on: RB-3, which the next column's rules stop, and
+ * RB-7, whose last move was refused.
+ */
+export const CantMove: Story = () => {
+  const blocks: Readonly<Record<string, MessageInitShape<typeof MoveBlockSchema>>> = {
+    "RB-3": { toColumn: "rb-doing", reason: "Nobody is assigned." },
+    "RB-7": {
+      toColumn: "rb-qa",
+      reason: "2 acceptance criteria are not checked.",
+      more: 1,
+      refused: true,
+    },
+  };
+  const cards = boardsSnapshot().cards.map((c) => {
+    const block = blocks[c.id];
+    return block === undefined
+      ? c
+      : create(ItemCardSchema, { ...c, moveBlock: create(MoveBlockSchema, block) });
+  });
+  return <BoardWindow openBoard={RECIPES_ID} client={boardsClient(boardsSnapshot({ cards }))} />;
+};
 
 /** Main, the release-gated board: Inbox folds into a rail. */
 export const ReleaseGatedBoard: Story = () => <BoardWindow />;

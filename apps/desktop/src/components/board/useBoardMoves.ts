@@ -29,6 +29,8 @@ type MoveUi =
       readonly needsReason: boolean;
       readonly needsOverride: boolean;
       readonly unmet: readonly Unmet[];
+      /** A release-gated board's unlisted move: the owner's override. */
+      readonly override: boolean;
     }
   | {
       readonly kind: "refused";
@@ -161,7 +163,7 @@ export function useBoardMoves({ api, columns, refresh, addToast }: Options): Boa
         if (plan.kind === "go") {
           await commit(card, to, anchor);
         } else if (plan.kind === "input") {
-          setUi({ ...plan, card, to, anchor });
+          setUi({ ...plan, card, to, anchor, override: checks.overrides.has(toKey) });
         } else {
           setUi({ kind: "refused", card, to, anchor, unmet: plan.unmet });
         }
