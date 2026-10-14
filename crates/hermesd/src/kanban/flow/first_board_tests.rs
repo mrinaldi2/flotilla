@@ -118,3 +118,36 @@ fn done_is_the_owners_or_an_independent_leads() {
         ["rule.independent"]
     );
 }
+
+#[test]
+fn a_lead_that_held_the_card_doesnt_approve_it_once_it_hands_it_on() {
+    let from = column("review");
+    let to = column("done");
+    let mv = Move {
+        to: &to,
+        reason: None,
+        override_reason: None,
+    };
+    let ctx = Context {
+        past_assignees: vec!["lead".into()],
+        ..Context::default()
+    };
+    let lead = bot("lead", &[Role::Lead]);
+    for assignee in [None, Some("helper")] {
+        let card = item("review", assignee);
+        let unmet: Vec<String> = evaluate(&card, &from, &to.policy, &mv, &lead, &ctx)
+            .into_iter()
+            .map(|u| u.code)
+            .collect();
+        assert_eq!(unmet, ["rule.independent"], "assignee {assignee:?}");
+    }
+    assert!(evaluate(
+        &item("review", None),
+        &from,
+        &to.policy,
+        &mv,
+        &Who::Owner,
+        &ctx
+    )
+    .is_empty());
+}

@@ -55,6 +55,7 @@ mod card_flow;
 mod card_questions_peer;
 mod card_rights;
 mod card_stuck;
+mod card_trust;
 mod chat;
 mod check_heavy;
 mod check_runner;

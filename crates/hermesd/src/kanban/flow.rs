@@ -42,7 +42,8 @@ pub enum EntryRule {
     Link {
         kind: String,
     },
-    /// The mover is neither the assignee nor whoever linked its branch or PR.
+    /// The mover is neither the assignee, nor a bot that ever was, nor
+    /// whoever linked its branch or PR.
     Independent,
     Reason,
     /// A check another module registers (`release.in_open_package`).
@@ -264,10 +265,12 @@ fn independent(item: &Item, who: &Who, ctx: &Context) -> Vec<Unmet> {
         .links
         .iter()
         .any(|l| matches!(l.kind, LinkKind::Branch | LinkKind::Pr) && l.created_by == author);
-    if who.is(item.assignee.as_deref()) || linked {
+    // A bot that held the card did its work, even once it hands it on.
+    let held = ctx.past_assignees.iter().any(|b| who.is(Some(b)));
+    if who.is(item.assignee.as_deref()) || held || linked {
         vec![unmet(
             "rule.independent",
-            "The mover can't be the assignee or an author of its branch.",
+            "The mover can't be its assignee, now or before, or an author of its branch.",
             Some("Ask someone else."),
         )]
     } else {

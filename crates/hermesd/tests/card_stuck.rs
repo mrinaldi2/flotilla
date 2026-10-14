@@ -63,7 +63,7 @@ async fn a_card_says_why_it_cant_move() {
         .and_then(|card| card.move_block)
         .expect("the pushed refusal");
     assert_eq!((block.to_column.as_str(), block.refused), ("done", true));
-    assert!(block.reason.contains("can't be the assignee"), "{block:?}");
+    assert!(block.reason.contains("can't be its assignee"), "{block:?}");
 }
 
 #[tokio::test]
