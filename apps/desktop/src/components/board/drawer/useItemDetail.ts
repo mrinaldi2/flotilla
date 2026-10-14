@@ -44,6 +44,9 @@ export function useItemDetail(
   itemId: string,
   /** The card's version: a push that changes it reads the item again. */
   version: bigint | undefined,
+  /** Anything else on the card that, changed, reads the item again: a
+   * draft's invited bots, which leave its version alone. */
+  stamp?: string,
 ): ItemDetailState {
   const [detail, setDetail] = useState<ItemDetail | null>(null);
   const [check, setCheck] = useState<MoveCheck | null>(null);
@@ -82,10 +85,10 @@ export function useItemDetail(
     return () => {
       live = false;
     };
-    // `version` and `reads` are triggers, not inputs: a push that moves the
-    // card, or a comment just posted, reads the item again.
+    // `version`, `stamp` and `reads` are triggers, not inputs: a push that
+    // changes the card, or a comment just posted, reads the item again.
     // oxlint-disable-next-line react/exhaustive-effect-dependencies
-  }, [api, itemId, version, reads]);
+  }, [api, itemId, version, stamp, reads]);
 
   // Resolves once the item read back holds the comment (H-201), so the
   // drawer swaps "Sending…" for the posted comment without a gap. A retry

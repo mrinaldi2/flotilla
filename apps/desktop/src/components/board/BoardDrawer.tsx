@@ -67,6 +67,7 @@ export default function BoardDrawer(props: BoardDrawerProps): ReactElement | nul
       client={props.client}
       itemId={openId}
       version={(card ?? draft)?.version}
+      invited={draft?.invited}
       columns={props.columns}
       bots={props.bots}
       canComment={props.canControl}

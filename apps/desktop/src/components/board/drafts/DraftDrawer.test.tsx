@@ -162,8 +162,11 @@ describe("a draft in the drawer", () => {
 
   it("invites the bot picked, docks its chat and sends every message with the item", async () => {
     const user = userEvent.setup();
+    // The daemon answers with the draft, the bot now among its invited.
+    const invited = draftDetail();
+    invited.invited = ["lead", "b2"];
     const client = boardsClient()
-      .onBoard("itemInvite", () => ({ case: "item", value: draftDetail() }))
+      .onBoard("itemInvite", () => ({ case: "item", value: invited }))
       .onRequest("send_user_message", () => ({
         type: "message",
         req_id: "1",

@@ -1,7 +1,9 @@
 // What a draft adds to the item drawer (0.19.0), as slots the drawer
-// places: the Review list, "Discuss with a bot" under the description, the
-// footer with the changes strip, Discard and Finalize, the bot's chat
-// docked beside it, and the Discard dialog.
+// places: the Review list, "Discuss with a bot" and the bots discussing it
+// under the description, the footer with the changes strip, Discard and
+// Finalize, the bot's chat docked beside it, and the Discard and Remove
+// dialogs. A bot no longer invited, here or from another device, has its
+// docked chat closed.
 
 import { useState } from "react";
 import type { ReactNode } from "react";
@@ -13,6 +15,8 @@ import type { BoardColumn, Item, Unmet } from "../../../protocol/gen/hermes/boar
 import type { ItemDetail } from "../../../protocol/gen/hermes/board/v1/requests_pb";
 import { errText } from "../../../util";
 import DiscussButton from "./DiscussButton";
+import { DiscussedWith, invitees, RemoveDialog } from "./DiscussedWith";
+import type { Invitee } from "./DiscussedWith";
 import DiscussPanel from "./DiscussPanel";
 import { ChangesStrip, DiscardDialog, DraftFooter, DraftReview } from "./DraftParts";
 import { useDraft } from "./useDraft";
@@ -81,6 +85,7 @@ function finalized(
 /** Finalize, Discard and Discuss: their busy state and their refusals. */
 function useDraftActions(p: DraftDrawerParams, draft: DraftState) {
   const [discussWith, setDiscussWith] = useState<string | null>(p.initialDiscuss ?? null);
+  const [removing, setRemoving] = useState<Invitee | null>(null);
   const [discarding, setDiscarding] = useState(false);
   const [busy, setBusy] = useState(false);
   const [unmet, setUnmet] = useState<readonly Unmet[] | null>(null);
@@ -94,6 +99,21 @@ function useDraftActions(p: DraftDrawerParams, draft: DraftState) {
   return {
     discussWith,
     closeDiscuss: () => setDiscussWith(null),
+    removing,
+    setRemoving,
+    remove: (invitee: Invitee): void => {
+      setRemoving(null);
+      setFailure(null);
+      void (async () => {
+        try {
+          const uninvite = { id, bot: invitee.id, remove: true };
+          p.setDetail(await boardCall(p.api, { case: "itemInvite", value: uninvite }, "item"));
+          setDiscussWith((open) => (open === invitee.id ? null : open));
+        } catch (error) {
+          setFailure(errText(error));
+        }
+      })();
+    },
     discarding,
     setDiscarding,
     busy,
@@ -145,7 +165,10 @@ export function useDraftDrawer(p: DraftDrawerParams): DraftSlots {
   if (!isDraft || item === undefined) {
     return NONE;
   }
-  const bot = p.bots.find((b) => b.id === actions.discussWith);
+  const invited = p.detail?.invited ?? [];
+  // Once the item is read, a bot it no longer invites has no docked chat.
+  const docked = p.detail === null || invited.includes(actions.discussWith ?? "");
+  const bot = docked ? p.bots.find((b) => b.id === actions.discussWith) : undefined;
   return {
     isDraft: true,
     review:
@@ -160,12 +183,15 @@ export function useDraftDrawer(p: DraftDrawerParams): DraftSlots {
       ),
     after:
       p.client === undefined ? null : (
-        <DiscussButton
-          bots={p.bots}
-          leadId={p.leadId}
-          invited={p.detail?.invited ?? []}
-          onDiscuss={actions.discuss}
-        />
+        <>
+          <DiscussButton
+            bots={p.bots}
+            leadId={p.leadId}
+            invited={invited}
+            onDiscuss={actions.discuss}
+          />
+          <DiscussedWith invitees={invitees(invited, p.bots)} onRemove={actions.setRemoving} />
+        </>
       ),
     footer: (
       <>
@@ -197,12 +223,31 @@ export function useDraftDrawer(p: DraftDrawerParams): DraftSlots {
           now={p.now}
         />
       ),
-    overlay: actions.discarding ? (
+    overlay: overlay(item.id, actions),
+  };
+}
+
+/** The dialog over the drawer, if one is open: Discard's or Remove's. */
+function overlay(itemId: string, actions: ReturnType<typeof useDraftActions>): ReactNode {
+  if (actions.discarding) {
+    return (
       <DiscardDialog
-        itemId={item.id}
+        itemId={itemId}
         onCancel={() => actions.setDiscarding(false)}
         onDiscard={actions.discard}
       />
-    ) : null,
-  };
+    );
+  }
+  const { removing } = actions;
+  if (removing === null) {
+    return null;
+  }
+  return (
+    <RemoveDialog
+      itemId={itemId}
+      invitee={removing}
+      onCancel={() => actions.setRemoving(null)}
+      onRemove={() => actions.remove(removing)}
+    />
+  );
 }
