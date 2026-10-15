@@ -1,4 +1,4 @@
-title = "Gravity secret scanning"
+title = "Flotilla secret scanning"
 
 [extend]
 useDefault = true
@@ -15,7 +15,7 @@ regexes = ['''^grav_5f2c9e4ab8d14c6f9a3e7d1b0c8f2a6e$''']
 [[allowlists]]
 description = "Synthetic Sec-WebSocket-Key in the Codex terminal fixture"
 condition = "AND"
-paths = ['''crates/(gravityd|flotillad)/tests/fixtures/codex-websocket\.mjs$''']
+paths = ['''crates/(gravityd|hermesd|flotillad)/tests/fixtures/codex-websocket\.mjs$''']
 regexTarget = "secret"
 regexes = ['''^Z3Jhdml0eS10ZXN0LWtleQ==$''']
 
@@ -25,7 +25,7 @@ regexes = ['''^Z3Jhdml0eS10ZXN0LWtleQ==$''']
 description = "Synthetic credentials in the redaction tests"
 condition = "AND"
 targetRules = ["curl-auth-header", "curl-auth-user", "generic-api-key"]
-paths = ['''crates/flotillad/src/redact(/tests)?\.rs$''']
+paths = ['''crates/(gravityd|hermesd|flotillad)/src/redact(/tests)?\.rs$''']
 regexTarget = "secret"
 regexes = [
   '''^dXNlcjpwYXNz$''',
@@ -38,7 +38,7 @@ regexes = [
 description = "RFC 6455 sample Sec-WebSocket-Key in the scratch safety test"
 condition = "AND"
 targetRules = ["generic-api-key"]
-paths = ['''crates/flotillad/tests/scratch_safety\.rs$''']
+paths = ['''crates/(gravityd|hermesd|flotillad)/tests/scratch_safety\.rs$''']
 regexTarget = "secret"
 regexes = ['''^dGhlIHNhbXBsZSBub25jZQ==$''']
 
@@ -47,7 +47,7 @@ regexes = ['''^dGhlIHNhbXBsZSBub25jZQ==$''']
 description = "Synthetic token in the owner actions test"
 condition = "AND"
 targetRules = ["generic-api-key"]
-paths = ['''crates/flotillad/tests/owner_actions\.rs$''']
+paths = ['''crates/(gravityd|hermesd|flotillad)/tests/owner_actions\.rs$''']
 regexTarget = "secret"
 regexes = ['''^0123456789abcdef0123456789abcdef01$''']
 
