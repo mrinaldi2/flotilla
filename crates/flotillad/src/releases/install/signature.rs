@@ -1,5 +1,5 @@
 //! Before anything is swapped in (ARCH-R43 M2): the build is signed as the
-//! owner's, by the identity compiled into this hermesd (H-110). On macOS,
+//! owner's, by the identity compiled into this flotillad (H-110). On macOS,
 //! `codesign --verify --strict` against the code requirement; on Windows,
 //! Authenticode (WinVerifyTrust, through `Get-AuthenticodeSignature`) and
 //! the signer's name. A build that can't be checked says so out loud.
@@ -12,7 +12,10 @@ use crate::bus_auth::app_identity::{is_team_id, requirement, DEV_BUILD, TEAM_ID}
 use super::Kind;
 
 /// The Windows release's signer (`CN=…`), when Windows builds are signed.
-const WINDOWS_SIGNER: Option<&str> = option_env!("HERMES_WINDOWS_SIGNER");
+const WINDOWS_SIGNER: Option<&str> = match option_env!("FLOTILLA_WINDOWS_SIGNER") {
+    Some(signer) => Some(signer),
+    None => option_env!("HERMES_WINDOWS_SIGNER"),
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Check {
@@ -20,13 +23,13 @@ pub(crate) enum Check {
     Skip(String),
     /// An app bundle against the app's requirement.
     MacApp(String),
-    /// A bare hermesd against the owner's team.
+    /// A bare flotillad against the owner's team.
     MacBinary(String),
     /// Authenticode, signed by this subject.
     Windows(String),
 }
 
-/// What this build of hermesd can check for a file of `kind`.
+/// What this build of flotillad can check for a file of `kind`.
 pub(crate) fn plan(
     kind: Kind,
     dev_build: bool,
@@ -35,13 +38,13 @@ pub(crate) fn plan(
     macos: bool,
 ) -> Check {
     if dev_build {
-        return Check::Skip("this hermesd is a dev build, so it doesn't check signatures".into());
+        return Check::Skip("this flotillad is a dev build, so it doesn't check signatures".into());
     }
     let mac = matches!(kind, Kind::AppZip | Kind::AppDmg) || (kind == Kind::Daemon && macos);
     if mac {
         if !is_team_id(team) {
             return Check::Skip(
-                "this hermesd has no Team ID compiled in, so it can't tell the owner's signature"
+                "this flotillad has no Team ID compiled in, so it can't tell the owner's signature"
                     .into(),
             );
         }
@@ -58,13 +61,13 @@ pub(crate) fn plan(
             Check::Windows(signer.to_string())
         }
         _ if kind == Kind::WindowsSetup || cfg!(windows) => Check::Skip(
-            "this hermesd knows no Windows signer: Windows releases aren't signed yet".into(),
+            "this flotillad knows no Windows signer: Windows releases aren't signed yet".into(),
         ),
         _ => Check::Skip("builds for this system aren't signed".into()),
     }
 }
 
-/// The check for this build of hermesd.
+/// The check for this build of flotillad.
 pub(crate) fn plan_here(kind: Kind) -> Check {
     plan(
         kind,

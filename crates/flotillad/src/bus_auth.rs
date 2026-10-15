@@ -1,7 +1,7 @@
 //! Bus identity by process, not by secret (H-044, CE-010 T1). Every bot runs
 //! as the owner's user, so any secret handed to a bot is readable by every
 //! other bot. Instead a session reaches the daemon over a local endpoint
-//! (`ipc`) through `hermesd bus-proxy` (`proxy`), the kernel names the
+//! (`ipc`) through `flotillad bus-proxy` (`proxy`), the kernel names the
 //! process on the other end, and the daemon walks its parents to the session
 //! root the supervisor recorded (`session`, `os`).
 //!
@@ -29,6 +29,8 @@ mod owner_macos;
 mod owner_os;
 #[cfg(windows)]
 pub use owner_os::app_dir as windows_app_dir;
+#[cfg(windows)]
+pub use owner_os::legacy_app_dirs as windows_legacy_app_dirs;
 pub mod proxy;
 pub mod session;
 
@@ -46,7 +48,7 @@ pub enum BearerPolicy {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BotTransport {
-    /// `hermesd bus-proxy` over the local endpoint, identified by process.
+    /// `flotillad bus-proxy` over the local endpoint, identified by process.
     #[default]
     Stdio,
     /// The HTTP endpoint with the bearer token: the rollback switch.
@@ -63,7 +65,7 @@ pub struct AuthConfig {
 }
 
 /// Whether this build's hooks reach the daemon over the local endpoint
-/// (`hermesd hook <event>`, H-044 T3). Phase 2 refuses bearer tokens on
+/// (`flotillad hook <event>`, H-044 T3). Phase 2 refuses bearer tokens on
 /// `/hook` and `/hook/permission` too, so without it every bot's SessionStart
 /// and permission prompts would fail. A const, not a config key: only the
 /// code that ships the hook transport can claim it. `true` since the T3
@@ -80,7 +82,7 @@ impl AuthConfig {
         }
         self.bot_bearer = BearerPolicy::Accept;
         Some(
-            "[auth] bot_bearer = \"refuse\" ignored: this build has no `hermesd hook` \
+            "[auth] bot_bearer = \"refuse\" ignored: this build has no `flotillad hook` \
              transport (H-044 T3), so refusing bearers would break every bot's hooks \
              and delete the tokens needed to roll back. Staying in phase 1."
                 .to_string(),
@@ -97,8 +99,8 @@ impl AuthConfig {
         }
         self.bot_bearer = BearerPolicy::Accept;
         Some(
-            "[auth] bot_bearer = \"refuse\" ignored: this hermesd was built without the \
-             owner's Team ID (HERMES_TEAM_ID), so it cannot recognise the signed app and \
+            "[auth] bot_bearer = \"refuse\" ignored: this flotillad was built without the \
+             owner's Team ID (FLOTILLA_TEAM_ID), so it cannot recognise the signed app and \
              phase 2 would lock it out. Staying in phase 1."
                 .to_string(),
         )
@@ -197,7 +199,7 @@ pub fn composer_delivery(cfg: &crate::config::Config, id: &str, name: &str) -> b
         && cfg.runtime == crate::config::RuntimeKind::Pty
 }
 
-/// A stdio MCP server's entry, started through `hermesd mcp-exec` when the
+/// A stdio MCP server's entry, started through `flotillad mcp-exec` when the
 /// composer is vouched for: detached from the bot's terminal, it can't push
 /// keystrokes into the composer (TIOCSTI, CE-029 M1). The provenance check
 /// still covers a server a bot adds itself.
@@ -233,7 +235,7 @@ pub fn bearer_in_env(cfg: &crate::config::Config) -> bool {
 fn proxy_command() -> String {
     std::env::current_exe()
         .map(|exe| exe.to_string_lossy().into_owned())
-        .unwrap_or_else(|_| "hermesd".to_string())
+        .unwrap_or_else(|_| "flotillad".to_string())
 }
 
 /// The HTTP entry with the bearer token from the session's environment:
@@ -332,7 +334,7 @@ mod tests {
         let mut auth = refusing();
         let error = auth.hold_phase_two(false).expect("refused");
         assert!(
-            error.contains("T3") && error.contains("hermesd hook"),
+            error.contains("T3") && error.contains("flotillad hook"),
             "{error}"
         );
         assert_eq!(auth.bot_bearer, BearerPolicy::Accept, "stays in phase 1");
@@ -345,7 +347,7 @@ mod tests {
             BearerPolicy::Refuse,
             "phase 2 once hooks have their own way in"
         );
-        // A dev build (HERMES_DEV_BUILD, as a release verify may set) never
+        // A dev build (FLOTILLA_DEV_BUILD, as a release verify may set) never
         // enforces storage; only shipped binaries do (H-042).
         assert_eq!(auth.storage().enforce, !app_identity::DEV_BUILD);
 
@@ -357,7 +359,7 @@ mod tests {
     fn phase_two_waits_for_the_owner_team_id() {
         let mut auth = refusing();
         let error = auth.hold_for_app_identity(false).expect("refused");
-        assert!(error.contains("HERMES_TEAM_ID"), "{error}");
+        assert!(error.contains("FLOTILLA_TEAM_ID"), "{error}");
         assert_eq!(auth.bot_bearer, BearerPolicy::Accept, "stays in phase 1");
         assert!(!auth.storage().enforce, "client.token is kept");
 

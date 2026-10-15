@@ -12,7 +12,7 @@ use tauri::{AppHandle, Manager};
 
 /// The owner credential for the next connection: a one-time ticket the daemon
 /// grants this app by its code signature over the local endpoint (H-044 T4),
-/// or, from a daemon too old to ask, `~/.thehermes/secrets/client.token`.
+/// or, from a daemon too old to ask, `~/.flotilla/secrets/client.token`.
 #[tauri::command]
 fn read_client_token() -> Result<String, String> {
     let home = daemon::daemon_home()?;
@@ -23,6 +23,13 @@ fn read_client_token() -> Result<String, String> {
     let token = std::fs::read_to_string(&path)
         .map_err(|err| format!("failed to read {}: {err}", path.display()))?;
     Ok(token.trim().to_string())
+}
+
+/// The app this one replaced (`/Applications/The Hermes.app`), while it is
+/// still installed, so the owner can be told it may go.
+#[tauri::command]
+fn legacy_app_path() -> Option<String> {
+    legacy_storage::installed_app().map(|app| app.display().to_string())
 }
 
 /// Puts the unread count on the dock icon; a count of zero removes the badge.
@@ -95,7 +102,7 @@ fn open_url(url: &str) -> Result<(), String> {
 /// Shows a project's directory in the OS file manager.
 ///
 /// Takes the immutable `dir_name` rather than a path so the webview cannot ask
-/// the shell to open somewhere outside `~/.thehermes/projects/`.
+/// the shell to open somewhere outside `~/.flotilla/projects/`.
 #[tauri::command]
 fn reveal_project(dir_name: String) -> Result<(), String> {
     if dir_name.is_empty() || dir_name.contains('/') || dir_name.contains('\\') {
@@ -211,6 +218,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             read_client_token,
+            legacy_app_path,
             set_dock_badge,
             open_external_url,
             reveal_project,

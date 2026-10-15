@@ -1,30 +1,39 @@
-//! What the owner's app is, compiled into hermesd (H-110). There is no pin
+//! What the owner's app is, compiled into flotillad (H-110). There is no pin
 //! file a bot could rewrite: a release build names the owner's Apple team,
 //! and on Windows the app's place under Program Files, which only an
 //! administrator can write.
 //!
 //! Build-time environment:
-//! - `HERMES_TEAM_ID`: the owner's Apple Developer Team ID. Until the owner
+//! - `FLOTILLA_TEAM_ID` (or, as before the rename, `HERMES_TEAM_ID`): the
+//!   owner's Apple Developer Team ID. Until the owner
 //!   sends it, a placeholder stands in, which no real app satisfies, so the
 //!   app falls back to `client.token` in phase 1. A macOS daemon built with
 //!   the placeholder never enters phase 2 (`AuthConfig::hold_for_app_identity`),
 //!   and the release scripts refuse to build one unless it is a dev build
 //!   (ARCH-R38). A malformed value fails the build.
-//! - `HERMES_DEV_BUILD=1`: an explicit dev build, which never enforces phase
+//! - `FLOTILLA_DEV_BUILD=1` (or `HERMES_DEV_BUILD=1`): an explicit dev
+//!   build, which never enforces phase
 //!   2 storage (`client.token` and bot tokens stay on disk), so an unsigned
 //!   app from `tauri dev` keeps working. Release builds never set it.
 
 use std::path::Path;
 
-/// The app's bundle identifier on macOS (`tauri.conf.json`).
-pub const BUNDLE_ID: &str = "com.manuelrinaldi.thehermes";
+/// The app's bundle identifier on macOS (`tauri.conf.json`). Only this app
+/// is the owner's: The Hermes's `com.manuelrinaldi.thehermes` is not, since
+/// the daemon and the app it trusts ship and update together (the Flotilla
+/// app installs this daemon before it asks it for anything).
+pub const BUNDLE_ID: &str = "com.manuelrinaldi.flotilla";
 
 /// Stands in for the Team ID until the owner sends it.
 pub const PLACEHOLDER_TEAM_ID: &str = "0000000000";
 
-pub const TEAM_ID: &str = match option_env!("HERMES_TEAM_ID") {
+pub const TEAM_ID: &str = match option_env!("FLOTILLA_TEAM_ID") {
     Some(team) => team,
-    None => PLACEHOLDER_TEAM_ID,
+    // The name release.yml and the scripts used before the rename.
+    None => match option_env!("HERMES_TEAM_ID") {
+        Some(team) => team,
+        None => PLACEHOLDER_TEAM_ID,
+    },
 };
 
 const fn same(a: &str, b: &str) -> bool {
@@ -62,7 +71,7 @@ pub const fn is_team_id(team: &str) -> bool {
 // a Team ID.
 const _: () = assert!(
     is_team_id(TEAM_ID) || same(TEAM_ID, PLACEHOLDER_TEAM_ID),
-    "HERMES_TEAM_ID must be the ten-character Apple Team ID"
+    "FLOTILLA_TEAM_ID (or HERMES_TEAM_ID) must be the ten-character Apple Team ID"
 );
 
 /// Whether this build knows the owner's app: always on Windows (the
@@ -70,7 +79,8 @@ const _: () = assert!(
 /// Team ID, since no app satisfies the placeholder.
 pub const APP_IDENTITY_KNOWN: bool = !cfg!(target_os = "macos") || is_team_id(TEAM_ID);
 
-pub const DEV_BUILD: bool = option_env!("HERMES_DEV_BUILD").is_some();
+pub const DEV_BUILD: bool =
+    option_env!("FLOTILLA_DEV_BUILD").is_some() || option_env!("HERMES_DEV_BUILD").is_some();
 
 /// How this build knows the owner's app, for `--version`, `service status`
 /// and the About box (H-114).
@@ -116,7 +126,12 @@ fn describe(dev: bool, macos: bool, windows: bool, team: &str) -> String {
 }
 
 /// The folder the perMachine installer puts the app in, under Program Files.
-pub const WINDOWS_APP_FOLDER: &str = "The Hermes";
+pub const WINDOWS_APP_FOLDER: &str = "Flotilla";
+
+/// The folders releases before the rename installed into (Gravity installed
+/// per user, so only The Hermes's is under Program Files). Nothing in them is
+/// trusted; an install only stops the daemon its task ran from there.
+pub const LEGACY_WINDOWS_APP_FOLDERS: [&str; 1] = ["The Hermes"];
 
 /// macOS code requirement for the app: Apple's anchor, the owner's team
 /// (a renewed certificate keeps matching) and the app's identifier.
@@ -127,14 +142,17 @@ pub fn requirement() -> String {
 }
 
 /// Windows: `image` is an executable directly in `app_dir`, other than the
-/// daemon.
+/// daemon under any of its names.
 pub fn is_app_image(image: &Path, app_dir: &Path) -> bool {
     let same_dir = directly_in(image, app_dir);
     let name = image
         .file_name()
         .map(|n| n.to_string_lossy().to_ascii_lowercase())
         .unwrap_or_default();
-    same_dir && !name.is_empty() && !name.starts_with("hermesd")
+    let daemon = crate::brand::all_daemon_files("")
+        .iter()
+        .any(|stem| name.starts_with(stem.as_str()));
+    same_dir && !name.is_empty() && !daemon
 }
 
 /// `path` sits directly in `dir`. Paths compare case-insensitively, as NTFS
@@ -154,7 +172,7 @@ pub fn is_installed_daemon(binary: &Path, app_dir: &Path) -> bool {
     directly_in(binary, app_dir)
         && binary
             .file_name()
-            .is_some_and(|n| n.to_string_lossy().eq_ignore_ascii_case("hermesd.exe"))
+            .is_some_and(|n| n.to_string_lossy().eq_ignore_ascii_case("flotillad.exe"))
 }
 
 #[cfg(test)]
@@ -177,7 +195,7 @@ mod tests {
         );
         assert_eq!(
             describe(false, false, true, PLACEHOLDER_TEAM_ID),
-            "app in Program Files\\The Hermes"
+            "app in Program Files\\Flotilla"
         );
         assert_eq!(
             describe(false, false, false, PLACEHOLDER_TEAM_ID),
@@ -206,14 +224,16 @@ mod tests {
                 p.replace(r"C:\", "/").replace('\\', "/")
             }
         };
-        let dir = os(r"C:\Program Files\The Hermes");
+        let dir = os(r"C:\Program Files\Flotilla");
         let app = |p: &str| is_app_image(Path::new(&os(p)), Path::new(&dir));
-        assert!(app(r"C:\Program Files\The Hermes\hermes-desktop.exe"));
-        assert!(app(r"C:\program files\the hermes\Hermes-Desktop.EXE"));
-        assert!(!app(r"C:\Program Files\The Hermes\hermesd.exe"));
-        assert!(!app(r"C:\Program Files\The Hermes\sub\hermes-desktop.exe"));
+        assert!(app(r"C:\Program Files\Flotilla\flotilla-desktop.exe"));
+        assert!(app(r"C:\program files\flotilla\Flotilla-Desktop.EXE"));
+        assert!(!app(r"C:\Program Files\Flotilla\flotillad.exe"));
+        assert!(!app(r"C:\Program Files\Flotilla\hermesd.exe"));
+        assert!(!app(r"C:\Program Files\The Hermes\hermes-desktop.exe"));
+        assert!(!app(r"C:\Program Files\Flotilla\sub\flotilla-desktop.exe"));
         assert!(!app(
-            r"C:\Users\me\AppData\Local\The Hermes\hermes-desktop.exe"
+            r"C:\Users\me\AppData\Local\Flotilla\flotilla-desktop.exe"
         ));
     }
 
@@ -243,12 +263,12 @@ mod tests {
                 p.replace(r"C:\", "/").replace('\\', "/")
             }
         };
-        let dir = os(r"C:\Program Files\The Hermes");
+        let dir = os(r"C:\Program Files\Flotilla");
         let daemon = |p: &str| is_installed_daemon(Path::new(&os(p)), Path::new(&dir));
-        assert!(daemon(r"C:\Program Files\The Hermes\hermesd.exe"));
-        assert!(daemon(r"C:\program files\the hermes\HERMESD.EXE"));
-        assert!(!daemon(r"C:\Program Files\The Hermes\hermes-desktop.exe"));
-        assert!(!daemon(r"C:\Users\me\.thehermes\bin\hermesd.exe"));
-        assert!(!daemon(r"C:\Program Files\The Hermes\bin\hermesd.exe"));
+        assert!(daemon(r"C:\Program Files\Flotilla\flotillad.exe"));
+        assert!(daemon(r"C:\program files\flotilla\FLOTILLAD.EXE"));
+        assert!(!daemon(r"C:\Program Files\Flotilla\flotilla-desktop.exe"));
+        assert!(!daemon(r"C:\Users\me\.flotilla\bin\flotillad.exe"));
+        assert!(!daemon(r"C:\Program Files\Flotilla\bin\flotillad.exe"));
     }
 }

@@ -21,6 +21,7 @@ import CommandPalette from "./components/CommandPalette";
 import Rail from "./components/home/Rail";
 import MainChat from "./components/mainchat/MainChat";
 import { useAppChat } from "./components/mainchat/useAppChat";
+import { useLegacyAppNotice } from "./app/useLegacyAppNotice";
 import HomeMigrationConfirm from "./components/overlay/HomeMigrationConfirm";
 import MainPane from "./components/MainPane";
 import SearchOverlay from "./components/SearchOverlay";
@@ -112,6 +113,7 @@ function SetupGate({ setup, toasts, onDismissToast, children }: SetupGateProps):
 export default function App(): ReactElement {
   const [client] = useState(() => new DaemonClient(loadEndpoint(), readClientToken));
   const { toasts, addToast, dismissToast } = useToasts();
+  useLegacyAppNotice(addToast);
   const daemon = useDaemonState(client, addToast);
   const overlays = useOverlays();
   const { select, bots, canControl, connected } = daemon;
