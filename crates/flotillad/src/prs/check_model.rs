@@ -122,7 +122,7 @@ pub struct CheckRun {
 }
 
 impl CheckRun {
-    /// The record with the `hermes.pr.v1` `CheckRun` field names.
+    /// The record with the `flotilla.pr.v1` `CheckRun` field names.
     pub fn to_json(&self) -> Value {
         json!({
             "name": self.name, "sha": self.sha, "tree": self.tree,

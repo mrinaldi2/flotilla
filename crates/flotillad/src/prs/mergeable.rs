@@ -15,7 +15,7 @@ use crate::releases::git_cache;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Blocker {
-    /// `hermes.pr.v1.BlockerKind`, lowercase without its prefix.
+    /// `flotilla.pr.v1.BlockerKind`, lowercase without its prefix.
     pub kind: &'static str,
     pub text: String,
     pub subject: Option<String>,

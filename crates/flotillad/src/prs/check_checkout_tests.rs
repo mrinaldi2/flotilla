@@ -151,7 +151,7 @@ fn the_projects_ssh_remote_clones_anonymously() {
 }
 
 /// H-321 AC1 for real with the daemon's own token (gh's login or
-/// `GH_TOKEN`): `cargo test -p hermesd --lib check_checkout -- --ignored`.
+/// `GH_TOKEN`): `cargo test -p flotillad --lib check_checkout -- --ignored`.
 #[test]
 #[ignore = "needs a GitHub token on this computer"]
 fn the_projects_ssh_remote_clones_with_the_daemons_token() {

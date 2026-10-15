@@ -1,5 +1,5 @@
 //! The PR reads the app makes (H-273; H-261 §9): `pr_list`, `pr_get`,
-//! `pr_diff` and `pr_comments` as `hermes.pr.v1` answers. The board's home
+//! `pr_diff` and `pr_comments` as `flotilla.pr.v1` answers. The board's home
 //! answers them for its own WS clients and for a linked computer's, which
 //! forwards them here (`pr_read`), so both see the same PRs. They read what
 //! is recorded: the 5-minute watch notices unreported pushes, not a read.

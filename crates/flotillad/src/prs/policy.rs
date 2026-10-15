@@ -1,10 +1,15 @@
-//! Repo-owned review and check policy (H-267, H-261 §2): `.hermes/reviewers.toml`
-//! names the reviewer roles each area of the tree needs, `.hermes/checks.toml`
+//! Repo-owned review and check policy (H-267, H-261 §2): `.flotilla/reviewers.toml`
+//! names the reviewer roles each area of the tree needs, `.flotilla/checks.toml`
 //! the checks a change runs. Both are read from the PR's base, never its
-//! head (`base`), so a PR can't change its own rules.
+//! head (`base`), so a PR can't change its own rules. A repository that still
+//! has the pre-rename `.hermes/` folder is read from there; `.flotilla/`
+//! wins when both exist.
 //!
 //! A change to the policy files themselves always needs architect, ce and the
-//! owner (§12 risk 4). That area is hard-coded here, so no file can remove it.
+//! owner (§12 risk 4). That area is hard-coded here, so no file can remove it,
+//! and it covers both folders: otherwise a bot could add `.flotilla/` beside
+//! an owner-reviewed `.hermes/` (or the reverse) and change the rules
+//! without the owner.
 
 pub mod base;
 pub mod glob;
@@ -15,11 +20,15 @@ use serde::Deserialize;
 
 use crate::decisions::{forbidden, invalid};
 
-pub const REVIEWERS_PATH: &str = ".hermes/reviewers.toml";
-pub const CHECKS_PATH: &str = ".hermes/checks.toml";
+pub const REVIEWERS_PATH: &str = ".flotilla/reviewers.toml";
+pub const CHECKS_PATH: &str = ".flotilla/checks.toml";
 
-/// The hard-coded area: the policy files.
-const POLICY_PATHS: &[&str] = &[".hermes/*.toml"];
+/// Each policy file under every folder name, the one read first first.
+pub const REVIEWERS_PATHS: [&str; 2] = [REVIEWERS_PATH, ".hermes/reviewers.toml"];
+pub const CHECKS_PATHS: [&str; 2] = [CHECKS_PATH, ".hermes/checks.toml"];
+
+/// The hard-coded area: the policy files, in both folders.
+const POLICY_PATHS: &[&str] = &[".flotilla/*.toml", ".hermes/*.toml"];
 const POLICY_ROLES: &[ReviewRole] = &[ReviewRole::Architect, ReviewRole::Ce, ReviewRole::Owner];
 
 /// A reviewer role as `reviewers.toml` names it.
@@ -126,7 +135,7 @@ impl Check {
     }
 }
 
-/// `.hermes/checks.toml`.
+/// `.flotilla/checks.toml` (or `.hermes/checks.toml`).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Checks {
@@ -142,42 +151,46 @@ impl Checks {
 }
 
 pub fn parse_reviewers(text: &str) -> anyhow::Result<Reviewers> {
-    let reviewers: Reviewers =
-        toml::from_str(text).map_err(|e| invalid(format!("{REVIEWERS_PATH}: {e}")))?;
+    parse_reviewers_at(text, REVIEWERS_PATH)
+}
+
+/// [`parse_reviewers`] for the file at `path`, which errors name.
+pub fn parse_reviewers_at(text: &str, path: &str) -> anyhow::Result<Reviewers> {
+    let reviewers: Reviewers = toml::from_str(text).map_err(|e| invalid(format!("{path}: {e}")))?;
     for area in &reviewers.areas {
         anyhow::ensure!(
             !area.name.trim().is_empty() && !area.paths.is_empty() && !area.roles.is_empty(),
             invalid(format!(
-                "{REVIEWERS_PATH}: area {:?} needs a name, paths and roles",
+                "{path}: area {:?} needs a name, paths and roles",
                 area.name
             ))
         );
     }
     unique(
         reviewers.areas.iter().map(|a| a.name.as_str()),
-        REVIEWERS_PATH,
+        path,
         "area",
     )?;
     Ok(reviewers)
 }
 
 pub fn parse_checks(text: &str) -> anyhow::Result<Checks> {
-    let checks: Checks =
-        toml::from_str(text).map_err(|e| invalid(format!("{CHECKS_PATH}: {e}")))?;
+    parse_checks_at(text, CHECKS_PATH)
+}
+
+/// [`parse_checks`] for the file at `path`, which errors name.
+pub fn parse_checks_at(text: &str, path: &str) -> anyhow::Result<Checks> {
+    let checks: Checks = toml::from_str(text).map_err(|e| invalid(format!("{path}: {e}")))?;
     for check in &checks.checks {
         anyhow::ensure!(
             !check.name.trim().is_empty() && !check.run.trim().is_empty(),
             invalid(format!(
-                "{CHECKS_PATH}: check {:?} needs a name and a run command",
+                "{path}: check {:?} needs a name and a run command",
                 check.name
             ))
         );
     }
-    unique(
-        checks.checks.iter().map(|c| c.name.as_str()),
-        CHECKS_PATH,
-        "check",
-    )?;
+    unique(checks.checks.iter().map(|c| c.name.as_str()), path, "check")?;
     Ok(checks)
 }
 

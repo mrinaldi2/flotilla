@@ -59,25 +59,36 @@ fn checks(text: &str) -> Checks {
 
 fn ran(out: &[NewCheck]) -> Vec<(String, String)> {
     out.iter()
-        .filter(|c| c.name != ".hermes/checks.toml")
+        .filter(|c| c.name != crate::prs::policy::CHECKS_PATH)
         .map(|c| (c.name.clone(), c.run.clone()))
         .collect()
 }
 
 fn row(out: &[NewCheck]) -> Option<String> {
-    let row = out.iter().find(|c| c.name == ".hermes/checks.toml")?;
+    let row = out
+        .iter()
+        .find(|c| c.name == crate::prs::policy::CHECKS_PATH)?;
     assert_eq!(row.result, CheckResult::Pass);
     row.note.clone()
 }
 
 fn changed() -> Vec<String> {
-    vec!["src/x.rs".to_string(), ".hermes/checks.toml".to_string()]
+    vec![
+        "src/x.rs".to_string(),
+        crate::prs::policy::CHECKS_PATH.to_string(),
+    ]
 }
 
 /// CE M1: each kind is named plainly, the quiet weakenings included.
 #[test]
 fn each_kind_of_change_is_named_on_the_pr() {
-    let out = with_head_defs(&checks(MAIN), &checks(MAIN), &checks(HEAD), &changed());
+    let out = with_head_defs(
+        &checks(MAIN),
+        &checks(MAIN),
+        &checks(HEAD),
+        &changed(),
+        crate::prs::policy::CHECKS_PATH,
+    );
     assert_eq!(
         ran(&out),
         vec![
@@ -101,7 +112,13 @@ fn a_check_made_optional_is_skipped_and_named() {
         "name = \"optional\"\nrun = \"cargo test\"",
         "name = \"optional\"\nrun = \"cargo test\"\nrequired = false",
     );
-    let out = with_head_defs(&checks(MAIN), &checks(MAIN), &checks(&head), &changed());
+    let out = with_head_defs(
+        &checks(MAIN),
+        &checks(MAIN),
+        &checks(&head),
+        &changed(),
+        crate::prs::policy::CHECKS_PATH,
+    );
     assert!(ran(&out).iter().all(|(n, _)| n != "optional"));
     assert_eq!(
         row(&out).as_deref(),
@@ -112,7 +129,13 @@ fn a_check_made_optional_is_skipped_and_named() {
 #[test]
 fn a_check_whose_paths_no_longer_match_is_skipped_and_named() {
     let head = MAIN.replace("paths = [\"src/**\"]", "paths = [\"docs/**\"]");
-    let out = with_head_defs(&checks(MAIN), &checks(MAIN), &checks(&head), &changed());
+    let out = with_head_defs(
+        &checks(MAIN),
+        &checks(MAIN),
+        &checks(&head),
+        &changed(),
+        crate::prs::policy::CHECKS_PATH,
+    );
     assert!(ran(&out).iter().all(|(n, _)| n != "narrowed"));
     assert_eq!(
         row(&out).as_deref(),
@@ -123,7 +146,13 @@ fn a_check_whose_paths_no_longer_match_is_skipped_and_named() {
 #[test]
 fn a_removed_check_is_named() {
     let head = MAIN.replace("[[check]]\nname = \"gone\"\nrun = \"exit 1\"\n", "");
-    let out = with_head_defs(&checks(MAIN), &checks(MAIN), &checks(&head), &changed());
+    let out = with_head_defs(
+        &checks(MAIN),
+        &checks(MAIN),
+        &checks(&head),
+        &changed(),
+        crate::prs::policy::CHECKS_PATH,
+    );
     assert!(ran(&out).iter().all(|(n, _)| n != "gone"));
     assert_eq!(
         row(&out).as_deref(),
@@ -146,6 +175,7 @@ fn mains_later_edits_are_not_the_prs() {
         &checks(MAIN),
         &checks(&head),
         &changed(),
+        crate::prs::policy::CHECKS_PATH,
     );
     let fixed = ran(&out).into_iter().find(|(n, _)| n == "fixed").unwrap();
     assert_eq!(fixed.1, "cargo test --strict", "main's current definition");
@@ -157,7 +187,13 @@ fn mains_later_edits_are_not_the_prs() {
 
 #[test]
 fn a_checks_toml_that_changes_no_check_adds_no_row() {
-    let out = with_head_defs(&checks(MAIN), &checks(MAIN), &checks(MAIN), &changed());
+    let out = with_head_defs(
+        &checks(MAIN),
+        &checks(MAIN),
+        &checks(MAIN),
+        &changed(),
+        crate::prs::policy::CHECKS_PATH,
+    );
     assert_eq!(row(&out), None);
     assert_eq!(ran(&out).len(), 5, "every check of main runs");
 }

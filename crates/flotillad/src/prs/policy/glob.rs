@@ -34,7 +34,7 @@ mod tests {
 
     #[test]
     fn double_star_spans_any_depth() {
-        assert!(matches("crates/**", "crates/hermesd/src/lib.rs"));
+        assert!(matches("crates/**", "crates/flotillad/src/lib.rs"));
         assert!(matches("crates/**", "crates/Cargo.toml"));
         assert!(!matches("crates/**", "apps/desktop/src/main.ts"));
         assert!(matches("**/*.md", "README.md"));
@@ -44,12 +44,12 @@ mod tests {
     #[test]
     fn star_stays_within_a_segment() {
         assert!(matches(
-            "crates/hermesd/src/ws/owner_*",
-            "crates/hermesd/src/ws/owner_auth.rs"
+            "crates/flotillad/src/ws/owner_*",
+            "crates/flotillad/src/ws/owner_auth.rs"
         ));
         assert!(!matches(
-            "crates/hermesd/src/ws/owner_*",
-            "crates/hermesd/src/ws/owner_x/a.rs"
+            "crates/flotillad/src/ws/owner_*",
+            "crates/flotillad/src/ws/owner_x/a.rs"
         ));
         assert!(matches("scripts/release*", "scripts/release-notes.sh"));
         assert!(matches("Cargo.*", "Cargo.lock"));

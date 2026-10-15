@@ -22,12 +22,14 @@ use super::checks::{policy_check, queue};
 
 /// The checks of a PR whose head's `checks.toml` parses and differs from
 /// the merge-base's: `current` is main's, `before` the merge-base's, `head`
-/// the PR's; `changed` the paths the PR changes.
+/// the PR's; `changed` the paths the PR changes; `file` the head's checks
+/// file, which the policy check is named after.
 pub(super) fn with_head_defs(
     current: &Checks,
     before: &Checks,
     head: &Checks,
     changed: &[String],
+    file: &str,
 ) -> Vec<NewCheck> {
     let find = |set: &'_ Checks, name: &str| set.checks.iter().find(|c| c.name == name).cloned();
     let runs = |c: &Check| c.required && c.applies(changed);
@@ -73,6 +75,7 @@ pub(super) fn with_head_defs(
     let mut checks = queue(&merged, changed);
     if !said.is_empty() {
         checks.push(policy_check(
+            file,
             CheckResult::Pass,
             &format!("this PR's checks.toml: {}", said.join("; ")),
         ));

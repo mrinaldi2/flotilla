@@ -72,7 +72,7 @@ pub struct Pr {
 }
 
 impl Pr {
-    /// The record for bots and clients, with the `hermes.pr.v1` field names.
+    /// The record for bots and clients, with the `flotilla.pr.v1` field names.
     pub fn to_json(&self) -> Value {
         json!({
             "id": self.id, "project_id": self.project_id, "number": self.number,

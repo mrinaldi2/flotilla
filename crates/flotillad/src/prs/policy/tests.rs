@@ -33,7 +33,7 @@ fn the_fixtures_parse() {
 #[test]
 fn required_roles_are_the_union_of_the_matched_areas() {
     let changed = paths(&[
-        "crates/hermesd/src/peer/link.rs",
+        "crates/flotillad/src/peer/link.rs",
         "apps/desktop/src/App.tsx",
         "scripts/release-notes.sh",
     ]);
@@ -65,12 +65,14 @@ fn a_matched_area_replaces_the_default() {
     assert_eq!(required_roles(&ui_only, &paths(&["ui/a.ts"])), roles(&[Ux]));
 }
 
-/// Whatever the files say, even with no area at all for `.hermes/`.
+/// Whatever the files say, even with no area at all for `.flotilla/`, and
+/// in either folder: a bot adding `.flotilla/` beside an owner-reviewed
+/// `.hermes/` (or the reverse) changes the rules too.
 #[test]
 fn a_policy_change_always_needs_architect_ce_and_the_owner() {
     let ui_only = parse_reviewers("[[area]]\nname='all'\npaths=['**']\nroles=['ux']").unwrap();
     for reviewers in [fixture(), Reviewers::default(), ui_only] {
-        for file in [REVIEWERS_PATH, CHECKS_PATH] {
+        for file in REVIEWERS_PATHS.into_iter().chain(CHECKS_PATHS) {
             let got = required_roles(&reviewers, &paths(&[file]));
             assert!(
                 got.is_superset(&roles(&[Architect, Ce, Owner])),
@@ -79,6 +81,14 @@ fn a_policy_change_always_needs_architect_ce_and_the_owner() {
         }
     }
     assert!(!touches_policy(&paths(&[".hermes/README.md"])));
+    assert!(!touches_policy(&paths(&[".flotilla/README.md"])));
+    for file in [
+        ".flotilla/reviewers.toml",
+        ".hermes/reviewers.toml",
+        ".flotilla/extra.toml",
+    ] {
+        assert!(touches_policy(&paths(&[file])), "{file}");
+    }
 }
 
 #[test]

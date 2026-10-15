@@ -1,4 +1,4 @@
-//! A PR as `hermes.pr.v1` messages (H-273), for the WS reads. Built from the
+//! A PR as `flotilla.pr.v1` messages (H-273), for the WS reads. Built from the
 //! same JSON `pr_get` gives bots (`prs::detail`), so the two never disagree:
 //! the short enum names become wire enums, bot ids `BotRef`s with names, and
 //! the owner's provenance an `Owner`.

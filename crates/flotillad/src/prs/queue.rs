@@ -74,7 +74,7 @@ pub fn tick(app: &Arc<AppState>, project: &str, now: DateTime<Utc>) -> anyhow::R
         let row = app.db.board_read(|t| t.queue_row(&pr.id))?;
         if let Some(row) = &row {
             if row.state == "handed" {
-                // DevOps runs it now (`hermesd pr merge`), unless it's stuck.
+                // DevOps runs it now (`flotillad pr merge`), unless it's stuck.
                 if now - row.updated_at >= STUCK_AFTER {
                     stuck(app, pr, row, now)?;
                 }
@@ -157,7 +157,7 @@ fn hand_off(
         return Ok(());
     };
     let body = format!(
-        "Merge PR #{} ({}: {}) into main: main fast-forwards to {}. Run `hermesd pr merge {}` \
+        "Merge PR #{} ({}: {}) into main: main fast-forwards to {}. Run `flotillad pr merge {}` \
          in your checkout; it checks the PR is still mergeable first.",
         pr.number, pr.item_id, pr.title, pr.head_sha, pr.number
     );

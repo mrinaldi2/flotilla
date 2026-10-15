@@ -1,4 +1,4 @@
-//! The JSON `pr_get` gives bots, as `hermes.pr.v1` messages.
+//! The JSON `pr_get` gives bots, as `flotilla.pr.v1` messages.
 
 use serde_json::json;
 

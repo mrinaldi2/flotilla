@@ -74,7 +74,7 @@ fn a_pr_editing_the_policy_is_judged_by_the_base_rules() {
     git(repo, &["checkout", "-q", "-b", "sneaky"]);
     // The head drops every area and so would need only the architect.
     write(repo, ".hermes/reviewers.toml", "");
-    write(repo, "crates/hermesd/src/peer/link.rs", "// change\n");
+    write(repo, "crates/flotillad/src/peer/link.rs", "// change\n");
     commit(repo, "drop the reviewers");
 
     let base = read(repo, "main").unwrap();
@@ -83,7 +83,10 @@ fn a_pr_editing_the_policy_is_judged_by_the_base_rules() {
     let changed = git_cache::changed_paths(repo, "main", "sneaky").unwrap();
     assert_eq!(
         changed,
-        [".hermes/reviewers.toml", "crates/hermesd/src/peer/link.rs"]
+        [
+            ".hermes/reviewers.toml",
+            "crates/flotillad/src/peer/link.rs"
+        ]
     );
     assert_eq!(
         base.required_roles(&changed),
@@ -144,4 +147,46 @@ fn a_broken_base_file_fails_closed() {
         base.required_roles(&["README.md".to_string()]),
         roles(&[Architect, Ce, Owner])
     );
+}
+
+/// `.flotilla/` is read before the pre-rename `.hermes/` when both exist.
+#[test]
+fn the_new_folder_wins_over_the_old_one() {
+    let dir = repo();
+    let repo = dir.path();
+    write(repo, ".flotilla/reviewers.toml", "");
+    commit(repo, "move the policy");
+    let base = read(repo, "main").unwrap();
+    assert!(base.reviewers.as_ref().unwrap().areas.is_empty());
+    assert_eq!(
+        base.checks.as_ref().unwrap().checks.len(),
+        5,
+        "still .hermes/"
+    );
+}
+
+/// A bot adding the other folder's file beside an owner-reviewed one would
+/// change the rules (the new folder wins): that needs the owner too, in
+/// either direction.
+#[test]
+fn adding_the_other_folder_needs_the_owner() {
+    for (base_dir, added) in [(".hermes", ".flotilla"), (".flotilla", ".hermes")] {
+        let dir = tempfile::tempdir().unwrap();
+        let repo = dir.path();
+        git(repo, &["init", "-q", "-b", "main"]);
+        write(repo, &format!("{base_dir}/reviewers.toml"), REVIEWERS);
+        commit(repo, "policy");
+        git(repo, &["checkout", "-q", "-b", "sneaky"]);
+        write(repo, &format!("{added}/reviewers.toml"), "");
+        commit(repo, "a second policy");
+        let base = read(repo, "main").unwrap();
+        let changed = git_cache::changed_paths(repo, "main", "sneaky").unwrap();
+        assert_eq!(changed, [format!("{added}/reviewers.toml")]);
+        assert!(
+            base.required_roles(&changed)
+                .is_superset(&roles(&[Architect, Ce, Owner])),
+            "{added} beside {base_dir}"
+        );
+        assert!(crate::prs::policy::touches_policy(&changed), "{added}");
+    }
 }

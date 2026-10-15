@@ -14,7 +14,7 @@ use crate::app::AppState;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
 use crate::prs::check_log;
 use crate::prs::check_model::{CheckResult, CheckRun, NewCheck, Report};
-use crate::prs::policy::{base, parse_checks, Checks, CHECKS_PATH};
+use crate::prs::policy::{base, parse_checks, Checks, CHECKS_PATHS};
 use crate::releases::{git_cache, machines};
 
 /// The checks a head must pass, and the tree it holds.
@@ -41,28 +41,30 @@ pub fn required(cache: &Path, base_sha: &str, head: &str) -> anyhow::Result<Requ
     let tree = git_cache::tree_of(cache, head)
         .ok_or_else(|| anyhow::anyhow!("{head} isn't in the repository"))?;
     let changed = git_cache::changed_paths(cache, base_sha, head)?;
-    let checks = match base::read(cache, base_sha)?.checks {
+    let base = base::read(cache, base_sha)?;
+    let checks = match base.checks {
         Ok(policy) => match repair(cache, head, &changed)? {
-            Some(theirs) => {
+            Some((file, theirs)) => {
                 // What the PR changed is against where it left main (CE S3).
                 let fork = git_cache::merge_base(cache, base_sha, head)?;
                 let before = base::read(cache, &fork)?
                     .checks
                     .unwrap_or_else(|_| Checks::default());
-                super::check_defs::with_head_defs(&policy, &before, &theirs, &changed)
+                super::check_defs::with_head_defs(&policy, &before, &theirs, &changed, file)
             }
             None => queue(&policy, &changed),
         },
         Err(e) => match repair(cache, head, &changed)? {
-            Some(policy) => {
+            Some((file, policy)) => {
                 let mut checks = queue(&policy, &changed);
                 checks.push(policy_check(
+                    file,
                     CheckResult::Pass,
                     "repairs the base's broken checks.toml; the head's checks run",
                 ));
                 checks
             }
-            None => vec![policy_check(CheckResult::Error, &e)],
+            None => vec![policy_check(base.checks_file, CheckResult::Error, &e)],
         },
     };
     Ok(Required { tree, checks })
@@ -85,9 +87,12 @@ pub(super) fn queue(policy: &Checks, changed: &[String]) -> Vec<NewCheck> {
         .collect()
 }
 
-pub(super) fn policy_check(result: CheckResult, note: &str) -> NewCheck {
+/// The check that stands for the policy file itself, named after it
+/// (`.flotilla/checks.toml`, or `.hermes/checks.toml` in a repository that
+/// keeps the pre-rename folder).
+pub(super) fn policy_check(file: &str, result: CheckResult, note: &str) -> NewCheck {
     NewCheck {
-        name: CHECKS_PATH.to_string(),
+        name: file.to_string(),
         run: String::new(),
         needs: Vec::new(),
         machine: None,
@@ -98,12 +103,18 @@ pub(super) fn policy_check(result: CheckResult, note: &str) -> NewCheck {
     }
 }
 
-/// The head's `checks.toml`, when the PR changes it and it parses.
-fn repair(cache: &Path, head: &str, changed: &[String]) -> anyhow::Result<Option<Checks>> {
-    if !changed.iter().any(|p| p == CHECKS_PATH) {
+/// The head's `checks.toml` and where it is, when the PR changes it (in
+/// either folder) and it parses.
+fn repair(
+    cache: &Path,
+    head: &str,
+    changed: &[String],
+) -> anyhow::Result<Option<(&'static str, Checks)>> {
+    if !changed.iter().any(|p| CHECKS_PATHS.contains(&p.as_str())) {
         return Ok(None);
     }
-    Ok(git_cache::file_at(cache, head, CHECKS_PATH)?.and_then(|text| parse_checks(&text).ok()))
+    Ok(base::first_file(cache, head, &CHECKS_PATHS)?
+        .and_then(|(file, text)| Some((file, parse_checks(&text).ok()?))))
 }
 
 /// Dispatches a queued check to `runner`: the daemon's
@@ -150,7 +161,7 @@ pub fn report(app: &Arc<AppState>, bot: &bus::Bot, req: &CheckReport) -> anyhow:
     if matches!(result, CheckResult::Pass | CheckResult::Fail) {
         return Err(forbidden(
             "a pass or a fail comes only from the check's exit status, which the daemon's \
-             runner (hermesd check run) records; report error if it couldn't run",
+             runner (flotillad check run) records; report error if it couldn't run",
         ));
     }
     let run = app

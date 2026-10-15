@@ -68,7 +68,8 @@ pub struct Shape {
     pub areas: Vec<String>,
     /// A ce area or the policy files: security work.
     pub security: bool,
-    /// The policy files (`.hermes/*.toml`): the owner reviews it whatever
+    /// The policy files (`.flotilla/*.toml`, `.hermes/*.toml`): the owner
+    /// reviews it whatever
     /// the setting (H-267, H-313).
     #[serde(default)]
     pub policy: bool,

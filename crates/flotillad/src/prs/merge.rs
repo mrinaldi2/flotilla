@@ -1,15 +1,15 @@
-//! The daemon's side of `hermesd pr merge <n>` (H-284; H-261 §5.2, §5.3,
+//! The daemon's side of `flotillad pr merge <n>` (H-284; H-261 §5.2, §5.3,
 //! §15.2). The command runs in DevOps' session and asks over the local
 //! endpoint, which knows the bot by its process, the same model as
 //! `release land` (H-117 X2):
 //!
-//! - `hermes/pr_merge {number}`: the bot holds the `pr_merge` extra, is the
+//! - `flotilla/pr_merge {number}`: the bot holds the `pr_merge` extra, is the
 //!   project's DevOps and holds the PR's open `pr_merge` task. The daemon
 //!   fetches the repo, checks the branch is still at the PR's head,
 //!   recomputes the roles and the shape the change needs **at the merge**
 //!   (main's tip to the head, CE on H-269), then every §5.1 condition. A
 //!   PR that no longer holds leaves the queue and its task closes.
-//! - `hermes/pr_merged {number, sha, branch}`: the daemon's own fetch must
+//! - `flotilla/pr_merged {number, sha, branch}`: the daemon's own fetch must
 //!   show main at `sha`, the PR's head. The PR is merged, its task done, and
 //!   its card moves Review → Verify once every PR it has, in every repo, is
 //!   merged (§6.5). A remote branch DevOps kept is said on the card.
@@ -31,8 +31,8 @@ use crate::prs::model::{Pr, PrState};
 use crate::prs::{mergeable, repo, review};
 use crate::releases::git_cache;
 
-const MERGE: &str = "hermes/pr_merge";
-const MERGED: &str = "hermes/pr_merged";
+const MERGE: &str = "flotilla/pr_merge";
+const MERGED: &str = "flotilla/pr_merged";
 
 /// Answers one of the merge gates from `bot_id`'s session, or `None` for
 /// any other request. Git runs off the async workers.
@@ -247,7 +247,7 @@ fn passed(app: &Arc<AppState>, cache: &std::path::Path, pr: &Pr, sha: &str) -> a
         "main reached a PR's head without a merge gate pass; nothing recorded"
     );
     Err(conflict(format!(
-        "main reached {sha} without a passed `hermesd pr merge` check for PR #{}: main moved \
+        "main reached {sha} without a passed `flotillad pr merge` check for PR #{}: main moved \
          outside the gate, so nothing is recorded and the owner is told",
         pr.number
     )))

@@ -1,0 +1,171 @@
+# .flotilla/reviewers.toml — mrinaldi2/gravity (H-279 draft, Architect 2026-10-10)
+#
+# Read from the PR's BASE, never its head (H-267). A change's required roles
+# are the union of every area its paths match. A change no area matches needs
+# `architect` (built-in fallback). The policy files themselves
+# (`.flotilla/*.toml`) always need architect + ce + owner: that area is
+# hard-coded in the daemon and can't be removed or weakened here.
+# The owner's own review is governed by the owner review setting
+# (all | areas | flagged | none), not by this file; `security` below is the
+# area name the `areas` setting keys on.
+#
+# Roles: architect (reviewer.arch), ux (reviewer.ux), ce (reviewer.ce,
+# owner-assigned only), devops, qa (tester), owner.
+
+# --- Security: trust boundaries, identity, owner-only gates -----------------
+[[area]]
+name = "security"
+roles = ["architect", "ce"]
+paths = [
+  # Bot identity, permissions guard, secrets
+  "crates/flotillad/src/bus_auth.rs",
+  "crates/flotillad/src/bus_auth/**",
+  "crates/flotillad/src/bot_permissions.rs",
+  "crates/flotillad/src/bot_permissions/**",
+  "crates/flotillad/src/secrets.rs",
+  "crates/flotillad/src/secrets/**",
+  "crates/flotillad/src/paths.rs",
+  "crates/flotillad/src/paths/**",
+  "crates/flotillad/src/contain.rs",
+  "crates/flotillad/src/botmgmt.rs",
+  "crates/flotillad/src/botmgmt/**",
+  "crates/flotillad/src/mcp/selfmgmt.rs",
+  "crates/flotillad/src/permissions.rs",
+  "crates/flotillad/src/db/permissions.rs",
+  "crates/flotillad/src/redact/**",
+  # Bot identity on the bus (per-connection bot token) and its tools
+  "crates/flotillad/src/mcp.rs",
+  "crates/flotillad/src/mcp/tools.rs",
+  # Owner credentials (devices behind owner_proof)
+  "crates/flotillad/src/db/devices.rs",
+  # The daemon's config (origin allowlist) and its bind (/health)
+  "crates/flotillad/src/config.rs",
+  "crates/flotillad/src/config/**",
+  "crates/flotillad/src/server.rs",
+  # Owner proof on every WS path, approvals, grants, Run cards
+  "crates/flotillad/src/ws.rs",
+  "crates/flotillad/src/ws/**",
+  "crates/flotillad/src/approval.rs",
+  "crates/flotillad/src/approval/**",
+  "crates/flotillad/src/owner_action.rs",
+  "crates/flotillad/src/owner_action/**",
+  "crates/flotillad/src/mcp/owner_actions.rs",
+  "crates/flotillad/src/db/owner_actions.rs",
+  # Owner provenance in chat (FROM_OWNER, H-306)
+  "crates/flotillad/src/owner_threads.rs",
+  "crates/flotillad/src/owner_threads/**",
+  "crates/flotillad/src/db/owner_threads.rs",
+  # Owner rulings
+  "crates/flotillad/src/decisions.rs",
+  "crates/flotillad/src/decisions/**",
+  "crates/flotillad/src/db/decisions*.rs",
+  "crates/flotillad/src/mcp/decisions.rs",
+  # Owner-typed provenance (H-195/H-209)
+  "crates/flotillad/src/supervisor/hooks.rs",
+  "crates/flotillad/src/supervisor/session_hooks.rs",
+  "crates/flotillad/src/supervisor/composer*.rs",
+  "crates/flotillad/src/supervisor/typing.rs",
+  # Composer off when the hook settings write fails (H-209 M1)
+  "crates/flotillad/src/supervisor/lifecycle.rs",
+  # Roles (who may review and merge) and board gates
+  "crates/flotillad/src/kanban/team.rs",
+  "crates/flotillad/src/mcp/board_roles.rs",
+  "crates/flotillad/src/kanban/guards.rs",
+  "crates/flotillad/src/kanban/guards/**",
+  "crates/flotillad/src/db/reviews.rs",
+  # Peer trust (links, forwarded owner acts, mirrors)
+  "crates/flotillad/src/peer.rs",
+  "crates/flotillad/src/peer/**",
+  "crates/flotillad/src/db/peers.rs",
+  "crates/flotillad/src/db/peer_grants.rs",
+  # PR gates: reviews, separation of duties, owner review, merge, checks
+  "crates/flotillad/src/mcp/prs.rs",
+  "crates/flotillad/src/prs/checks.rs",
+  "crates/flotillad/src/db/checks.rs",
+  "crates/flotillad/src/db/prs.rs",
+  "crates/flotillad/src/db/review_settings.rs",
+  "crates/flotillad/src/db/merge_queue.rs",
+  "crates/flotillad/src/machine_tools.rs",
+  "crates/flotillad/src/prs/owner*.rs",
+  "crates/flotillad/src/prs/review*.rs",
+  "crates/flotillad/src/prs/merge*.rs",
+  "crates/flotillad/src/prs/mergeable*.rs",
+  "crates/flotillad/src/prs/queue*.rs",
+  "crates/flotillad/src/prs/flow*.rs",
+  "crates/flotillad/src/prs/worktree*.rs",
+  "crates/flotillad/src/prs/check_*.rs",
+  "crates/flotillad/src/prs/policy.rs",
+  "crates/flotillad/src/prs/policy/**",
+  "crates/flotillad/src/check_exec.rs",
+  "crates/flotillad/src/check_tree*.rs",
+  "crates/flotillad/src/pr_cli.rs",
+  # Git run on bot-controlled repos; deleting trees
+  "crates/flotillad/src/safe_git*.rs",
+  "crates/flotillad/src/cleanup.rs",
+  "crates/flotillad/src/cleanup/**",
+  # Release gates: rulings, freeze, install, serve, tag, Leave out
+  "crates/flotillad/src/releases/rule.rs",
+  "crates/flotillad/src/releases/gates.rs",
+  "crates/flotillad/src/releases/package.rs",
+  "crates/flotillad/src/releases/land*.rs",
+  "crates/flotillad/src/releases/tag*.rs",
+  "crates/flotillad/src/releases/leave_out*.rs",
+  "crates/flotillad/src/releases/quiesce_gate.rs",
+  "crates/flotillad/src/releases/install*.rs",
+  "crates/flotillad/src/releases/install/**",
+  "crates/flotillad/src/releases/publish.rs",
+  "crates/flotillad/src/releases/serve*.rs",
+  "crates/flotillad/src/releases/confine*.rs",
+  "crates/flotillad/src/releases/build_installer*.rs",
+  "crates/flotillad/src/releases/deploy*.rs",
+  "crates/flotillad/src/releases/assemble.rs",
+  "crates/flotillad/src/releases/phone.rs",
+  "crates/flotillad/src/releases/sha_cache.rs",
+  # Service install / home migration (runs with the owner's rights)
+  "crates/flotillad/src/service.rs",
+  "crates/flotillad/src/service/**",
+  "crates/flotillad/src/migrate_home.rs",
+  "crates/flotillad/src/migrate_home/**",
+  # The app's code identity, signing, the release pipeline
+  "apps/desktop/src-tauri/**",
+  "ops/**",
+  ".github/workflows/**",
+  "scripts/prepare-sidecar*",
+  "scripts/install-flotillad.sh",
+]
+
+# --- Daemon and shared crates ------------------------------------------------
+[[area]]
+name = "daemon"
+roles = ["architect"]
+paths = ["crates/**", "Cargo.toml", "Cargo.lock", "rust-toolchain*"]
+
+# --- The wire contract (protobuf): breaking-change and client impact ---------
+[[area]]
+name = "contract"
+roles = ["architect"]
+paths = ["proto/**", "buf.yaml", "buf.gen.yaml", "docs/protocol.md"]
+
+# --- Desktop app UI ----------------------------------------------------------
+[[area]]
+name = "desktop"
+roles = ["ux"]
+paths = ["apps/desktop/**"]
+
+# --- Marketing site -----------------------------------------------------------
+[[area]]
+name = "marketing"
+roles = ["ux"]
+paths = ["apps/marketing/**"]
+
+# --- Docs (MkDocs site, ADRs, design notes in the repo) -------------------
+[[area]]
+name = "docs"
+roles = ["architect"]
+paths = ["docs/**", "mkdocs.yml", "*.md"]
+
+# --- Build / verify scripts ----------------------------------------------------
+[[area]]
+name = "tooling"
+roles = ["architect", "devops"]
+paths = ["scripts/**", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml"]

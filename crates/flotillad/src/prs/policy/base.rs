@@ -11,8 +11,8 @@ use crate::decisions::forbidden;
 use crate::releases::git_cache;
 
 use super::{
-    parse_checks, parse_reviewers, required_roles, Checks, ReviewRole, Reviewers, CHECKS_PATH,
-    POLICY_ROLES, REVIEWERS_PATH,
+    parse_checks_at, parse_reviewers_at, required_roles, Checks, ReviewRole, Reviewers,
+    CHECKS_PATHS, POLICY_ROLES, REVIEWERS_PATHS,
 };
 
 /// Both policy files at one base commit. A file the base lacks reads as
@@ -20,6 +20,9 @@ use super::{
 #[derive(Debug, Clone)]
 pub struct BasePolicy {
     pub commit: String,
+    /// The checks file it was read from (`.flotilla/` or the pre-rename
+    /// `.hermes/`), which the policy check is named after.
+    pub checks_file: &'static str,
     pub reviewers: Result<Reviewers, String>,
     pub checks: Result<Checks, String>,
 }
@@ -44,19 +47,38 @@ impl BasePolicy {
 pub fn read(cache: &Path, base_ref: &str) -> anyhow::Result<BasePolicy> {
     let commit = git_cache::resolve(cache, base_ref)
         .ok_or_else(|| forbidden(format!("the base {base_ref} isn't in the repository")))?;
-    let reviewers = match git_cache::file_at(cache, &commit, REVIEWERS_PATH)? {
+    let reviewers = match first_file(cache, &commit, &REVIEWERS_PATHS)? {
         None => Ok(Reviewers::default()),
-        Some(text) => parse_reviewers(&text).map_err(|e| e.to_string()),
+        Some((path, text)) => parse_reviewers_at(&text, path).map_err(|e| e.to_string()),
     };
-    let checks = match git_cache::file_at(cache, &commit, CHECKS_PATH)? {
-        None => Ok(Checks::default()),
-        Some(text) => parse_checks(&text).map_err(|e| e.to_string()),
+    let (checks_file, checks) = match first_file(cache, &commit, &CHECKS_PATHS)? {
+        None => (CHECKS_PATHS[0], Ok(Checks::default())),
+        Some((path, text)) => (
+            path,
+            parse_checks_at(&text, path).map_err(|e| e.to_string()),
+        ),
     };
     Ok(BasePolicy {
         commit,
+        checks_file,
         reviewers,
         checks,
     })
+}
+
+/// The first of `paths` that `commit` has: `.flotilla/`, then the
+/// pre-rename `.hermes/`.
+pub(crate) fn first_file(
+    cache: &Path,
+    commit: &str,
+    paths: &[&'static str],
+) -> anyhow::Result<Option<(&'static str, String)>> {
+    for path in paths {
+        if let Some(text) = git_cache::file_at(cache, commit, path)? {
+            return Ok(Some((path, text)));
+        }
+    }
+    Ok(None)
 }
 
 /// The project's policy at `base_ref`, after fetching the cache.

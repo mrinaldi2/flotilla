@@ -49,7 +49,7 @@ pub struct ChecksConfig {
     /// The longest a check may run before its whole tree is stopped and it
     /// is an `error`, in seconds.
     pub timeout_secs: u64,
-    /// The `hermesd` that runs a check (`hermesd check run`); this
+    /// The `flotillad` that runs a check (`flotillad check run`); this
     /// daemon's own binary when unset.
     pub runner: Option<PathBuf>,
 }
