@@ -170,12 +170,43 @@ pub fn session_tag(_pid: u32) -> Option<String> {
     None
 }
 
+/// The session tag in `env`: `FLOTILLA_SESSION`, or the name a session
+/// started before the rename gave its processes (`THEHERMES_SESSION`), so a
+/// leftover of one is still found.
 #[cfg(not(windows))]
 fn tag_in(env: Vec<(String, String)>) -> Option<String> {
-    env.into_iter()
-        .find(|(k, _)| k == SESSION_ENV)
-        .map(|(_, v)| v)
-        .filter(|v| !v.is_empty())
+    let names = crate::brand::all_env_names("SESSION");
+    names.iter().find_map(|name| {
+        env.iter()
+            .find(|(k, v)| k == name && !v.is_empty())
+            .map(|(_, v)| v.clone())
+    })
+}
+
+#[cfg(all(test, not(windows)))]
+#[test]
+fn a_pre_rename_session_tag_is_read_too() {
+    let env = |pairs: &[(&str, &str)]| -> Vec<(String, String)> {
+        pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect()
+    };
+    assert_eq!(SESSION_ENV, crate::brand::env_name("SESSION"));
+    assert_eq!(
+        tag_in(env(&[("THEHERMES_SESSION", "s1")])).as_deref(),
+        Some("s1")
+    );
+    assert_eq!(
+        tag_in(env(&[
+            ("THEHERMES_SESSION", "old"),
+            ("FLOTILLA_SESSION", "new")
+        ]))
+        .as_deref(),
+        Some("new")
+    );
+    assert_eq!(tag_in(env(&[("FLOTILLA_SESSION", "")])), None);
+    assert_eq!(tag_in(env(&[("HOME", "/u")])), None);
 }
 
 /// The environment in a `KERN_PROCARGS2` buffer: an `argc` (i32), the
