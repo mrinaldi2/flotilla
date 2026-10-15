@@ -28,6 +28,33 @@ const COLUMNS: &[(&str, &str, &[&str])] = &[
 
 pub const MIGRATED_KEY: &str = "home_migrated";
 pub const MIGRATED_FROM_KEY: &str = "home_migrated_from";
+/// Where the last move went. Moves before Flotilla's set only the two keys
+/// above, so a database marked by the Gravity → The Hermes move does not
+/// count as moved to `~/.flotilla`.
+pub const MIGRATED_TO_KEY: &str = "home_migrated_to";
+/// Every move so far, oldest first, as a JSON array of `{from, to}`.
+pub const MIGRATIONS_KEY: &str = "home_migrations";
+
+/// The `meta` rows a move writes, and a rollback puts back as they were.
+const META_KEYS: [&str; 4] = [
+    MIGRATED_KEY,
+    MIGRATED_FROM_KEY,
+    MIGRATED_TO_KEY,
+    MIGRATIONS_KEY,
+];
+
+/// The `meta` rows of [`META_KEYS`] before a move: `(key, value)`, `None`
+/// for a row that was absent.
+pub type MetaSnapshot = Vec<(String, Option<String>)>;
+
+/// What [`apply`] leaves in `meta`.
+pub enum Mark<'a> {
+    /// A finished move: the keys set for this one, the history extended.
+    Migrated,
+    /// A rollback: the rows as the snapshot had them. `None` (a move logged
+    /// before snapshots existed) removes the two keys that move set.
+    Restore(Option<&'a MetaSnapshot>),
+}
 
 /// Whether paths compare as Windows compares them: case-insensitive, with
 /// `/` and `\` alike. Agents write `C:/Users/x/.gravity` as often as the
@@ -198,10 +225,56 @@ fn changed_rows(
         .collect())
 }
 
-/// Rewrites every column in one transaction and marks `meta` so the
-/// migration can tell it already ran. `pairs` lists `(from, to)` spellings,
-/// e.g. the home as configured and as resolved through symlinks.
-pub fn apply(db: &Path, pairs: &[(String, String)], migrated: bool) -> anyhow::Result<usize> {
+/// The [`META_KEYS`] rows in `db` now.
+pub fn meta_snapshot(db: &Path) -> anyhow::Result<MetaSnapshot> {
+    let conn = Connection::open_with_flags(db, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .with_context(|| format!("opening {}", db.display()))?;
+    META_KEYS
+        .iter()
+        .map(|key| Ok((key.to_string(), meta_value(&conn, key)?)))
+        .collect()
+}
+
+fn meta_value(conn: &Connection, key: &str) -> anyhow::Result<Option<String>> {
+    Ok(conn
+        .query_row("SELECT value FROM meta WHERE key = ?1", params![key], |r| {
+            r.get(0)
+        })
+        .optional()?)
+}
+
+fn set_meta(tx: &Connection, key: &str, value: &str) -> anyhow::Result<()> {
+    tx.execute(
+        "INSERT INTO meta(key, value) VALUES (?1, ?2)
+         ON CONFLICT(key) DO UPDATE SET value = ?2",
+        params![key, value],
+    )?;
+    Ok(())
+}
+
+/// The move history with `from → to` appended. A database marked by a move
+/// from before the history existed starts it with that move.
+fn history(tx: &Connection, from: &str, to: &str) -> anyhow::Result<String> {
+    let mut moves: Vec<serde_json::Value> = meta_value(tx, MIGRATIONS_KEY)?
+        .and_then(|text| serde_json::from_str(&text).ok())
+        .unwrap_or_default();
+    if moves.is_empty() {
+        if let Some(earlier) = meta_value(tx, MIGRATED_FROM_KEY)? {
+            moves.push(serde_json::json!({ "from": earlier, "to": from }));
+        }
+    }
+    let this = serde_json::json!({ "from": from, "to": to });
+    // A run that committed but died before recording the step does it again.
+    if moves.last() != Some(&this) {
+        moves.push(this);
+    }
+    Ok(serde_json::Value::Array(moves).to_string())
+}
+
+/// Rewrites every column in one transaction and marks `meta` (see [`Mark`])
+/// so the migration can tell it already ran. `pairs` lists `(from, to)`
+/// spellings, e.g. the home as configured and as resolved through symlinks.
+pub fn apply(db: &Path, pairs: &[(String, String)], mark: Mark<'_>) -> anyhow::Result<usize> {
     let mut conn = Connection::open(db).with_context(|| format!("opening {}", db.display()))?;
     conn.busy_timeout(std::time::Duration::from_secs(10))?;
     let tx = conn.transaction()?;
@@ -220,28 +293,48 @@ pub fn apply(db: &Path, pairs: &[(String, String)], migrated: bool) -> anyhow::R
             }
         }
     }
-    if migrated {
-        let homes: Vec<&str> = pairs.iter().map(|(from, _)| from.as_str()).collect();
-        let stale = stale_workspaces(&tx, &homes)?;
-        anyhow::ensure!(
-            stale.is_empty(),
-            "bot workspaces still under the old home after the rewrite: {}; \
-             fix those paths and retry",
-            stale.join(", ")
-        );
-        let from = pairs.first().map(|(from, _)| from.as_str()).unwrap_or("");
-        for (key, value) in [(MIGRATED_KEY, "1"), (MIGRATED_FROM_KEY, from)] {
+    match mark {
+        Mark::Migrated => {
+            let homes: Vec<&str> = pairs.iter().map(|(from, _)| from.as_str()).collect();
+            let stale = stale_workspaces(&tx, &homes)?;
+            anyhow::ensure!(
+                stale.is_empty(),
+                "bot workspaces still under the old home after the rewrite: {}; \
+                 fix those paths and retry",
+                stale.join(", ")
+            );
+            let (from, to) = pairs
+                .first()
+                .map(|(from, to)| (from.as_str(), to.as_str()))
+                .unwrap_or(("", ""));
+            // Read before the keys below change; a resumed run that already
+            // committed never gets here twice (the step is then done).
+            let moves = history(&tx, from, to)?;
+            for (key, value) in [
+                (MIGRATED_KEY, "1"),
+                (MIGRATED_FROM_KEY, from),
+                (MIGRATED_TO_KEY, to),
+                (MIGRATIONS_KEY, moves.as_str()),
+            ] {
+                set_meta(&tx, key, value)?;
+            }
+        }
+        Mark::Restore(Some(snapshot)) => {
+            for key in META_KEYS {
+                tx.execute("DELETE FROM meta WHERE key = ?1", params![key])?;
+            }
+            for (key, value) in snapshot {
+                if let Some(value) = value {
+                    set_meta(&tx, key, value)?;
+                }
+            }
+        }
+        Mark::Restore(None) => {
             tx.execute(
-                "INSERT INTO meta(key, value) VALUES (?1, ?2)
-                 ON CONFLICT(key) DO UPDATE SET value = ?2",
-                params![key, value],
+                "DELETE FROM meta WHERE key IN (?1, ?2)",
+                params![MIGRATED_KEY, MIGRATED_FROM_KEY],
             )?;
         }
-    } else {
-        tx.execute(
-            "DELETE FROM meta WHERE key IN (?1, ?2)",
-            params![MIGRATED_KEY, MIGRATED_FROM_KEY],
-        )?;
     }
     tx.commit()?;
     Ok(changed)
@@ -263,85 +356,15 @@ pub fn live_bots(db: &Path) -> anyhow::Result<usize> {
     Ok(conn.query_row(&sql, [], |r| r.get::<_, i64>(0))? as usize)
 }
 
-/// Whether `meta.home_migrated` is set in the database at `db`.
-pub fn is_marked(db: &Path) -> anyhow::Result<bool> {
+/// Whether the database at `db` records a finished move to `home`: an
+/// earlier move's `meta.home_migrated` alone does not count.
+pub fn is_marked_to(db: &Path, home: &str) -> anyhow::Result<bool> {
     let conn = Connection::open_with_flags(db, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
-    let value: Option<String> = conn
-        .query_row(
-            "SELECT value FROM meta WHERE key = ?1",
-            params![MIGRATED_KEY],
-            |r| r.get(0),
-        )
-        .optional()?;
-    Ok(value.as_deref() == Some("1"))
+    let marked = meta_value(&conn, MIGRATED_KEY)?.as_deref() == Some("1");
+    let to = meta_value(&conn, MIGRATED_TO_KEY)?;
+    Ok(marked && to.is_some_and(|to| is_under(&to, home) && is_under(home, &to)))
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{is_under, msys_spelling, rewrite, rewrite_as};
-
-    #[test]
-    fn rewrites_whole_paths_and_prefixes_only() {
-        let (from, to) = ("/Users/u/.gravity", "/Users/u/.thehermes");
-        assert_eq!(
-            rewrite("/Users/u/.gravity/projects/p/bots/b/workspace", from, to),
-            "/Users/u/.thehermes/projects/p/bots/b/workspace"
-        );
-        assert_eq!(rewrite("/Users/u/.gravity", from, to), to);
-        assert_eq!(
-            rewrite("see /Users/u/.gravity/a and /Users/u/.gravity/b", from, to),
-            "see /Users/u/.thehermes/a and /Users/u/.thehermes/b"
-        );
-        assert_eq!(
-            rewrite("/Users/u/.gravity-old/x", from, to),
-            "/Users/u/.gravity-old/x"
-        );
-        assert_eq!(
-            rewrite(
-                r"C:\Users\u\.gravity\projects",
-                r"C:\Users\u\.gravity",
-                r"C:\Users\u\.thehermes"
-            ),
-            r"C:\Users\u\.thehermes\projects"
-        );
-    }
-
-    #[test]
-    fn a_loose_rewrite_takes_every_windows_spelling() {
-        let (from, to) = (r"C:\Users\u\.gravity", r"C:\Users\u\.thehermes");
-        for (text, want) in [
-            (r"C:\Users\u\.gravity\p", r"C:\Users\u\.thehermes\p"),
-            ("C:/Users/u/.gravity/p", "C:/Users/u/.thehermes/p"),
-            (r"c:\users\U\.Gravity\p", r"C:\Users\u\.thehermes\p"),
-            (r"C:/Users\u/.gravity", r"C:\Users\u\.thehermes"),
-            (r"C:\Users\u\.gravity-old\p", r"C:\Users\u\.gravity-old\p"),
-        ] {
-            assert_eq!(rewrite_as(text, from, to, true), want, "{text}");
-        }
-        // Exact matching (macOS, Linux) leaves the variants alone.
-        assert_eq!(
-            rewrite_as("C:/Users/u/.gravity/p", from, to, false),
-            "C:/Users/u/.gravity/p"
-        );
-        let (from, to) = (
-            msys_spelling(from).expect("msys"),
-            msys_spelling(to).expect("msys"),
-        );
-        assert_eq!(from, "/c/Users/u/.gravity");
-        assert_eq!(
-            rewrite_as("cd /c/users/u/.gravity/p", &from, &to, true),
-            "cd /c/Users/u/.thehermes/p"
-        );
-        assert_eq!(msys_spelling("/Users/u/.gravity"), None);
-    }
-
-    #[test]
-    fn any_spelling_under_the_home_counts_as_under_it() {
-        let home = "/Users/u/.gravity";
-        assert!(is_under("/Users/u/.gravity", home));
-        assert!(is_under("/users/U/.GRAVITY/projects/x", home));
-        assert!(is_under(r"C:\Users\u\.gravity\p", r"c:/users/u/.gravity"));
-        assert!(!is_under("/Users/u/.gravity-old/x", home));
-        assert!(!is_under("/Users/u/.thehermes/x", home));
-    }
-}
+#[path = "sql_tests.rs"]
+mod tests;

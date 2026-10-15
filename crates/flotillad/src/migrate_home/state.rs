@@ -40,7 +40,15 @@ pub enum Action {
     /// A file or directory moved from `from` to `to`.
     Rename { from: PathBuf, to: PathBuf },
     /// Database paths rewritten from `from` to `to` (and `meta` marked).
-    Database { from: String, to: String },
+    /// `previous` holds the `meta` rows the move replaced, so a rollback
+    /// leaves an earlier move's marks as they were; runs logged before it
+    /// existed have none.
+    Database {
+        from: String,
+        to: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        previous: Option<super::sql::MetaSnapshot>,
+    },
     /// A compatibility link created at `path`.
     Symlink { path: PathBuf },
     /// A file's text rewritten; `original` is what it held before.
@@ -63,6 +71,11 @@ pub struct State {
     pub actions: Vec<Action>,
     #[serde(default)]
     pub warnings: Vec<String>,
+    /// An earlier move's finished `migrate-home.json`, found in the home
+    /// this run moves and kept beside it under this name; a rollback puts it
+    /// back.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub previous: Option<String>,
 }
 
 impl State {
@@ -77,6 +90,7 @@ impl State {
             steps: Vec::new(),
             actions: Vec::new(),
             warnings: Vec::new(),
+            previous: None,
         }
     }
 
@@ -86,15 +100,6 @@ impl State {
 
     pub fn is_complete(&self) -> bool {
         self.completed_at.is_some()
-    }
-
-    /// Where the state file is now: in the destination once the home has
-    /// moved, in the source before that.
-    pub fn locate(from: &Path, to: &Path) -> Option<PathBuf> {
-        [to, from]
-            .iter()
-            .map(|home| home.join(STATE_FILE))
-            .find(|path| path.is_file())
     }
 
     pub fn load(path: &Path) -> anyhow::Result<Self> {

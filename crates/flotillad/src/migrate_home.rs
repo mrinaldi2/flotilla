@@ -1,4 +1,6 @@
-//! `hermesd migrate-home`: moves a pre-rename `~/.gravity` to `~/.thehermes`.
+//! `flotillad migrate-home`: moves a pre-rename home (`~/.thehermes`, or a
+//! `~/.gravity` that never moved) to `~/.flotilla`. Which one, and how an
+//! earlier move's log is told apart, is in [`hop`].
 //!
 //! Steps, each recorded in `migrate-home.json` inside the home so a failed run
 //! resumes where it stopped and `--rollback` can reverse what was done:
@@ -6,9 +8,10 @@
 //! 1. **Backup** the database, config and transcript dirs into
 //!    `backups/pre-rename-<ts>`.
 //! 2. **Move** the home directory.
-//! 3. **Rename** the daemon's own files (`gravityd.toml` → `hermesd.toml`, …).
+//! 3. **Rename** the daemon's own files (`hermesd.toml` or `gravityd.toml` →
+//!    `flotillad.toml`, …).
 //! 4. **Rewrite** home paths in the database, in one transaction, and set
-//!    `meta.home_migrated`; then in `hermesd.toml` and the files in the home
+//!    `meta.home_migrated` and `home_migrated_to`; then in `flotillad.toml` and the files in the home
 //!    its `claude_args` name (`bot-settings.json`).
 //! 5. **Rename** Claude Code's transcript and memory dirs, keyed by the
 //!    mangled workspace path, so every bot keeps `--continue`, chat history
@@ -27,6 +30,9 @@ pub(crate) mod disk;
 #[cfg(test)]
 mod env_home_tests;
 mod files;
+mod hop;
+#[cfg(test)]
+mod hop_tests;
 mod preflight;
 #[cfg(test)]
 pub(crate) mod resume_tests;
@@ -70,13 +76,10 @@ impl Plan {
         }
     }
 
-    /// The default move for `cfg`: `~/.gravity` to the configured home.
+    /// The default move for `cfg`: the newest pre-rename home to the
+    /// configured home (see [`hop::default_plan`]).
     pub fn default_for(cfg: &Config) -> Self {
-        Self::new(
-            cfg.user_home.join(crate::brand::LEGACY_HOME_DIR_NAME),
-            cfg.home.clone(),
-            cfg.user_home.clone(),
-        )
+        hop::default_plan(cfg)
     }
 
     /// `(from, to)` spellings of the home: as given, and as resolved through
@@ -128,10 +131,9 @@ impl Plan {
     /// the move yet; that move is recorded here, so resume and rollback both
     /// see it. Callers that change anything save the state themselves.
     pub(crate) fn state(&self) -> anyhow::Result<Option<State>> {
-        let Some(path) = State::locate(&self.from, &self.to) else {
+        let Some((path, mut state)) = hop::locate(self)? else {
             return Ok(None);
         };
-        let mut state = State::load(&path)?;
         let moved_unrecorded = path.starts_with(&self.to)
             && state.from == self.from
             && !state.done(Step::Move)
@@ -171,11 +173,15 @@ fn crash_point(_at: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// The migration the default home still needs, if any: a real `~/.gravity`
-/// holding a database, or a run that stopped partway. A home chosen with
-/// `THEHERMES_HOME` is the user's to migrate (`migrate-home --from --to`).
+/// The migration the default home still needs, if any: a real pre-rename
+/// home (`~/.thehermes`, `~/.gravity`) holding a database, or a run that
+/// stopped partway. A home chosen with `FLOTILLA_HOME`, or by a config's
+/// `home` naming another place, is the user's to migrate
+/// (`migrate-home --from --to`): a test or dev daemon never waits on the
+/// owner's real home.
 pub fn pending(cfg: &Config) -> anyhow::Result<Option<Plan>> {
-    pending_unless(cfg, crate::config::home_is_overridden())
+    let elsewhere = !hop::same_home(&cfg.home, &cfg.user_home.join(crate::brand::HOME_DIR_NAME));
+    pending_unless(cfg, crate::config::home_is_overridden() || elsewhere)
 }
 
 /// Whether the default migration for `cfg` ran to the end, so the home now
@@ -210,8 +216,8 @@ pub fn pending_for(plan: &Plan) -> anyhow::Result<Option<Plan>> {
 pub fn refuse_unmigrated(cfg: &Config) -> anyhow::Result<()> {
     if let Some(plan) = pending(cfg)? {
         bail!(
-            "{} has not been migrated to {}; run `hermesd migrate-home` \
-             (or `hermesd service install`, which runs it) first",
+            "{} has not been migrated to {}; run `flotillad migrate-home` \
+             (or `flotillad service install`, which runs it) first",
             plan.from.display(),
             plan.to.display()
         );
@@ -245,6 +251,9 @@ pub fn run(plan: &Plan, out: &mut dyn Write) -> anyhow::Result<State> {
         disk::probe_move(&plan.from).map_err(|error| {
             crate::holders::explain_held(error, std::slice::from_ref(&plan.from))
         })?;
+    }
+    if !state.done(Step::Move) {
+        hop::keep_previous(plan, &mut state)?;
     }
     state.save()?;
     for step in Step::ALL {
@@ -309,9 +318,10 @@ fn run_step(plan: &Plan, state: &mut State, step: Step) -> anyhow::Result<()> {
                 state.record(Action::Database {
                     from: pairs[0].0.clone(),
                     to: pairs[0].1.clone(),
+                    previous: Some(sql::meta_snapshot(&db)?),
                 })?;
             }
-            sql::apply(&db, &pairs, true)?;
+            sql::apply(&db, &pairs, sql::Mark::Migrated)?;
             files::rewrite(plan, state)?;
         }
         Step::Transcripts => {
@@ -325,7 +335,8 @@ fn run_step(plan: &Plan, state: &mut State, step: Step) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Whether the database in `home` records a finished migration.
+/// Whether the database in `home` records a finished migration to `home`
+/// itself, not only an earlier rename's.
 pub fn is_migrated(home: &Path) -> bool {
-    sql::is_marked(&home.join("bus.sqlite")).unwrap_or(false)
+    sql::is_marked_to(&home.join("bus.sqlite"), &home.to_string_lossy()).unwrap_or(false)
 }

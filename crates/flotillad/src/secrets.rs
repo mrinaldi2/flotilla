@@ -1,5 +1,5 @@
 //! Token management: one client token for the control plane, one scoped token
-//! per bot for the MCP bridge. Files live under `~/.thehermes/secrets` with
+//! per bot for the MCP bridge. Files live under `~/.flotilla/secrets` with
 //! mode 0700/0600 and are never exported.
 //!
 //! Phase 2 of H-044 (`[auth] bot_bearer = "refuse"`) keeps no owner or bot
@@ -16,6 +16,8 @@ use anyhow::Context;
 use rand::RngCore;
 
 mod devices;
+#[cfg(any(target_os = "macos", test))]
+mod keychain_move;
 mod vault;
 
 pub use vault::PeerTokens;

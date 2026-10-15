@@ -30,14 +30,14 @@ fn config_and_the_settings_it_names_are_rewritten_and_restored() {
 
     run(&f.plan, &mut Vec::new()).expect("migrate");
     let to = &f.plan.to;
-    let config_now = std::fs::read_to_string(to.join("hermesd.toml")).expect("config");
+    let config_now = std::fs::read_to_string(to.join("flotillad.toml")).expect("config");
     assert!(
         config_now.contains(&format!("'{}/bot-settings.json'", to.display())),
         "{config_now}"
     );
     let settings_now = std::fs::read_to_string(to.join("bot-settings.json")).expect("settings");
     assert!(
-        settings_now.contains("under ~/.thehermes/ and"),
+        settings_now.contains("under ~/.flotilla/ and"),
         "{settings_now}"
     );
     assert!(
@@ -98,17 +98,17 @@ fn settings_permission_rules_follow_the_home_and_renamed_files() {
 
     // Bug 1: the bare glob gains its new-home form; the old one stays.
     assert!(has("Bash(*.gravity/secrets*)"), "{deny:#?}");
-    assert!(has("Bash(*.thehermes/secrets*)"), "{deny:#?}");
+    assert!(has("Bash(*.flotilla/secrets*)"), "{deny:#?}");
     // Bug 2: the lock follows the config to its new name.
     assert!(has("Edit(~/.gravity/gravityd.toml)"), "{deny:#?}");
-    assert!(has("Edit(~/.thehermes/hermesd.toml)"), "{deny:#?}");
-    assert!(!has("Edit(~/.thehermes/gravityd.toml)"), "{deny:#?}");
+    assert!(has("Edit(~/.flotilla/flotillad.toml)"), "{deny:#?}");
+    assert!(!has("Edit(~/.flotilla/gravityd.toml)"), "{deny:#?}");
     for rule in [
-        "Read(~/.thehermes/secrets/**)",
-        "Edit(~/.thehermes/secrets/**)",
-        "Edit(~/.thehermes/bot-settings.json)",
-        "Edit(~/.thehermes/projects/**/.claude/settings.json)",
-        "Edit(~/.thehermes/projects/gravity/bots/devops/workspace/serve/serve.sh)",
+        "Read(~/.flotilla/secrets/**)",
+        "Edit(~/.flotilla/secrets/**)",
+        "Edit(~/.flotilla/bot-settings.json)",
+        "Edit(~/.flotilla/projects/**/.claude/settings.json)",
+        "Edit(~/.flotilla/projects/gravity/bots/devops/workspace/serve/serve.sh)",
     ] {
         assert!(has(rule), "{rule} missing: {deny:#?}");
     }
@@ -119,7 +119,7 @@ fn settings_permission_rules_follow_the_home_and_renamed_files() {
     );
     // A launchd label is not a file name.
     assert!(
-        !deny.iter().any(|r| r.contains("in.mikolajczuk.hermesd")),
+        !deny.iter().any(|r| r.contains("in.mikolajczuk.flotillad")),
         "{deny:#?}"
     );
     // Never fewer denies: every old rule is still there, in order.
@@ -130,13 +130,13 @@ fn settings_permission_rules_follow_the_home_and_renamed_files() {
         allow,
         [
             "Read(~/.gravity/projects/**)",
-            "Read(~/.thehermes/projects/**)",
+            "Read(~/.flotilla/projects/**)",
             "Bash(git status*)"
         ]
     );
     // Prose outside the rules gets the plain rewrite.
     assert!(
-        text.contains("under ~/.thehermes/projects/<project>"),
+        text.contains("under ~/.flotilla/projects/<project>"),
         "{text}"
     );
     // A second pass changes nothing (resume after a crash).
@@ -154,7 +154,7 @@ fn settings_permission_rules_follow_the_home_and_renamed_files() {
 fn a_rewrite_that_drops_a_deny_is_refused() {
     let f = fixture();
     let before = "{\"permissions\": {\"deny\": [\"Read(~/.gravity/secrets/**)\", \"Bash(x)\"]}}";
-    let after = "{\"permissions\": {\"deny\": [\"Read(~/.thehermes/secrets/**)\", \"Bash(x)\"]}}";
+    let after = "{\"permissions\": {\"deny\": [\"Read(~/.flotilla/secrets/**)\", \"Bash(x)\"]}}";
     let error = files::check_denies(before, after, &f.plan).expect_err("dropped");
     assert!(format!("{error}").contains("~/.gravity/secrets"), "{error}");
     assert!(files::check_denies(before, "not json", &f.plan).is_err());

@@ -14,7 +14,7 @@ fn is_real_dir(path: &std::path::Path) -> bool {
 
 /// Reverses a migration from its log, newest change first, and leaves the
 /// old home exactly where it was. The daemon must be stopped; after the new
-/// service has run, uninstall it first (`hermesd service uninstall`).
+/// service has run, uninstall it first (`flotillad service uninstall`).
 pub fn rollback(plan: &Plan, out: &mut dyn Write) -> anyhow::Result<()> {
     let Some(mut state) = plan.state()? else {
         bail!("no migration to roll back (no {STATE_FILE})");
@@ -30,8 +30,18 @@ pub fn rollback(plan: &Plan, out: &mut dyn Write) -> anyhow::Result<()> {
         match &action {
             Action::Symlink { path } => steps::remove_link(path)?,
             Action::File { path, original } => files::write(path, original)?,
-            Action::Database { .. } => {
-                sql::apply(&plan.to.join("bus.sqlite"), &plan.reversed(), false)?;
+            Action::Database { previous, .. } => {
+                sql::apply(
+                    &plan.to.join("bus.sqlite"),
+                    &plan.reversed(),
+                    sql::Mark::Restore(previous.as_ref()),
+                )?;
+            }
+            // A file the new daemon removed since (its port file goes at
+            // every stop, `service uninstall` included) has nothing to move
+            // back. The home itself is never treated so.
+            Action::Rename { from, to } if from != &plan.from && to.symlink_metadata().is_err() => {
+                writeln!(out, "{} is gone; nothing to move back", to.display())?;
             }
             Action::Rename { from, to } => {
                 // Recreated by a process that kept writing to the old path
@@ -68,6 +78,7 @@ pub fn rollback(plan: &Plan, out: &mut dyn Write) -> anyhow::Result<()> {
         state.save()?;
     }
     std::fs::remove_file(plan.from.join(STATE_FILE))?;
+    super::hop::restore_previous(plan, state.previous.as_deref())?;
     writeln!(out, "rolled back; {} is as it was", plan.from.display())?;
     Ok(())
 }

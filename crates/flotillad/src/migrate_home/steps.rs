@@ -9,20 +9,23 @@ use anyhow::{bail, Context};
 use super::state::{Action, State};
 use super::Plan;
 use crate::activity::claude_project_key;
-use crate::brand::{daemon_file, legacy_daemon_file};
+use crate::brand::{all_daemon_files, daemon_file, LEGACY_DAEMON_FILE_STEMS};
 
-/// The daemon's own files that carry the old name: `(old, new)`, relative to
-/// the home.
+/// The daemon's own files that carry an old name: `(old, new)`, relative to
+/// the home, newest old name first (`hermesd.toml`, then `gravityd.toml`).
+/// Only the first old file found for a new name is renamed.
 pub fn renamed_files() -> Vec<(PathBuf, PathBuf)> {
-    let mut files: Vec<(PathBuf, PathBuf)> = [".toml", ".port", ".reclaims"]
-        .iter()
-        .map(|s| (legacy_daemon_file(s).into(), daemon_file(s).into()))
-        .collect();
-    for suffix in [".out.log", ".err.log"] {
-        files.push((
-            Path::new("logs").join(legacy_daemon_file(suffix)),
-            Path::new("logs").join(daemon_file(suffix)),
-        ));
+    let mut files: Vec<(PathBuf, PathBuf)> = Vec::new();
+    for stem in LEGACY_DAEMON_FILE_STEMS {
+        for suffix in [".toml", ".port", ".reclaims"] {
+            files.push((format!("{stem}{suffix}").into(), daemon_file(suffix).into()));
+        }
+        for suffix in [".out.log", ".err.log"] {
+            files.push((
+                Path::new("logs").join(format!("{stem}{suffix}")),
+                Path::new("logs").join(daemon_file(suffix)),
+            ));
+        }
     }
     files
 }
@@ -90,9 +93,11 @@ pub fn backup(plan: &Plan, state: &mut State) -> anyhow::Result<PathBuf> {
         )
         .context("copying the database")?;
     }
-    let config = plan.from.join(legacy_daemon_file(".toml"));
-    if config.is_file() {
-        std::fs::copy(&config, dir.join(legacy_daemon_file(".toml")))?;
+    for name in all_daemon_files(".toml") {
+        let config = plan.from.join(&name);
+        if config.is_file() {
+            std::fs::copy(&config, dir.join(&name))?;
+        }
     }
     let transcripts = dir.join("claude-projects");
     for (old, _) in transcript_dirs(plan)? {
@@ -242,7 +247,7 @@ fn entries(dir: &Path) -> String {
 }
 
 #[cfg(unix)]
-fn make_link(target: &Path, link: &Path) -> anyhow::Result<()> {
+pub(super) fn make_link(target: &Path, link: &Path) -> anyhow::Result<()> {
     std::os::unix::fs::symlink(target, link)
         .with_context(|| format!("linking {} to {}", link.display(), target.display()))
 }

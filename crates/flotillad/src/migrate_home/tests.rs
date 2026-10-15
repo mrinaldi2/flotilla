@@ -15,7 +15,7 @@ pub(crate) fn fixture() -> Fixture {
     let tmp = tempfile::tempdir().expect("tmp");
     let user = tmp.path().join("user");
     let from = user.join(".gravity");
-    let to = user.join(".thehermes");
+    let to = user.join(".flotilla");
     let old_ws = from.join("projects/app/bots/lead/workspace");
     let new_ws = to.join("projects/app/bots/lead/workspace");
     std::fs::create_dir_all(&old_ws).expect("workspace");
@@ -75,7 +75,7 @@ fn a_dry_run_lists_the_work_and_changes_nothing() {
     let mut out = Vec::new();
     assert!(dry_run(&f.plan, &mut out).expect("dry run"));
     let out = String::from_utf8(out).expect("utf8");
-    assert!(out.contains("gravityd.toml -> hermesd.toml"), "{out}");
+    assert!(out.contains("gravityd.toml -> flotillad.toml"), "{out}");
     assert!(out.contains("bot.workspace_path: 1 row(s)"), "{out}");
     assert!(out.contains("bot.instructions: 1 row(s)"), "{out}");
     assert!(out.contains(&claude_project_key(&f.new_ws)), "{out}");
@@ -96,10 +96,10 @@ fn a_run_moves_the_home_rewrites_paths_and_keeps_transcripts() {
 
     let to = &f.plan.to;
     assert_eq!(
-        std::fs::read_to_string(to.join("hermesd.toml")).expect("config"),
+        std::fs::read_to_string(to.join("flotillad.toml")).expect("config"),
         "port = 7777\n"
     );
-    assert!(to.join("logs/hermesd.err.log").exists());
+    assert!(to.join("logs/flotillad.err.log").exists());
     assert!(!to.join("gravityd.toml").exists());
     assert!(to.join("secrets/client.token").exists());
     assert!(f.new_ws.join("FACTS.md").exists());

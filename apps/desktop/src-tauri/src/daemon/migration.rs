@@ -33,7 +33,7 @@ fn summarize_dry_run(output: &str) -> String {
         }
     }
     if parts.is_empty() {
-        parts.push("Moves your Hermes data to its new home and restarts every bot.".to_string());
+        parts.push("Moves your Flotilla data to its new home and restarts every bot.".to_string());
     }
     if !blocked.is_empty() {
         parts.push(format!("It will stop because: {}.", blocked.join("; ")));
@@ -47,16 +47,16 @@ mod tests {
 
     #[test]
     fn the_dry_run_summary_leaves_out_the_daemon_the_install_stops() {
-        let output = "migrate /u/.gravity -> /u/.thehermes\n\
-                      summary   Moves /u/.gravity to /u/.thehermes, restarts 3 bot(s), takes about 30 s, needs 600 MB.\n\
+        let output = "migrate /u/.gravity -> /u/.flotilla\n\
+                      summary   Moves /u/.gravity to /u/.flotilla, restarts 3 bot(s), takes about 30 s, needs 600 MB.\n\
                       blocked   a daemon is running against /u/.gravity\n";
         assert_eq!(
             summarize_dry_run(output),
-            "Moves /u/.gravity to /u/.thehermes, restarts 3 bot(s), takes about 30 s, needs 600 MB."
+            "Moves /u/.gravity to /u/.flotilla, restarts 3 bot(s), takes about 30 s, needs 600 MB."
         );
         let blocked = format!("{output}blocked   pid 7 python3 (cwd /u/.gravity/serve)\n");
         assert!(summarize_dry_run(&blocked)
             .ends_with("It will stop because: pid 7 python3 (cwd /u/.gravity/serve)."));
-        assert!(summarize_dry_run("").starts_with("Moves your Hermes data"));
+        assert!(summarize_dry_run("").starts_with("Moves your Flotilla data"));
     }
 }

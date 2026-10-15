@@ -4,7 +4,9 @@
 //! file every bot can read.
 //!
 //! `[auth] peer_tokens = "keychain"` turns that on; the default stays
-//! `"file"`. hermesd is ad-hoc signed, so the ACL pins one build: after an
+//! `"file"`. A home move or the rename changes the Keychain service the
+//! links are kept under; `keychain_move` carries them over. flotillad is
+//! ad-hoc signed, so the ACL pins one build: after an
 //! update macOS asks the owner once per item before the daemon may read it.
 //! It is meant to be switched on once the app and daemon are code-signed.
 //! On Windows and Linux the setting falls back to files (DPAPI is user-wide:
@@ -65,6 +67,11 @@ impl Vault {
             #[cfg(target_os = "macos")]
             PeerTokens::Keychain => {
                 let vault = keychain::Keychain::for_home(dir);
+                // Links kept under the name or home before a rename.
+                let carried = vault.carry_over()?;
+                if carried > 0 {
+                    tracing::info!(carried, "carried peer links over in the Keychain");
+                }
                 // Move files over first, so a token is never in neither place.
                 for (token, peer_id) in files(dir)? {
                     vault.put(&peer_id, &token)?;
@@ -108,44 +115,23 @@ mod keychain {
     use security_framework::base::Error;
     use security_framework::item::{ItemClass, ItemSearchOptions, Limit};
     use security_framework::passwords;
-    use sha2::{Digest, Sha256};
+
+    use super::super::keychain_move::{
+        carry_over, current_service, former_homes, legacy_services, remove_everywhere,
+        PasswordStore,
+    };
 
     /// `errSecItemNotFound`.
     const NOT_FOUND: i32 = -25300;
 
-    /// Generic passwords under one service per home, so a test or dev home
-    /// never sees the real daemon's links. The account is the peer id.
-    pub struct Keychain {
-        service: String,
-    }
+    /// The login Keychain's generic passwords.
+    struct Login;
 
-    impl Keychain {
-        pub fn for_home(secrets_dir: &Path) -> Self {
-            let digest = Sha256::digest(secrets_dir.to_string_lossy().as_bytes());
-            Self {
-                service: format!("The Hermes peer link {}", &hex::encode(digest)[..12]),
-            }
-        }
-
-        pub fn put(&self, peer_id: &str, token: &str) -> anyhow::Result<()> {
-            passwords::set_generic_password(&self.service, peer_id, token.as_bytes())
-                .map_err(|e| anyhow::anyhow!("storing peer {peer_id}'s token in the Keychain: {e}"))
-        }
-
-        pub fn remove(&self, peer_id: &str) -> anyhow::Result<()> {
-            match passwords::delete_generic_password(&self.service, peer_id) {
-                Err(e) if e.code() != NOT_FOUND => Err(anyhow::anyhow!(
-                    "removing peer {peer_id}'s token from the Keychain: {e}"
-                )),
-                _ => Ok(()),
-            }
-        }
-
-        /// token -> peer id for every link this home keeps.
-        pub fn all(&self) -> anyhow::Result<HashMap<String, String>> {
+    impl PasswordStore for Login {
+        fn list(&self, service: &str) -> anyhow::Result<HashMap<String, String>> {
             let found = ItemSearchOptions::new()
                 .class(ItemClass::generic_password())
-                .service(&self.service)
+                .service(service)
                 .load_attributes(true)
                 .limit(Limit::All)
                 .search();
@@ -153,17 +139,71 @@ mod keychain {
                 Err(e) if e.code() == NOT_FOUND => return Ok(HashMap::new()),
                 other => other.map_err(|e: Error| anyhow::anyhow!("reading the Keychain: {e}"))?,
             };
-            let mut tokens = HashMap::new();
+            let mut secrets = HashMap::new();
             for item in items {
-                let Some(peer_id) = item.simplify_dict().and_then(|d| d.get("acct").cloned())
+                let Some(account) = item.simplify_dict().and_then(|d| d.get("acct").cloned())
                 else {
                     continue;
                 };
-                let token = passwords::get_generic_password(&self.service, &peer_id)
-                    .map_err(|e| anyhow::anyhow!("reading peer {peer_id}'s token: {e}"))?;
-                tokens.insert(String::from_utf8_lossy(&token).into_owned(), peer_id);
+                let secret = passwords::get_generic_password(service, &account)
+                    .map_err(|e| anyhow::anyhow!("reading peer {account}'s token: {e}"))?;
+                secrets.insert(account, String::from_utf8_lossy(&secret).into_owned());
             }
-            Ok(tokens)
+            Ok(secrets)
+        }
+
+        fn put(&self, service: &str, account: &str, secret: &str) -> anyhow::Result<()> {
+            passwords::set_generic_password(service, account, secret.as_bytes())
+                .map_err(|e| anyhow::anyhow!("storing peer {account}'s token in the Keychain: {e}"))
+        }
+
+        fn delete(&self, service: &str, account: &str) -> anyhow::Result<()> {
+            match passwords::delete_generic_password(service, account) {
+                Err(e) if e.code() != NOT_FOUND => Err(anyhow::anyhow!(
+                    "removing peer {account}'s token from the Keychain: {e}"
+                )),
+                _ => Ok(()),
+            }
+        }
+    }
+
+    /// Generic passwords under one service per home, so a test or dev home
+    /// never sees the real daemon's links. The account is the peer id. Links
+    /// kept under the service of an earlier name or home are carried over
+    /// when the vault opens (see [`super::super::keychain_move`]).
+    pub struct Keychain {
+        service: String,
+        legacy: Vec<String>,
+    }
+
+    impl Keychain {
+        pub fn for_home(secrets_dir: &Path) -> Self {
+            Self {
+                service: current_service(secrets_dir),
+                legacy: legacy_services(secrets_dir, &former_homes(secrets_dir)),
+            }
+        }
+
+        /// Copies links kept under an earlier service; see `keychain_move`.
+        pub fn carry_over(&self) -> anyhow::Result<usize> {
+            carry_over(&Login, &self.service, &self.legacy)
+        }
+
+        pub fn put(&self, peer_id: &str, token: &str) -> anyhow::Result<()> {
+            Login.put(&self.service, peer_id, token)
+        }
+
+        pub fn remove(&self, peer_id: &str) -> anyhow::Result<()> {
+            remove_everywhere(&Login, &self.service, &self.legacy, peer_id)
+        }
+
+        /// token -> peer id for every link this home keeps.
+        pub fn all(&self) -> anyhow::Result<HashMap<String, String>> {
+            Ok(Login
+                .list(&self.service)?
+                .into_iter()
+                .map(|(peer_id, token)| (token, peer_id))
+                .collect())
         }
     }
 
@@ -172,7 +212,7 @@ mod keychain {
         use super::*;
 
         /// Touches the real login Keychain, so it runs only when asked:
-        /// `cargo test -p hermesd keychain -- --ignored`.
+        /// `cargo test -p flotillad keychain -- --ignored`.
         #[test]
         #[ignore = "uses the login Keychain"]
         fn peer_tokens_round_trip_through_the_keychain() {

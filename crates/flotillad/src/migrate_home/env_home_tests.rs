@@ -20,7 +20,7 @@ fn resolve(env: Option<&Path>, user: &Path) -> (Config, Option<Plan>) {
 fn assert_moves_old_to_new(pending: Option<Plan>, user: &Path) {
     let plan = pending.expect("a migration is pending");
     assert_eq!(plan.from, user.join(".gravity"));
-    assert_eq!(plan.to, user.join(".thehermes"));
+    assert_eq!(plan.to, user.join(".flotilla"));
 }
 
 /// The spellings of `name` under `user` that still name that default home.
@@ -40,7 +40,7 @@ fn a_variable_naming_the_old_home_resolves_to_the_new_one_and_migrates() {
     let user = &f.plan.user_home;
     for env in spellings(user, ".gravity") {
         let (cfg, pending) = resolve(Some(&env), user);
-        assert_eq!(cfg.home, user.join(".thehermes"), "{env:?}");
+        assert_eq!(cfg.home, user.join(".flotilla"), "{env:?}");
         assert_moves_old_to_new(pending, user);
     }
 }
@@ -49,16 +49,16 @@ fn a_variable_naming_the_old_home_resolves_to_the_new_one_and_migrates() {
 fn a_variable_naming_the_new_home_resolves_to_it_and_nothing_is_left_after() {
     let f = fixture();
     let user = &f.plan.user_home;
-    for env in spellings(user, ".thehermes") {
+    for env in spellings(user, ".flotilla") {
         let (cfg, pending) = resolve(Some(&env), user);
-        assert_eq!(cfg.home, user.join(".thehermes"), "{env:?}");
+        assert_eq!(cfg.home, user.join(".flotilla"), "{env:?}");
         assert_moves_old_to_new(pending, user);
     }
     run(&f.plan, &mut Vec::new()).expect("migrate");
-    // After the move `.thehermes` exists and is compared canonically.
-    for env in spellings(user, ".thehermes") {
+    // After the move `.flotilla` exists and is compared canonically.
+    for env in spellings(user, ".flotilla") {
         let (cfg, pending) = resolve(Some(&env), user);
-        assert_eq!(cfg.home, user.join(".thehermes"), "{env:?}");
+        assert_eq!(cfg.home, user.join(".flotilla"), "{env:?}");
         assert!(pending.is_none(), "{env:?}");
     }
 }
@@ -67,7 +67,7 @@ fn a_variable_naming_the_new_home_resolves_to_it_and_nothing_is_left_after() {
 fn a_custom_home_is_used_as_given_and_never_migrated_automatically() {
     let f = fixture();
     let user = &f.plan.user_home;
-    for custom in [user.join("hermes-test"), user.join(".thehermes-dev")] {
+    for custom in [user.join("flotilla-test"), user.join(".flotilla-dev")] {
         let (cfg, pending) = resolve(Some(&custom), user);
         assert_eq!(cfg.home, custom);
         assert!(pending.is_none(), "{custom:?}");
@@ -79,7 +79,7 @@ fn without_the_variable_the_new_home_is_used_and_the_old_one_migrates() {
     let f = fixture();
     let user = &f.plan.user_home;
     let (cfg, pending) = resolve(None, user);
-    assert_eq!(cfg.home, user.join(".thehermes"));
+    assert_eq!(cfg.home, user.join(".flotilla"));
     assert_moves_old_to_new(pending, user);
 }
 
@@ -96,11 +96,8 @@ fn an_inherited_variable_naming_the_real_home_is_an_override_under_a_scratch_use
     assert_eq!(cfg.home, real_old);
     assert!(pending.is_none());
     assert_eq!(
-        home_notice(&cfg.home, Some("THEHERMES_HOME")),
-        format!(
-            "Home: {} (overridden by THEHERMES_HOME)",
-            real_old.display()
-        )
+        home_notice(&cfg.home, Some("FLOTILLA_HOME")),
+        format!("Home: {} (overridden by FLOTILLA_HOME)", real_old.display())
     );
 }
 

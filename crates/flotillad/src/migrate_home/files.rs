@@ -1,4 +1,4 @@
-//! Old-home paths inside the daemon's own files. `hermesd.toml` can name
+//! Old-home paths inside the daemon's own files. `flotillad.toml` can name
 //! files in the home by absolute path (`claude_args = ["--settings",
 //! "<home>/bot-settings.json"]`), and such a file can name the home again
 //! (the settings tell the auto-mode classifier that bot workspaces under
@@ -9,7 +9,7 @@
 //! replace: a rule naming the old home is kept and the same rule naming the
 //! new one is added after it, for the home spelled absolute, as `~/…` or as
 //! a bare `.gravity/` inside a glob (`Bash(*.gravity/secrets*)`), and for the
-//! daemon files the migration renames (`gravityd.toml` → `hermesd.toml`).
+//! daemon files the migration renames (`gravityd.toml` → `flotillad.toml`).
 //! The old rules still guard the compatibility link; the new ones guard the
 //! real paths. A rewrite that would leave fewer denies is refused.
 
@@ -19,7 +19,7 @@ use anyhow::{bail, Context};
 
 use super::state::{Action, State};
 use super::{sql, steps, Plan};
-use crate::brand::{daemon_file, legacy_daemon_file, DAEMON_FILE_STEM, LEGACY_DAEMON_FILE_STEM};
+use crate::brand::{all_daemon_files, DAEMON_FILE_STEM, LEGACY_DAEMON_FILE_STEMS};
 
 /// The settings keys whose arrays hold permission rules.
 const RULE_LISTS: [&str; 3] = ["deny", "allow", "ask"];
@@ -47,7 +47,7 @@ fn rewrite_text(text: &str, pairs: &[(String, String)]) -> String {
 /// The config in `home` (renamed or not yet) and every file in the home its
 /// `claude_args` or `codex_args` names.
 pub fn candidates(plan: &Plan, home: &Path) -> Vec<PathBuf> {
-    let Some(config) = [daemon_file(".toml"), legacy_daemon_file(".toml")]
+    let Some(config) = all_daemon_files(".toml")
         .iter()
         .map(|name| home.join(name))
         .find(|path| path.is_file())
@@ -134,24 +134,21 @@ fn mapped_rule(rule: &str, plan: &Plan) -> Option<String> {
             mapped = replace_name(&mapped, &from, &to, &["/", "\\", "*", ")", ""]);
         }
     }
-    // Renamed daemon files (`gravityd.toml`, `logs/gravityd.err.log`, …) and
-    // globs over them (`gravityd*`). The launchd label `….gravityd` is not a
-    // file name and keeps its spelling.
-    let suffixes: Vec<String> = steps::renamed_files()
-        .iter()
-        .filter_map(|(old, _)| {
-            let name = old.file_name()?.to_string_lossy().into_owned();
-            Some(name.strip_prefix(LEGACY_DAEMON_FILE_STEM)?.to_string())
-        })
-        .chain(["*".to_string()])
-        .collect();
-    let suffixes: Vec<&str> = suffixes.iter().map(String::as_str).collect();
-    mapped = replace_name(
-        &mapped,
-        LEGACY_DAEMON_FILE_STEM,
-        DAEMON_FILE_STEM,
-        &suffixes,
-    );
+    // Renamed daemon files (`hermesd.toml`, `logs/gravityd.err.log`, …) and
+    // globs over them (`hermesd*`). A launchd label (`….thehermesd`) is not
+    // a file name and keeps its spelling.
+    for stem in LEGACY_DAEMON_FILE_STEMS {
+        let suffixes: Vec<String> = steps::renamed_files()
+            .iter()
+            .filter_map(|(old, _)| {
+                let name = old.file_name()?.to_string_lossy().into_owned();
+                Some(name.strip_prefix(stem)?.to_string())
+            })
+            .chain(["*".to_string()])
+            .collect();
+        let suffixes: Vec<&str> = suffixes.iter().map(String::as_str).collect();
+        mapped = replace_name(&mapped, stem, DAEMON_FILE_STEM, &suffixes);
+    }
     (mapped != rule).then_some(mapped)
 }
 

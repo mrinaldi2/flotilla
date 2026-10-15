@@ -22,7 +22,7 @@ fn assert_migrated(f: &Fixture) {
     let to = &f.plan.to;
     let state = f.plan.state().expect("state").expect("found");
     assert!(state.is_complete(), "{:?}", state.steps);
-    assert!(to.join("hermesd.toml").exists());
+    assert!(to.join("flotillad.toml").exists());
     assert_eq!(
         workspace_path(&to.join("bus.sqlite")),
         f.new_ws.to_string_lossy()
