@@ -1,12 +1,12 @@
-GRAVITY MARKETING THIRD-PARTY NOTICES
+FLOTILLA MARKETING THIRD-PARTY NOTICES
 
-Gravity's MIT license is separate from these upstream terms.
+Flotilla's MIT license is separate from these upstream terms.
 Native inventory targets: aarch64-apple-darwin, x86_64-pc-windows-msvc.
 Runtime dependency closures are conservative; tree-shaken code may be absent.
 Build/test notices are included conservatively for generated code; their
 presence does not mean the tools themselves are distributed.
 Source URLs identify the exact unmodified dependency versions.
-See third-party/README.md in the Gravity source for scope and maintenance.
+See third-party/README.md in the Flotilla source for scope and maintenance.
 
 ========================================================================
 JavaScript: vite 8.2.2

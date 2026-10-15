@@ -1,4 +1,4 @@
-# Contributing to Gravity
+# Contributing to Flotilla
 
 Report bugs and propose changes through [GitHub issues](https://github.com/ahilles107/gravity/issues).
 Include the app and daemon versions, operating system, steps to reproduce, and
@@ -8,7 +8,7 @@ reports.
 
 ## Issue tracking
 
-GitHub Issues is the source of truth for all Gravity work, including internal
+GitHub Issues is the source of truth for all Flotilla work, including internal
 maintainer tasks and follow-ups. Use this repository's issues instead of Linear
 or `USE-XXX` identifiers. Search for an existing issue before opening one, and
 reference it as `#123` in discussions and pull requests. Use `Fixes #123` when a
@@ -37,7 +37,7 @@ cargo build --workspace
 ```
 
 Real bots require your own Claude Code installation and authentication. Use
-`GRAVITY_RUNTIME=double ./scripts/dev.sh` to run the deterministic test runtime
+`FLOTILLA_RUNTIME=double ./scripts/dev.sh` to run the deterministic test runtime
 without Claude credentials. Development state stays under `.dev/`.
 
 Start with the [README](README.md), [architecture](docs/architecture.md), and
@@ -63,7 +63,7 @@ The daemon's integration tests build as one program, `integration`. To run one
 file's tests, name the file as a module path:
 
 ```sh
-cargo test -p hermesd --test integration board_import::
+cargo test -p flotillad --test integration board_import::
 ```
 
 `owner_ticket_obs` and `quiesce_reap` are programs of their own, because each

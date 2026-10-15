@@ -1,11 +1,11 @@
 ---
 name: terminal-perf-test
-description: Verify terminal rendering performance and correctness (WebGL renderer, bot-switch terminal cache, forced-repaint nudge, replay bottom-pin) by running the real desktop app in Chrome against a local hermesd with the double runtime, seeding heavy ANSI output, and stress-testing switching/scrolling/streaming. Use when changing TerminalPane, terminalCache, the daemon's attach/replay/resize path, or investigating terminal CPU, lag, black screens, or rendering artifacts.
+description: Verify terminal rendering performance and correctness (WebGL renderer, bot-switch terminal cache, forced-repaint nudge, replay bottom-pin) by running the real desktop app in Chrome against a local flotillad with the double runtime, seeding heavy ANSI output, and stress-testing switching/scrolling/streaming. Use when changing TerminalPane, terminalCache, the daemon's attach/replay/resize path, or investigating terminal CPU, lag, black screens, or rendering artifacts.
 ---
 
 # Terminal rendering performance test
 
-Runs the real stack locally — `hermesd` with the deterministic `double` runtime, the
+Runs the real stack locally — `flotillad` with the deterministic `double` runtime, the
 Vite-served desktop frontend in Chrome — then seeds terminals with more output
 than the daemon's 1 MiB scrollback ring and stress-tests the paths that have
 historically broken: bulk replay after eviction, rapid bot switching, live
@@ -15,7 +15,7 @@ Why the double runtime: it echoes every `input` byte back as terminal output
 (so a driver script can pump arbitrary ANSI at any rate), and it prints a
 `[resize CxR]` marker for every pty resize — making the forced-repaint nudge
 (shrink to rows-1, restore ~50 ms later; see `REPAINT_NUDGE_DELAY` in
-`crates/hermesd/src/supervisor.rs`) visible on screen.
+`crates/flotillad/src/supervisor.rs`) visible on screen.
 
 ## Setup
 
@@ -27,22 +27,22 @@ and 1420 are free first; choose unused ports consistently if needed.
 umask 077
 PERF_DIR=$(mktemp -d "${TMPDIR:-/tmp}/gravity-perf.XXXXXX")
 PERF_DIR=$(cd "$PERF_DIR" && pwd -P)
-export GRAVITY_HOME="$PERF_DIR"
-export GRAVITY_WS=ws://127.0.0.1:49555/ws
-cargo build -p hermesd
-cat > "$GRAVITY_HOME/hermesd.toml" <<EOF
-home = "$GRAVITY_HOME"
+export FLOTILLA_HOME="$PERF_DIR"
+export FLOTILLA_WS=ws://127.0.0.1:49555/ws
+cargo build -p flotillad
+cat > "$FLOTILLA_HOME/flotillad.toml" <<EOF
+home = "$FLOTILLA_HOME"
 bind = ["127.0.0.1"]
 port = 49555
 negotiate_port = false
 runtime = "double"
 supervision_interval_ms = 500
 EOF
-./target/debug/hermesd --config "$GRAVITY_HOME/hermesd.toml" > "$PERF_DIR/hermesd.log" 2>&1 &
+./target/debug/flotillad --config "$FLOTILLA_HOME/flotillad.toml" > "$PERF_DIR/flotillad.log" 2>&1 &
 PERF_DAEMON_PID=$!
 ```
 
-Wait for `$GRAVITY_HOME/hermesd.port`, confirm it is 49555 and the recorded
+Wait for `$FLOTILLA_HOME/flotillad.port`, confirm it is 49555 and the recorded
 PID is still running, then check `curl --fail http://127.0.0.1:49555/health`.
 Stop on startup failure. Do not connect the driver to an installed daemon or
 use it with `pty`: its generated input belongs only in the echo runtime.
@@ -52,8 +52,8 @@ in the local process environment; do not print it or paste it into browser
 commands or chat.
 
 ```bash
-export VITE_GRAVITY_DEV_PORT=49555
-export VITE_GRAVITY_DEV_TOKEN="$(cat "$GRAVITY_HOME/secrets/client.token")"
+export VITE_FLOTILLA_DEV_PORT=49555
+export VITE_FLOTILLA_DEV_TOKEN="$(cat "$FLOTILLA_HOME/secrets/client.token")"
 (cd apps/desktop && env -u CONDUCTOR_PORT pnpm dev)
 ```
 
@@ -62,8 +62,8 @@ profile. Stored connection settings override these defaults: confirm the footer
 shows `127.0.0.1:49555 · connected` before interacting. Never expose or deploy
 the dev frontend containing this token.
 
-In another terminal, set `GRAVITY_HOME` to this run's exact directory and
-`GRAVITY_WS` to the matching loopback URL, then seed:
+In another terminal, set `FLOTILLA_HOME` to this run's exact directory and
+`FLOTILLA_WS` to the matching loopback URL, then seed:
 
 ```bash
 node .claude/skills/terminal-perf-test/scripts/drive.mjs setup

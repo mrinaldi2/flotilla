@@ -16,7 +16,7 @@ To configure a distribution, copy `apps/desktop/.env.example` to
 Leave the token empty to make telemetry unavailable. `VITE_*` values are public
 frontend configuration: never put a personal API key in them.
 
-When enabled, Gravity sends typed usage events, application/daemon versions,
+When enabled, Flotilla sends typed usage events, application/daemon versions,
 connection type, and error reports. Error messages and optional daemon log tails
 are redacted before sending, but redaction cannot guarantee removal of every
 kind of sensitive text. Session recording, page views, DOM autocapture and
@@ -108,6 +108,6 @@ non-code assets and GitHub issues, Actions logs, and release attachments too.
 If a real credential is found, revoke it before considering any history cleanup.
 History rewriting requires a coordinated backup and explicit approval.
 
-Gravity's source is licensed under the [MIT License](../LICENSE). Before
+Flotilla's source is licensed under the [MIT License](../LICENSE). Before
 publishing a distribution, preserve required third-party notices and review
 redistribution rights for any added images or other assets.

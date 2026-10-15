@@ -1,10 +1,10 @@
-# Gravity agent instructions
+# Flotilla agent instructions
 
 ## Issue tracking
 
-- Use GitHub Issues in this repository for all Gravity work, including internal
+- Use GitHub Issues in this repository for all Flotilla work, including internal
   maintainer tasks, bugs, plans, and follow-ups. Do not create or update Linear
-  issues for Gravity. This overrides shared agent guidance that requires Linear
+  issues for Flotilla. This overrides shared agent guidance that requires Linear
   or `USE-XXX` identifiers.
 - Use `gh issue list`, `gh issue view`, and `gh issue create` to find or track
   work. Reuse a relevant issue instead of creating duplicates.

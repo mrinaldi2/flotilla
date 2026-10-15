@@ -1,4 +1,4 @@
-// Drives a sandbox hermesd over its WS control plane while staging a
+// Drives a sandbox flotillad over its WS control plane while staging a
 // marketing screenshot. Talks to the throwaway daemon only — never the
 // installed one on 49777.
 //
@@ -10,15 +10,15 @@
 //   node drive.mjs update <botId> <description> <instructions>
 //   node drive.mjs delete <botId>
 //
-// Env: GRAVITY_WS (default ws://127.0.0.1:49888/ws),
-//      GRAVITY_HOME (required; use a fresh disposable home).
+// Env: FLOTILLA_WS (default ws://127.0.0.1:49888/ws),
+//      FLOTILLA_HOME (required; use a fresh disposable home).
 
 import { readFileSync } from "node:fs";
 import { localDaemon } from "../../lib/local-daemon.mjs";
 
 const daemon = localDaemon(
-  process.env.GRAVITY_HOME,
-  process.env.GRAVITY_WS ?? "ws://127.0.0.1:49888/ws",
+  process.env.FLOTILLA_HOME,
+  process.env.FLOTILLA_WS ?? "ws://127.0.0.1:49888/ws",
 );
 const token = readFileSync(`${daemon.home}/secrets/client.token`, "utf8").trim();
 const ws = new WebSocket(daemon.endpoint);

@@ -56,7 +56,7 @@ not this one's.
 
 ## Task limits are per computer
 
-`[tasks]` is read from each computer's own `hermesd.toml`, and each daemon
+`[tasks]` is read from each computer's own `flotillad.toml`, and each daemon
 enforces it on the bots it runs:
 
 ```toml
