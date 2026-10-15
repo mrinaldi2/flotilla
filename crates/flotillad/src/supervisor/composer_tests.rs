@@ -37,7 +37,10 @@ fn a_body_can_not_close_the_paste_or_send_keys() {
 fn the_typed_text_never_starts_with_a_composer_command() {
     for body in ["/clear", "!rm -rf ~", "#remember this", "  /model"] {
         let text = typed_text(&sanitize(body.as_bytes()).unwrap(), "k7Qf2abc", 1);
-        assert!(text.starts_with("Owner (Hermes app) ·k7Qf2abc: "), "{text}");
+        assert!(
+            text.starts_with("Owner (Flotilla app) ·k7Qf2abc: "),
+            "{text}"
+        );
     }
 }
 
@@ -53,7 +56,10 @@ fn a_long_message_is_typed_as_its_first_line_and_a_pointer() {
     );
     let many_lines = "a\n".repeat(MAX_TYPED_LINES + 1);
     assert!(typed_text(&many_lines, "n", 7).ends_with("#7)"));
-    assert_eq!(typed_text("short", "n", 1), "Owner (Hermes app) ·n: short");
+    assert_eq!(
+        typed_text("short", "n", 1),
+        "Owner (Flotilla app) ·n: short"
+    );
 }
 
 // ---- the echo check (K3) ----
@@ -64,12 +70,12 @@ fn only_the_nonce_and_body_on_screen_count_as_the_echo() {
     let needle = echo_needle(&text, "N0nce123");
     // Drawn with colours, wrapped inside the composer box.
     let screen =
-        "\x1b[2K\x1b[1G│ > Owner (Hermes app) \x1b[2m·N0nce123:\x1b[0m de\r\n│   ploy the fix";
+        "\x1b[2K\x1b[1G│ > Owner (Flotilla app) \x1b[2m·N0nce123:\x1b[0m de\r\n│   ploy the fix";
     assert!(echoed(screen.as_bytes(), &needle));
     // The bot printing the prefix (any nonce but this one) is no echo.
-    let forged = "Owner (Hermes app) ·guessed1: deploy the fix";
+    let forged = "Owner (Flotilla app) ·guessed1: deploy the fix";
     assert!(!echoed(forged.as_bytes(), &needle));
-    assert!(!echoed(b"Owner (Hermes app):", &needle));
+    assert!(!echoed(b"Owner (Flotilla app):", &needle));
 }
 
 #[test]

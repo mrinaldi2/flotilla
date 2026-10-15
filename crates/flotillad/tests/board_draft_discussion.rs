@@ -17,7 +17,7 @@ use common::peer_files::{owner_attach, screenshot};
 use common::peers::wait_until;
 use common::tasks::{error_text, project_with_bots};
 use common::{terminal, TestDaemon, WsClient};
-use hermesd::kanban::presets::Preset;
+use flotillad::kanban::presets::Preset;
 use serde_json::json;
 
 pub(crate) const KICKOFF: &str = "The owner wants to discuss draft";
@@ -146,14 +146,14 @@ async fn the_invited_bot_is_sent_the_draft_and_the_owners_chat_names_it() {
     let head = format!("from USER · chat] {tag} {KICKOFF} {id} with you.");
     assert!(term.contains(&head), "{term}");
     let project = d.app.db.get_project(&x.project_id).unwrap().unwrap();
-    let artifacts = hermesd::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
     let path = d
         .app
         .db
         .board_read(|t| t.attachments(id))
         .unwrap()
         .into_iter()
-        .find_map(|a| hermesd::kanban::attachments::local_path(&a, &artifacts))
+        .find_map(|a| flotillad::kanban::attachments::local_path(&a, &artifacts))
         .expect("the screenshot's path")
         .display()
         .to_string();

@@ -8,7 +8,7 @@
 use crate::legacy;
 
 use bus::schema::MIGRATIONS;
-use hermesd::db::Db;
+use flotillad::db::Db;
 use legacy::{add_group, v2_database};
 use rusqlite::Connection;
 
@@ -247,7 +247,7 @@ fn a_legacy_event_routine_is_disabled_and_inert() {
     assert!(!routine.enabled);
     assert_eq!(routine.trigger, bus::Trigger::unparsable());
     // The sentinel is inert: the scheduler can compute no occurrence from it.
-    assert!(hermesd::scheduler::next_occurrence(
+    assert!(flotillad::scheduler::next_occurrence(
         &routine.trigger,
         chrono::Utc::now(),
         routine.created_at

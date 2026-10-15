@@ -125,7 +125,7 @@ fn platforms_and_the_base_url() {
     assert_eq!(platform_for("A.IPA"), Some("ios"));
     assert_eq!(platform_for("a.dmg"), Some("desktop-mac"));
     assert_eq!(platform_for("a-setup.exe"), Some("desktop-win"));
-    assert_eq!(platform_for("hermesd"), None);
+    assert_eq!(platform_for("flotillad"), None);
     let tmp = tempfile::tempdir().unwrap();
     let mut cfg = config(tmp.path(), &[]);
     assert!(base_url(&cfg).is_err());

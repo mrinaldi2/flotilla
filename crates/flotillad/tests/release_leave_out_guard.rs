@@ -8,10 +8,10 @@ use crate::common;
 use common::cuts::{checkout, cut, cuts, leave_out, merged, DEVOPS};
 use common::prs::{clone, commit};
 use common::repo::git;
-use hermesd::prs::merge::answer;
-use hermesd::prs::queue;
-use hermesd::releases::leave_out_cli::{revert_in, Plan};
-use hermesd::releases::leave_out_gate::executor;
+use flotillad::prs::merge::answer;
+use flotillad::prs::queue;
+use flotillad::releases::leave_out_cli::{revert_in, Plan};
+use flotillad::releases::leave_out_gate::executor;
 use serde_json::{json, Value};
 
 /// The release 0.18.0 of two merged PRs, the first left out: returns the
@@ -29,7 +29,7 @@ async fn reverting(r: &mut common::prs::Repo) -> (String, Value) {
         .to_string();
     let app = &r.pair.d.app;
     let devops = &r.pair.ids[DEVOPS];
-    let gate = executor(app, devops, "hermes/leave_out", &json!({"id": lo})).unwrap();
+    let gate = executor(app, devops, "flotilla/leave_out", &json!({"id": lo})).unwrap();
     (lo, gate)
 }
 
@@ -37,7 +37,7 @@ fn pushed(r: &common::prs::Repo, lo: &str, gate: &Value, head: &str) -> anyhow::
     executor(
         &r.pair.d.app,
         &r.pair.ids[DEVOPS],
-        "hermes/leave_out_pushed",
+        "flotilla/leave_out_pushed",
         &json!({"id": lo, "branch": gate["branch"], "head": head}),
     )
 }
@@ -125,7 +125,7 @@ async fn pr_merge_checks_the_owners_revert_again() {
     let why = answer(
         &app,
         &r.pair.ids[DEVOPS],
-        "hermes/pr_merge",
+        "flotilla/pr_merge",
         &json!({"number": number}),
     )
     .unwrap_err()

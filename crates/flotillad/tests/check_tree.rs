@@ -13,10 +13,10 @@ use std::time::Duration;
 use std::os::unix::process::CommandExt;
 
 use common::prs::{branch, give, head, set_policy, setup, setup_with, Repo};
-use hermesd::kanban::model::Role;
-use hermesd::prs::check_jobs::{self, dispatch, SYSTEM_RUNNER};
-use hermesd::prs::check_model::{CheckResult, CheckRun, Report};
-use hermesd::releases::machines;
+use flotillad::kanban::model::Role;
+use flotillad::prs::check_jobs::{self, dispatch, SYSTEM_RUNNER};
+use flotillad::prs::check_model::{CheckResult, CheckRun, Report};
+use flotillad::releases::machines;
 use serde_json::json;
 
 /// `slow` starts a child that outlives its shell: every 0.2 s it rewrites
@@ -161,7 +161,7 @@ async fn a_daemon_stop_ends_each_checks_whole_tree_first() {
     dispatch(&app, &r.project).await.unwrap();
     child_running(&r).await;
 
-    hermesd::check_tree::stop_all(&app.cfg.home);
+    flotillad::check_tree::stop_all(&app.cfg.home);
     assert!(
         checkouts(&r).is_empty(),
         "the checkout went as the daemon stopped"
@@ -246,14 +246,14 @@ fn a_runner_whose_daemon_dies_ends_its_own_tree() {
     assert!(!alive.exists(), "a child outlived its runner");
 }
 
-/// `hermesd check run` as the daemon starts it, in job folder `job`.
+/// `flotillad check run` as the daemon starts it, in job folder `job`.
 #[cfg(unix)]
 fn runner(job: &std::path::Path) -> std::process::Child {
     use std::process::{Command, Stdio};
-    Command::new(env!("CARGO_BIN_EXE_hermesd"))
+    Command::new(env!("CARGO_BIN_EXE_flotillad"))
         .args(["check", "run"])
         .arg(job)
-        .env(hermesd::check_tree::LIFELINE_ENV, "1")
+        .env(flotillad::check_tree::LIFELINE_ENV, "1")
         .stdin(Stdio::piped())
         .process_group(0)
         .spawn()
@@ -275,7 +275,7 @@ fn a_runner_starts_nothing_before_go() {
     assert!(!job.join("alive").exists(), "it ran before go");
     drop(runner.stdin.take());
     let status = runner.wait().unwrap();
-    assert_eq!(status.code(), Some(hermesd::check_exec::COULDNT_RUN));
+    assert_eq!(status.code(), Some(flotillad::check_exec::COULDNT_RUN));
     std::thread::sleep(Duration::from_millis(500));
     assert!(!job.join("alive").exists(), "it ran without go");
 }

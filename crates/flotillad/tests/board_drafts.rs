@@ -11,7 +11,7 @@ use bus::contract::board::{
 use common::board::*;
 use common::tasks::{drain_until, error_text, project_with_bots};
 use common::{McpClient, WsClient};
-use hermesd::kanban::presets::Preset;
+use flotillad::kanban::presets::Preset;
 use serde_json::{json, Value};
 
 /// A PNG of `len` bytes: its signature, then filler.
@@ -223,7 +223,7 @@ async fn a_bot_shapes_a_draft_with_the_owner_who_finalizes_it() {
     )
     .await;
     let project = db.get_project(&project_id).unwrap().unwrap();
-    let artifacts = hermesd::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
     std::fs::create_dir_all(&artifacts).unwrap();
     std::fs::write(artifacts.join("spec.md"), "# Unit conversion\n").unwrap();
     let doc = lead
@@ -258,7 +258,7 @@ async fn a_bot_shapes_a_draft_with_the_owner_who_finalizes_it() {
         ["title", "acceptance_criteria", "attachment"],
         "{changes:?}"
     );
-    let rows = hermesd::overview::attention_rows(&d.app, &project_id).unwrap();
+    let rows = flotillad::overview::attention_rows(&d.app, &project_id).unwrap();
     let row = rows
         .rows
         .iter()
@@ -269,7 +269,7 @@ async fn a_bot_shapes_a_draft_with_the_owner_who_finalizes_it() {
         format!("Lead updated draft {id}: Convert cups and grams")
     );
     draft_changes(&mut owner, &id, true).await;
-    let rows = hermesd::overview::attention_rows(&d.app, &project_id).unwrap();
+    let rows = flotillad::overview::attention_rows(&d.app, &project_id).unwrap();
     assert!(!rows
         .rows
         .iter()

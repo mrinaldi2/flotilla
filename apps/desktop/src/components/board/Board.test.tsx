@@ -6,7 +6,7 @@ import { DaemonError } from "../../protocol/connection";
 import {
   EditResultSchema,
   StructureResultSchema,
-} from "../../protocol/gen/hermes/board/v1/requests_pb";
+} from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import { board, boardsSnapshot, draftItem, RECIPES_ID } from "../../test/boardsFixtures";
 import { BoardWindow, boardsClient } from "../../test/boardStory";
 import { loadBoardPrefs } from "./boardPrefs";

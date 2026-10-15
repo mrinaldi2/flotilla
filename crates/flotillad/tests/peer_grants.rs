@@ -87,7 +87,7 @@ async fn the_pc_refuses_each_extra_it_may_not_take_and_applies_the_rest() {
     let t = team_trusting().await;
     let frame = json!({"type": "grant_extras", "bot_id": t.windev_id,
                        "extras": ["install", "build_installers"], "decision": "d"});
-    let answer = hermesd::decisions::grants::serve_grant(&t.win.app, &t.win_peer_id, &frame)
+    let answer = flotillad::decisions::grants::serve_grant(&t.win.app, &t.win_peer_id, &frame)
         .expect("install applies");
     assert_eq!(answer["extras"], json!(["install"]), "{answer}");
     assert_eq!(
@@ -98,7 +98,7 @@ async fn the_pc_refuses_each_extra_it_may_not_take_and_applies_the_rest() {
 
     let none = json!({"type": "grant_extras", "bot_id": t.windev_id,
                       "extras": ["publish"], "decision": "d"});
-    let refused = hermesd::decisions::grants::serve_grant(&t.win.app, &t.win_peer_id, &none);
+    let refused = flotillad::decisions::grants::serve_grant(&t.win.app, &t.win_peer_id, &none);
     assert!(refused.is_err(), "nothing grantable is refused outright");
 }
 

@@ -77,7 +77,7 @@ pub(super) fn check_attach(stand_in: &bus::Bot, args: &Value) -> anyhow::Result<
     if given("file") {
         return Err(refuse(
             "invalid_request",
-            "the board's home can't read a file on your computer; update The Hermes there, \
+            "the board's home can't read a file on your computer; update Flotilla there, \
              which sends the file itself",
         ));
     }

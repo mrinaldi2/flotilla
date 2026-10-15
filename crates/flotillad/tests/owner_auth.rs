@@ -9,7 +9,7 @@ use crate::common;
 
 use common::peers::{team, team_trusting, wait_until};
 use common::*;
-use hermesd::db::OwnerVia;
+use flotillad::db::OwnerVia;
 use serde_json::{json, Value};
 
 async fn bot(d: &TestDaemon, c: &mut WsClient) -> String {

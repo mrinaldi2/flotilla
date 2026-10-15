@@ -2,8 +2,8 @@ import type { AttachResult, DaemonApi } from "../protocol/api";
 import type { BoardCall, BoardReply } from "../protocol/board";
 import type { ConnectionStatus, Endpoint } from "../protocol/connection";
 import type { Grant } from "../protocol/entities";
-import type { BoardEvent } from "../protocol/gen/hermes/board/v1/requests_pb";
-import type { PrPush } from "../protocol/gen/hermes/pr/v1/pr_pb";
+import type { BoardEvent } from "../protocol/gen/flotilla/board/v1/requests_pb";
+import type { PrPush } from "../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { PrCall, PrReply } from "../protocol/prs";
 import type {
   PushOf,

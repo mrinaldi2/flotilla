@@ -12,9 +12,9 @@ use common::board::{call, response};
 use common::peer_board::{board_on, Board};
 use common::peers::{computer, paired_from, wait_until};
 use common::tasks::error_text;
-use hermesd::actor::Actor;
-use hermesd::kanban::admin::{self, By, Outcome, Structure};
-use hermesd::kanban::presets::Preset;
+use flotillad::actor::Actor;
+use flotillad::kanban::admin::{self, By, Outcome, Structure};
+use flotillad::kanban::presets::Preset;
 use serde_json::json;
 
 /// The board fixture with the PC (`older_pc`) or the Mac on contract 1.
@@ -141,7 +141,10 @@ async fn a_0_19_computer_falls_back_to_one_board_with_a_0_18_home() {
         ),
     ] {
         let raw = b.tester.call_raw(tool, args).await;
-        assert!(error_text(&raw).contains("runs an older Gravity"), "{raw}");
+        assert!(
+            error_text(&raw).contains("runs an older Flotilla release"),
+            "{raw}"
+        );
     }
 
     // A board id is left out of what it asks: there is one board.

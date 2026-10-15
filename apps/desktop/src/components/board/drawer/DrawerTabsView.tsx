@@ -3,8 +3,8 @@
 
 import { useState } from "react";
 import type { ReactElement, ReactNode } from "react";
-import { ItemEventKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import type { ItemDetail } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import { ItemEventKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { ItemDetail } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { Activity } from "./DrawerActivity";
 import type { PostComment } from "./DrawerActivity";
 import { Links, Overview } from "./DrawerTabs";

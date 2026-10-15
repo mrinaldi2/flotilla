@@ -151,12 +151,17 @@ async fn a_package_without_a_commit_closes_only_through_its_release_branch() {
     let db = &r.pair.d.app.db;
     let item = db.get_item(&items[0]).unwrap().unwrap();
     let texts = vec!["survives a reboot".to_string()];
-    let edit = hermesd::db::ItemEdit {
+    let edit = flotillad::db::ItemEdit {
         acceptance_criteria: Some(&texts),
-        ..hermesd::db::ItemEdit::default()
+        ..flotillad::db::ItemEdit::default()
     };
-    let hermesd::db::Write::Done(item) = db
-        .update_item(&item.id, item.version, &edit, &hermesd::actor::Actor::User)
+    let flotillad::db::Write::Done(item) = db
+        .update_item(
+            &item.id,
+            item.version,
+            &edit,
+            &flotillad::actor::Actor::User,
+        )
         .unwrap()
     else {
         unreachable!()
@@ -167,7 +172,7 @@ async fn a_package_without_a_commit_closes_only_through_its_release_branch() {
             item.version,
             0,
             true,
-            &hermesd::actor::Actor::User,
+            &flotillad::actor::Actor::User,
         )
     })
     .unwrap();
@@ -182,7 +187,7 @@ async fn a_package_without_a_commit_closes_only_through_its_release_branch() {
         0,
         true,
         None,
-        &hermesd::actor::Actor::User,
+        &flotillad::actor::Actor::User,
     )
     .unwrap();
 

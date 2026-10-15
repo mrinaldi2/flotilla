@@ -138,7 +138,7 @@ async fn a_tip_that_moves_without_a_report_is_flagged() {
     assert_eq!(again["pushes"].as_array().unwrap().len(), 2);
 
     // The background pass finds the same, with nobody reading.
-    hermesd::prs::watch::step(&r.pair.d.app);
+    flotillad::prs::watch::step(&r.pair.d.app);
 
     let reported = r.bots[1]
         .call("pr_push", json!({"number": 1, "sha": sneaky}))

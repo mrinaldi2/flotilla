@@ -1,4 +1,4 @@
-//! hermesd: always-on daemon that owns product state, durable delivery,
+//! flotillad: always-on daemon that owns product state, durable delivery,
 //! the scheduler, runtime adapters, and the control plane.
 
 // The test-only switches (H-303) never reach an optimised build: only the

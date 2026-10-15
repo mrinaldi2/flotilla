@@ -9,7 +9,7 @@ use crate::releases::model::ReleaseEvent;
 #[test]
 fn the_releases_migration_runs_again_without_losing_packages() {
     let db = Db::open_in_memory().unwrap();
-    let p = db.create_project("The Hermes", "the-hermes").unwrap();
+    let p = db.create_project("Flotilla", "flotilla").unwrap();
     db.ensure_board(&p.id, "d-mac", Some("H")).unwrap();
     let release = db
         .board_tx(|t| {

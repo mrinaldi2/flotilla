@@ -192,7 +192,8 @@ async fn deleting_a_running_worker_closes_its_spawn() {
     let parent = book_id(&d, &pid);
     // The owner deletes the worker mid-task: its spawn closes as cancelled.
     let bot = bot_named(&d, &pid, "ch-1").expect("worker");
-    hermesd::botmgmt::archive_bot(&d.app, &bot, &hermesd::db::Actor::User, None).expect("archive");
+    flotillad::botmgmt::archive_bot(&d.app, &bot, &flotillad::db::Actor::User, None)
+        .expect("archive");
     wait_until("the spawn settles", || {
         worker_state(&d, &parent, "ch-1") == Some(WorkerState::Cancelled)
     })

@@ -39,7 +39,7 @@ async fn a_package_goes_from_devops_through_the_owner_to_the_machine() {
     ops.call(
         "release_attach_build",
         json!({"release_id": id, "platform": "daemon", "version": "0.16.0",
-               "artifact": "/builds/hermesd", "sha256": "a".repeat(64)}),
+               "artifact": "/builds/flotillad", "sha256": "a".repeat(64)}),
     )
     .await;
     // Every tester machine must pass the frozen build first (H-020 §6.4).

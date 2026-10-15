@@ -3,7 +3,7 @@
 // before 0.19 sends no boards: then the project has one, implied, and every
 // column and card is on it.
 
-import type { Board, BoardColumn, ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { Board, BoardColumn, ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import type { BoardModel } from "./boardSync";
 
 function byPlace(a: Board, b: Board): number {
@@ -76,7 +76,7 @@ export function cardsOf(cards: readonly ItemCard[], board: Board | undefined): I
   return cards.filter((card) => onBoard(card.boardId, board));
 }
 
-/** The item-id prefix a name suggests: its initials in capitals, as the Hermes service picks. */
+/** The item-id prefix a name suggests: its initials in capitals, as the Flotilla service picks. */
 export function suggestKey(name: string): string {
   const initials = name
     .split(/[^\p{L}\p{N}]+/u)

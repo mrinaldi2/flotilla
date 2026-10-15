@@ -110,17 +110,17 @@ fn regeneration_is_idempotent() {
 }
 
 #[test]
-fn system_md_speaks_of_hermes_and_the_registered_bus() {
+fn system_md_speaks_of_flotilla_and_the_registered_bus() {
     let mut with_browser = spec("Reviewer", "");
     with_browser.own_browser = true;
     let md = prompt::system_md(&with_browser);
-    assert!(md.contains("## How to use the Hermes bus"));
+    assert!(md.contains("## How to use the Flotilla bus"));
     assert!(md.contains(&format!(
         "Use the `{}` MCP tools",
         crate::brand::ACTIVE_MCP_SERVER
     )));
-    assert!(md.contains("on Hermes there is no"));
-    assert!(md.contains("the owner can watch it from Hermes."));
+    assert!(md.contains("on Flotilla there is no"));
+    assert!(md.contains("the owner can watch it from Flotilla."));
     assert!(!md.contains("Gravity"));
 }
 
@@ -141,7 +141,7 @@ fn the_session_start_hook_retries_a_daemon_that_is_still_booting() {
     assert!(command.contains("--retry-connrefused"), "{command}");
 }
 
-/// H-044: every hook is `hermesd hook <event>` over the local endpoint, and
+/// H-044: every hook is `flotillad hook <event>` over the local endpoint, and
 /// nothing in the settings names a token.
 #[test]
 fn hooks_go_over_the_local_endpoint_without_a_token() {
@@ -206,7 +206,7 @@ fn system_md_states_this_machines_task_limits_and_the_note_cap() {
 fn the_composer_switch_adds_the_provenance_hooks_and_nothing_else_does() {
     let settings = |provenance| {
         super::unix_hooks::settings(&crate::bus_auth::HookTransport::Ipc {
-            command: "/bin/hermesd".to_string(),
+            command: "/bin/flotillad".to_string(),
             endpoint: "/run/bus.sock".to_string(),
             provenance,
         })

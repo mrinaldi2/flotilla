@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { BoardApi } from "../../../protocol/board";
 import { boardCall } from "../../../protocol/board";
-import type { DraftRevision, Unmet } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { DraftRevision, Unmet } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { errText } from "../../../util";
 import { unseenChanges } from "./draftChanges";
 

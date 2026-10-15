@@ -17,25 +17,27 @@ pub struct HomeLock {
 /// start every bot twice. A port collision used to stop the second one; port
 /// negotiation means it no longer does, so the claim is explicit.
 ///
-/// The pre-rename lock file is claimed too: until the `~/.gravity` symlink the
-/// home migration leaves is removed, a daemon from before the rename can still
-/// reach this home through it, and that one only knows the old name.
+/// The pre-rename lock files are claimed too: until the `~/.thehermes` and
+/// `~/.gravity` links the home migrations leave are removed, a daemon from
+/// before a rename can still reach this home through them, and that one only
+/// knows its own name.
 pub fn lock(home: &Path) -> anyhow::Result<HomeLock> {
     let mut files = Vec::new();
-    for name in [
-        crate::brand::daemon_file(".lock"),
-        crate::brand::legacy_daemon_file(".lock"),
-    ] {
+    for name in crate::brand::all_daemon_files(".lock") {
         files.push(lock_file(home, &name)?);
     }
     Ok(HomeLock { _files: files })
 }
 
-/// Claims a home the way a daemon from before the rename does, which is how
-/// the home migration proves the old daemon has stopped.
+/// Claims a home the way a daemon from before the rename does (The Hermes
+/// claims `hermesd.lock` and `gravityd.lock`), which is how the home
+/// migration proves the old daemon has stopped.
 pub fn lock_legacy(home: &Path) -> anyhow::Result<HomeLock> {
-    let file = lock_file(home, &crate::brand::legacy_daemon_file(".lock"))?;
-    Ok(HomeLock { _files: vec![file] })
+    let mut files = Vec::new();
+    for name in crate::brand::legacy_daemon_files(".lock") {
+        files.push(lock_file(home, &name)?);
+    }
+    Ok(HomeLock { _files: files })
 }
 
 fn lock_file(home: &Path, name: &str) -> anyhow::Result<File> {
@@ -45,7 +47,7 @@ fn lock_file(home: &Path, name: &str) -> anyhow::Result<File> {
     match file.try_lock() {
         Ok(()) => Ok(file),
         Err(std::fs::TryLockError::WouldBlock) => anyhow::bail!(
-            "another hermesd is already running against {}; stop it first",
+            "another flotillad is already running against {}; stop it first",
             home.display()
         ),
         Err(std::fs::TryLockError::Error(e)) => {
@@ -58,7 +60,7 @@ pub fn runtime_port_path(home: &Path) -> PathBuf {
     home.join(crate::brand::daemon_file(".port"))
 }
 
-/// Publishes the port selected for this process without changing hermesd.toml.
+/// Publishes the port selected for this process without changing flotillad.toml.
 pub fn publish_runtime_port(home: &Path, port: u16) -> anyhow::Result<()> {
     std::fs::create_dir_all(home)?;
     let path = runtime_port_path(home);

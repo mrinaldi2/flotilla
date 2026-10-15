@@ -1,6 +1,6 @@
 //! The check runner, PR-5b (H-283, H-261 §1.6, §7): a queued check is
 //! routed by its tools to a computer, whose daemon runs it with
-//! `hermesd check run` in a fresh checkout at the exact sha that goes once
+//! `flotillad check run` in a fresh checkout at the exact sha that goes once
 //! it has run. Its result is the command's exit status (ARCH M1), and no
 //! bot or AI worker is in the loop (ARCH M2). Each computer runs at most its
 //! cap of jobs and none under the disk floor; an error is retried once, a
@@ -13,12 +13,12 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use common::prs::{branch, error, give, head, set_policy, setup, setup_with, Repo};
-use hermesd::kanban::model::Role;
-use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
-use hermesd::prs::check_model::{CheckResult, CheckRun};
-use hermesd::prs::check_rerun::{rerun, Asker};
-use hermesd::prs::check_route::DISK_FREE_GB;
-use hermesd::releases::machines;
+use flotillad::kanban::model::Role;
+use flotillad::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
+use flotillad::prs::check_model::{CheckResult, CheckRun};
+use flotillad::prs::check_rerun::{rerun, Asker};
+use flotillad::prs::check_route::DISK_FREE_GB;
+use flotillad::releases::machines;
 use serde_json::json;
 
 /// `unit` and `lint` run side by side on one computer: they test the
@@ -121,7 +121,7 @@ fn published(r: &Repo, run: &CheckRun) -> String {
     let app = &r.pair.d.app;
     let project = app.db.get_project(&r.project).unwrap().unwrap();
     let log = run.log_artifact.as_deref().expect("a log");
-    std::fs::read_to_string(hermesd::paths::artifacts_dir(&app.cfg, &project.dir_name).join(log))
+    std::fs::read_to_string(flotillad::paths::artifacts_dir(&app.cfg, &project.dir_name).join(log))
         .unwrap()
 }
 
@@ -309,7 +309,7 @@ async fn an_errors_retry_is_routed_by_the_daemon_itself() {
     .await;
     std::fs::rename(&r.origin, r.origin.with_extension("moved")).unwrap();
     tools(&r, &[("cargo", "1.90.0"), (DISK_FREE_GB, "1000")]);
-    hermesd::prs::check_jobs::nudge();
+    flotillad::prs::check_jobs::nudge();
     // A first error is queued again, so only the retry's error is final.
     for name in ["unit", "lint"] {
         let run = finished(&r, &sha, name).await;

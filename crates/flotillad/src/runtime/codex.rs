@@ -326,18 +326,18 @@ mod tests {
             claude_bin: String::new(),
             claude_args: Vec::new(),
             env: vec![
-                ("THEHERMES_HOME".into(), "/home".into()),
+                ("FLOTILLA_HOME".into(), "/home".into()),
                 ("GRAVITY_HOME".into(), "/home".into()),
-                ("THEHERMES_TOKEN".into(), "t".into()),
+                ("FLOTILLA_TOKEN".into(), "t".into()),
             ],
             cols: 80,
             rows: 24,
         };
         let command = server_command(&spec).unwrap();
         let envs: Vec<_> = command.get_envs().collect();
-        for key in ["THEHERMES_HOME", "GRAVITY_HOME"] {
+        for key in ["FLOTILLA_HOME", "GRAVITY_HOME"] {
             assert!(envs.contains(&(OsStr::new(key), None)), "{key}: {envs:?}");
         }
-        assert!(envs.contains(&(OsStr::new("THEHERMES_TOKEN"), Some(OsStr::new("t")))));
+        assert!(envs.contains(&(OsStr::new("FLOTILLA_TOKEN"), Some(OsStr::new("t")))));
     }
 }

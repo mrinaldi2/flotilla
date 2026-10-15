@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use hermesd::app::AppState;
-use hermesd::config::Config;
-use hermesd::db::Db;
+use flotillad::app::AppState;
+use flotillad::config::Config;
+use flotillad::db::Db;
 
 /// Exit code for a stop that only asks to be restarted, distinct from a crash.
 const RECLAIM_EXIT_CODE: i32 = 75;
@@ -15,9 +15,9 @@ fn flag_value(args: &[String], flag: &str) -> Option<PathBuf> {
         .map(PathBuf::from)
 }
 
-/// `hermesd migrate-home [--dry-run | --rollback] [--from <dir>] [--to <dir>]`.
+/// `flotillad migrate-home [--dry-run | --rollback] [--from <dir>] [--to <dir>]`.
 fn migrate_home(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
-    use hermesd::migrate_home::{self as migrate, Plan};
+    use flotillad::migrate_home::{self as migrate, Plan};
     let default = Plan::default_for(cfg);
     let plan = Plan::new(
         flag_value(args, "--from").unwrap_or(default.from),
@@ -26,7 +26,10 @@ fn migrate_home(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     );
     println!(
         "{}",
-        hermesd::config::home_notice(&cfg.home, hermesd::config::home_override_var().as_deref())
+        flotillad::config::home_notice(
+            &cfg.home,
+            flotillad::config::home_override_var().as_deref()
+        )
     );
     let mut out = std::io::stdout();
     if args.iter().any(|a| a == "--dry-run") {
@@ -54,31 +57,31 @@ async fn main() -> anyhow::Result<()> {
     // The PreToolUse hook runs once per tool call of every bot: no config,
     // no logging, nothing on stdout but its answer.
     if args.first().map(String::as_str) == Some("guard") {
-        std::process::exit(hermesd::bot_permissions::guard::run(&args[1..]));
+        std::process::exit(flotillad::bot_permissions::guard::run(&args[1..]));
     }
     // A session's stdio bus server (H-044): stdout is MCP's alone.
     if args.first().map(String::as_str) == Some("bus-proxy") {
-        std::process::exit(hermesd::bus_auth::proxy::run(&args[1..]).await);
+        std::process::exit(flotillad::bus_auth::proxy::run(&args[1..]).await);
     }
     // A bot's stdio MCP server, detached from its terminal (H-195 D2b).
     if args.first().map(String::as_str) == Some("mcp-exec") {
-        std::process::exit(hermesd::bus_auth::detach::mcp_exec(&args[1..]));
+        std::process::exit(flotillad::bus_auth::detach::mcp_exec(&args[1..]));
     }
     // Claude Code's hooks (H-044): over the local endpoint, not curl.
     if args.first().map(String::as_str) == Some("hook") {
-        std::process::exit(hermesd::bus_auth::hook::run(&args[1..]).await);
+        std::process::exit(flotillad::bus_auth::hook::run(&args[1..]).await);
     }
     // A check's runner (H-283): the daemon starts it and reads its exit
     // status, the check's result.
     if args.first().map(String::as_str) == Some("check") {
-        std::process::exit(hermesd::check_exec::run_cli(&args[1..]));
+        std::process::exit(flotillad::check_exec::run_cli(&args[1..]));
     }
     // `service install` runs a staged binary with this to check it starts.
     if args.first().map(String::as_str) == Some("--version") {
-        println!("hermesd {}", hermesd::app::DAEMON_VERSION);
+        println!("flotillad {}", flotillad::app::DAEMON_VERSION);
         println!(
             "identity: {}",
-            hermesd::bus_auth::app_identity::identity_line()
+            flotillad::bus_auth::app_identity::identity_line()
         );
         return Ok(());
     }
@@ -98,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
 
     let mut cfg = Config::load(config_path.as_deref())?;
     cfg.scratch |= args.iter().any(|arg| arg == "--scratch")
-        || std::env::var("HERMES_SCRATCH").is_ok_and(|v| v == "1");
+        || flotillad::brand::env_var_os("SCRATCH").is_some_and(|v| v == "1");
     if cfg.scratch {
         tracing::warn!(
             home = %cfg.home.display(),
@@ -106,10 +109,10 @@ async fn main() -> anyhow::Result<()> {
              workers, no bot-folder writes, no git push"
         );
     }
-    if let Some(e) = cfg.auth.hold_phase_two(hermesd::bus_auth::HOOKS_OVER_IPC) {
+    if let Some(e) = cfg.auth.hold_phase_two(flotillad::bus_auth::HOOKS_OVER_IPC) {
         tracing::error!("{e}");
     }
-    let app_identity_known = hermesd::bus_auth::app_identity::APP_IDENTITY_KNOWN;
+    let app_identity_known = flotillad::bus_auth::app_identity::APP_IDENTITY_KNOWN;
     if let Some(e) = cfg.auth.hold_for_app_identity(app_identity_known) {
         tracing::error!("{e}");
     }
@@ -120,7 +123,7 @@ async fn main() -> anyhow::Result<()> {
         args.first().map(String::as_str),
         Some("service" | "migrate-home")
     ) {
-        hermesd::migrate_home::refuse_unmigrated(&cfg)?;
+        flotillad::migrate_home::refuse_unmigrated(&cfg)?;
     }
 
     match args.first().map(String::as_str) {
@@ -130,13 +133,13 @@ async fn main() -> anyhow::Result<()> {
         }
         Some("backup") => {
             let out = flag_value(&args, "--out").unwrap_or_else(|| {
-                hermesd::backup::backups_dir(&cfg).join(format!(
+                flotillad::backup::backups_dir(&cfg).join(format!(
                     "backup-{}",
                     chrono::Utc::now().format("%Y%m%d-%H%M%S")
                 ))
             });
             // As stored: a newer binary backs up without migrating first.
-            let path = hermesd::backup::backup(&cfg, &out)?;
+            let path = flotillad::backup::backup(&cfg, &out)?;
             println!("backup written to {}", path.display());
             return Ok(());
         }
@@ -144,38 +147,38 @@ async fn main() -> anyhow::Result<()> {
             let from = flag_value(&args, "--from")
                 .ok_or_else(|| anyhow::anyhow!("restore requires --from <backup dir>"))?;
             let overwrite = args.iter().any(|a| a == "--overwrite");
-            hermesd::backup::restore(&cfg, &from, overwrite)?;
+            flotillad::backup::restore(&cfg, &from, overwrite)?;
             println!("restored into {}", cfg.home.display());
             return Ok(());
         }
         Some("board") => {
-            hermesd::backlog_import::cli::run(&cfg, &args[1..]).await?;
+            flotillad::backlog_import::cli::run(&cfg, &args[1..]).await?;
             return Ok(());
         }
         Some("release") => {
-            hermesd::releases::cli::run(&cfg, &args[1..]).await?;
+            flotillad::releases::cli::run(&cfg, &args[1..]).await?;
             return Ok(());
         }
         Some("pr") => {
-            hermesd::pr_cli::run(&cfg, &args[1..]).await?;
+            flotillad::pr_cli::run(&cfg, &args[1..]).await?;
             return Ok(());
         }
         Some("quiesce") => {
-            hermesd::quiesce::cli::run(&cfg, &args[1..]).await?;
+            flotillad::quiesce::cli::run(&cfg, &args[1..]).await?;
             return Ok(());
         }
         Some("peer") => {
-            hermesd::peer::cli::run(&cfg, &args[1..]).await?;
+            flotillad::peer::cli::run(&cfg, &args[1..]).await?;
             return Ok(());
         }
         Some("service") => {
             let paths =
-                hermesd::service::ServicePaths::new(cfg.home.clone(), cfg.user_home.clone());
+                flotillad::service::ServicePaths::new(cfg.home.clone(), cfg.user_home.clone());
             // Flags are not otherwise parsed here; `service install --help`
             // used to run the install.
             if args.iter().any(|a| a == "--help" || a == "-h") {
                 println!(
-                    "usage: hermesd service <install [--binary <path>] [--no-migrate]|uninstall|restart|status [--json]>"
+                    "usage: flotillad service <install [--binary <path>] [--no-migrate]|uninstall|restart|status [--json]>"
                 );
                 return Ok(());
             }
@@ -185,18 +188,18 @@ async fn main() -> anyhow::Result<()> {
                         flag_value(&args, "--binary").map_or_else(std::env::current_exe, Ok)?;
                     println!(
                         "{}",
-                        hermesd::config::home_notice(
+                        flotillad::config::home_notice(
                             &cfg.home,
-                            hermesd::config::home_override_var().as_deref()
+                            flotillad::config::home_override_var().as_deref()
                         )
                     );
                     // `--no-migrate` (the app's launch-time repair) reinstalls
                     // the binary only; moving the home needs the user's yes.
-                    let pending = hermesd::migrate_home::pending(&cfg)?;
+                    let pending = flotillad::migrate_home::pending(&cfg)?;
                     if args.iter().any(|a| a == "--no-migrate") {
                         if let Some(plan) = &pending {
                             anyhow::bail!(
-                                "{} still has to move to {}; run `hermesd service install` \
+                                "{} still has to move to {}; run `flotillad service install` \
                                  without --no-migrate to move it",
                                 plan.from.display(),
                                 plan.to.display()
@@ -204,51 +207,54 @@ async fn main() -> anyhow::Result<()> {
                         }
                     }
                     // Who restarted the service, on record (H-193).
-                    hermesd::service_audit::record(&paths.log_dir(), &args);
-                    hermesd::service::install_and_start(
+                    flotillad::service_audit::record(&paths.log_dir(), &args);
+                    flotillad::service::install_and_start(
                         &source,
                         &paths,
                         cfg.port,
                         pending.as_ref(),
                     )?;
                     println!(
-                        "hermesd installed to {} and running ({})",
+                        "flotillad installed to {} and running ({})",
                         paths.bin_path().display(),
-                        hermesd::service::SERVICE_LABEL
+                        flotillad::service::SERVICE_LABEL
                     );
                     println!("Logs: {}", paths.log_dir().display());
                 }
                 Some("uninstall") => {
-                    hermesd::service::uninstall(&paths)?;
+                    flotillad::service::uninstall(&paths)?;
                     println!(
-                        "hermesd service removed; state in {} kept",
+                        "flotillad service removed; state in {} kept",
                         cfg.home.display()
                     );
                 }
                 Some("restart") => {
                     anyhow::ensure!(
                         paths.plist_path().exists(),
-                        "no hermesd service installed at {}",
+                        "no flotillad service installed at {}",
                         paths.plist_path().display()
                     );
-                    hermesd::service::restart(&paths, cfg.port)?;
-                    println!("hermesd restarted ({})", hermesd::service::SERVICE_LABEL);
+                    flotillad::service::restart(&paths, cfg.port)?;
+                    println!(
+                        "flotillad restarted ({})",
+                        flotillad::service::SERVICE_LABEL
+                    );
                 }
                 Some("status") => {
                     if args.iter().any(|a| a == "--json") {
-                        let home = hermesd::service_report::HomeState {
-                            migration_pending: hermesd::migrate_home::pending(&cfg)?.is_some(),
-                            migrated: hermesd::migrate_home::completed(&cfg),
+                        let home = flotillad::service_report::HomeState {
+                            migration_pending: flotillad::migrate_home::pending(&cfg)?.is_some(),
+                            migrated: flotillad::migrate_home::completed(&cfg),
                         };
-                        let report = hermesd::service::report(&paths, cfg.port, home);
+                        let report = flotillad::service::report(&paths, cfg.port, home);
                         println!("{}", serde_json::to_string(&report)?);
                         return Ok(());
                     }
-                    if !hermesd::service::status(&paths, cfg.port) {
+                    if !flotillad::service::status(&paths, cfg.port) {
                         std::process::exit(1);
                     }
                 }
-                _ => anyhow::bail!("usage: hermesd service <install|uninstall|restart|status>"),
+                _ => anyhow::bail!("usage: flotillad service <install|uninstall|restart|status>"),
             }
             return Ok(());
         }
@@ -257,14 +263,14 @@ async fn main() -> anyhow::Result<()> {
 
     // Before the port: two daemons on one home run two supervisors against one
     // database, and negotiation means a collision no longer stops the second.
-    let _home_lock = hermesd::home::lock(&cfg.home)?;
+    let _home_lock = flotillad::home::lock(&cfg.home)?;
     #[cfg(unix)]
-    hermesd::holders::track_sessions_in(&cfg.home);
+    flotillad::holders::track_sessions_in(&cfg.home);
     // What bot sessions start, for quiesce to reap (H-117 Q1).
-    hermesd::holders::ledger::track_in(&cfg.home);
-    hermesd::holders::ledger::spawn_sweeper();
-    let policy = hermesd::server::port_policy(&cfg, negotiate_port);
-    let bound = hermesd::server::bind(&cfg.bind, cfg.port, policy).await?;
+    flotillad::holders::ledger::track_in(&cfg.home);
+    flotillad::holders::ledger::spawn_sweeper();
+    let policy = flotillad::server::port_policy(&cfg, negotiate_port);
+    let bound = flotillad::server::bind(&cfg.bind, cfg.port, policy).await?;
     cfg.port = bound.port();
     if bound.negotiated() {
         tracing::warn!(
@@ -276,13 +282,13 @@ async fn main() -> anyhow::Result<()> {
     }
     let home = cfg.home.clone();
     let configured_port = cfg.configured_port;
-    hermesd::home::publish_runtime_port(&home, cfg.port)?;
+    flotillad::home::publish_runtime_port(&home, cfg.port)?;
 
     // Only a daemon that had to move watches for its port, and only while it
     // has restarts left: a port that keeps flapping is not worth bouncing
     // every bot for.
-    let spent = hermesd::home::recent_reclaims(&home);
-    let reclaim = bound.negotiated() && spent < hermesd::home::MAX_RECLAIMS;
+    let spent = flotillad::home::recent_reclaims(&home);
+    let reclaim = bound.negotiated() && spent < flotillad::home::MAX_RECLAIMS;
     if bound.negotiated() {
         if !reclaim {
             tracing::warn!(
@@ -292,7 +298,7 @@ async fn main() -> anyhow::Result<()> {
             );
         }
     } else {
-        hermesd::home::clear_reclaims(&home);
+        flotillad::home::clear_reclaims(&home);
     }
 
     tracing::info!(
@@ -301,11 +307,11 @@ async fn main() -> anyhow::Result<()> {
         home = %cfg.home.display(),
         port = cfg.port,
         runtime = ?cfg.runtime,
-        "hermesd starting"
+        "flotillad starting"
     );
 
     // Opening the database migrates it, one way; back it up first or stop.
-    hermesd::backup::before_migrations(&cfg)?;
+    flotillad::backup::before_migrations(&cfg)?;
     let db = Db::open(&cfg.db_path())?;
     if !db.integrity_check()? {
         anyhow::bail!("SQLite integrity check failed; refusing to start");
@@ -319,12 +325,12 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
-    let stop = hermesd::server::serve(app, bound, reclaim).await?;
-    hermesd::home::clear_runtime_port(&home);
-    tracing::info!(pid = std::process::id(), "hermesd stopped");
+    let stop = flotillad::server::serve(app, bound, reclaim).await?;
+    flotillad::home::clear_runtime_port(&home);
+    tracing::info!(pid = std::process::id(), "flotillad stopped");
 
-    if stop == hermesd::server::Stop::ReclaimPort {
-        let attempts = hermesd::home::record_reclaim(&home);
+    if stop == flotillad::server::Stop::ReclaimPort {
+        let attempts = flotillad::home::record_reclaim(&home);
         tracing::warn!(
             port = configured_port,
             attempts,

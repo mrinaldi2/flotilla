@@ -33,7 +33,7 @@ describe("BoardView saved filters", () => {
     const { unmount } = renderBoard();
     await screen.findByRole("article", { name: /^H-024/ });
     await user.click(screen.getByRole("button", { name: "ios" }));
-    expect(localStorage.getItem("hermes.board.p1")).not.toBeNull();
+    expect(localStorage.getItem("flotilla.board.p1")).not.toBeNull();
     unmount();
 
     renderBoard();

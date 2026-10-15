@@ -3,10 +3,10 @@
 
 use super::peers::{bot_named, paired, project, wait_until, Paired};
 use super::{create_bot, McpClient};
-use hermesd::actor::Actor;
-use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::feed::{Change, ChangeKind};
-use hermesd::kanban::model::{ItemType, Priority, ProjectRole, Role};
+use flotillad::actor::Actor;
+use flotillad::db::{MoveTo, NewItem};
+use flotillad::kanban::feed::{Change, ChangeKind};
+use flotillad::kanban::model::{ItemType, Priority, ProjectRole, Role};
 use serde_json::json;
 
 pub struct Board {

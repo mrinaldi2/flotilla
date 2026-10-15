@@ -1,5 +1,5 @@
 // The Board tab inside its project window, for stories of several boards
-// (0.19.0): a fake Hermes service that answers the board, an item, a
+// (0.19.0): a fake Flotilla service that answers the board, an item, a
 // draft's changes, an attachment's bytes and the owner's thread with a bot.
 
 import { create } from "@bufbuild/protobuf";
@@ -11,8 +11,8 @@ import ProjectWindow from "../components/project/ProjectWindow";
 import {
   AttachmentChunkSchema,
   MoveCheckSchema,
-} from "../protocol/gen/hermes/board/v1/requests_pb";
-import type { BoardSnapshot } from "../protocol/gen/hermes/board/v1/requests_pb";
+} from "../protocol/gen/flotilla/board/v1/requests_pb";
+import type { BoardSnapshot } from "../protocol/gen/flotilla/board/v1/requests_pb";
 import { boardsSnapshot, draftChanges, draftDetail, SCREENSHOT_PNG } from "./boardsFixtures";
 import { DRAWER_NOW } from "./drawerFixtures";
 import { FakeDaemon } from "./fakeDaemon";
@@ -28,7 +28,7 @@ export const STORY_BOTS = [
 const noop = (): void => {};
 const noTab = (_tab: ProjectTab): void => {};
 
-/** A Hermes service with a project of several boards. */
+/** A Flotilla service with a project of several boards. */
 export function boardsClient(snapshot: BoardSnapshot = boardsSnapshot()): FakeDaemon {
   const fake = new FakeDaemon()
     .onBoard("boardWatch", () => ({ case: "board", value: snapshot }))

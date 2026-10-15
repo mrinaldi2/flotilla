@@ -197,20 +197,20 @@ async fn the_pc_runs_only_what_the_mac_offered() {
     let s = setup().await;
     // An action the PC's own bot proposed there: the Mac never offered it.
     let win = &s.p.win.app;
-    let proposal = hermesd::owner_action::model::Proposal {
+    let proposal = flotillad::owner_action::model::Proposal {
         project_id: s.win_app.clone(),
         proposed_by: "bot:someone".into(),
         item_id: None,
         decision_id: None,
         target_machine: win.db.daemon_id().unwrap(),
-        shell: hermesd::owner_action::model::Shell::Zsh,
+        shell: flotillad::owner_action::model::Shell::Zsh,
         cwd: s.dir.path().display().to_string(),
         content: "echo never".into(),
         pinned_files: vec![],
         reason: "r".into(),
         timeout_s: 60,
     };
-    let local = hermesd::owner_action::store(win, proposal, "bot", vec![]).unwrap();
+    let local = flotillad::owner_action::store(win, proposal, "bot", vec![]).unwrap();
     let forged =
         s.p.mac
             .app

@@ -303,7 +303,7 @@ pub async fn serve(
         );
         tokio::select! {
             signal = shutdown_signal() => {
-                tracing::info!(signal, "hermesd stopping");
+                tracing::info!(signal, "flotillad stopping");
                 Stop::Signal
             }
             () = wait_for_configured_port(addresses, configured_port, PORT_RECLAIM_INTERVAL) => {
@@ -313,7 +313,7 @@ pub async fn serve(
         }
     } else {
         let signal = shutdown_signal().await;
-        tracing::info!(signal, "hermesd stopping");
+        tracing::info!(signal, "flotillad stopping");
         Stop::Signal
     };
     let _ = stop_tx.send(());

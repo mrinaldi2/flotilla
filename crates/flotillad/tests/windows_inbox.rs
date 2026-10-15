@@ -1,8 +1,8 @@
 #![cfg(windows)]
 use std::time::Duration;
 
-use hermesd::runtime::double::DoubleAdapter;
-use hermesd::runtime::{BotSpec, RuntimeAdapter, SessionEvent};
+use flotillad::runtime::double::DoubleAdapter;
+use flotillad::runtime::{BotSpec, RuntimeAdapter, SessionEvent};
 
 #[tokio::test]
 async fn windows_inbox_delivers_authenticated_unicode_messages() {
@@ -29,7 +29,7 @@ async fn windows_inbox_delivers_authenticated_unicode_messages() {
     assert!(socket.path.to_string_lossy().starts_with(r"\\.\pipe\"));
     let text = "Hello — 世界\n".repeat(10_000);
     let delivered = text.clone();
-    tokio::task::spawn_blocking(move || hermesd::channel::send(&socket, &delivered))
+    tokio::task::spawn_blocking(move || flotillad::channel::send(&socket, &delivered))
         .await
         .expect("join")
         .expect("deliver");
@@ -42,6 +42,6 @@ async fn windows_inbox_delivers_authenticated_unicode_messages() {
     );
     let mut socket = started.msg_socket.expect("inbox");
     socket.token = None;
-    assert!(hermesd::channel::send(&socket, "unauthenticated").is_err());
+    assert!(flotillad::channel::send(&socket, "unauthenticated").is_err());
     started.session.kill().expect("kill");
 }

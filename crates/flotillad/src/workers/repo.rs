@@ -131,7 +131,7 @@ mod tests {
     fn a_salvage_branch_is_the_workers_name_and_id() {
         assert_eq!(
             salvage_branch("Chapter 3", "0123456789ab"),
-            "gravity/chapter-3-01234567"
+            "flotilla/chapter-3-01234567"
         );
     }
 }

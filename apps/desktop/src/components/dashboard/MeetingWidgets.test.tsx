@@ -34,7 +34,7 @@ function setup(canControl = true, data: Dashboard = dashboard(), over: Partial<P
   render(
     <DashboardView
       client={fake}
-      project={project({ id: "p1", name: "The Hermes", ...over })}
+      project={project({ id: "p1", name: "Flotilla", ...over })}
       bots={DASH_BOTS}
       connected
       canControl={canControl}
@@ -61,7 +61,7 @@ describe("Meetings and action items", () => {
     setup(true, offHome());
     const meetings = await screen.findByRole("region", { name: "Meetings" });
     expect(meetings).toHaveTextContent(
-      "Meetings are kept on mac. Open The Hermes there to see them.",
+      "Meetings are kept on mac. Open Flotilla there to see them.",
     );
     expect(meetings).not.toHaveTextContent("No meetings");
     const actions = screen.getByRole("region", { name: "Action items" });

@@ -1,4 +1,4 @@
-//! `hermesd guard`: the PreToolUse hook every bot runs (H-031 §2, hardened
+//! `flotillad guard`: the PreToolUse hook every bot runs (H-031 §2, hardened
 //! per CE-003 M3–M5).
 //!
 //! Permission rules match command text, so `git -C . push -f`, `sh -c '…'`,
@@ -26,7 +26,7 @@
 //!   for every bot, DevOps included: only the daemon writes there (CE-010
 //!   M3). Reading them stays allowed. The same holds for the daemon's own
 //!   state in `<home>/run` (CE-023 M1);
-//! - `hermesd release install|quiesce` pointed at another config or home
+//! - `flotillad release install|quiesce` pointed at another config or home
 //!   (CE-023 F1).
 //!
 //! Hooks run in every permission mode, so this is the boundary that still
@@ -35,7 +35,7 @@
 //!
 //! It fails closed: a tool call it can't parse is denied, in every profile
 //! (CE-004). It can't cover its own absence, though. If the binary the hook
-//! names is gone (an app update moved `hermesd`), Claude Code treats the
+//! names is gone (an app update moved `flotillad`), Claude Code treats the
 //! hook's failure to start as a non-blocking error and runs the call: Standard
 //! and Trusted still have the auto-mode classifier, Full has nothing. That is
 //! one reason Full is not selectable yet (CE-004 (b)).
@@ -140,7 +140,7 @@ pub fn decide(input: &Value, ctx: &GuardContext) -> Option<String> {
             if let Some(path) = ctx.served_word(file, &scope) {
                 return Some(format!(
                     "{path} is in the served release builds, which only the daemon writes; \
-                     publish with `hermesd release publish`"
+                     publish with `flotillad release publish`"
                 ));
             }
             if let Some(path) = ctx.run_word(file, &scope) {
@@ -171,7 +171,7 @@ pub fn verdict(reason: Option<String>) -> Option<Value> {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
-                "permissionDecisionReason": format!("Blocked by the Hermes guard: {reason}."),
+                "permissionDecisionReason": format!("Blocked by the Flotilla guard: {reason}."),
             }
         })
     })
@@ -208,7 +208,7 @@ pub fn slug(bot_name: &str) -> String {
         .collect()
 }
 
-/// `hermesd guard --home H --user-home U [--writable P]… [--worktrees P]…
+/// `flotillad guard --home H --user-home U [--writable P]… [--worktrees P]…
 /// [--served P]… [--bot NAME] [--releases] [--allow-main] [--protect BRANCH]…
 /// [--full]`: read one tool call on
 /// stdin and print a deny when it must not run or can't be read.
@@ -227,7 +227,7 @@ pub fn run(args: &[String]) -> i32 {
     };
     let (Some(home), Some(user_home)) = (value_of("--home"), value_of("--user-home")) else {
         eprintln!(
-            "usage: hermesd guard --home <dir> --user-home <dir> [--writable <dir>]… \
+            "usage: flotillad guard --home <dir> --user-home <dir> [--writable <dir>]… \
              [--worktrees <dir>]… [--served <dir>]… [--bot <name>] [--releases] \
              [--allow-main] [--protect <branch>]… [--full]"
         );

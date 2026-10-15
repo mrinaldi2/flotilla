@@ -45,7 +45,7 @@ async fn exchange<S: AsyncRead + AsyncWrite + Unpin>(
     writer.write_all(format!("{request}\n").as_bytes()).await?;
     writer.flush().await?;
     let Some(line) = BufReader::new(reader).lines().next_line().await? else {
-        anyhow::bail!("the Hermes service closed the connection without answering");
+        anyhow::bail!("the Flotilla service closed the connection without answering");
     };
     let reply: Value = serde_json::from_str(&line)?;
     if let Some(ticket) = reply["result"]["ticket"].as_str() {
@@ -65,9 +65,9 @@ pub async fn cli_credential(home: &Path, secrets: &Path) -> anyhow::Result<Strin
     let cwd = std::env::current_dir()
         .map(|dir| dir.to_string_lossy().into_owned())
         .unwrap_or_default();
-    eprintln!("Waiting for you to allow this in The Hermes on this computer…");
+    eprintln!("Waiting for you to allow this in Flotilla on this computer…");
     let params = json!({ "command": command, "cwd": cwd });
-    match ask(home, "hermes/owner_request", params).await? {
+    match ask(home, "flotilla/owner_request", params).await? {
         Asked::Ticket(ticket) => Ok(ticket),
         // The daemon's reason is the owner-facing sentence (UX-014).
         Asked::Refused(reason) => anyhow::bail!("{reason}"),

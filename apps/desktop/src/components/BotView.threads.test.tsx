@@ -7,8 +7,8 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { JsonValue } from "@bufbuild/protobuf";
-import { ThreadMessageSchema } from "../protocol/gen/hermes/home/v1/home_pb";
-import type { ThreadMessage } from "../protocol/gen/hermes/home/v1/home_pb";
+import { ThreadMessageSchema } from "../protocol/gen/flotilla/home/v1/home_pb";
+import type { ThreadMessage } from "../protocol/gen/flotilla/home/v1/home_pb";
 import { text, turn } from "../test/chatFixtures";
 import { FakeDaemon } from "../test/fakeDaemon";
 import * as fx from "../test/fixtures";
@@ -159,7 +159,7 @@ describe("BotView, one conversation (H-192)", () => {
     renderView(client);
     expect(screen.queryByRole("button", { name: "Activity" })).toBeNull();
     expect(
-      screen.getByText(/This computer's Hermes service shows Chat and Activity together/),
+      screen.getByText(/This computer's Flotilla service shows Chat and Activity together/),
     ).toBeVisible();
   });
 

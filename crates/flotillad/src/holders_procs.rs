@@ -7,7 +7,7 @@
 use crate::bus_auth::session::ProcessTable;
 
 /// The environment variable each bot session's processes inherit.
-pub const SESSION_ENV: &str = "THEHERMES_SESSION";
+pub const SESSION_ENV: &str = "FLOTILLA_SESSION";
 
 /// One live process.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -113,7 +113,7 @@ pub fn all() -> Vec<Row> {
         .collect()
 }
 
-/// The `THEHERMES_SESSION` a process was started with, when the OS lets
+/// The `FLOTILLA_SESSION` a process was started with, when the OS lets
 /// this user read its environment.
 #[cfg(target_os = "macos")]
 pub fn session_tag(pid: u32) -> Option<String> {

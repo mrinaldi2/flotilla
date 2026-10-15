@@ -15,7 +15,7 @@ use common::supersede::{
 };
 use common::tasks::error_text;
 use common::WsClient;
-use hermesd::kanban::model::{ProjectRole, Role};
+use flotillad::kanban::model::{ProjectRole, Role};
 use serde_json::json;
 
 #[tokio::test]
@@ -37,15 +37,15 @@ async fn a_deploy_supersedes_the_older_unruled_packages_of_its_platform() {
         .unwrap();
     let db = &r.pair.d.app.db;
     let ios_item = db.get_item(&items[1]).unwrap().unwrap();
-    let edit = hermesd::db::ItemEdit {
+    let edit = flotillad::db::ItemEdit {
         labels: Some(&["platform:ios".to_string()]),
-        ..hermesd::db::ItemEdit::default()
+        ..flotillad::db::ItemEdit::default()
     };
     db.update_item(
         &ios_item.id,
         ios_item.version,
         &edit,
-        &hermesd::actor::Actor::User,
+        &flotillad::actor::Actor::User,
     )
     .unwrap();
     let waiting = submitted(&mut r, "0.17.0-r1", &items[0], ("daemon", DESKTOP), &a).await;
@@ -55,7 +55,8 @@ async fn a_deploy_supersedes_the_older_unruled_packages_of_its_platform() {
         .as_str()
         .expect("decision")
         .to_string();
-    let rows = |r: &Releases| hermesd::overview::attention_rows(&r.pair.d.app, &r.project).unwrap();
+    let rows =
+        |r: &Releases| flotillad::overview::attention_rows(&r.pair.d.app, &r.project).unwrap();
     assert!(rows(&r)
         .rows
         .iter()

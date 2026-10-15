@@ -1,5 +1,5 @@
-//! H-213: a unit test copied `/bin/sleep` into a temp dir as `hermesd`;
-//! macOS killed the copy (Code Signature Invalid) and filed a "hermesd quit
+//! H-213: a unit test copied `/bin/sleep` into a temp dir as `flotillad`;
+//! macOS killed the copy (Code Signature Invalid) and filed a "flotillad quit
 //! unexpectedly" crash report on every run. No test may copy, link or move a
 //! system binary; a stand-in process is a copy of the test binary instead
 //! (see `service::reap`'s tests).

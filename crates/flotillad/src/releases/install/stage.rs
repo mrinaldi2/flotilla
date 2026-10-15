@@ -23,7 +23,7 @@ impl Stage {
             .filter(|c| c.is_ascii_alphanumeric() || *c == '-')
             .collect();
         let dir = std::env::temp_dir().join(format!(
-            "hermes-install-{name}-{}",
+            "flotilla-install-{name}-{}",
             uuid::Uuid::new_v4().simple()
         ));
         // Only mutated on unix, where the folder gets mode 0o700.

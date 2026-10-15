@@ -249,7 +249,7 @@ async fn artifacts_dir_is_provisioned_and_carried_in_results() {
     // rules in a folder's settings.json make Claude Code's trust dialog warn
     // about pre-approved permissions.
     let project = &p.d.app.db.list_projects().expect("projects")[0];
-    let artifacts = hermesd::paths::artifacts_dir(&p.d.app.cfg, &project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&p.d.app.cfg, &project.dir_name);
     assert!(artifacts.is_dir(), "missing {}", artifacts.display());
     let spawned = terminal(&p.d, &p.ids[0]);
     let bot_root = std::path::Path::new(
@@ -263,13 +263,13 @@ async fn artifacts_dir_is_provisioned_and_carried_in_results() {
     .parent()
     .expect("bot root")
     .to_path_buf();
-    let generated = bot_root.join(hermesd::bot_permissions::SETTINGS_FILE);
+    let generated = bot_root.join(flotillad::bot_permissions::SETTINGS_FILE);
     assert!(
         spawned.contains(&format!("--settings {}", generated.display())),
         "the session was spawned without its generated settings: {spawned}"
     );
     let allow = std::fs::read_to_string(&generated).expect("generated settings");
-    for rule in hermesd::paths::artifacts_allow_rules(&artifacts) {
+    for rule in flotillad::paths::artifacts_allow_rules(&artifacts) {
         assert!(rule.contains("(//"), "{rule} must be anchored as absolute");
         assert!(
             allow.contains(&rule),

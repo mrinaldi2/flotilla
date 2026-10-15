@@ -147,7 +147,7 @@ fn the_pr_section_is_there_only_after_cut_over_and_names_only_served_tools() {
         "`pr_push`",
         "`pr_get`",
         "`pr_close`",
-        "`hermesd pr merge`",
+        "`flotillad pr merge`",
     ] {
         assert!(section.contains(name), "{name}");
     }

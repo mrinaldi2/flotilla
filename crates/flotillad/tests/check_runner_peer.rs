@@ -12,10 +12,10 @@ use std::collections::BTreeMap;
 use common::peer_board::board;
 use common::peers::wait_until;
 use common::repo::{git, remote};
-use hermesd::machine_tools as tool_probe;
-use hermesd::prs::check_jobs::{dispatch, hold_for_tests, SYSTEM_RUNNER};
-use hermesd::prs::check_model::{CheckResult, NewCheck};
-use hermesd::releases::machines;
+use flotillad::machine_tools as tool_probe;
+use flotillad::prs::check_jobs::{dispatch, hold_for_tests, SYSTEM_RUNNER};
+use flotillad::prs::check_model::{CheckResult, NewCheck};
+use flotillad::releases::machines;
 
 #[tokio::test]
 async fn a_windows_check_runs_on_the_linked_windows_computer() {

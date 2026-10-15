@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import type { ReactElement } from "react";
 import { useDialogKeys } from "../../../hooks/useReturnFocus";
 import type { BoardApi } from "../../../protocol/board";
-import type { ItemAttachment } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { kindLabel, sizeWords } from "./attachments";
 import { useAttachmentImage } from "./useAttachmentImage";
 

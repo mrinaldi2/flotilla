@@ -34,7 +34,7 @@ function Home({ legacy = false }: { readonly legacy?: boolean }): ReactElement {
         <ProjectsHome
           client={client}
           projects={[
-            project({ id: "p1", name: "The Hermes", lead_bot_id: "b1" }),
+            project({ id: "p1", name: "Flotilla", lead_bot_id: "b1" }),
             project({ id: "p2", name: "PhD" }),
           ]}
           bots={[bot({ id: "b1", name: "Team Lead", project_id: "p1" })]}

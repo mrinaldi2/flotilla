@@ -18,14 +18,14 @@ const RELEASE: [&str; 6] = [
     "build-installer",
 ];
 
-/// Why this `hermesd` line must not run, or `None`.
+/// Why this `flotillad` line must not run, or `None`.
 pub(super) fn redirected(words: &Words, at: usize, scope: &Scope) -> Option<String> {
-    // From the program on: `env -u NAME hermesd …` names NAME as the program.
+    // From the program on: `env -u NAME flotillad …` names NAME as the program.
     let is_daemon = |w: &String| {
         let name = shell::program(w);
         matches!(
             name.strip_suffix(".exe").unwrap_or(name),
-            "hermesd" | "gravityd"
+            "flotillad" | "hermesd" | "gravityd"
         )
     };
     let at = if is_daemon(&words[at]) {
@@ -36,7 +36,7 @@ pub(super) fn redirected(words: &Words, at: usize, scope: &Scope) -> Option<Stri
         return None;
     };
     let rest = &words[at + 1..];
-    // `hermesd --config X release install …`: main reads the flag anywhere.
+    // `flotillad --config X release install …`: main reads the flag anywhere.
     let mut i = 0;
     while rest.get(i).is_some_and(|w| w.starts_with('-')) {
         i += if rest[i] == "--config" { 2 } else { 1 };
@@ -54,12 +54,9 @@ pub(super) fn redirected(words: &Words, at: usize, scope: &Scope) -> Option<Stri
     let config = rest
         .iter()
         .any(|w| w == "--config" || w.starts_with("--config="));
-    let homes = [
-        "HOME".to_string(),
-        crate::brand::env_name("HOME"),
-        crate::brand::legacy_env_name("HOME"),
-    ];
-    // `X=… hermesd`, `env -u … hermesd`: its environment, so its home, is changed.
+    let mut homes = vec!["HOME".to_string()];
+    homes.extend(crate::brand::all_env_names("HOME"));
+    // `X=… flotillad`, `env -u … flotillad`: its environment, so its home, is changed.
     let prefixed = words[..at]
         .iter()
         .any(|w| shell::is_assignment(w) || shell::program(w) == "env");

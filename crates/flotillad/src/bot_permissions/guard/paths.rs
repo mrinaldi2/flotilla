@@ -109,7 +109,7 @@ impl GuardContext {
                 .map(|name| self.home.join(name)),
         );
         // The same paths spelled through a sibling link to the home
-        // (`~/.gravity` → `~/.thehermes` after the move).
+        // (`~/.gravity` → `~/.flotilla` after the move).
         let aliases: Vec<PathBuf> = self
             .home_links()
             .iter()

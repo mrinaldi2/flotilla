@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { BoardEventKind } from "../../protocol/gen/hermes/board/v1/requests_pb";
+import { BoardEventKind } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import { boardEvent, card, snapshot } from "../../test/boardFixtures";
 import { boards, boardsSnapshot, MAIN_ID, RECIPES_ID } from "../../test/boardsFixtures";
 import { FakeDaemon } from "../../test/fakeDaemon";

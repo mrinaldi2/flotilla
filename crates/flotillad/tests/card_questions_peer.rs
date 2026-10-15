@@ -10,8 +10,8 @@ use bus::contract::board::{self as c, board_request::Request, board_response::Re
 use common::board::{call, response};
 use common::peer_board::board;
 use common::peers::wait_until;
-use hermesd::actor::Actor;
-use hermesd::db::Db;
+use flotillad::actor::Actor;
+use flotillad::db::Db;
 use serde_json::json;
 
 fn owner_comment(id: &str, body: &str, reply_to: Option<&str>) -> Request {
@@ -57,7 +57,7 @@ async fn the_owners_reply_reaches_the_pc_bot_and_closes_its_question() {
     assert!(asked["owner_question"].is_string(), "{asked}");
 
     // (c) The PC's row names the comment that asked.
-    let rows = hermesd::overview::attention_rows(&b.p.win.app, &b.win_app).expect("rows");
+    let rows = flotillad::overview::attention_rows(&b.p.win.app, &b.win_app).expect("rows");
     let row = rows
         .rows
         .iter()
@@ -91,7 +91,7 @@ async fn the_owners_reply_reaches_the_pc_bot_and_closes_its_question() {
     // (a) The PC closes the question once its mirror shows the comment.
     let win_app = b.win_app.clone();
     wait_until("the PC closes the question", || {
-        hermesd::overview::attention_rows(win, &win_app)
+        flotillad::overview::attention_rows(win, &win_app)
             .expect("rows")
             .rows
             .iter()

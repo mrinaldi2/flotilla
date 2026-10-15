@@ -15,7 +15,7 @@ struct Board {
 
 fn board() -> Board {
     let db = Db::open_in_memory().unwrap();
-    let p = db.create_project("The Hermes", "the-hermes").unwrap();
+    let p = db.create_project("Flotilla", "flotilla").unwrap();
     let bot = |name: &str, dir: &str| {
         db.create_bot(&p.id, name, "", "", "", "/tmp/x", dir, None)
             .unwrap()

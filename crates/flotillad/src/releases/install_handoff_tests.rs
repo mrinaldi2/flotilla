@@ -8,7 +8,7 @@ fn job(home: &Path) -> Job {
     Job::new(
         home,
         "r1",
-        "/Applications/The Hermes.app/Contents/MacOS/hermesd".into(),
+        "/Applications/Flotilla.app/Contents/MacOS/flotillad".into(),
         vec![
             "service".into(),
             "install".into(),
@@ -25,11 +25,11 @@ fn job(home: &Path) -> Job {
 fn the_job_runs_once_records_its_outcome_and_cleans_up() {
     let home = Path::new("/h");
     let job = job(home);
-    assert_eq!(job.label, "com.thehermes.release-install.r1");
+    assert_eq!(job.label, "com.flotilla.release-install.r1");
     let script = sh_script(&job, true);
     assert!(
         script.starts_with(
-            "'/Applications/The Hermes.app/Contents/MacOS/hermesd' 'service' 'install'"
+            "'/Applications/Flotilla.app/Contents/MacOS/flotillad' 'service' 'install'"
         ),
         "{script}"
     );
@@ -43,7 +43,7 @@ fn the_job_runs_once_records_its_outcome_and_cleans_up() {
         "{script}"
     );
     assert!(script.contains("rm -rf '/h/stage'"), "{script}");
-    assert!(script.ends_with("launchctl bootout gui/$(id -u)/com.thehermes.release-install.r1\n"));
+    assert!(script.ends_with("launchctl bootout gui/$(id -u)/com.flotilla.release-install.r1\n"));
     assert!(!sh_script(&job, false).contains("launchctl"));
 
     let plist = launchd_plist(&job.label, "a && b > c");
@@ -57,7 +57,7 @@ fn the_windows_job_records_its_outcome_and_unschedules_itself() {
     let job = job(Path::new("/h"));
     let cmd = cmd_script(&job);
     assert!(cmd.contains("echo %ERRORLEVEL%>"), "{cmd}");
-    assert!(cmd.contains("schtasks /delete /tn \"com.thehermes.release-install.r1\" /f"));
+    assert!(cmd.contains("schtasks /delete /tn \"com.flotilla.release-install.r1\" /f"));
     assert!(cmd.ends_with("del \"%~f0\"\r\n"));
 }
 

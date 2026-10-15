@@ -5,7 +5,7 @@
 import type { ReactElement } from "react";
 import type { DaemonApi } from "../../protocol/api";
 import type { Bot } from "../../protocol/entities";
-import type { ThreadMessage } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { ThreadMessage } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { fromTheBot } from "../../protocol/home";
 import { clock } from "../home/homeText";
 import { useOwnerThread } from "../home/useOwnerThreads";

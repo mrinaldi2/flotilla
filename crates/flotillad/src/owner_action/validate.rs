@@ -90,7 +90,7 @@ pub fn unpinned_writable(content: &str, writable: &[PathBuf], pinned: &[String])
 }
 
 /// "stop.sh (in ~/Developer/gravity/scripts) can be changed by a bot after
-/// you approve, and The Hermes can't check it." (UX-022).
+/// you approve, and Flotilla can't check it." (UX-022).
 fn unpinned_flag(path: &Path) -> String {
     let name = path.file_name().map_or_else(
         || path.display().to_string(),
@@ -98,7 +98,7 @@ fn unpinned_flag(path: &Path) -> String {
     );
     let folder = path.parent().map(tilde).unwrap_or_default();
     format!(
-        "{name} (in {folder}) can be changed by a bot after you approve, and The Hermes \
+        "{name} (in {folder}) can be changed by a bot after you approve, and Flotilla \
          can't check it."
     )
 }
@@ -150,16 +150,16 @@ mod tests {
 
     #[test]
     fn a_bot_writable_path_is_flagged_unless_pinned() {
-        let roots = [PathBuf::from("/home/u/.thehermes/projects")];
-        let script = "sh /home/u/.thehermes/projects/p/bots/dev/run.sh && ls /tmp";
+        let roots = [PathBuf::from("/home/u/.flotilla/projects")];
+        let script = "sh /home/u/.flotilla/projects/p/bots/dev/run.sh && ls /tmp";
         let flags = unpinned_writable(script, &roots, &[]);
         assert_eq!(flags.len(), 1, "{flags:?}");
         assert!(
             flags[0]
-                .starts_with("run.sh (in /home/u/.thehermes/projects/p/bots/dev) can be changed"),
+                .starts_with("run.sh (in /home/u/.flotilla/projects/p/bots/dev) can be changed"),
             "{flags:?}"
         );
-        let pinned = ["/home/u/.thehermes/projects/p/bots/dev/run.sh".to_string()];
+        let pinned = ["/home/u/.flotilla/projects/p/bots/dev/run.sh".to_string()];
         assert!(unpinned_writable(script, &roots, &pinned).is_empty());
     }
 }

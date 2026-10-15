@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { ItemAttachment } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { draftDetail } from "../../../test/boardsFixtures";
 import { boardsClient } from "../../../test/boardStory";
 import ItemMarkdown from "./ItemMarkdown";

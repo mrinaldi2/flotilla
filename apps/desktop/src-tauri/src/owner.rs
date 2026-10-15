@@ -1,5 +1,5 @@
 //! A one-time owner ticket from the daemon's local endpoint (H-044 T4). The
-//! daemon grants it because this process is the owner's app as hermesd was
+//! daemon grants it because this process is the owner's app as flotillad was
 //! built to know it (its signature on macOS, its Program Files folder on
 //! Windows); nothing secret is stored or passed in the environment.
 
@@ -26,7 +26,7 @@ pub fn ticket(home: &Path) -> Option<String> {
         .open(endpoint)
         .ok()?;
     let mut writer = stream.try_clone().ok()?;
-    let request = r#"{"jsonrpc":"2.0","id":1,"method":"hermes/owner_ticket","params":{}}"#;
+    let request = r#"{"jsonrpc":"2.0","id":1,"method":"flotilla/owner_ticket","params":{}}"#;
     writer.write_all(format!("{request}\n").as_bytes()).ok()?;
     writer.flush().ok()?;
     let mut line = String::new();

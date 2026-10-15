@@ -39,7 +39,7 @@ async fn the_owner_sets_a_profile_and_the_bot_restarts_under_it() {
     let d = spawn_daemon().await;
     let mut owner = WsClient::connect(&d).await;
     let project = owner
-        .request(json!({ "type": "create_project", "name": "Hermes" }))
+        .request(json!({ "type": "create_project", "name": "Flotilla" }))
         .await;
     let project_id = project["project"]["id"]
         .as_str()
@@ -110,7 +110,7 @@ async fn the_owner_sets_a_profile_and_the_bot_restarts_under_it() {
     let generated = std::path::Path::new(&workspace)
         .parent()
         .expect("bot root")
-        .join(hermesd::bot_permissions::SETTINGS_FILE);
+        .join(flotillad::bot_permissions::SETTINGS_FILE);
     eventually("the extras reach the generated settings", || {
         std::fs::read_to_string(&generated).is_ok_and(|text| text.contains("serve/serve.sh start"))
     })

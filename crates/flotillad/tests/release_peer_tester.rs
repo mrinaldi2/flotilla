@@ -9,10 +9,10 @@ use common::create_bot;
 use common::peer_board::board;
 use common::peers::{bot_named, wait_until};
 use common::McpClient;
-use hermesd::actor::Actor;
-use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::feed::{Change, ChangeKind};
-use hermesd::kanban::model::{ItemType, Priority, ProjectRole, Role};
+use flotillad::actor::Actor;
+use flotillad::db::{MoveTo, NewItem};
+use flotillad::kanban::feed::{Change, ChangeKind};
+use flotillad::kanban::model::{ItemType, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 const RELEASE_TOOLS: [&str; 3] = ["release_test", "install_release", "deploy_confirm"];

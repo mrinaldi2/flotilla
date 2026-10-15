@@ -44,38 +44,43 @@ pub(super) fn input_on(
     generate(&SettingsInput {
         profile,
         extras,
-        project_name: "Hermes",
+        project_name: "Flotilla",
         home: Path::new("/Users/me/.gravity"),
         user_home: Path::new("/Users/me"),
         workspace: Path::new("/Users/me/.gravity/projects/p/bots/devops/workspace"),
-        hermesd: Path::new(APP_HERMESD),
+        flotillad: Path::new(APP_FLOTILLAD),
         artifacts: Some(Path::new("/Users/me/.gravity/projects/p/artifacts")),
         trusted_paths: &[PathBuf::from("/Users/me/Developer")],
         served: &[PathBuf::from("/Users/me/.gravity/releases")],
-        repo_url: Some("git@github.com:me/hermes.git"),
+        repo_url: Some("git@github.com:me/flotilla.git"),
         protected_branch,
         devops,
         port: 49777,
-        guard_command: "'/bin/hermesd' guard".to_string(),
+        guard_command: "'/bin/flotillad' guard".to_string(),
         extra_environment: &[],
         interim: None,
     })
 }
 
-pub(super) const APP_HERMESD: &str = "/Applications/The Hermes.app/Contents/MacOS/hermesd";
+/// An app path with a space, which the rules quote (the app was "The
+/// Hermes.app" before the rename; a copy can still be named so).
+pub(super) const APP_FLOTILLAD: &str = "/Applications/Flotilla Beta.app/Contents/MacOS/flotillad";
 
 /// H-166: the install and quiesce extras allow this daemon's own binary by
-/// its exact path, the way a bot quotes it; never a bare `hermesd`, which
+/// its exact path, the way a bot quotes it; never a bare `flotillad`, which
 /// is whatever the bot's PATH finds first. Standard grants no extras.
 #[test]
 fn install_and_quiesce_allow_this_binary_by_its_exact_path() {
     let extras = [PermissionExtra::Install, PermissionExtra::Quiesce];
     let allow = rules(&input(PermissionProfile::Trusted, &extras), "allow");
     for sub in ["release install", "quiesce"] {
-        let exact = format!("Bash(\"{APP_HERMESD}\" {sub} *)");
+        let exact = format!("Bash(\"{APP_FLOTILLAD}\" {sub} *)");
         assert!(allow.contains(&exact), "{sub}: {allow:?}");
         assert_eq!(
-            format!("Bash({} *)", hermesd_command(Path::new(APP_HERMESD), sub)),
+            format!(
+                "Bash({} *)",
+                flotillad_command(Path::new(APP_FLOTILLAD), sub)
+            ),
             exact,
             "the command a bot is told to run is the one allowed"
         );
@@ -83,27 +88,27 @@ fn install_and_quiesce_allow_this_binary_by_its_exact_path() {
     assert!(
         !allow
             .iter()
-            .any(|r| r.contains("(hermesd ") || r.contains("(& hermesd ")),
-        "no bare hermesd: {allow:?}"
+            .any(|r| r.contains("(flotillad ") || r.contains("(& flotillad ")),
+        "no bare flotillad: {allow:?}"
     );
     let without = rules(&input(PermissionProfile::Trusted, &[]), "allow");
     assert!(
-        !without.iter().any(|r| r.contains("hermesd")),
+        !without.iter().any(|r| r.contains("flotillad")),
         "{without:?}"
     );
     let standard = rules(&input(PermissionProfile::Standard, &extras), "allow");
     assert!(
-        !standard.iter().any(|r| r.contains("hermesd")),
+        !standard.iter().any(|r| r.contains("flotillad")),
         "{standard:?}"
     );
 }
 
 /// B8 (H-020 §2.6 b): only DevOps runs installers or `service install` by
-/// hand; everyone else installs a release through `hermesd release install`.
+/// hand; everyone else installs a release through `flotillad release install`.
 #[test]
 fn installers_are_denied_to_everyone_but_devops() {
     let installers = [
-        "Bash(*hermesd* service install*)",
+        "Bash(*flotillad* service install*)",
         "Bash(installer -pkg*)",
         "Bash(msiexec*)",
         "Bash(*xcrun devicectl device install*)",
@@ -166,7 +171,7 @@ fn standard_keeps_the_built_in_mode_but_gets_context_denies_and_the_guard() {
     );
     assert!(env.iter().any(|l| l
         .as_str()
-        .is_some_and(|l| l.contains("git@github.com:me/hermes.git"))));
+        .is_some_and(|l| l.contains("git@github.com:me/flotilla.git"))));
     let deny = rules(&settings, "deny");
     assert!(deny.contains(&"Read(//Users/me/.gravity/secrets/**)".to_string()));
     assert!(deny.contains(
@@ -179,7 +184,7 @@ fn standard_keeps_the_built_in_mode_but_gets_context_denies_and_the_guard() {
         .any(|r| r.starts_with("Bash(cargo")));
     assert_eq!(
         settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"],
-        "'/bin/hermesd' guard"
+        "'/bin/flotillad' guard"
     );
     assert!(settings.get("skipDangerousModePermissionPrompt").is_none());
 }
@@ -197,7 +202,7 @@ fn trusted_adds_routine_work_and_extras_add_their_powers() {
     assert!(allow.contains(
         &"Bash(/Users/me/.gravity/projects/p/bots/devops/workspace/serve/publish.sh *)".to_string()
     ));
-    assert!(allow.contains(&format!("Bash(\"{APP_HERMESD}\" release publish *)")));
+    assert!(allow.contains(&format!("Bash(\"{APP_FLOTILLAD}\" release publish *)")));
     let deny = rules(&devops, "deny");
     assert!(deny.contains(
         &"Edit(//Users/me/.gravity/projects/p/bots/devops/workspace/serve/publish.sh)".to_string()
@@ -270,11 +275,11 @@ fn the_interim_settings_are_folded_in_and_not_passed_twice() {
         ..SettingsInput {
             profile: PermissionProfile::Standard,
             extras: &[],
-            project_name: "Hermes",
+            project_name: "Flotilla",
             home: Path::new("/Users/me/.gravity"),
             user_home: Path::new("/Users/me"),
             workspace: Path::new("/w"),
-            hermesd: Path::new("/bin/hermesd"),
+            flotillad: Path::new("/bin/flotillad"),
             artifacts: None,
             trusted_paths: &[],
             served: &[],
@@ -346,11 +351,11 @@ fn the_owners_trust_lines_survive_removing_the_interim_argument() {
         ..SettingsInput {
             profile: PermissionProfile::Trusted,
             extras: &[],
-            project_name: "Hermes",
+            project_name: "Flotilla",
             home: &home,
             user_home: Path::new("/Users/me"),
             workspace: Path::new("/w"),
-            hermesd: Path::new("/bin/hermesd"),
+            flotillad: Path::new("/bin/flotillad"),
             artifacts: None,
             trusted_paths: &[],
             served: &[],
@@ -379,7 +384,7 @@ fn rule_paths_are_absolute_on_both_platforms() {
 /// (H-166: by its path), and only when granted; the daemon checks the
 /// extra, role and release again.
 #[test]
-fn the_quiesce_extra_allows_only_hermesd_quiesce() {
+fn the_quiesce_extra_allows_only_flotillad_quiesce() {
     let without = rules(&input(PermissionProfile::Trusted, &[]), "allow");
     assert!(!without.iter().any(|r| r.contains("quiesce")));
     let with = rules(
@@ -389,6 +394,6 @@ fn the_quiesce_extra_allows_only_hermesd_quiesce() {
     let added: Vec<String> = with.into_iter().filter(|r| !without.contains(r)).collect();
     assert_eq!(
         added,
-        super::exact::rules(Path::new(APP_HERMESD), "quiesce")
+        super::exact::rules(Path::new(APP_FLOTILLAD), "quiesce")
     );
 }

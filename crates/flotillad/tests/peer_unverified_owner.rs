@@ -13,8 +13,8 @@ use std::time::Duration;
 use common::board::new_item;
 use common::peers::{team, wait_until, Team};
 use common::*;
-use hermesd::db::OwnerVia;
-use hermesd::kanban::model::{Priority, ProjectRole, Role};
+use flotillad::db::OwnerVia;
+use flotillad::kanban::model::{Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 /// The PC's name for the Mac.
@@ -72,7 +72,7 @@ async fn chat_from_the_mac(t: &mut Team, body: &str) {
 
 /// The questions the PC bot has open.
 fn open(t: &Team) -> usize {
-    hermesd::owner_threads::open_questions(&t.win.app, None, Some(&t.windev_id))
+    flotillad::owner_threads::open_questions(&t.win.app, None, Some(&t.windev_id))
         .unwrap()
         .len()
 }
@@ -136,14 +136,14 @@ async fn an_unverified_chat_answers_no_question_the_bot_asked() {
 
     // The owner thread and the conversation say where it came from.
     let bot = db.get_bot(&windev).unwrap().unwrap();
-    let page = hermesd::owner_threads::page(&t.win.app, &bot, None, None).unwrap();
+    let page = flotillad::owner_threads::page(&t.win.app, &bot, None, None).unwrap();
     let shown: Vec<_> = page.messages.iter().filter(|m| m.text == body).collect();
     assert_eq!(shown.len(), 2, "{:?}", page.messages);
     for m in shown {
         assert!(!m.from_owner, "{m:?}");
         assert_eq!(m.unverified_from, mac_name(&t));
     }
-    let entry = hermesd::owner_threads::entry(&t.win.app, &bot).unwrap();
+    let entry = flotillad::owner_threads::entry(&t.win.app, &bot).unwrap();
     let last = entry.last.expect("a last message");
     assert!(!last.from_owner && last.unverified_from == mac_name(&t));
     let conv = db.dm_conversation(&windev).unwrap().unwrap();
@@ -254,7 +254,7 @@ async fn an_unverified_chat_turn_posts_no_answer_to_the_owner() {
     assert!(answers.contains_key("t2"), "{answers:?}");
     assert!(!answers.contains_key("t1"), "{answers:?}");
     let bot = t.win.app.db.get_bot(&windev).unwrap().unwrap();
-    let page = hermesd::owner_threads::page(&t.win.app, &bot, None, None).unwrap();
+    let page = flotillad::owner_threads::page(&t.win.app, &bot, None, None).unwrap();
     let from_bot: Vec<&str> = page
         .messages
         .iter()

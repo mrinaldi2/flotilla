@@ -6,7 +6,7 @@ use crate::common;
 
 use common::prs::{approve, commit, error, give, opened, pr, setup};
 use common::repo::git;
-use hermesd::kanban::model::Role;
+use flotillad::kanban::model::Role;
 use serde_json::json;
 
 /// ARCH M2: a bot that ever pushed to the PR can't review it, even after
@@ -57,7 +57,7 @@ async fn no_review_while_the_branch_moved_unreported() {
 /// the lead never gives itself a reviewer role.
 #[tokio::test]
 async fn only_the_owner_seats_the_security_reviewer() {
-    use hermesd::project_roles::{set_role, Assigner};
+    use flotillad::project_roles::{set_role, Assigner};
     let mut r = setup().await;
     let lead = r.bots[0]
         .call_raw(

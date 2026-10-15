@@ -12,7 +12,7 @@ describe("recoveryFor", () => {
   });
 
   it.each([
-    ["not_installed", "Install the Hermes service"],
+    ["not_installed", "Install the Flotilla service"],
     ["legacy_only", "Finish the update"],
     ["migration_pending", "Finish the update"],
     ["migrated_service_missing", "Finish the update"],
@@ -22,15 +22,15 @@ describe("recoveryFor", () => {
     expect(recoveryFor(status(state))?.action).toBe(action);
   });
 
-  it("names the Hermes started by hand without saying daemon", () => {
+  it("names the Flotilla started by hand without saying daemon", () => {
     const offer = recoveryFor(status("unmanaged", "0.14.2"));
-    expect(offer?.title).toBe("Hermes is running, but not as a service");
+    expect(offer?.title).toBe("Flotilla is running, but not as a service");
     expect(offer?.body).toMatch(
-      /^Hermes 0\.14\.2 is answering on port 49777, but it was started by hand/,
+      /^Flotilla 0\.14\.2 is answering on port 49777, but it was started by hand/,
     );
     expect(offer?.body).toMatch(/press Ctrl-C in its Terminal window/);
     expect(offer?.body).toMatch(/Your bots pause until the service starts them again\.$/);
-    expect(recoveryFor(status("unmanaged"))?.body).toMatch(/^Hermes is answering on port 49777/);
+    expect(recoveryFor(status("unmanaged"))?.body).toMatch(/^Flotilla is answering on port 49777/);
   });
 
   it.each([
@@ -47,12 +47,12 @@ describe("recoveryFor", () => {
 
   it("says the legacy-only update leaves data where it is", () => {
     expect(recoveryFor(status("legacy_only"))?.body).toBe(
-      "Your bots are still set up to run on the Hermes service from before the update, and it may be stopped. Finishing the update installs the new service in its place. Your data stays where it is.",
+      "Your bots are still set up to run on the Flotilla service from before the update, and it may be stopped. Finishing the update installs the new service in its place. Your data stays where it is.",
     );
   });
 
   it.each([
-    ["Install the Hermes service", "Installing…", "Couldn't install the Hermes service."],
+    ["Install the Flotilla service", "Installing…", "Couldn't install the Flotilla service."],
     ["Finish the update", "Finishing the update…", "Couldn't finish the update."],
     ["Repair the service", "Repairing…", "Couldn't repair the service."],
   ] as const)("names %s while it runs and when it fails", (action, progress, failure) => {

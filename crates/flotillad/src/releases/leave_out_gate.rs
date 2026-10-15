@@ -1,10 +1,10 @@
 //! DevOps' side of the owner's Leave out (H-272; see `leave_out`): the
-//! `hermesd release leave-out` gates, and the re-cut once the owner's revert
+//! `flotillad release leave-out` gates, and the re-cut once the owner's revert
 //! PR merged.
 //!
-//! - IPC `hermes/leave_out {id}`: DevOps, holding the Leave out's task, gets
+//! - IPC `flotilla/leave_out {id}`: DevOps, holding the Leave out's task, gets
 //!   the branch name and each PR's merged range, newest first.
-//! - IPC `hermes/leave_out_pushed {id, branch, head}`: the daemon's fetch must
+//! - IPC `flotilla/leave_out_pushed {id, branch, head}`: the daemon's fetch must
 //!   show the branch at `head`; it becomes the owner's PR (checks, no bot
 //!   review, the normal queue).
 //! - `after_merge`: when that PR merges, the left-out PRs are `reverted`, the
@@ -28,10 +28,10 @@ use super::{git_cache, load};
 use crate::kanban::api::{publish_moves, report_fact};
 use crate::kanban::facts::Fact;
 
-const GATE: &str = "hermes/leave_out";
-const PUSHED: &str = "hermes/leave_out_pushed";
+const GATE: &str = "flotilla/leave_out";
+const PUSHED: &str = "flotilla/leave_out_pushed";
 
-/// Answers DevOps' `hermesd release leave-out`, or `None` for anything else.
+/// Answers DevOps' `flotillad release leave-out`, or `None` for anything else.
 pub async fn serve(app: &Arc<AppState>, bot_id: &str, request: &Value) -> Option<Value> {
     let method = request.get("method").and_then(Value::as_str)?;
     if ![GATE, PUSHED].contains(&method) {
@@ -188,7 +188,7 @@ fn expected_tree(
     let main_at = lo
         .main_at
         .as_deref()
-        .ok_or_else(|| conflict("ask what to revert first (hermes/leave_out)"))?;
+        .ok_or_else(|| conflict("ask what to revert first (flotilla/leave_out)"))?;
     if !git_cache::contains(cache, head, main_at)? {
         return Err(conflict(format!(
             "{head} doesn't start from main as it was ({main_at}); nothing opened"

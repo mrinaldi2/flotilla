@@ -73,7 +73,7 @@ const UPDATE_HELP: Readonly<Record<"idle" | "checking" | "current", string>> = {
 function updateHelp(update: UpdateState, updateLocalDaemon: boolean): string {
   if (update.kind === "available") {
     if (updateLocalDaemon) {
-      return `Version ${update.version} is ready. Installing restarts the app, the Hermes service and running bots.`;
+      return `Version ${update.version} is ready. Installing restarts the app, the Flotilla service and running bots.`;
     }
     return `Version ${update.version} is ready. Installing relaunches the app.`;
   }
@@ -106,7 +106,7 @@ function UpdateAction({ update, onCheck, onInstall }: UpdateActionProps): ReactE
   );
 }
 
-/** The Hermes service: its version, its build's identity (H-114), and the
+/** Flotilla service: its version, its build's identity (H-114), and the
  *  update when the app is newer. */
 function ServiceRow(props: {
   readonly version: string;
@@ -123,9 +123,9 @@ function ServiceRow(props: {
   return (
     <div className="settings-row">
       <div className="settings-row-text">
-        <div className="settings-row-label">Hermes service</div>
+        <div className="settings-row-label">Flotilla service</div>
         <div className="settings-row-help">
-          The hermesd this app is connected to.
+          The flotillad this app is connected to.
           {props.identity.length > 0 ? (
             <span className="mono"> identity: {props.identity}</span>
           ) : null}
@@ -140,7 +140,7 @@ function ServiceRow(props: {
             disabled={props.updating}
             onClick={props.onUpdate}
           >
-            {props.updating ? "Updating…" : "Update Hermes service"}
+            {props.updating ? "Updating…" : "Update Flotilla service"}
           </button>
         ) : null}
       </div>
@@ -187,8 +187,8 @@ export default function AboutSettings(props: AboutSettingsProps): ReactElement {
       await installLocalDaemon(localDaemonVersion);
       addToast(
         "info",
-        "Hermes service updated",
-        "The Hermes service on this computer is restarting.",
+        "Flotilla service updated",
+        "Flotilla service on this computer is restarting.",
       );
     } catch (error) {
       if (error instanceof InstallCancelled) {
@@ -196,7 +196,7 @@ export default function AboutSettings(props: AboutSettingsProps): ReactElement {
       }
       captureException(error, "daemon_update");
       const body = error instanceof Error ? error.message : "update failed";
-      addToast("error", "Couldn't update the Hermes service", body, { sticky: true });
+      addToast("error", "Couldn't update the Flotilla service", body, { sticky: true });
     } finally {
       setDaemonUpdating(false);
     }
@@ -206,7 +206,7 @@ export default function AboutSettings(props: AboutSettingsProps): ReactElement {
     <div className="settings-section">
       <div className="settings-row">
         <div className="settings-row-text">
-          <div className="settings-row-label">The Hermes</div>
+          <div className="settings-row-label">Flotilla</div>
           <div className="settings-row-help">
             Desktop app version. Based on Gravity by P. Mikołajczuk.
           </div>

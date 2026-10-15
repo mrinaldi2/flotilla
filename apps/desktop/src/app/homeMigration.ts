@@ -1,6 +1,6 @@
 /**
  * The one question a migrating service install asks. Installing the 0.15
- * service on a machine that still has `~/.gravity` moves it to `~/.thehermes`
+ * service on a machine that still has `~/.gravity` moves it to `~/.flotilla`
  * and restarts every bot, so it waits for an explicit yes. Whoever starts the
  * install awaits {@link confirmHomeMigration}; the host component mounted at
  * the app root shows the dialog.
@@ -18,7 +18,7 @@ let listener: Listener | null = null;
 /** Thrown by an install the user declined; nothing was changed. */
 export class InstallCancelled extends Error {
   constructor() {
-    super("Cancelled. The Hermes service was not updated and nothing was moved.");
+    super("Cancelled. Flotilla service was not updated and nothing was moved.");
     this.name = "InstallCancelled";
   }
 }

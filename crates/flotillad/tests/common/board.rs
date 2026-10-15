@@ -12,9 +12,9 @@ use prost::Message;
 use serde_json::json;
 use tokio_tungstenite::tungstenite::Message as WsMsg;
 
-use hermesd::actor::Actor;
-use hermesd::db::{Db, MoveTo, NewItem, Write};
-use hermesd::kanban::model::{ItemType, Priority};
+use flotillad::actor::Actor;
+use flotillad::db::{Db, MoveTo, NewItem, Write};
+use flotillad::kanban::model::{ItemType, Priority};
 
 use super::{TestDaemon, WsClient};
 

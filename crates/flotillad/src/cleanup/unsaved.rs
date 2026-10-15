@@ -10,7 +10,7 @@
 use std::path::{Component, Path, PathBuf};
 
 use crate::safe_git::SafeGit;
-use crate::worktree::METADATA_FILE;
+use crate::worktree::is_metadata_file;
 
 /// What a worktree holds that no remote has.
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -48,7 +48,7 @@ fn git(tree: &Path, args: &[&str]) -> anyhow::Result<String> {
 
 fn lines(out: &str) -> Vec<String> {
     out.lines()
-        .filter(|l| !l.is_empty() && *l != METADATA_FILE)
+        .filter(|l| !l.is_empty() && !is_metadata_file(l))
         .map(str::to_string)
         .collect()
 }

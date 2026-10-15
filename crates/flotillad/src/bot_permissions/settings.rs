@@ -21,9 +21,9 @@ pub struct SettingsInput<'a> {
     pub user_home: &'a Path,
     pub workspace: &'a Path,
     /// This daemon's own binary: the extras allow its commands by this exact
-    /// path, and nothing else named `hermesd` (H-166); none when a bot could
+    /// path, and nothing else named `flotillad` (H-166); none when a bot could
     /// rebuild or replace it (CE-023 F2).
-    pub hermesd: &'a Path,
+    pub flotillad: &'a Path,
     pub artifacts: Option<&'a Path>,
     /// Folders outside the bot's own that it works in (`~/Developer`, …).
     pub trusted_paths: &'a [std::path::PathBuf],
@@ -35,7 +35,7 @@ pub struct SettingsInput<'a> {
     /// Only a name the rule syntax can quote (`rule_quotable`).
     pub protected_branch: Option<&'a str>,
     /// DevOps installs releases by hand; every other bot only through
-    /// `hermesd release install` (B8).
+    /// `flotillad release install` (B8).
     pub devops: bool,
     pub port: u16,
     /// The command that runs the guard hook.
@@ -67,19 +67,20 @@ pub fn generate(input: &SettingsInput<'_>) -> Value {
     let mut deny = hard_deny(input);
     if !input.devops {
         deny.extend(INSTALL_DENY.iter().map(|r| (*r).to_string()));
+        deny.extend(super::LEGACY_INSTALL_DENY.iter().map(|r| (*r).to_string()));
     }
     let mut allow = artifacts_allow(input.artifacts);
     if input.profile != PermissionProfile::Standard {
         allow.extend(TRUSTED_ALLOW.iter().map(|r| (*r).to_string()));
-        let hermesd = (!super::exact::bot_writable(
-            input.hermesd,
+        let flotillad = (!super::exact::bot_writable(
+            input.flotillad,
             input.home,
             input.user_home,
             input.trusted_paths,
         ))
-        .then_some(input.hermesd);
+        .then_some(input.flotillad);
         for extra in input.extras {
-            allow.extend(extra_allow(*extra, input.workspace, hermesd));
+            allow.extend(extra_allow(*extra, input.workspace, flotillad));
         }
     }
     if !input.extras.contains(&PermissionExtra::DaemonRestart) {
@@ -248,12 +249,12 @@ fn hard_deny(input: &SettingsInput<'_>) -> Vec<String> {
 
 /// Direct installer and service commands, denied to every bot but DevOps
 /// (H-020 §2.6 b): a release goes on a computer through
-/// `hermesd release install`, which checks the gate first. Advisory only
+/// `flotillad release install`, which checks the gate first. Advisory only
 /// (ARCH-R43 M3): they match command text, so a script or a renamed binary
 /// gets past them; the daemon's gate is the boundary.
 const INSTALL_DENY: &[&str] = &[
-    "Bash(*hermesd* service install*)",
-    "Bash(*hermesd* service uninstall*)",
+    "Bash(*flotillad* service install*)",
+    "Bash(*flotillad* service uninstall*)",
     "Bash(installer -pkg*)",
     "Bash(*/installer -pkg*)",
     "Bash(sudo installer *)",
@@ -316,10 +317,10 @@ fn artifacts_allow(artifacts: Option<&Path>) -> Vec<String> {
         .unwrap_or_default()
 }
 
-fn extra_allow(extra: PermissionExtra, workspace: &Path, hermesd: Option<&Path>) -> Vec<String> {
+fn extra_allow(extra: PermissionExtra, workspace: &Path, flotillad: Option<&Path>) -> Vec<String> {
     // This daemon's own command, by its exact path (H-166, CE-023).
     let exact = |sub: &str| {
-        hermesd
+        flotillad
             .map(|p| super::exact::rules(p, sub))
             .unwrap_or_default()
     };

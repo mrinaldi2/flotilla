@@ -1,13 +1,13 @@
-//! The daemon's side of `hermesd release tag` (H-272; H-261 §6.3): DevOps
+//! The daemon's side of `flotillad release tag` (H-272; H-261 §6.3): DevOps
 //! tags a release cut from main once the owner approved it. Main is already
 //! at the commit, so nothing but the tag is pushed, and no release branch
 //! exists.
 //!
-//! - `hermes/release_tag {release_id}`: the bot holds `release_main` and is
+//! - `flotilla/release_tag {release_id}`: the bot holds `release_main` and is
 //!   the project's DevOps; the release was cut from main, the owner approved
 //!   it, and its builds were made from the cut commit. Answers the commit,
 //!   the tag name (`desktop-v<version>`) and the repo to check.
-//! - `hermes/release_tagged {release_id, tag, commit}`: the daemon asks the
+//! - `flotilla/release_tagged {release_id, tag, commit}`: the daemon asks the
 //!   repository itself that the tag is on the commit, then records it.
 
 use std::sync::Arc;
@@ -27,8 +27,8 @@ use super::gates::{approved, recorded_commit};
 use super::model::{Release, ReleaseEvent};
 use super::{git, load, Caller};
 
-const TAG: &str = "hermes/release_tag";
-const TAGGED: &str = "hermes/release_tagged";
+const TAG: &str = "flotilla/release_tag";
+const TAGGED: &str = "flotilla/release_tagged";
 
 /// Answers one of the tag gates from `bot_id`'s session, or `None`.
 pub async fn serve(app: &Arc<AppState>, bot_id: &str, request: &Value) -> Option<Value> {
@@ -137,7 +137,7 @@ fn gate(app: &Arc<AppState>, bot: &bus::Bot, release_id: &str) -> anyhow::Result
         .map_err(|_| invalid(format!("no release {release_id} on this computer's board")))?;
     let Some(cut) = &release.cut else {
         return Err(forbidden(format!(
-            "release {} wasn't cut from main; it lands with `hermesd release land`",
+            "release {} wasn't cut from main; it lands with `flotillad release land`",
             release.name
         )));
     };

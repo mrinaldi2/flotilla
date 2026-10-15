@@ -36,7 +36,7 @@ pub async fn permission_hook(
 
 /// The hook output deciding `bot_id`'s prompt, once the owner has answered;
 /// `None` leaves the prompt to the terminal. Shared by HTTP and the local
-/// endpoint (`hermesd hook PermissionRequest`, H-044).
+/// endpoint (`flotillad hook PermissionRequest`, H-044).
 pub(crate) async fn permission_output(
     app: &Arc<AppState>,
     bot_id: &str,

@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import type { ReactElement } from "react";
-import type { Board } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { Board } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 
 export interface BoardChange {
   readonly name?: string;

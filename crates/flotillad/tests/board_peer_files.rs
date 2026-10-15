@@ -212,7 +212,7 @@ async fn the_home_opens_no_peer_path_and_serves_no_draft_or_other_project() {
         db,
         &other,
         "Elsewhere",
-        hermesd::kanban::model::Priority::P2,
+        flotillad::kanban::model::Priority::P2,
     );
     let theirs = owner_attach(&mut b.p.mac_client, &item, "x.png", &shot).await;
     let refused = ask(&b, fetch(&theirs.id, &b.win_app)).await.unwrap_err();
@@ -244,7 +244,7 @@ async fn a_linked_computer_stages_no_more_than_the_items_cap() {
     assert!(refused.contains("at most 1 MB"), "{refused}");
 
     let project = b.p.mac.app.db.get_project(&b.mac_app).unwrap().unwrap();
-    let artifacts = hermesd::paths::artifacts_dir(&b.p.mac.app.cfg, &project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&b.p.mac.app.cfg, &project.dir_name);
     let uploads = artifacts.join("items").join(&b.item).join(".uploads");
     let staged: Vec<_> = std::fs::read_dir(&uploads)
         .unwrap()

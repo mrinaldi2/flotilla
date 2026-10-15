@@ -15,9 +15,9 @@ use common::cleanup::{merge, open};
 use common::prs::error;
 use common::prs::setup;
 use common::repo::git;
-use hermesd::cleanup::model::JobState;
+use flotillad::cleanup::model::JobState;
 #[cfg(unix)]
-use hermesd::prs::model::PrWorktree;
+use flotillad::prs::model::PrWorktree;
 use serde_json::json;
 
 const DEV: usize = 1;
@@ -108,7 +108,7 @@ async fn after_a_merge_every_worktree_of_the_branch_goes_and_the_author_is_told(
     );
 
     // Idempotent: queuing again adds nothing, a later pass changes nothing.
-    assert_eq!(hermesd::cleanup::enqueue(&r.pair.d.app, &pr).unwrap(), 0);
+    assert_eq!(flotillad::cleanup::enqueue(&r.pair.d.app, &pr).unwrap(), 0);
     step(&r, Utc::now() + chrono::Duration::hours(1)).await;
     assert_eq!(job_at(&r, &pr, &tree).attempts, 1);
     assert!(orphan.exists());
@@ -159,7 +159,7 @@ async fn a_link_or_a_path_outside_is_refused_at_report_and_before_delete() {
     };
     let db = &r.pair.d.app.db;
     db.board_tx(|t| t.add_pr_worktree(&here, &row)).unwrap();
-    hermesd::cleanup::enqueue(&r.pair.d.app, &pr).unwrap();
+    flotillad::cleanup::enqueue(&r.pair.d.app, &pr).unwrap();
     step(&r, Utc::now()).await;
 
     let swapped = job_at(&r, &pr, &real);
@@ -186,7 +186,7 @@ async fn a_link_or_a_path_outside_is_refused_at_report_and_before_delete() {
     let open_tree = linked(&r, "open", "H-2-open");
     let n = open(&mut r, "Open", &open_tree, "H-2-open").await;
     let unmerged = common::cleanup::pr(&r, n);
-    hermesd::cleanup::enqueue(&r.pair.d.app, &unmerged).unwrap();
+    flotillad::cleanup::enqueue(&r.pair.d.app, &unmerged).unwrap();
     step(&r, Utc::now()).await;
     let held = job_at(&r, &unmerged, &open_tree);
     assert_eq!(held.state, JobState::Held);

@@ -11,9 +11,9 @@ use bus::contract::board::{
 };
 use common::board::*;
 use common::*;
-use hermesd::actor::Actor;
-use hermesd::db::NewItem;
-use hermesd::kanban::model::{ItemType, Priority};
+use flotillad::actor::Actor;
+use flotillad::db::NewItem;
+use flotillad::kanban::model::{ItemType, Priority};
 use serde_json::json;
 
 #[tokio::test]
@@ -21,7 +21,7 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
     let d = spawn_daemon().await;
     let mut owner = WsClient::connect(&d).await;
     let mut watcher = WsClient::connect(&d).await;
-    let project_id = common::peers::project(&mut owner, "The Hermes").await;
+    let project_id = common::peers::project(&mut owner, "Flotilla").await;
 
     // The first board_get with the control grant enables the board here.
     let board = snapshot(

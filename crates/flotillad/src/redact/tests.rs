@@ -133,7 +133,7 @@ fn masks_known_token_prefixes() {
 fn leaves_ordinary_commands_alone() {
     for text in [
         "Bash: rm -rf build",
-        "Bash: cargo test -p hermesd --test owner_threads",
+        "Bash: cargo test -p flotillad --test owner_threads",
         "Write: /w/a.txt",
         "Bash: FOO=1 make keys=3",
         "Bash: echo bearer",

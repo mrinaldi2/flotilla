@@ -21,7 +21,7 @@ async fn deleting_a_bot_removes_its_cargo_target_and_keeps_its_workspace() {
     let workspace = std::path::PathBuf::from(bot["workspace_path"].as_str().expect("workspace"));
     let target = workspace.parent().expect("bot dir").join("cargo-target");
     std::fs::create_dir_all(target.join("debug")).expect("target");
-    std::fs::write(target.join("debug/hermesd"), b"built").expect("artifact");
+    std::fs::write(target.join("debug/flotillad"), b"built").expect("artifact");
     std::fs::create_dir_all(&workspace).expect("workspace");
     std::fs::write(workspace.join("notes.md"), b"work").expect("work");
 

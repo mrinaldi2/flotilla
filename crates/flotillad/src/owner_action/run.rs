@@ -119,7 +119,7 @@ fn command(p: &Proposal) -> Command {
     #[cfg(windows)]
     for (key, _) in std::env::vars() {
         let upper = key.to_ascii_uppercase();
-        if upper.starts_with("THEHERMES_") || upper.starts_with("GRAVITY_") {
+        if upper.starts_with("FLOTILLA_") || upper.starts_with("GRAVITY_") {
             cmd.env_remove(key);
         }
     }

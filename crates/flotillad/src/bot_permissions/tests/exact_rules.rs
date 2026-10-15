@@ -1,5 +1,5 @@
 //! Every extra that pre-approves a daemon command names this daemon's own
-//! binary by its exact path, never a bare `hermesd` (H-166, CE-023); none
+//! binary by its exact path, never a bare `flotillad` (H-166, CE-023); none
 //! when a bot could rebuild that binary (CE-023 F2). `<home>/run` is the
 //! daemon's alone (CE-023 M1).
 
@@ -10,7 +10,7 @@ use serde_json::Value;
 
 use super::super::exact;
 use super::super::settings::{generate, SettingsInput};
-use super::{input, rules, APP_HERMESD};
+use super::{input, rules, APP_FLOTILLAD};
 
 const ALL: [PermissionExtra; 8] = [
     PermissionExtra::Publish,
@@ -41,7 +41,7 @@ fn trusted(extras: &[PermissionExtra]) -> Value {
 /// `publish` the daemon's publish beside its own scripts.
 #[test]
 fn publish_land_and_build_installers_allow_this_binary_by_its_exact_path() {
-    let app = Path::new(APP_HERMESD);
+    let app = Path::new(APP_FLOTILLAD);
     let land: Vec<String> = ["release land", "release tag", "release leave-out"]
         .into_iter()
         .flat_map(|c| exact::rules(app, c))
@@ -62,8 +62,8 @@ fn publish_land_and_build_installers_allow_this_binary_by_its_exact_path() {
     let all = rules(&trusted(&ALL), "allow");
     assert!(
         !all.iter()
-            .any(|r| r.contains("(hermesd ") || r.contains("(& hermesd ")),
-        "no bare hermesd: {all:?}"
+            .any(|r| r.contains("(flotillad ") || r.contains("(& flotillad ")),
+        "no bare flotillad: {all:?}"
     );
 }
 
@@ -72,20 +72,20 @@ fn publish_land_and_build_installers_allow_this_binary_by_its_exact_path() {
 #[test]
 fn a_binary_a_bot_could_rebuild_gets_no_exact_rule() {
     for dev in [
-        "/Users/me/Developer/gravity/target/debug/hermesd",
-        "/Users/me/Developer/gravity-wt-x/target/release/hermesd",
-        "/Users/me/elsewhere/target/debug/hermesd",
-        "/Users/me/Developer/bin/hermesd",
+        "/Users/me/Developer/gravity/target/debug/flotillad",
+        "/Users/me/Developer/gravity-wt-x/target/release/flotillad",
+        "/Users/me/elsewhere/target/debug/flotillad",
+        "/Users/me/Developer/bin/flotillad",
     ] {
         let settings = |extras: &[PermissionExtra]| {
             generate(&SettingsInput {
                 profile: PermissionProfile::Trusted,
                 extras,
-                project_name: "Hermes",
+                project_name: "Flotilla",
                 home: Path::new("/Users/me/.gravity"),
                 user_home: Path::new("/Users/me"),
                 workspace: Path::new("/Users/me/.gravity/projects/p/bots/devops/workspace"),
-                hermesd: Path::new(dev),
+                flotillad: Path::new(dev),
                 artifacts: None,
                 trusted_paths: &[PathBuf::from("/Users/me/Developer")],
                 served: &[],
@@ -101,8 +101,8 @@ fn a_binary_a_bot_could_rebuild_gets_no_exact_rule() {
         let all = rules(&settings(&ALL), "allow");
         assert!(
             !all.iter().any(|r| r.contains(dev)
-                || r.contains("hermesd release")
-                || r.contains("hermesd quiesce")),
+                || r.contains("flotillad release")
+                || r.contains("flotillad quiesce")),
             "{dev}: {all:?}"
         );
         // The extras' other rules stay.

@@ -1,6 +1,6 @@
 //! Serving builds over HTTPS on the tailnet (H-020 §6.6, ruling 7097a9ce).
 //!
-//! `hermesd release publish` stages a build in the served directory, which
+//! `flotillad release publish` stages a build in the served directory, which
 //! `tailscale serve --set-path /releases <dir>` exposes and nothing else.
 //! Each build lands at `<dir>/<release id>/<platform>/<file>`, and an iOS
 //! build also gets the `manifest.plist` its `itms-services` link names. A
@@ -20,7 +20,7 @@ use crate::decisions::{conflict, forbidden, invalid};
 
 use super::confine::{ServedDirs, Source};
 
-/// `[releases]` in `hermesd.toml`.
+/// `[releases]` in `flotillad.toml`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct ServeConfig {
@@ -36,7 +36,7 @@ pub struct ServeConfig {
     pub source_roots: Vec<String>,
     /// The bundle id an iOS manifest names when the publish gives none.
     pub ios_bundle_id: Option<String>,
-    /// The app's name in an iOS manifest; "The Hermes" when unset.
+    /// The app's name in an iOS manifest; "Flotilla" when unset.
     pub ios_title: Option<String>,
     /// Why `dir` was refused when the config loaded (CE-010 M1).
     #[serde(skip)]
@@ -57,7 +57,7 @@ pub fn base_url(cfg: &Config) -> anyhow::Result<String> {
     let base = cfg.releases.base_url.as_deref().unwrap_or_default().trim();
     if !base.starts_with("https://") {
         return Err(invalid(format!(
-            "set [releases] base_url in hermesd.toml to the https:// address that serves {}; \
+            "set [releases] base_url in flotillad.toml to the https:// address that serves {}; \
              pass only that folder to `tailscale serve`, never the home",
             served_root(cfg).display()
         )));

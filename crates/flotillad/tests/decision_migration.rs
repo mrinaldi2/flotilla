@@ -6,7 +6,7 @@
 
 use crate::legacy;
 
-use hermesd::db::{Db, DecisionFilter, NewDecision};
+use flotillad::db::{Db, DecisionFilter, NewDecision};
 use legacy::v2_database;
 use rusqlite::Connection;
 

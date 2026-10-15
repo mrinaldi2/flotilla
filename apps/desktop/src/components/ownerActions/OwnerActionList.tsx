@@ -25,7 +25,7 @@ export default function OwnerActionList(props: {
   }
   const canRun = connected && client.hasGrant("approve");
   const proposer = (by: string): string =>
-    by.startsWith("bot:") ? props.botName(by.slice(4)) : "The Hermes";
+    by.startsWith("bot:") ? props.botName(by.slice(4)) : "Flotilla";
   return (
     <section className="owner-actions" aria-label={props.title ?? "Commands for you to run"}>
       {props.title ? <h3>{props.title}</h3> : null}

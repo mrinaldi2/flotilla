@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BoardApi } from "../../protocol/board";
-import type { BoardSnapshot } from "../../protocol/gen/hermes/board/v1/requests_pb";
+import type { BoardSnapshot } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import type { BoardStatus } from "./boardSync";
 import { BoardSync } from "./boardSync";
 

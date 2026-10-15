@@ -8,7 +8,7 @@
 import type { ReactElement } from "react";
 import ReactMarkdown from "react-markdown";
 import type { BoardApi } from "../../../protocol/board";
-import type { ItemAttachment } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { useCardMarkdown } from "../../cards/cardMarkdown";
 import { SAFE_LINKS } from "../../control/Markdown";
 import { attachmentId, kindLabel } from "./attachments";

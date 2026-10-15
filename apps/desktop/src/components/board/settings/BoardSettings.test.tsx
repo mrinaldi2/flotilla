@@ -2,7 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { StructureResultSchema } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import { StructureResultSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import type { BoardCall } from "../../../protocol/board";
 import { board, boardsSnapshot, proposals, recipeColumns } from "../../../test/boardsFixtures";
 import { FakeDaemon } from "../../../test/fakeDaemon";

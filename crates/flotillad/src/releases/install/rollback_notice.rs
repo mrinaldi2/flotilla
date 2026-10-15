@@ -37,7 +37,7 @@ pub fn report(app: &Arc<AppState>) {
     let why = marker["why"].as_str().unwrap_or("unknown");
     let body = format!(
         "The install of {release} failed, and putting the earlier app back failed too: {why}. \
-         The Hermes service was started from the last installed program. A command that \
+         Flotilla service was started from the last installed program. A command that \
          installs the service from the app in Applications is waiting for you to run."
     );
     app.events.push(Push::notice(
@@ -65,10 +65,10 @@ pub fn report(app: &Arc<AppState>) {
         target_machine: app.db.daemon_id().unwrap_or_default(),
         shell: Shell::Bash,
         cwd: app.cfg.user_home.display().to_string(),
-        content: format!("'{bundle}/Contents/MacOS/hermesd' service install"),
+        content: format!("'{bundle}/Contents/MacOS/flotillad' service install"),
         pinned_files: Vec::new(),
         reason: format!(
-            "The install of {release} and its rollback failed. This reinstalls the Hermes \
+            "The install of {release} and its rollback failed. This reinstalls the Flotilla \
              service from {bundle}, the app now in Applications."
         ),
         timeout_s: 300,
@@ -84,9 +84,9 @@ mod tests {
 
     #[test]
     fn the_card_names_only_a_plain_app_in_applications() {
-        assert!(plain_app("/Applications/The Hermes.app").is_some());
+        assert!(plain_app("/Applications/Flotilla.app").is_some());
         assert!(plain_app("/Applications/x'; rm -rf ~; '.app").is_none());
-        assert!(plain_app("/tmp/The Hermes.app").is_none());
+        assert!(plain_app("/tmp/Flotilla.app").is_none());
         assert!(plain_app("/Applications/../x.app").is_none());
         assert!(plain_app("/Applications/a/b.app").is_none());
     }

@@ -2,11 +2,11 @@ import { create } from "@bufbuild/protobuf";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { DraftRevisionSchema } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import { DraftRevisionSchema } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import {
   EditResultSchema,
   MoveResultSchema,
-} from "../../../protocol/gen/hermes/board/v1/requests_pb";
+} from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { unmet } from "../../../test/boardFixtures";
 import { draftChanges, draftDetail, draftItem, recipeColumns } from "../../../test/boardsFixtures";
 import { boardsClient, STORY_BOTS } from "../../../test/boardStory";

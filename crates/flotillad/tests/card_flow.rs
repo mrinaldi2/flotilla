@@ -133,7 +133,7 @@ async fn a_card_that_isnt_ready_goes_back_to_to_do_with_a_question() {
         )
         .await;
     assert_eq!(asked["asks"], true, "{asked}");
-    let open = hermesd::owner_threads::open_questions(&f.d.app, Some(&f.project), None).unwrap();
+    let open = flotillad::owner_threads::open_questions(&f.d.app, Some(&f.project), None).unwrap();
     assert_eq!(open.len(), 1, "{open:?}");
 
     // Its next reads don't start it again: it moves it on itself once it
@@ -181,11 +181,11 @@ async fn a_release_gated_card_is_never_moved_for_its_assignee() {
         &d.app.db,
         &project,
         "Legacy",
-        hermesd::kanban::model::Priority::P2,
+        flotillad::kanban::model::Priority::P2,
     );
     d.app
         .db
-        .assign_item(&id, version, Some(&bot_id), &hermesd::actor::Actor::User)
+        .assign_item(&id, version, Some(&bot_id), &flotillad::actor::Actor::User)
         .unwrap();
     let got = builder.call("item_get", json!({"id": id})).await;
     assert_eq!(got["item"]["column_key"], "inbox", "{got}");

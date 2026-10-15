@@ -10,7 +10,7 @@ use std::time::Duration;
 use bus::schema::MIGRATIONS;
 use bus::PermissionExtra;
 use common::*;
-use hermesd::db::Db;
+use flotillad::db::Db;
 use rusqlite::{params, Connection};
 use serde_json::json;
 
@@ -37,7 +37,7 @@ fn an_old_database_keeps_its_extras_and_accepts_release_main() {
     let path = dir.path().join("bus.sqlite");
     let bot_id = {
         let db = Db::open(&path).expect("open");
-        let p = db.create_project("Hermes", "hermes").expect("project");
+        let p = db.create_project("Flotilla", "flotilla").expect("project");
         db.create_bot(&p.id, "DevOps", "", "", "", "/tmp/w", "devops", None)
             .expect("bot")
             .id
@@ -97,7 +97,7 @@ fn the_rebuild_runs_twice_without_losing_or_doubling_a_grant() {
     let path = dir.path().join("bus.sqlite");
     let bot_id = {
         let db = Db::open(&path).expect("open");
-        let p = db.create_project("Hermes", "hermes").expect("project");
+        let p = db.create_project("Flotilla", "flotilla").expect("project");
         let bot = db
             .create_bot(&p.id, "DevOps", "", "", "", "/tmp/w", "devops", None)
             .expect("bot");
@@ -150,7 +150,7 @@ async fn a_refused_write_neither_restarts_the_bot_nor_regenerates_its_settings()
     let d = spawn_daemon().await;
     let mut owner = WsClient::connect(&d).await;
     let project = owner
-        .request(json!({ "type": "create_project", "name": "Hermes" }))
+        .request(json!({ "type": "create_project", "name": "Flotilla" }))
         .await;
     let project_id = project["project"]["id"].as_str().expect("id").to_string();
     let bot = create_bot(&mut owner, &project_id, "devops").await;
@@ -165,7 +165,7 @@ async fn a_refused_write_neither_restarts_the_bot_nor_regenerates_its_settings()
     let generated = std::path::Path::new(&workspace)
         .parent()
         .expect("bot root")
-        .join(hermesd::bot_permissions::SETTINGS_FILE);
+        .join(flotillad::bot_permissions::SETTINGS_FILE);
     eventually("the bot starts with its settings", || generated.exists()).await;
 
     // The database refuses every grant, as the old CHECK refused release_main.
@@ -222,7 +222,7 @@ async fn the_old_check_refusing_release_main_is_an_error_without_a_restart() {
     let d = spawn_daemon().await;
     let mut owner = WsClient::connect(&d).await;
     let project = owner
-        .request(json!({ "type": "create_project", "name": "Hermes" }))
+        .request(json!({ "type": "create_project", "name": "Flotilla" }))
         .await;
     let project_id = project["project"]["id"].as_str().expect("id").to_string();
     let bot = create_bot(&mut owner, &project_id, "devops").await;
@@ -237,7 +237,7 @@ async fn the_old_check_refusing_release_main_is_an_error_without_a_restart() {
     let generated = std::path::Path::new(&workspace)
         .parent()
         .expect("bot root")
-        .join(hermesd::bot_permissions::SETTINGS_FILE);
+        .join(flotillad::bot_permissions::SETTINGS_FILE);
     eventually("the bot starts with its settings", || generated.exists()).await;
 
     let raw = Connection::open(d.app.cfg.db_path()).expect("raw");

@@ -11,13 +11,13 @@ import type {
   BoardSettings,
   ItemCard,
   ProjectRole,
-} from "../../protocol/gen/hermes/board/v1/board_pb";
-import { BoardEventKind } from "../../protocol/gen/hermes/board/v1/requests_pb";
+} from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { BoardEventKind } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import type {
   BoardEvent,
   BoardProposal,
   BoardSnapshot,
-} from "../../protocol/gen/hermes/board/v1/requests_pb";
+} from "../../protocol/gen/flotilla/board/v1/requests_pb";
 
 export interface BoardModel {
   readonly settings: BoardSettings | undefined;

@@ -10,11 +10,11 @@ fn file(dir: &Path, name: &str, body: &str) -> PathBuf {
     path
 }
 
-/// A daemon home at `<tmp>/user/.thehermes`, `~/Developer` as the trusted
+/// A daemon home at `<tmp>/user/.flotilla`, `~/Developer` as the trusted
 /// path, and the served root at `dir` (the default when `None`).
 fn config(tmp: &Path, dir: Option<PathBuf>) -> Config {
     let user = tmp.join("user");
-    let home = user.join(".thehermes");
+    let home = user.join(".flotilla");
     fs::create_dir_all(home.join("secrets")).unwrap();
     fs::write(home.join("bus.sqlite"), "").unwrap();
     let mut cfg = Config {
@@ -104,9 +104,9 @@ fn builds_come_only_from_release_worktrees_and_artifacts() {
     let allowed = [
         file(&rel, "TheHermes.zip", "zip"),
         file(&dev.join("gravitiOS-rel-0.16.0/build"), "App.ipa", "ipa"),
-        file(&dev.join("gravity-rel-0.16.0"), "Hermes.DMG", "dmg"),
-        file(&artifacts.join("peers/win"), "hermes-setup.exe", "exe"),
-        file(&artifacts, "hermes.msi", "msi"),
+        file(&dev.join("gravity-rel-0.16.0"), "Flotilla.DMG", "dmg"),
+        file(&artifacts.join("peers/win"), "flotilla-setup.exe", "exe"),
+        file(&artifacts, "flotilla.msi", "msi"),
     ];
     for path in &allowed {
         let src = source(&cfg, &artifacts, path).unwrap_or_else(|e| panic!("{e}"));
@@ -134,7 +134,12 @@ fn builds_come_only_from_release_worktrees_and_artifacts() {
     // A symlink posing as a release worktree is not one.
     symlink(dev.join("PhD"), dev.join("x-rel-1")).unwrap();
     assert!(source(&cfg, &artifacts, &dev.join("x-rel-1/thesis.zip")).is_err());
-    assert!(source(&cfg, &artifacts, Path::new("gravity-rel-0.16.0/Hermes.DMG")).is_err());
+    assert!(source(
+        &cfg,
+        &artifacts,
+        Path::new("gravity-rel-0.16.0/Flotilla.DMG")
+    )
+    .is_err());
 
     // The owner may widen the roots; the type allowlist still holds.
     let mut wide = cfg.clone();

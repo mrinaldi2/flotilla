@@ -3,13 +3,13 @@
 // Activity lives in DrawerActivity.
 
 import type { ReactElement, ReactNode } from "react";
-import type { ItemLink } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { ItemLink } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import {
   LinkKind,
   PersonRole,
   VerificationResult,
-} from "../../../protocol/gen/hermes/board/v1/board_pb";
-import type { ItemDetail } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+} from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { ItemDetail } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import Markdown from "../../control/Markdown";
 import { when } from "./drawerText";
 

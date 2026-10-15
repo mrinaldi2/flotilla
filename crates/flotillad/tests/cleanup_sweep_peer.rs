@@ -14,13 +14,13 @@ use common::peer_board::board;
 use common::prs::{commit, head};
 use common::repo::{git, remote};
 use common::WsClient;
-use hermesd::cleanup::model::Job;
-use hermesd::cleanup::sweep_remote::run_now;
-use hermesd::db::prs::NewPr;
+use flotillad::cleanup::model::Job;
+use flotillad::cleanup::sweep_remote::run_now;
+use flotillad::db::prs::NewPr;
 use serde_json::json;
 
-fn job_on(db: &hermesd::db::Db, machine: &str, path: &Path) -> Option<Job> {
-    let path = hermesd::safe_git::canonical(path)
+fn job_on(db: &flotillad::db::Db, machine: &str, path: &Path) -> Option<Job> {
+    let path = flotillad::safe_git::canonical(path)
         .unwrap_or(path.to_path_buf())
         .display()
         .to_string();
@@ -89,7 +89,7 @@ async fn a_linked_computer_sweeps_its_trees_and_the_home_keeps_the_rows() {
     let tester = win.app.db.get_bot(&b.tester_id).unwrap().unwrap();
     let ws = PathBuf::from(&tester.workspace_path);
     std::fs::create_dir_all(ws.join("scratch")).unwrap();
-    let ws = hermesd::safe_git::canonical(&ws).unwrap();
+    let ws = flotillad::safe_git::canonical(&ws).unwrap();
     git(&ws, &["clone", "-q", &url, "repo"]);
     let main = ws.join("repo");
     let tree = |name: &str| {

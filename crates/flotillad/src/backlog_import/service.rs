@@ -1,5 +1,5 @@
 //! The import as the adapters call it (MCP for the lead, WS and the
-//! `hermesd board import` CLI for the owner): parse, write on the home in
+//! `flotillad board import` CLI for the owner): parse, write on the home in
 //! one transaction, then push the new cards to open boards.
 
 use std::collections::BTreeMap;

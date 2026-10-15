@@ -37,7 +37,7 @@ describe("SetupScreen", () => {
     const onConnect = vi.fn<() => void>();
     render(<SetupScreen onConnect={onConnect} />);
     await waitFor(() => {
-      expect(screen.getByText(/Connecting to the Hermes service/)).toBeInTheDocument();
+      expect(screen.getByText(/Connecting to the Flotilla service/)).toBeInTheDocument();
     });
     expect(onConnect).toHaveBeenCalledWith({ method: "local", endpoint: DEFAULT_ENDPOINT });
   });
@@ -70,8 +70,10 @@ describe("SetupScreen", () => {
     probeDaemon.mockResolvedValue(null);
     installLocalDaemon.mockReturnValue(new Promise(() => undefined));
     render(<SetupScreen onConnect={vi.fn<() => void>()} />);
-    expect(await screen.findByText(/Hermes service starts when you sign in/)).toBeInTheDocument();
-    expect(screen.getByText("Installing the Hermes service on this computer…")).toBeInTheDocument();
+    expect(await screen.findByText(/Flotilla service starts when you sign in/)).toBeInTheDocument();
+    expect(
+      screen.getByText("Installing the Flotilla service on this computer…"),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/on this Mac|launchd|LaunchAgents/)).not.toBeInTheDocument();
   });
 
@@ -163,7 +165,7 @@ describe("SetupScreen", () => {
       endpoint: { host: "mini.ts.net", port: DEFAULT_ENDPOINT.port },
       token: "tok-123",
     });
-    expect(screen.getByText(/Connecting to the Hermes service/)).toBeInTheDocument();
+    expect(screen.getByText(/Connecting to the Flotilla service/)).toBeInTheDocument();
   });
 
   it("omits the token when the fallback form leaves it blank", async () => {

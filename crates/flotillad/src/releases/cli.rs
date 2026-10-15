@@ -1,4 +1,4 @@
-//! `hermesd release publish …`: DevOps publishes a build from its terminal.
+//! `flotillad release publish …`: DevOps publishes a build from its terminal.
 //! The command calls `release_publish` on the running daemon with the bot's
 //! own token, so the daemon checks the role and the Publish extra exactly as
 //! it does over MCP, and does the copying itself.
@@ -8,13 +8,13 @@ use serde_json::{json, Value};
 use crate::config::Config;
 
 const USAGE: &str = "usage:
-  hermesd release publish <release> <file> [--platform <p>] [--version <v>] [--bundle-id <id>]
+  flotillad release publish <release> <file> [--platform <p>] [--version <v>] [--bundle-id <id>]
                           [--source-commit <sha>]   (default: this checkout's HEAD, when clean)
-  hermesd release install <release> [--dry-run | --status]
-  hermesd release land <release> [--commit <sha>] [--branch <b>] [--tag <t>] [--dry-run]
-  hermesd release tag <release> [--dry-run]
-  hermesd release leave-out <leave-out id>
-  hermesd release build-installer <release> [--commit <sha>] [--script <path>] [--output <file>]";
+  flotillad release install <release> [--dry-run | --status]
+  flotillad release land <release> [--commit <sha>] [--branch <b>] [--tag <t>] [--dry-run]
+  flotillad release tag <release> [--dry-run]
+  flotillad release leave-out <leave-out id>
+  flotillad release build-installer <release> [--commit <sha>] [--script <path>] [--output <file>]";
 
 const FLAGS: [&str; 4] = ["--platform", "--version", "--bundle-id", "--source-commit"];
 
@@ -95,7 +95,7 @@ async fn post(port: u16, token: &str, body: &Value) -> anyhow::Result<Value> {
     let body = body.to_string();
     let mut stream = tokio::net::TcpStream::connect(("127.0.0.1", port))
         .await
-        .map_err(|e| anyhow::anyhow!("hermesd is not answering on port {port}: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("flotillad is not answering on port {port}: {e}"))?;
     let request = format!(
         "POST /mcp HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nAuthorization: Bearer {token}\r\n\
          Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
@@ -107,12 +107,12 @@ async fn post(port: u16, token: &str, body: &Value) -> anyhow::Result<Value> {
     let raw = String::from_utf8_lossy(&raw);
     let (head, payload) = raw
         .split_once("\r\n\r\n")
-        .ok_or_else(|| anyhow::anyhow!("hermesd sent no answer"))?;
+        .ok_or_else(|| anyhow::anyhow!("flotillad sent no answer"))?;
     let status = head.split_whitespace().nth(1).unwrap_or_default();
     if status == "401" {
-        anyhow::bail!("hermesd doesn't know this bot token");
+        anyhow::bail!("flotillad doesn't know this bot token");
     }
-    anyhow::ensure!(status == "200", "hermesd answered {status}");
+    anyhow::ensure!(status == "200", "flotillad answered {status}");
     Ok(serde_json::from_str(payload)?)
 }
 

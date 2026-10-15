@@ -12,10 +12,10 @@ use chrono::{Duration, Utc};
 use common::cleanup::{jobs, linked, notes, open, pr, step};
 use common::prs::{approve, branch, commit, opened, setup, Repo};
 use common::repo::git;
-use hermesd::kanban::model::Role;
-use hermesd::pr_cli::{drop_stale, merge_in, Plan};
-use hermesd::prs::merge::answer;
-use hermesd::prs::queue;
+use flotillad::kanban::model::Role;
+use flotillad::pr_cli::{drop_stale, merge_in, Plan};
+use flotillad::prs::merge::answer;
+use flotillad::prs::queue;
 use serde_json::{json, Value};
 
 const DEV: usize = 1;
@@ -186,7 +186,7 @@ async fn a_merge_run_deletes_closed_branches_after_fourteen_days() {
     queue::step(&app, Utc::now() + Duration::seconds(11)).unwrap();
 
     let devops = r.pair.ids[0].clone();
-    let gate = answer(&app, &devops, "hermes/pr_merge", &json!({"number": 1})).unwrap();
+    let gate = answer(&app, &devops, "flotilla/pr_merge", &json!({"number": 1})).unwrap();
     let due: Vec<u64> = gate["stale_branches"]
         .as_array()
         .unwrap()
@@ -203,7 +203,7 @@ async fn a_merge_run_deletes_closed_branches_after_fourteen_days() {
     answer(
         &app,
         &devops,
-        "hermes/pr_merged",
+        "flotilla/pr_merged",
         &json!({"number": 1, "sha": head,
                 "branch": {"deleted": done.branch_deleted, "note": done.branch_note},
                 "stale_branches": stale}),

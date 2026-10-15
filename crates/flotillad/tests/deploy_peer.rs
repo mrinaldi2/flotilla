@@ -91,8 +91,8 @@ async fn a_deploy_task_forwarded_to_the_pcs_tester_is_on_the_board_there() {
     // Working with no task, the PC's tester is flagged off the board.
     win.supervisor.set_state(&tester, BotState::Working, "test");
     let t0 = Utc::now();
-    hermesd::offboard::sweep(&win, t0).unwrap();
-    hermesd::offboard::sweep(&win, t0 + Duration::minutes(10)).unwrap();
+    flotillad::offboard::sweep(&win, t0).unwrap();
+    flotillad::offboard::sweep(&win, t0 + Duration::minutes(10)).unwrap();
     assert!(
         win.off_board.flagged_since(&tester).is_some(),
         "the PC watches its tester"
@@ -129,8 +129,8 @@ async fn a_deploy_task_forwarded_to_the_pcs_tester_is_on_the_board_there() {
     assert!(win.db.task_on_board(&task.id).unwrap());
 
     win.supervisor.set_state(&tester, BotState::Working, "test");
-    hermesd::offboard::sweep(&win, t0 + Duration::minutes(11)).unwrap();
-    hermesd::offboard::sweep(&win, t0 + Duration::minutes(25)).unwrap();
+    flotillad::offboard::sweep(&win, t0 + Duration::minutes(11)).unwrap();
+    flotillad::offboard::sweep(&win, t0 + Duration::minutes(25)).unwrap();
     assert!(
         win.off_board.flagged_since(&tester).is_none(),
         "a forwarded deploy task is on the board on the PC"

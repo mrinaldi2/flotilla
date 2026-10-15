@@ -56,7 +56,7 @@ fn release() -> Release {
         builds: vec![ReleaseBuild {
             platform: "desktop-mac".into(),
             version: "0.16.0".into(),
-            artifact: "/builds/The Hermes.dmg".into(),
+            artifact: "/builds/Flotilla.dmg".into(),
             url: None,
             install_url: None,
             sha256: "a".repeat(64),

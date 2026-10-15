@@ -1,6 +1,6 @@
 //! H-313 (H-267, CE on H-311): a PR on the policy files (`.hermes/*.toml`)
 //! waits for the owner whatever the owner's review setting, `none` included,
-//! and `hermesd pr merge` reads that again at the merge; an ordinary PR under
+//! and `flotillad pr merge` reads that again at the merge; an ordinary PR under
 //! `none` still doesn't wait for the owner.
 
 use crate::common;
@@ -10,10 +10,10 @@ use chrono::{Duration, Utc};
 use common::prs::{approve, give, opened, pr, setup, write, Repo};
 use common::repo::git;
 use common::WsClient;
-use hermesd::kanban::model::Role;
-use hermesd::prs::merge::answer;
-use hermesd::prs::owner::Shape;
-use hermesd::prs::queue;
+use flotillad::kanban::model::Role;
+use flotillad::prs::merge::answer;
+use flotillad::prs::owner::Shape;
+use flotillad::prs::queue;
 use serde_json::{json, Value};
 
 const DEVOPS: usize = 0;
@@ -99,7 +99,7 @@ async fn the_merge_gate_still_needs_the_owner_on_a_policy_pr() {
     let why = answer(
         &app,
         &r.pair.ids[DEVOPS],
-        "hermes/pr_merge",
+        "flotilla/pr_merge",
         &json!({"number": 1}),
     )
     .expect_err("the gate refuses it")

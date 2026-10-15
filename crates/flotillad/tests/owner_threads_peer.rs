@@ -36,7 +36,7 @@ async fn a_linked_bots_thread_reads_through_its_stand_in() {
         "{comments:?}"
     );
     let item = b.item.clone();
-    let asked = hermesd::overview::attention_rows(&b.p.win.app, &b.win_app).expect("rows");
+    let asked = flotillad::overview::attention_rows(&b.p.win.app, &b.win_app).expect("rows");
     let question = asked
         .rows
         .iter()
@@ -106,7 +106,7 @@ async fn a_pin_is_forwarded_to_the_linked_computer() {
         win.db.project_pinned(&win_app).unwrap()
     })
     .await;
-    let o = hermesd::overview::overview(win, &[]).expect("overview");
+    let o = flotillad::overview::overview(win, &[]).expect("overview");
     assert_eq!(o.rows[0].project_id, b.win_app);
     assert!(o.rows[0].pinned);
     assert_eq!(o.rows[0].rank, 0);

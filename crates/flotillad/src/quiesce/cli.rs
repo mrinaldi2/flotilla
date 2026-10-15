@@ -1,6 +1,6 @@
-//! `hermesd quiesce start|status|resume <release>` (H-117 Q4): the
+//! `flotillad quiesce start|status|resume <release>` (H-117 Q4): the
 //! `install_quiesce` tool, asked over the local endpoint, which knows the
-//! bot by its process (H-044). `hermesd release install` calls the same.
+//! bot by its process (H-044). `flotillad release install` calls the same.
 
 use std::time::Duration;
 
@@ -8,7 +8,8 @@ use serde_json::{json, Value};
 
 use crate::config::Config;
 
-const USAGE: &str = "usage: hermesd quiesce <start|status|extend|resume> <release> [--version <v>]";
+const USAGE: &str =
+    "usage: flotillad quiesce <start|status|extend|resume> <release> [--version <v>]";
 
 /// A pause stops sessions and reaps for a few seconds before answering.
 const WAIT: Duration = Duration::from_secs(180);
@@ -84,7 +85,7 @@ pub fn describe(answer: &Value) -> String {
     }
     if report["services_changed"] == true {
         out.push_str(
-            "\n  note: the list of background services changed after the Hermes service \
+            "\n  note: the list of background services changed after the Flotilla service \
              started; this install used the earlier list",
         );
     }

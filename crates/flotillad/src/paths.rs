@@ -210,13 +210,26 @@ pub fn provision_bot(cfg: &Config, spec: &BotProvision<'_>) -> anyhow::Result<Bo
 }
 
 /// Keeps bots out of the daemon's secrets wherever the home lives, including
-/// through the `~/.gravity` symlink the home migration leaves behind.
+/// through the `~/.thehermes` and `~/.gravity` links the home migrations
+/// leave behind.
 pub(crate) fn secrets_deny_rule() -> String {
     format!("Read(~/{}/secrets/**)", crate::brand::HOME_DIR_NAME)
 }
 
-pub(crate) fn legacy_secrets_deny_rule() -> String {
-    format!("Read(~/{}/secrets/**)", crate::brand::LEGACY_HOME_DIR_NAME)
+/// The deny rules in every bot workspace's own `.claude/settings.json`.
+pub(crate) fn workspace_deny_rules() -> Vec<String> {
+    let mut rules = vec!["Read(../**)".to_string(), secrets_deny_rule()];
+    rules.extend(legacy_secrets_deny_rules());
+    rules.push("Bash(rm -rf /*)".to_string());
+    rules
+}
+
+/// [`secrets_deny_rule`] for each pre-rename home name.
+pub(crate) fn legacy_secrets_deny_rules() -> Vec<String> {
+    crate::brand::LEGACY_HOME_DIR_NAMES
+        .iter()
+        .map(|name| format!("Read(~/{name}/secrets/**)"))
+        .collect()
 }
 
 /// (Re)write the bot's `mcp.json`. Called at creation and again on every start,

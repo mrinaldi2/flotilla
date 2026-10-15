@@ -131,12 +131,7 @@ pub fn ensure_page(app: &AppState, version: &str, links: &Links) -> anyhow::Resu
         return Ok(());
     }
     let dirs = confine::prepare(&app.cfg)?;
-    let title = app
-        .cfg
-        .releases
-        .ios_title
-        .as_deref()
-        .unwrap_or("The Hermes");
+    let title = app.cfg.releases.ios_title.as_deref().unwrap_or("Flotilla");
     serve::write_page(
         &dirs,
         &links.dir,
@@ -224,7 +219,7 @@ pub fn info(app: &AppState, release: &Release) -> anyhow::Result<ReleaseInstall>
             .releases
             .ios_title
             .clone()
-            .unwrap_or_else(|| "The Hermes".to_string()),
+            .unwrap_or_else(|| "Flotilla".to_string()),
         approved_at: approved_at(app, release)?.map(timestamp),
     })
 }

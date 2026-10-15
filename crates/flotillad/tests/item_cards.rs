@@ -8,7 +8,7 @@ use common::board::new_item;
 use common::peer_board::board;
 use common::peers::{project, wait_until};
 use common::WsClient;
-use hermesd::kanban::model::Priority;
+use flotillad::kanban::model::Priority;
 use serde_json::{json, Value};
 
 fn entry<'a>(reply: &'a Value, id: &str) -> &'a Value {
@@ -24,8 +24,8 @@ fn entry<'a>(reply: &'a Value, id: &str) -> &'a Value {
 async fn cards_on_this_computer_come_back_with_where_they_are_kept() {
     let d = common::spawn_daemon().await;
     let mut owner = WsClient::connect(&d).await;
-    assert!(hermesd::app::CAPABILITIES.contains(&"item_cards"));
-    let project_id = project(&mut owner, "The Hermes").await;
+    assert!(flotillad::app::CAPABILITIES.contains(&"item_cards"));
+    let project_id = project(&mut owner, "Flotilla").await;
     let db = &d.app.db;
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), Some("H"))
         .unwrap();
@@ -50,7 +50,7 @@ async fn cards_on_this_computer_come_back_with_where_they_are_kept() {
     assert_eq!(reply["cards"].as_array().map(Vec::len), Some(3), "{reply}");
     let found = entry(&reply, &card);
     assert_eq!(found["project_id"], project_id.as_str());
-    assert_eq!(found["project_name"], "The Hermes");
+    assert_eq!(found["project_name"], "Flotilla");
     assert_eq!(found["card"]["title"], "Card links");
     assert_eq!(found["column_name"], "Inbox", "{found}");
     assert!(found["computer"].is_string());

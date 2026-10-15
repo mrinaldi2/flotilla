@@ -1,6 +1,6 @@
-//! The home migration (`hermesd migrate-home`) on two paired daemons, as on
+//! The home migration (`flotillad migrate-home`) on two paired daemons, as on
 //! the Mac and the PC: each runs on a pre-rename `~/.gravity` with bots and
-//! Claude Code transcripts, is stopped, migrated to `~/.thehermes`, and comes
+//! Claude Code transcripts, is stopped, migrated to `~/.flotilla`, and comes
 //! back up with every bot, its history and the peer link intact.
 
 use crate::common;
@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 use common::peers::{pair, project};
 use common::transcripts::transcript_dir;
 use common::*;
-use hermesd::migrate_home::{self, Plan};
+use flotillad::migrate_home::{self, Plan};
 use serde_json::json;
 
 struct Machine {
@@ -23,14 +23,14 @@ impl Machine {
         self.user.join(".gravity")
     }
     fn new_home(&self) -> PathBuf {
-        self.user.join(".thehermes")
+        self.user.join(".flotilla")
     }
     fn plan(&self) -> Plan {
         Plan::new(self.old_home(), self.new_home(), self.user.clone())
     }
 }
 
-fn on_home(user: PathBuf, home: PathBuf) -> impl FnOnce(&mut hermesd::config::Config) {
+fn on_home(user: PathBuf, home: PathBuf) -> impl FnOnce(&mut flotillad::config::Config) {
     move |cfg| {
         cfg.home = home;
         cfg.user_home = user;
@@ -115,7 +115,7 @@ async fn both_daemons_come_back_on_the_new_home_with_bots_and_history() {
         assert!(migrate_home::dry_run(&m.plan(), &mut out).expect("dry run"));
         let state = migrate_home::run(&m.plan(), &mut out).expect("migrate");
         assert!(state.is_complete(), "{}", String::from_utf8_lossy(&out));
-        assert!(m.new_home().join("hermesd.toml").is_file());
+        assert!(m.new_home().join("flotillad.toml").is_file());
         assert!(m.old_home().symlink_metadata().expect("link").is_symlink());
     }
 
@@ -140,7 +140,8 @@ async fn both_daemons_come_back_on_the_new_home_with_bots_and_history() {
                 format!("memory of {id}")
             );
             assert!(!transcript_dir(&m.user, old_ws).exists());
-            let activity = hermesd::activity::from_transcript(&m.user, &new_ws).expect("activity");
+            let activity =
+                flotillad::activity::from_transcript(&m.user, &new_ws).expect("activity");
             assert_eq!(activity.text, format!("hello from {id}"));
 
             // Regenerated at boot from the rewritten database.

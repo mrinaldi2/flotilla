@@ -110,10 +110,12 @@ export default function BoardView(props: BoardViewProps): ReactElement {
   const { status, refresh, adopt } = useBoard(client, project.id, connected && supported);
 
   if (!supported) {
-    return <Notice title="The board needs a newer Hermes service" />;
+    return <Notice title="The board needs a newer Flotilla service" />;
   }
   if (status.kind === "loading") {
-    return <Notice title={connected ? "Loading the board…" : "Waiting for the Hermes service…"} />;
+    return (
+      <Notice title={connected ? "Loading the board…" : "Waiting for the Flotilla service…"} />
+    );
   }
   if (status.kind === "failed") {
     if (status.code === "no_board") {

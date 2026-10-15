@@ -7,7 +7,7 @@ import type { ReactElement } from "react";
 import type { BoardApi } from "../../../protocol/board";
 import { boardCall } from "../../../protocol/board";
 import type { Bot } from "../../../protocol/entities";
-import type { ItemCard } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { ItemCard } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { typeLabel } from "../labels";
 import MenuButton from "../MenuButton";
 

@@ -8,11 +8,11 @@ use crate::common;
 use chrono::{Duration, Utc};
 use common::cuts::{checkout, cut, cuts, get, leave_out, main_tip, merged, numbers, DEVOPS};
 use common::WsClient;
-use hermesd::pr_cli::{merge_in, Plan as MergePlan};
-use hermesd::prs::merge::answer;
-use hermesd::prs::queue;
-use hermesd::releases::leave_out_cli::{revert_in, Plan};
-use hermesd::releases::leave_out_gate::executor;
+use flotillad::pr_cli::{merge_in, Plan as MergePlan};
+use flotillad::prs::merge::answer;
+use flotillad::prs::queue;
+use flotillad::releases::leave_out_cli::{revert_in, Plan};
+use flotillad::releases::leave_out_gate::executor;
 use serde_json::json;
 
 fn items(release: &serde_json::Value) -> Vec<String> {
@@ -83,13 +83,13 @@ async fn an_earlier_pr_is_reverted_through_the_owners_pr() {
     );
 
     // DevOps' command: the revert on a branch from main, pushed.
-    let gate = executor(&app, &devops, "hermes/leave_out", &json!({"id": lo})).unwrap();
+    let gate = executor(&app, &devops, "flotilla/leave_out", &json!({"id": lo})).unwrap();
     let tree = checkout(&r, &r.origin, "revert");
     let head = revert_in(&tree, &Plan::from_gate(&gate).unwrap(), &r.dev).unwrap();
     let opened = executor(
         &app,
         &devops,
-        "hermes/leave_out_pushed",
+        "flotilla/leave_out_pushed",
         &json!({"id": lo, "branch": gate["branch"], "head": head}),
     )
     .unwrap();
@@ -109,7 +109,13 @@ async fn an_earlier_pr_is_reverted_through_the_owners_pr() {
     let now = Utc::now();
     queue::step(&app, now).unwrap();
     queue::step(&app, now + Duration::seconds(11)).unwrap();
-    let check = answer(&app, &devops, "hermes/pr_merge", &json!({"number": number})).unwrap();
+    let check = answer(
+        &app,
+        &devops,
+        "flotilla/pr_merge",
+        &json!({"number": number}),
+    )
+    .unwrap();
     let plan = MergePlan {
         head: check["head_sha"].as_str().unwrap().into(),
         branch: check["branch"].as_str().unwrap().into(),
@@ -122,7 +128,7 @@ async fn an_earlier_pr_is_reverted_through_the_owners_pr() {
     answer(
         &app,
         &devops,
-        "hermes/pr_merged",
+        "flotilla/pr_merged",
         &json!({"number": number, "sha": head,
                 "branch": {"deleted": done.branch_deleted, "note": done.branch_note}}),
     )

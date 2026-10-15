@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import type { FormEvent, ReactElement } from "react";
-import type { Board } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { Board } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import { useDialogKeys } from "../../hooks/useReturnFocus";
 import { errText } from "../../util";
 import OverlayShell from "../overlay/OverlayShell";
@@ -20,7 +20,7 @@ export interface NewBoard {
 
 interface NewBoardSheetProps {
   readonly boards: readonly Board[];
-  /** Resolves once the board exists; rejects with the Hermes service's refusal. */
+  /** Resolves once the board exists; rejects with the Flotilla service's refusal. */
   readonly onCreate: (board: NewBoard) => Promise<void>;
   readonly onCancel: () => void;
   /** Prefills the form (stories). */

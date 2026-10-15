@@ -134,7 +134,7 @@ async fn files_are_confined_to_the_bot_and_the_project_artifacts() {
             .get_project(&s.project_id)
             .expect("db")
             .expect("project");
-    let artifacts = hermesd::paths::artifacts_dir(&s.d.app.cfg, &project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&s.d.app.cfg, &project.dir_name);
     std::fs::write(artifacts.join("report.md"), "# Weekly report\n\nAll green.").expect("write");
 
     let listed =
@@ -230,7 +230,7 @@ async fn artifacts_come_a_page_at_a_time_newest_first() {
             .get_project(&s.project_id)
             .expect("db")
             .expect("project");
-    let artifacts = hermesd::paths::artifacts_dir(&s.d.app.cfg, &project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&s.d.app.cfg, &project.dir_name);
     let start = std::time::SystemTime::now() - std::time::Duration::from_secs(3600);
     // Two files share a time, so the cursor has to tell them apart by path.
     for (i, name) in ["a.md", "b.md", "c.md", "d.md", "e.md", "f.md", "g.md"]

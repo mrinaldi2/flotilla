@@ -8,7 +8,7 @@ use crate::common;
 use common::releases::{releases, rule};
 use common::tasks::error_text;
 use common::WsClient;
-use hermesd::kanban::model::Role;
+use flotillad::kanban::model::Role;
 use serde_json::json;
 
 /// M1: mixed ruling → successor → cancelled → second successor → submitted →

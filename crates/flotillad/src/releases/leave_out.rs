@@ -5,7 +5,7 @@
 //!   device or ticket): if every left-out PR merged after every kept one,
 //!   the release is cut again at the last kept merge. Otherwise each later
 //!   PR touching the same files is refused by name; then DevOps gets a task
-//!   to run `hermesd release leave-out <id>`, which reverts them on a branch
+//!   to run `flotillad release leave-out <id>`, which reverts them on a branch
 //!   from main. That branch becomes the owner's PR: checks, no bot review,
 //!   the normal queue. Once it merges, the release is cut again at the new
 //!   main, the left-out PRs are `reverted`, and their cards go back to Doing.
@@ -255,7 +255,7 @@ fn task_devops(
     };
     let names: Vec<String> = left.iter().map(|p| format!("#{}", p.number)).collect();
     let body = format!(
-        "The owner left {} out of release {}. Run `hermesd release leave-out {}` in your \
+        "The owner left {} out of release {}. Run `flotillad release leave-out {}` in your \
          checkout: it reverts them on a branch from main and opens that as the owner's PR, which \
          merges through the queue (checks, no bot review). The release is then cut again.",
         names.join(", "),

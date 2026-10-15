@@ -1,5 +1,5 @@
 //! Claude Code hook settings on Unix: lifecycle events and permission prompts
-//! sent to the daemon by `hermesd hook` over the local endpoint (H-044), or
+//! sent to the daemon by `flotillad hook` over the local endpoint (H-044), or
 //! posted with curl and the bearer token when `bot_transport = "http"`.
 
 use crate::bus_auth::HookTransport;
@@ -34,12 +34,7 @@ pub fn settings(transport: &HookTransport) -> serde_json::Value {
         // pre-approved permissions.
         "permissions": {
             "allow": [],
-            "deny": [
-                "Read(../**)",
-                crate::paths::secrets_deny_rule(),
-                crate::paths::legacy_secrets_deny_rule(),
-                "Bash(rm -rf /*)"
-            ]
+            "deny": crate::paths::workspace_deny_rules()
         },
         "hooks": hooks
     });

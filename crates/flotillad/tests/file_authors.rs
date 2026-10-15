@@ -45,7 +45,7 @@ async fn each_file_names_the_bot_that_made_it() {
     let writer = create_bot(&mut c, &pid, "writer").await;
     let artist = create_bot(&mut c, &pid, "artist").await;
     let project = d.app.db.get_project(&pid).expect("db").expect("project");
-    let root = hermesd::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
+    let root = flotillad::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
     std::fs::create_dir_all(root.join("uploads")).expect("dirs");
     for name in ["report.md", "shot.png", "uploads/brief.pdf", "stray.txt"] {
         std::fs::write(root.join(name), "x").expect("write");

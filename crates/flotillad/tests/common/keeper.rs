@@ -7,8 +7,8 @@
 use std::sync::Arc;
 
 use chrono::{Duration, Utc};
-use hermesd::app::AppState;
-use hermesd::kanban::keeper::{self, Keeper};
+use flotillad::app::AppState;
+use flotillad::kanban::keeper::{self, Keeper};
 use serde_json::json;
 
 use super::cards::Fresh;
@@ -76,7 +76,7 @@ pub fn notes(app: &AppState, bot_id: &str) -> Vec<String> {
 
 /// The project's Needs-you rows the keeper raised: (id, title).
 pub fn rows(app: &AppState, project_id: &str) -> Vec<(String, String)> {
-    hermesd::overview::attention_rows(app, project_id)
+    flotillad::overview::attention_rows(app, project_id)
         .unwrap()
         .rows
         .into_iter()

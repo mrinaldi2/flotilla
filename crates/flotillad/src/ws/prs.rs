@@ -2,7 +2,7 @@
 //! setting, the owner's verdict and line comments, and the owner's flag.
 //! The setting, verdicts and comments need `approve` and a paired device or
 //! the app's ticket (`owner_auth`); the owner token is refused before these
-//! run. JSON WS `{type, req_id, ...}` with `hermes.pr.v1` field names.
+//! run. JSON WS `{type, req_id, ...}` with `flotilla.pr.v1` field names.
 
 use serde_json::{json, Value};
 

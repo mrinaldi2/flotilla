@@ -8,8 +8,8 @@ use crate::common;
 use chrono::Duration;
 use common::cards::fresh;
 use common::keeper::{age, gated, long_running, marks, notes, rows, step, up_long};
-use hermesd::actor::Actor;
-use hermesd::db::MoveTo;
+use flotillad::actor::Actor;
+use flotillad::db::MoveTo;
 use serde_json::json;
 
 #[tokio::test]

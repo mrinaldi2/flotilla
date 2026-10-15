@@ -1,7 +1,7 @@
 //! Whether the home variable names a home of the user's choosing.
 //!
 //! The variable alone does not say so: the Windows task launcher sets
-//! `THEHERMES_HOME` (and the 0.14 one `GRAVITY_HOME`) to the default home, and
+//! `FLOTILLA_HOME` (and the 0.14 one `GRAVITY_HOME`) to the default home, and
 //! a shell started under it inherits that. Only a home other than both
 //! defaults is the user's.
 
@@ -12,12 +12,9 @@ pub fn home_override_var() -> Option<String> {
     if !super::home_is_overridden() {
         return None;
     }
-    [
-        crate::brand::env_name("HOME"),
-        crate::brand::legacy_env_name("HOME"),
-    ]
-    .into_iter()
-    .find(|name| std::env::var_os(name).is_some())
+    crate::brand::all_env_names("HOME")
+        .into_iter()
+        .find(|name| std::env::var_os(name).is_some())
 }
 
 /// `Home: <path>`, naming the variable that chose it, so an operator sees
@@ -29,8 +26,8 @@ pub fn home_notice(home: &Path, override_var: Option<&str>) -> String {
     }
 }
 
-/// `env_home` is overridden when it is set and names neither
-/// `<user_home>/.gravity` nor `<user_home>/.thehermes`, after resolving
+/// `env_home` is overridden when it is set and names none of
+/// `<user_home>/.flotilla`, `.thehermes` and `.gravity`, after resolving
 /// symlinks where the path exists and ignoring case where the file system
 /// does.
 pub(crate) fn overridden(env_home: Option<&Path>, user_home: &Path) -> bool {
@@ -38,12 +35,9 @@ pub(crate) fn overridden(env_home: Option<&Path>, user_home: &Path) -> bool {
         return false;
     };
     let home = key(home);
-    ![
-        crate::brand::LEGACY_HOME_DIR_NAME,
-        crate::brand::HOME_DIR_NAME,
-    ]
-    .iter()
-    .any(|name| key(&user_home.join(name)) == home)
+    !std::iter::once(crate::brand::HOME_DIR_NAME)
+        .chain(crate::brand::LEGACY_HOME_DIR_NAMES)
+        .any(|name| key(&user_home.join(name)) == home)
 }
 
 /// The path to compare: canonical when it exists, else lexically normalized,
@@ -100,7 +94,7 @@ mod tests {
     #[test]
     fn either_default_home_is_not_an_override() {
         let user = user_home();
-        for name in [".gravity", ".thehermes"] {
+        for name in [".gravity", ".thehermes", ".flotilla"] {
             let home = user.join(name).display().to_string();
             assert!(!is(&home, &user), "{home}");
             assert!(!is(&format!("{home}{SEP}"), &user), "{home} with a slash");
@@ -125,13 +119,13 @@ mod tests {
     fn a_custom_home_is_an_override() {
         let user = user_home();
         for custom in [
-            user.join("hermes-test"),
-            user.join(".thehermes").join("nested"),
-            user.join(".thehermes-dev"),
+            user.join("flotilla-test"),
+            user.join(".flotilla").join("nested"),
+            user.join(".flotilla-dev"),
             PathBuf::from(if cfg!(windows) {
-                r"D:\hermes"
+                r"D:\flotilla"
             } else {
-                "/var/lib/hermes"
+                "/var/lib/flotilla"
             }),
         ] {
             assert!(is(&custom.display().to_string(), &user), "{custom:?}");
@@ -142,13 +136,13 @@ mod tests {
     fn a_symlink_to_a_default_home_is_not_an_override() {
         let dir = tempfile::tempdir().unwrap();
         let user = dir.path().join("me");
-        std::fs::create_dir_all(user.join(".thehermes")).unwrap();
+        std::fs::create_dir_all(user.join(".flotilla")).unwrap();
         std::fs::create_dir_all(user.join("elsewhere")).unwrap();
         let link = dir.path().join("link");
         #[cfg(unix)]
-        let made = std::os::unix::fs::symlink(user.join(".thehermes"), &link);
+        let made = std::os::unix::fs::symlink(user.join(".flotilla"), &link);
         #[cfg(windows)]
-        let made = std::os::windows::fs::symlink_dir(user.join(".thehermes"), &link);
+        let made = std::os::windows::fs::symlink_dir(user.join(".flotilla"), &link);
         if made.is_err() {
             // Windows without the symlink privilege; nothing to resolve.
             return;
@@ -156,7 +150,7 @@ mod tests {
         assert!(!is(&link.display().to_string(), &user));
         assert!(is(&user.join("elsewhere").display().to_string(), &user));
         // The home exists and the variable reaches it another way round.
-        let roundabout = user.join("elsewhere").join("..").join(".thehermes");
+        let roundabout = user.join("elsewhere").join("..").join(".flotilla");
         assert!(!is(&roundabout.display().to_string(), &user));
     }
 }

@@ -22,7 +22,7 @@ export const Paused: Story = () => (
   </div>
 );
 
-/** The install waiting on programs that still hold the Hermes folder. */
+/** The install waiting on programs that still hold the Flotilla folder. */
 export const Blocked: Story = () => (
   <div className="main" style={{ width: 900 }}>
     <QuiesceBanner

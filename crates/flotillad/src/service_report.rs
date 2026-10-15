@@ -1,4 +1,4 @@
-//! `hermesd service status --json`: the facts the desktop app reads on launch
+//! `flotillad service status --json`: the facts the desktop app reads on launch
 //! to decide whether this machine's service needs installing, finishing or
 //! repairing. Facts only; the app decides what they add up to.
 
@@ -24,7 +24,7 @@ pub struct Report {
     pub port: u16,
     /// What `/health` on `port` reports; `None` when nothing answers.
     pub version: Option<String>,
-    /// How this hermesd build knows the owner's app (H-114).
+    /// How this flotillad build knows the owner's app (H-114).
     pub identity: crate::bus_auth::app_identity::Identity,
 }
 

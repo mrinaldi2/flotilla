@@ -7,7 +7,7 @@ fn lsof_output_names_each_holder_once_preferring_its_cwd() {
                   p200\ng200\ncnode\nftxt\nn/usr/bin/node\nf12\nn/Users/u/.gravity/browser/x\n\
                   fcwd\nn/Users/u/.gravity/projects\n\
                   p300\ng300\ncvim\nfcwd\nn/Users/u/.gravity-old/x\n\
-                  p400\ng1\nchermesd\nfcwd\nn/Users/u/.gravity\n";
+                  p400\ng1\ncflotillad\nfcwd\nn/Users/u/.gravity\n";
     let holders = parse_lsof(output, &[home], 400);
     assert_eq!(holders.len(), 2, "{holders:?}");
     assert_eq!(

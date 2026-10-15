@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 import { fromJson } from "@bufbuild/protobuf";
 import type { JsonValue } from "@bufbuild/protobuf";
 import { describe, expect, it } from "vitest";
-import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { PullRequestSchema } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { PullRequestSchema } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { PrRef, Release } from "../../protocol/releases";
 import {
   MAIN_RECORDS,

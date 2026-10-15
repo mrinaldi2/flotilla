@@ -3,8 +3,8 @@
 use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
-use hermesd::cleanup::model::Job;
-use hermesd::prs::model::Pr;
+use flotillad::cleanup::model::Job;
+use flotillad::prs::model::Pr;
 use serde_json::json;
 
 use super::prs::{commit, head, Repo};
@@ -70,7 +70,7 @@ pub fn merge(r: &Repo, number: u32, tree: &Path) -> Pr {
     db.board_tx(|t| t.set_pr_merged(&open, &sha, &r.pair.ids[0]))
         .unwrap();
     let merged = pr(r, number);
-    hermesd::cleanup::enqueue(&r.pair.d.app, &merged).unwrap();
+    flotillad::cleanup::enqueue(&r.pair.d.app, &merged).unwrap();
     merged
 }
 
@@ -81,7 +81,7 @@ pub async fn merged(r: &mut Repo, title: &str, tree: &Path, branch: &str) -> Pr 
 }
 
 pub async fn step(r: &Repo, at: DateTime<Utc>) {
-    hermesd::cleanup::step(&r.pair.d.app, at).await;
+    flotillad::cleanup::step(&r.pair.d.app, at).await;
 }
 
 pub fn jobs(r: &Repo, pr: &Pr) -> Vec<Job> {
@@ -91,7 +91,7 @@ pub fn jobs(r: &Repo, pr: &Pr) -> Vec<Job> {
 
 /// The job for the worktree at `path`.
 pub fn job_at(r: &Repo, pr: &Pr, path: &Path) -> Job {
-    let want = hermesd::safe_git::canonical(path)
+    let want = flotillad::safe_git::canonical(path)
         .unwrap_or(path.to_path_buf())
         .display()
         .to_string();

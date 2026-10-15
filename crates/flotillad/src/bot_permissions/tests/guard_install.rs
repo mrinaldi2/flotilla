@@ -102,7 +102,7 @@ fn no_bot_writes_the_daemons_run_folder() {
 /// send the gate request to whatever daemon that names.
 #[test]
 fn the_daemons_commands_go_to_this_computers_daemon_only() {
-    let app = "\"/Applications/The Hermes.app/Contents/MacOS/hermesd\"";
+    let app = "\"/Applications/Flotilla.app/Contents/MacOS/flotillad\"";
     for sub in [
         "release install be27e627",
         "quiesce start --release be27e627",
@@ -118,19 +118,22 @@ fn the_daemons_commands_go_to_this_computers_daemon_only() {
             format!("{app} {sub} --config /tmp/fake.toml"),
             format!("{app} {sub} --config=/tmp/fake.toml"),
             format!("{app} --config /tmp/fake.toml {sub}"),
-            format!("THEHERMES_HOME=/tmp/fake {app} {sub}"),
+            format!("FLOTILLA_HOME=/tmp/fake {app} {sub}"),
             format!("HOME=/tmp/fake {app} {sub}"),
-            format!("env -u THEHERMES_HOME {app} {sub}"),
+            format!("env -u FLOTILLA_HOME {app} {sub}"),
             format!("export GRAVITY_HOME=/tmp/fake; {app} {sub}"),
             format!("sh -c '{app} {sub} --config /tmp/fake.toml'"),
-            format!("hermesd {sub} --config /tmp/fake.toml"),
+            format!("flotillad {sub} --config /tmp/fake.toml"),
         ] {
             let why = bash(&odd).unwrap_or_default();
             assert!(why.contains("this computer's daemon"), "{odd}: {why}");
         }
     }
     // Other daemon commands keep their flags.
-    assert_eq!(bash("hermesd --version"), None);
-    assert_eq!(bash("echo hermesd release install r1 --config x"), None);
-    assert_eq!(bash("hermesd release status r1 --config /tmp/x.toml"), None);
+    assert_eq!(bash("flotillad --version"), None);
+    assert_eq!(bash("echo flotillad release install r1 --config x"), None);
+    assert_eq!(
+        bash("flotillad release status r1 --config /tmp/x.toml"),
+        None
+    );
 }

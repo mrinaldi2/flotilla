@@ -2,8 +2,8 @@
 use crate::common;
 use std::time::Duration;
 
-use hermesd::runtime::pty::PtyAdapter;
-use hermesd::runtime::{BotSpec, RuntimeAdapter, SessionEvent};
+use flotillad::runtime::pty::PtyAdapter;
+use flotillad::runtime::{BotSpec, RuntimeAdapter, SessionEvent};
 use serde_json::json;
 
 #[tokio::test]
@@ -114,7 +114,7 @@ async fn native_codex_switch_works_with_the_windows_service_path() {
 async fn check_provider_switch(codex_bin: String, codex_args: Vec<String>) {
     let fixtures = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures");
     let daemon = common::spawn_daemon_with(|cfg| {
-        cfg.runtime = hermesd::config::RuntimeKind::Pty;
+        cfg.runtime = flotillad::config::RuntimeKind::Pty;
         cfg.supervision_interval_ms = 50;
         cfg.user_home = cfg.home.join("cli-home");
         std::fs::create_dir_all(&cfg.user_home).unwrap();
@@ -209,7 +209,7 @@ async fn check_provider_switch(codex_bin: String, codex_args: Vec<String>) {
 async fn missing_codex_is_rejected_before_stopping_a_live_claude_session() {
     let fixtures = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures");
     let daemon = common::spawn_daemon_with(|cfg| {
-        cfg.runtime = hermesd::config::RuntimeKind::Pty;
+        cfg.runtime = flotillad::config::RuntimeKind::Pty;
         cfg.user_home = cfg.home.join("cli-home");
         std::fs::create_dir_all(&cfg.user_home).unwrap();
         cfg.claude_bin = "node".into();
@@ -245,7 +245,7 @@ async fn missing_codex_is_rejected_before_stopping_a_live_claude_session() {
 #[tokio::test]
 async fn codex_startup_failure_is_reported_in_state_and_terminal() {
     let daemon = common::spawn_daemon_with(|cfg| {
-        cfg.runtime = hermesd::config::RuntimeKind::Pty;
+        cfg.runtime = flotillad::config::RuntimeKind::Pty;
         cfg.supervision_interval_ms = 50;
         cfg.codex_bin = "node".into();
         cfg.codex_args = vec!["-e".into(), "process.exit(7)".into(), "--".into()];
@@ -280,7 +280,7 @@ async fn codex_startup_failure_is_reported_in_state_and_terminal() {
         .into_iter()
         .flat_map(|frame| frame.data)
         .collect();
-    let expected = format!("[{}] Engine couldn't start", hermesd::brand::SHORT_NAME);
+    let expected = format!("[{}] Engine couldn't start", flotillad::brand::SHORT_NAME);
     assert!(String::from_utf8_lossy(&output).contains(&expected));
     assert_eq!(daemon.app.supervisor.active_total(), 0);
 }

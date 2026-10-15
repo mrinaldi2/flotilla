@@ -1,6 +1,6 @@
 //! Services that hold the home, stopped through their own service manager
 //! during a pause and started again after it (H-117 Q3): colima and lima by
-//! default, from `[[quiesce.service]]` in `hermesd.toml`. Bots can't edit
+//! default, from `[[quiesce.service]]` in `flotillad.toml`. Bots can't edit
 //! that file, and the list is read once at daemon start: a list changed
 //! since is never run, and the report says so (ARCH-R49).
 //!
@@ -39,7 +39,7 @@ pub struct ServiceSpec {
     pub always: bool,
 }
 
-/// `[quiesce]` in `hermesd.toml`.
+/// `[quiesce]` in `flotillad.toml`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct QuiesceConfig {

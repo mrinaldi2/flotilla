@@ -16,7 +16,7 @@ export const TERMINAL_TITLE = "A terminal command wants to act as you";
 
 export const TERMINAL_BODY =
   "If you allow it, this one command runs with your owner rights: it can do anything you can " +
-  "do in The Hermes, including approving releases and deleting bots. Bots can run terminal " +
+  "do in Flotilla, including approving releases and deleting bots. Bots can run terminal " +
   "commands too. Allow it only if you just ran it yourself.";
 
 /** "Desktop Dev wants to run Bash", or the terminal's own line. */
@@ -37,13 +37,13 @@ function shortPath(path: string): string {
   return path.replace(/^(\/Users\/[^/]+|\/home\/[^/]+|[A-Za-z]:\\Users\\[^\\]+)(?=[/\\]|$)/, "~");
 }
 
-/** "From hermesd in Terminal · in ~/Developer/gravity · process 4242". */
+/** "From flotillad in Terminal · in ~/Developer/gravity · process 4242". */
 export function originLine(origin: TerminalOrigin): string {
   const where = origin.cwd === undefined ? [] : [`in ${shortPath(origin.cwd)}`];
   const pid = `process ${origin.pid}`;
   if (origin.process === undefined && origin.launched_from === undefined) {
     const known = [`From ${pid}`, ...where].join(" · ");
-    return `${known}. The Hermes couldn't tell which app started it.`;
+    return `${known}. Flotilla couldn't tell which app started it.`;
   }
   const who = [origin.process, origin.launched_from].filter((part) => part !== undefined);
   return [`From ${who.join(" in ")}`, ...where, pid].join(" · ");
@@ -60,5 +60,5 @@ export function permissionDetail(request: PermissionRequest): string {
     return request.summary;
   }
   const started = origin.bot === undefined ? "" : `Started in ${origin.bot}'s workspace. `;
-  return `${started}${origin.command} · open The Hermes to allow or deny it.`;
+  return `${started}${origin.command} · open Flotilla to allow or deny it.`;
 }

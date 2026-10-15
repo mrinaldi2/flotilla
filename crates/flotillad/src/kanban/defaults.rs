@@ -158,7 +158,7 @@ pub fn description_skeleton(template: &Value) -> String {
 }
 
 /// The item-id prefix a project starts with: the initials of its name in
-/// capitals ("The Hermes" → "TH", "gravity" → "G"), or "B" when it has none.
+/// capitals ("Flotilla" → "TH", "gravity" → "G"), or "B" when it has none.
 pub fn key_for(project_name: &str) -> String {
     let initials: String = project_name
         .split(|c: char| !c.is_alphanumeric())
@@ -181,6 +181,7 @@ mod tests {
     #[test]
     fn keys_come_from_initials() {
         assert_eq!(key_for("The Hermes"), "TH");
+        assert_eq!(key_for("Flotilla"), "F");
         assert_eq!(key_for("gravity"), "G");
         assert_eq!(key_for("my_app 2"), "MA");
         assert_eq!(key_for("42"), "B");

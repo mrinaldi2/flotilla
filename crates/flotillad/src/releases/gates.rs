@@ -1,15 +1,15 @@
-//! The daemon's side of `hermesd release land` (H-117 X2) and
-//! `hermesd release build-installer` (X3). The command runs in the bot's
+//! The daemon's side of `flotillad release land` (H-117 X2) and
+//! `flotillad release build-installer` (X3). The command runs in the bot's
 //! session and asks over the local endpoint, which knows the bot by its
 //! process, so the daemon checks the extra, the role and the release before
 //! the command touches anything, and records what it did on the release.
 //!
-//! - `hermes/release_land {release_id}`: the bot holds `release_main` and is
+//! - `flotilla/release_land {release_id}`: the bot holds `release_main` and is
 //!   the project's DevOps; the owner approved the release.
-//! - `hermes/release_landed {release_id, commit, tag}`: recorded.
-//! - `hermes/release_build_installer {release_id}`: the bot holds
+//! - `flotilla/release_landed {release_id, commit, tag}`: recorded.
+//! - `flotilla/release_build_installer {release_id}`: the bot holds
 //!   `build_installers`; the owner approved the release.
-//! - `hermes/release_installer_built {release_id, commit, file, sha256}`:
+//! - `flotilla/release_installer_built {release_id, commit, file, sha256}`:
 //!   recorded, for `release publish`.
 
 use std::sync::Arc;
@@ -26,10 +26,10 @@ use crate::kanban::model::Role;
 use super::model::{Release, ReleaseEvent, ReleaseStatus};
 use super::{load, Caller};
 
-const LAND: &str = "hermes/release_land";
-const LANDED: &str = "hermes/release_landed";
-const BUILD: &str = "hermes/release_build_installer";
-const BUILT: &str = "hermes/release_installer_built";
+const LAND: &str = "flotilla/release_land";
+const LANDED: &str = "flotilla/release_landed";
+const BUILD: &str = "flotilla/release_build_installer";
+const BUILT: &str = "flotilla/release_installer_built";
 
 /// Answers one of the release gates from `bot_id`'s session, or `None` for
 /// any other request.
@@ -178,7 +178,7 @@ fn gate(
     // A release cut from main is already on main: it is tagged (H-272).
     if extra == PermissionExtra::ReleaseMain && release.cut.is_some() {
         return Err(forbidden(format!(
-            "release {} was cut from main: tag it with `hermesd release tag`",
+            "release {} was cut from main: tag it with `flotillad release tag`",
             release.name
         )));
     }

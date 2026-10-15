@@ -11,7 +11,7 @@ use crate::kanban::model::{ItemType, Priority};
 use crate::prs::check_model::{CheckResult, NewCheck, Report};
 
 fn project(db: &Db) -> String {
-    let p = db.create_project("The Hermes", "the-hermes").unwrap();
+    let p = db.create_project("Flotilla", "flotilla").unwrap();
     db.ensure_board(&p.id, "d-mac", Some("H")).unwrap();
     p.id
 }

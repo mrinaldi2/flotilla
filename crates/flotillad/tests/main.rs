@@ -1,7 +1,7 @@
 //! Every integration test, built as one program (0.19.0). Each file in
 //! `tests/` used to be its own executable holding the whole daemon and its
 //! debug info, about 120 MB each; as modules of one test program they link
-//! once. `cargo test -p hermesd --test integration <file>::` runs one file.
+//! once. `cargo test -p flotillad --test integration <file>::` runs one file.
 //!
 //! Two files stay programs of their own (`Cargo.toml`), because they own
 //! state that is per process: `owner_ticket_obs` installs the global log
@@ -129,6 +129,7 @@ mod peer_grants;
 mod peer_grants_ruling;
 mod peer_owner_acts;
 mod peer_owner_input;
+mod peer_rename_compat;
 mod peer_task_cards;
 mod peer_terminal;
 mod peer_unverified_owner;

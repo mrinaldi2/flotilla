@@ -7,7 +7,7 @@ use crate::common;
 
 use common::ios_targets::{ios_qa_tests_ios, package, pass, team, DEVOPS, IOS_QA, TESTER_IMAC};
 use common::WsClient;
-use hermesd::quiesce::pending;
+use flotillad::quiesce::pending;
 use serde_json::{json, Value};
 
 /// The owner's ship ruling on a submitted package.

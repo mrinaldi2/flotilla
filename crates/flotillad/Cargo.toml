@@ -1,5 +1,5 @@
 [package]
-name = "hermesd"
+name = "flotillad"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -40,7 +40,7 @@ base64 = "0.22"
 test-support = []
 
 [dev-dependencies]
-hermesd = { path = ".", features = ["test-support"] }
+flotillad = { path = ".", features = ["test-support"] }
 tempfile = "3"
 tokio = { workspace = true, features = ["test-util"] }
 reqwest = { version = "0.12", features = ["json"] }

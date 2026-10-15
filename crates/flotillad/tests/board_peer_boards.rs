@@ -10,10 +10,10 @@ use common::peer_board::board;
 use common::peer_files::{owner_attach, screenshot, stored};
 use common::peers::wait_until;
 use common::tasks::error_text;
-use hermesd::actor::Actor;
-use hermesd::kanban::admin::{self, By, Structure};
-use hermesd::kanban::model::{ProjectRole, Role};
-use hermesd::kanban::presets::Preset;
+use flotillad::actor::Actor;
+use flotillad::kanban::admin::{self, By, Structure};
+use flotillad::kanban::model::{ProjectRole, Role};
+use flotillad::kanban::presets::Preset;
 use serde_json::{json, Value};
 
 fn research(boards: &Value) -> Value {
@@ -126,7 +126,7 @@ async fn a_linked_bot_edits_a_board_homed_elsewhere_and_reads_its_screenshot() {
     let path = listed["path"].as_str().expect("path");
     assert!(path.contains(&att.sha256), "{got}");
     let win_project = win.db.get_project(&b.win_app).unwrap().unwrap();
-    let artifacts = hermesd::paths::artifacts_dir(&win.cfg, &win_project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&win.cfg, &win_project.dir_name);
     assert!(std::path::Path::new(path).starts_with(&artifacts), "{path}");
     assert_eq!(std::fs::read(path).unwrap(), shot);
     let description = got["item"]["description"].as_str().unwrap();

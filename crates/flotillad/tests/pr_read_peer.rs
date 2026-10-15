@@ -12,8 +12,8 @@ use common::pr_wire::{self as w, call, error, expect_push, response};
 use common::prs::{clone, commit};
 use common::repo::{git, remote};
 use common::WsClient;
-use hermesd::actor::Actor;
-use hermesd::db::MoveTo;
+use flotillad::actor::Actor;
+use flotillad::db::MoveTo;
 use serde_json::json;
 
 #[tokio::test]

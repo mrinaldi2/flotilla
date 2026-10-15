@@ -27,12 +27,12 @@ fn at(stamp: &str) -> DateTime<Utc> {
 fn mangles_the_workspace_path_the_way_claude_code_does() {
     let dir = transcript_dir(
         Path::new("/Users/me"),
-        Path::new("/Users/me/.thehermes/projects/labs/bots/chief/workspace"),
+        Path::new("/Users/me/.flotilla/projects/labs/bots/chief/workspace"),
     );
     assert_eq!(
         dir,
         Path::new("/Users/me/.claude/projects")
-            .join("-Users-me--thehermes-projects-labs-bots-chief-workspace")
+            .join("-Users-me--flotilla-projects-labs-bots-chief-workspace")
     );
 }
 
@@ -40,9 +40,9 @@ fn mangles_the_workspace_path_the_way_claude_code_does() {
 fn mangles_underscores_like_claude_code() {
     let dir = transcript_dir(
         Path::new("/Users/me"),
-        Path::new("/Users/me/.thehermes/projects/my_app/bots/q_a/workspace"),
+        Path::new("/Users/me/.flotilla/projects/my_app/bots/q_a/workspace"),
     );
-    assert!(dir.ends_with("-Users-me--thehermes-projects-my-app-bots-q-a-workspace"));
+    assert!(dir.ends_with("-Users-me--flotilla-projects-my-app-bots-q-a-workspace"));
 }
 
 #[test]
@@ -150,7 +150,7 @@ fn compares_stamps_as_instants_not_strings() {
 }
 
 #[test]
-fn daemon_notices_preview_as_hermes() {
+fn daemon_notices_preview_as_flotilla() {
     let own = bus::Sender {
         kind: SenderKind::Bot,
         bot_id: Some("b1".into()),
@@ -159,7 +159,7 @@ fn daemon_notices_preview_as_hermes() {
     assert_eq!(preview_sender(&own, "b1"), "");
     assert_eq!(
         preview_sender(&crate::messaging::daemon_sender(), "b1"),
-        "Hermes"
+        "Flotilla"
     );
     assert_eq!(
         preview_sender(&crate::messaging::user_sender(), "b1"),

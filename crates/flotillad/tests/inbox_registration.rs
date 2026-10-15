@@ -7,7 +7,7 @@
 use crate::common;
 
 use common::*;
-use hermesd::bus_auth::os::OsProcessTable;
+use flotillad::bus_auth::os::OsProcessTable;
 use serde_json::{json, Value};
 
 #[tokio::test]

@@ -3,8 +3,8 @@
 // main or has conflicts. Read-only: reviewing is H-277's.
 
 import type { ReactElement } from "react";
-import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { PrState } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { PrState } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import CardLink from "../cards/CardLink";
 import { checksSummary, splitChecks } from "./checkText";
 import type { Tone } from "./prText";

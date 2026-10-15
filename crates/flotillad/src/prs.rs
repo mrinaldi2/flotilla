@@ -42,7 +42,7 @@ use serde_json::Value;
 use crate::app::AppState;
 use model::{Pr, PrState};
 
-/// The short names bots use for `hermes.pr.v1` enums, with their wire
+/// The short names bots use for `flotilla.pr.v1` enums, with their wire
 /// names, for the tool schemas (`open` ↔ `PR_STATE_OPEN`).
 pub fn spellings(enum_name: &str) -> Option<Vec<(&'static str, &'static str)>> {
     match enum_name {

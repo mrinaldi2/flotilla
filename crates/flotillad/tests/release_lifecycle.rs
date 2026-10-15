@@ -155,7 +155,7 @@ async fn testing_is_recorded_against_the_exact_build() {
         .call(
             "release_attach_build",
             json!({"release_id": id, "platform": "daemon", "version": "0.16.0",
-                   "artifact": "/builds/hermesd", "sha256": "a".repeat(64)}),
+                   "artifact": "/builds/flotillad", "sha256": "a".repeat(64)}),
         )
         .await;
     let test = |sha: String| json!({"release_id": id, "machine": "mac", "build_sha256": sha, "result": "pass"});
@@ -227,7 +227,7 @@ async fn the_owner_holds_a_package_and_it_comes_back() {
     // The reminder comes due: the decision sweep resumes it, and the
     // package waits for the owner again.
     assert!(d.app.db.try_resume(decision_id).unwrap());
-    hermesd::releases::lifecycle::on_decision_resumed(&d.app, decision_id).unwrap();
+    flotillad::releases::lifecycle::on_decision_resumed(&d.app, decision_id).unwrap();
     let back = owner
         .request(json!({"type": "get_release", "release_id": id}))
         .await;

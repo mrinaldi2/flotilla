@@ -8,7 +8,7 @@ use crate::common;
 use bus::PermissionExtra;
 use common::releases::{releases, Releases};
 use common::*;
-use hermesd::releases::gates::serve;
+use flotillad::releases::gates::serve;
 use serde_json::{json, Value};
 
 const C1: &str = "1111111111111111111111111111111111111111";
@@ -31,7 +31,7 @@ async fn package(r: &mut Releases, commit: Option<&str>) -> String {
         .await;
     let id = created["release"]["id"].as_str().unwrap().to_string();
     let mut build = json!({"release_id": id, "platform": "daemon", "version": "0.17.0",
-                           "artifact": "/builds/hermesd", "sha256": "a".repeat(64)});
+                           "artifact": "/builds/flotillad", "sha256": "a".repeat(64)});
     if let Some(c) = commit {
         build["source_commit"] = json!(c);
     }
@@ -71,7 +71,7 @@ async fn landing_takes_release_main_devops_approval_and_the_built_commit() {
     let (devops, tester) = (r.pair.ids[1].clone(), r.pair.ids[2].clone());
     let land = json!({"release_id": id});
 
-    let refused = ask(d, &devops, "hermes/release_land", land.clone()).unwrap_err();
+    let refused = ask(d, &devops, "flotilla/release_land", land.clone()).unwrap_err();
     assert!(refused.contains("release_main extra"), "{refused}");
     for bot in [&devops, &tester] {
         d.app
@@ -79,9 +79,9 @@ async fn landing_takes_release_main_devops_approval_and_the_built_commit() {
             .set_bot_permission_extras(bot, &[PermissionExtra::ReleaseMain])
             .unwrap();
     }
-    let refused = ask(d, &tester, "hermes/release_land", land.clone()).unwrap_err();
+    let refused = ask(d, &tester, "flotilla/release_land", land.clone()).unwrap_err();
     assert!(refused.contains("only the project's DevOps"), "{refused}");
-    let refused = ask(d, &devops, "hermes/release_land", land.clone()).unwrap_err();
+    let refused = ask(d, &devops, "flotilla/release_land", land.clone()).unwrap_err();
     assert!(
         refused.contains("only a release the owner approved"),
         "{refused}"
@@ -89,14 +89,14 @@ async fn landing_takes_release_main_devops_approval_and_the_built_commit() {
 
     approve(&mut r, &id).await;
     let d = &r.pair.d;
-    let ok = ask(d, &devops, "hermes/release_land", land).unwrap();
+    let ok = ask(d, &devops, "flotilla/release_land", land).unwrap();
     assert_eq!(ok["commit"], C1, "the commit the builds record: {ok}");
     // Recording anything else than that commit is refused.
     let landed =
         |commit: &str| json!({"release_id": id, "commit": commit, "tag": "desktop-v0.17.0"});
-    let refused = ask(d, &devops, "hermes/release_landed", landed(C2)).unwrap_err();
+    let refused = ask(d, &devops, "flotilla/release_landed", landed(C2)).unwrap_err();
     assert!(refused.contains("isn't the commit"), "{refused}");
-    let recorded = ask(d, &devops, "hermes/release_landed", landed(C1)).unwrap();
+    let recorded = ask(d, &devops, "flotilla/release_landed", landed(C1)).unwrap();
     assert_eq!(recorded["recorded"], "landed");
     let got = r.bots[1]
         .call("release_get", json!({"release_id": id}))
@@ -120,7 +120,13 @@ async fn a_release_whose_builds_name_no_commit_never_lands() {
         .db
         .set_bot_permission_extras(&devops, &[PermissionExtra::ReleaseMain])
         .unwrap();
-    let refused = ask(d, &devops, "hermes/release_land", json!({"release_id": id})).unwrap_err();
+    let refused = ask(
+        d,
+        &devops,
+        "flotilla/release_land",
+        json!({"release_id": id}),
+    )
+    .unwrap_err();
     assert!(refused.contains("record the commit"), "{refused}");
 }
 
@@ -131,18 +137,30 @@ async fn the_installer_is_built_from_the_packages_commit_while_it_is_open() {
     let d = &r.pair.d;
     let tester = r.pair.ids[2].clone();
     let build = json!({"release_id": id});
-    let refused = ask(d, &tester, "hermes/release_build_installer", build.clone()).unwrap_err();
+    let refused = ask(
+        d,
+        &tester,
+        "flotilla/release_build_installer",
+        build.clone(),
+    )
+    .unwrap_err();
     assert!(refused.contains("build_installers extra"), "{refused}");
     d.app
         .db
         .set_bot_permission_extras(&tester, &[PermissionExtra::BuildInstallers])
         .unwrap();
-    let ok = ask(d, &tester, "hermes/release_build_installer", build.clone()).unwrap();
+    let ok = ask(
+        d,
+        &tester,
+        "flotilla/release_build_installer",
+        build.clone(),
+    )
+    .unwrap();
     assert_eq!(ok["commit"], C1, "{ok}");
     let built = |commit: &str| json!({"release_id": id, "commit": commit, "file": "x-setup.exe", "sha256": "b".repeat(64)});
-    let refused = ask(d, &tester, "hermes/release_installer_built", built(C2)).unwrap_err();
+    let refused = ask(d, &tester, "flotilla/release_installer_built", built(C2)).unwrap_err();
     assert!(refused.contains("isn't the commit"), "{refused}");
-    ask(d, &tester, "hermes/release_installer_built", built(C1)).unwrap();
+    ask(d, &tester, "flotilla/release_installer_built", built(C1)).unwrap();
     // A build from another commit can't join the package.
     let other = r.bots[1]
         .call_raw(
@@ -159,7 +177,7 @@ async fn the_installer_is_built_from_the_packages_commit_while_it_is_open() {
     // Once submitted, its builds are frozen: no more installers.
     approve(&mut r, &id).await;
     let d = &r.pair.d;
-    let refused = ask(d, &tester, "hermes/release_build_installer", build).unwrap_err();
+    let refused = ask(d, &tester, "flotilla/release_build_installer", build).unwrap_err();
     assert!(refused.contains("frozen"), "{refused}");
     // Anything else isn't a gate.
     let other = json!({"jsonrpc": "2.0", "id": 1, "method": "tools/list"});

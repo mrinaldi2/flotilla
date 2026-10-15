@@ -11,10 +11,10 @@ use std::path::Path;
 
 use common::prs::{branch, error, head, set_policy, setup, write};
 use common::repo::git;
-use hermesd::prs::check_jobs::SYSTEM_RUNNER;
-use hermesd::prs::check_model::CheckResult;
-use hermesd::prs::checks::{dispatch, record, RunLog};
-use hermesd::releases::machines;
+use flotillad::prs::check_jobs::SYSTEM_RUNNER;
+use flotillad::prs::check_model::CheckResult;
+use flotillad::prs::checks::{dispatch, record, RunLog};
+use flotillad::releases::machines;
 use serde_json::{json, Value};
 
 const POLICY: &str = r#"
@@ -200,7 +200,7 @@ async fn only_the_dispatched_runner_reports_and_a_same_tree_pass_counts() {
     let log = format!("checks/{}-rust.log", &sha[..12]);
     assert_eq!(done["log_url"], log.as_str());
     let project = app.db.get_project(&r.project).unwrap().unwrap();
-    let published = hermesd::paths::artifacts_dir(&app.cfg, &project.dir_name).join(&log);
+    let published = flotillad::paths::artifacts_dir(&app.cfg, &project.dir_name).join(&log);
     assert_eq!(
         std::fs::read_to_string(published).unwrap(),
         "cargo: not found\n"

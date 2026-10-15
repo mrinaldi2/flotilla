@@ -228,7 +228,7 @@ mod tests {
     #[test]
     fn a_tester_tests_where_it_runs() {
         let db = Db::open_in_memory().unwrap();
-        let p = db.create_project("The Hermes", "the-hermes").unwrap();
+        let p = db.create_project("Flotilla", "flotilla").unwrap();
         let peer = db.create_peer("win-pc", None).unwrap();
         let mut ids = Vec::new();
         for (name, machine) in [
@@ -266,7 +266,7 @@ mod tests {
     #[test]
     fn a_real_tester_comes_before_a_stand_in_and_a_deleted_one_never() {
         let db = Db::open_in_memory().unwrap();
-        let p = db.create_project("The Hermes", "the-hermes").unwrap();
+        let p = db.create_project("Flotilla", "flotilla").unwrap();
         db.board_tx(|t| t.set_daemon_name("mac")).unwrap();
         let gone = db.create_peer("old-pc", None).unwrap();
         db.revoke_peer(&gone.id).unwrap();

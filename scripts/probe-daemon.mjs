@@ -1,10 +1,10 @@
-// Read-only probe of the live hermesd control plane: times list requests and
+// Read-only probe of the live flotillad control plane: times list requests and
 // measures what an uncursored `attach` replays per bot.
 import fs from "node:fs";
 import os from "node:os";
 
-const port = Number(process.argv[2] ?? fs.readFileSync(`${os.homedir()}/.thehermes/hermesd.port`, "utf8").trim());
-const token = fs.readFileSync(`${os.homedir()}/.thehermes/secrets/client.token`, "utf8").trim();
+const port = Number(process.argv[2] ?? fs.readFileSync(`${os.homedir()}/.flotilla/flotillad.port`, "utf8").trim());
+const token = fs.readFileSync(`${os.homedir()}/.flotilla/secrets/client.token`, "utf8").trim();
 const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`);
 
 let nextId = 1;

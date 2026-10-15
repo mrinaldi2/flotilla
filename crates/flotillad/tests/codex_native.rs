@@ -1,6 +1,6 @@
 //! Opt-in tests of the installed Codex CLI; model turns use only a local fixture.
-use hermesd::runtime::codex::{CodexAdapter, CodexSpec, NativeCodexAdapter};
-use hermesd::runtime::{BotSpec, RuntimeAdapter, SessionEvent};
+use flotillad::runtime::codex::{CodexAdapter, CodexSpec, NativeCodexAdapter};
+use flotillad::runtime::{BotSpec, RuntimeAdapter, SessionEvent};
 
 #[test]
 #[ignore = "requires CODEX_BINARY pointing to a locally installed CLI"]

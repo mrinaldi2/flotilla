@@ -9,7 +9,7 @@ import {
   type ProjectRow,
   type ReleaseBrief,
   type Source,
-} from "../../protocol/gen/hermes/home/v1/home_pb";
+} from "../../protocol/gen/flotilla/home/v1/home_pb";
 import type { ReleaseStatus } from "../../protocol/releases";
 import { age } from "../control/decisions";
 import { statusLabel } from "../releases/labels";

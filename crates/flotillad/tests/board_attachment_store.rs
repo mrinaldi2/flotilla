@@ -59,7 +59,7 @@ async fn draft() -> (TestDaemon, McpClient, WsClient, Draft) {
         remove: None,
     });
     call(&mut owner, invite).await;
-    let artifacts = hermesd::kanban::attach::artifacts_of(&d.app, &project_id).unwrap();
+    let artifacts = flotillad::kanban::attach::artifacts_of(&d.app, &project_id).unwrap();
     std::fs::create_dir_all(&artifacts).unwrap();
     let draft = Draft {
         project_id,

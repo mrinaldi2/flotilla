@@ -3,7 +3,7 @@
 // board…". The Board tab remembers the last board per project.
 
 import type { ReactElement } from "react";
-import type { Board } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { Board } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import { archivedBoards, liveBoards } from "./boards";
 import MenuButton from "./MenuButton";
 import type { MenuEntry } from "./MenuButton";

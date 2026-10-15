@@ -1,4 +1,4 @@
-//! The official Codex terminal UI and Hermes share one private App Server.
+//! The official Codex terminal UI and Flotilla share one private App Server.
 use super::{start_server, transport::Remote, CodexAdapter};
 use crate::runtime::{
     pty::PtyAdapter, BotSpec, Capabilities, RuntimeAdapter, RuntimeSession, SessionEvent,

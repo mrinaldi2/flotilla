@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { confirmHomeMigration } from "../../app/homeMigration";
 import HomeMigrationConfirm from "./HomeMigrationConfirm";
 
-const SUMMARY = "Moves /u/.gravity to /u/.thehermes, restarts 3 bot(s).";
+const SUMMARY = "Moves /u/.gravity to /u/.flotilla, restarts 3 bot(s).";
 
 describe("HomeMigrationConfirm", () => {
   it("shows nothing until an install asks", () => {

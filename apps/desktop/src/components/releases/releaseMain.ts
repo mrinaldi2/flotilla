@@ -1,9 +1,9 @@
 // A release cut from main (H-278; UX-051 decision 10, H-261 §6.1): its tag
 // line, what's in it, and what the owner's Leave out does. Pure functions
 // over the release JSON and, where the service sends them, the PRs' own
-// `hermes.pr.v1` messages, so the screen, the stories and the tests share them.
+// `flotilla.pr.v1` messages, so the screen, the stories and the tests share them.
 
-import type { PullRequest, Review } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest, Review } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { PrRef, Release } from "../../protocol/releases";
 import type { Tone } from "../prs/prText";
 import { OWNER_ROLE, reviewChip, sha7 } from "../prs/prText";

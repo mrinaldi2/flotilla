@@ -1,8 +1,8 @@
-//! `hermesd release land <release> [--commit <sha>] [--branch <b>]
+//! `flotillad release land <release> [--commit <sha>] [--branch <b>]
 //! [--tag <t>] [--dry-run]` (H-117 X2): DevOps puts an approved release on
 //! `main` and tags it, with no owner step.
 //!
-//! The daemon checks first (`hermes/release_land`): the `release_main`
+//! The daemon checks first (`flotilla/release_land`): the `release_main`
 //! extra, the project's DevOps role, a release the owner approved, and the
 //! one commit its builds were made from (ARCH-R52 M1). Then, in DevOps's own
 //! checkout, with git hooks off:
@@ -13,7 +13,7 @@
 //!   refused;
 //! - `main` is pushed, then the annotated tag (`desktop-v<version>` unless
 //!   named). The project's repo is then asked directly that both are at the
-//!   commit before they go on the release (`hermes/release_landed`).
+//!   commit before they go on the release (`flotilla/release_landed`).
 //!
 //! Over SSH, or GitHub over HTTPS with gh's credential when SSH has no key.
 //! A raw `git push … main` still goes through the guard, unchanged.
@@ -26,7 +26,7 @@ use serde_json::{json, Value};
 use super::git::{self, git as run_git};
 use crate::config::Config;
 
-const USAGE: &str = "usage: hermesd release land <release> [--commit <sha>] [--branch <name>] \
+const USAGE: &str = "usage: flotillad release land <release> [--commit <sha>] [--branch <name>] \
                      [--tag <name>] [--dry-run]";
 
 /// What to land, once the daemon said who and which release.
@@ -129,7 +129,7 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     let args = parse(args)?;
     let gate = ask(
         cfg,
-        "hermes/release_land",
+        "flotilla/release_land",
         json!({ "release_id": args.release }),
     )
     .await?;
@@ -150,7 +150,7 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     }
     ask(
         cfg,
-        "hermes/release_landed",
+        "flotilla/release_landed",
         json!({ "release_id": plan.release, "commit": landed.commit, "tag": landed.tag }),
     )
     .await?;

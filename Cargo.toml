@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/bus", "crates/hermesd"]
+members = ["crates/bus", "crates/flotillad"]
 
 [workspace.package]
 version = "0.18.3"

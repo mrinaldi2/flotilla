@@ -12,7 +12,7 @@ use chrono::{Duration, Utc};
 use common::cleanup::{job_at, linked, main_clone, merged, notes, step};
 use common::prs::{commit, setup};
 use common::repo::git;
-use hermesd::cleanup::model::JobState;
+use flotillad::cleanup::model::JobState;
 
 const DEV: usize = 1;
 
@@ -106,8 +106,8 @@ async fn a_tree_in_use_is_retried_every_15_minutes_then_held_after_24_hours() {
 #[tokio::test]
 async fn a_tree_a_program_sits_in_is_never_touched_by_the_removal() {
     use common::cleanup::listed;
-    use hermesd::cleanup::model::Outcome;
-    use hermesd::cleanup::remove;
+    use flotillad::cleanup::model::Outcome;
+    use flotillad::cleanup::remove;
 
     let r = setup().await;
     let tree = linked(&r, "a", "H-1-a");

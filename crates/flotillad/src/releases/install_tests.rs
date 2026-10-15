@@ -15,9 +15,9 @@ fn takes_one_release_and_passes_the_daemons_own_config_on() {
         (plain.release.as_str(), plain.dry_run, plain.status),
         ("r1", false, false)
     );
-    let dry = parse(&args(&["r1", "--dry-run", "--config", "/h/hermesd.toml"])).unwrap();
+    let dry = parse(&args(&["r1", "--dry-run", "--config", "/h/flotillad.toml"])).unwrap();
     assert!(dry.dry_run);
-    assert_eq!(dry.config.as_deref(), Some("/h/hermesd.toml"));
+    assert_eq!(dry.config.as_deref(), Some("/h/flotillad.toml"));
     assert!(parse(&args(&["r1", "--status"])).unwrap().status);
     assert!(parse(&args(&["r1", "--status", "--dry-run"])).is_err());
     assert!(parse(&args(&[])).is_err());
@@ -217,19 +217,16 @@ fn each_file_installs_its_own_way_on_its_own_system() {
         kind_of("TheHermes-0.16.2-macos.zip", true, false).unwrap(),
         Kind::AppZip
     );
+    assert_eq!(kind_of("Flotilla.dmg", true, false).unwrap(), Kind::AppDmg);
     assert_eq!(
-        kind_of("The Hermes.dmg", true, false).unwrap(),
-        Kind::AppDmg
-    );
-    assert_eq!(
-        kind_of("The Hermes_0.16.2_x64-setup.exe", false, true).unwrap(),
+        kind_of("Flotilla_0.16.2_x64-setup.exe", false, true).unwrap(),
         Kind::WindowsSetup
     );
     assert_eq!(
-        kind_of("hermesd-aarch64-apple-darwin", true, false).unwrap(),
+        kind_of("flotillad-aarch64-apple-darwin", true, false).unwrap(),
         Kind::Daemon
     );
-    assert_eq!(kind_of("hermesd.exe", false, true).unwrap(), Kind::Daemon);
+    assert_eq!(kind_of("flotillad.exe", false, true).unwrap(), Kind::Daemon);
     assert!(
         kind_of("TheHermes.zip", false, true).is_err(),
         "a macOS zip on Windows"

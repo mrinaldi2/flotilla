@@ -2,10 +2,10 @@
 //! everything, release rulings included, and every bot can read the file.
 //! Instead:
 //! - the desktop app asks the local endpoint for a one-time ticket
-//!   (`hermes/owner_ticket`), granted when the process asking is the app
-//!   compiled into hermesd (`app_identity`: its Developer ID signature on
+//!   (`flotilla/owner_ticket`), granted when the process asking is the app
+//!   compiled into flotillad (`app_identity`: its Developer ID signature on
 //!   macOS, its Program Files folder on Windows);
-//! - a CLI owner command asks for one too (`hermes/owner_request`), and the
+//! - a CLI owner command asks for one too (`flotilla/owner_request`), and the
 //!   owner allows or denies it on a card in the app.
 //!
 //! A ticket is good for one WebSocket hello within a minute. Bots, being in
@@ -27,10 +27,9 @@ const TICKET_TTL: Duration = Duration::from_secs(60);
 /// JSON-RPC error: the caller may not act as the owner.
 pub const NOT_THE_OWNER: i64 = -32002;
 /// What the CLI prints when the owner command doesn't run (UX-014).
-pub const DENIED: &str = "You denied this command in The Hermes. It did not run.";
-pub const EXPIRED: &str = "No answer in The Hermes, so the command did not run.";
-pub const NO_APP: &str =
-    "Open The Hermes on this computer to allow this command, then run it again.";
+pub const DENIED: &str = "You denied this command in Flotilla. It did not run.";
+pub const EXPIRED: &str = "No answer in Flotilla, so the command did not run.";
+pub const NO_APP: &str = "Open Flotilla on this computer to allow this command, then run it again.";
 
 /// The process on the other end of a local connection.
 #[derive(Debug, Clone, Copy, Default)]
@@ -225,7 +224,7 @@ pub async fn handle(
     request: &Value,
 ) -> Option<Value> {
     let method = request.get("method").and_then(Value::as_str)?;
-    if method != "hermes/owner_ticket" && method != "hermes/owner_request" {
+    if method != "flotilla/owner_ticket" && method != "flotilla/owner_request" {
         return None;
     }
     let id = request.get("id").cloned().unwrap_or(Value::Null);
@@ -235,14 +234,14 @@ pub async fn handle(
     if in_session {
         return Some(refused(
             &id,
-            if method == "hermes/owner_request" {
+            if method == "flotilla/owner_request" {
                 "Commands that act as the owner can't run from a bot's session."
             } else {
                 "a bot can't act as the owner"
             },
         ));
     }
-    if method == "hermes/owner_ticket" {
+    if method == "flotilla/owner_ticket" {
         return Some(if app.owner.is_owner_app(&peer) {
             ticket(&id, &app.owner, Grantee::of("app", peer.pid))
         } else {

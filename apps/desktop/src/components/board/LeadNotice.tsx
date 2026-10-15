@@ -5,7 +5,7 @@
 import { X } from "lucide-react";
 import { useState } from "react";
 import type { ReactElement } from "react";
-import type { BoardProposal } from "../../protocol/gen/hermes/board/v1/requests_pb";
+import type { BoardProposal } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import { readStored, writeStored } from "../../storage";
 import { leadChanges, noticeLine } from "./settings/lastChange";
 

@@ -203,7 +203,7 @@ fn from_bus(db: &Db, bot_id: &str) -> Option<Activity> {
     })
 }
 
-/// Who a bus preview names: nobody for the bot's own words, and the Hermes
+/// Who a bus preview names: nobody for the bot's own words, and the Flotilla
 /// service, not "system", for the daemon's notices.
 fn preview_sender(sender: &bus::Sender, bot_id: &str) -> String {
     match sender.kind {

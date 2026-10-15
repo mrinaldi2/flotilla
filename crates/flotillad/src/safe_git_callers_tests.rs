@@ -13,11 +13,11 @@ const DIRECT_GIT: &[(&str, &str)] = &[
     ),
     (
         "releases/git.rs",
-        "the `hermesd release` CLI, run by DevOps in its own terminal and checkout",
+        "the `flotillad release` CLI, run by DevOps in its own terminal and checkout",
     ),
     (
         "bot_permissions/guard/git.rs",
-        "the `hermesd guard` hook, run by the bot on its own command",
+        "the `flotillad guard` hook, run by the bot on its own command",
     ),
     (
         "migrate_home/steps.rs",
@@ -36,7 +36,7 @@ const OTHER_PROGRAMS: &[(&str, &str)] = &[
     ("holders_procs.rs", "lsof, from /usr/sbin or /usr/bin"),
     (
         "releases/install/apply.rs",
-        "the hermesd binary being installed",
+        "the flotillad binary being installed",
     ),
     (
         "quiesce/services.rs",
@@ -54,10 +54,10 @@ const OTHER_PROGRAMS: &[(&str, &str)] = &[
         "owner_action/run.rs",
         "the shell of an action the owner approved",
     ),
-    ("service/stage.rs", "the staged hermesd binary"),
+    ("service/stage.rs", "the staged flotillad binary"),
     (
         "check_exec.rs",
-        "the hermesd check runner, which runs a check's command from the base's checks.toml",
+        "the flotillad check runner, which runs a check's command from the base's checks.toml",
     ),
     (
         "machine_tools.rs",

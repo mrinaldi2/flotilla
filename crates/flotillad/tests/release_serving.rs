@@ -96,7 +96,7 @@ async fn devops_publishes_and_installs_check_the_served_file() {
 
     // The item is a daemon one, so the mac tester reports on the daemon
     // build, never on the iOS one (B7b-m1 F2).
-    let daemon = builds.join("hermesd.zip");
+    let daemon = builds.join("flotillad.zip");
     std::fs::write(&daemon, "daemon bytes").unwrap();
     let mac = ops
         .call(

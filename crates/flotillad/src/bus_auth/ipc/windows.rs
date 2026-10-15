@@ -94,13 +94,13 @@ fn user_sid() -> std::io::Result<String> {
     }))
 }
 
-/// `\\.\pipe\thehermes-<sid>-<home>-bus`: the user's, and this home's, so
+/// `\\.\pipe\flotilla-<sid>-<home>-bus`: the user's, and this home's, so
 /// two daemons of one user (tests) don't share a pipe.
 pub(super) fn pipe_name(home: &Path) -> String {
     let sid = user_sid().unwrap_or_else(|_| "user".to_string());
     let digest = Sha256::digest(home.to_string_lossy().as_bytes());
     let home = hex::encode(&digest[..4]);
-    format!(r"\\.\pipe\thehermes-{sid}-{home}-bus")
+    format!(r"\\.\pipe\flotilla-{sid}-{home}-bus")
 }
 
 /// A security descriptor allowing only this user, for every pipe instance.
@@ -183,7 +183,7 @@ mod tests {
     /// chain holds up to its parent.
     #[tokio::test]
     async fn a_pipe_client_resolves_to_its_process() {
-        let home = std::env::temp_dir().join(format!("hermes-pipe-{}", std::process::id()));
+        let home = std::env::temp_dir().join(format!("flotilla-pipe-{}", std::process::id()));
         let name = pipe_name(&home);
         let mut attrs = only_this_user().expect("descriptor");
         let server = create(&name, &mut attrs, true).expect("pipe");

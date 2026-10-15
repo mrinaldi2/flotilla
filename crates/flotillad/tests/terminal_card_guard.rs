@@ -9,8 +9,8 @@ use std::time::Duration;
 
 use common::proxy::Proxy;
 use common::*;
+use flotillad::bus_auth::owner;
 use futures::StreamExt;
-use hermesd::bus_auth::owner;
 use serde_json::{json, Value};
 use tokio_tungstenite::tungstenite::Message as WsMsg;
 
@@ -54,8 +54,8 @@ async fn a_client_without_terminal_card_neither_counts_as_an_app_nor_sees_the_ca
     cli.start().await;
     let refused = cli
         .request_within(
-            "hermes/owner_request",
-            json!({ "command": "hermesd board import" }),
+            "flotilla/owner_request",
+            json!({ "command": "flotillad board import" }),
             Duration::from_secs(10),
         )
         .await
@@ -69,8 +69,8 @@ async fn a_client_without_terminal_card_neither_counts_as_an_app_nor_sees_the_ca
     let asking = tokio::spawn(async move {
         let reply = cli
             .request_within(
-                "hermes/owner_request",
-                json!({ "command": "hermesd board import" }),
+                "flotilla/owner_request",
+                json!({ "command": "flotillad board import" }),
                 Duration::from_secs(30),
             )
             .await
@@ -134,8 +134,8 @@ async fn a_control_only_device_does_not_make_owner_request_wait() {
     cli.start().await;
     let refused = cli
         .request_within(
-            "hermes/owner_request",
-            json!({ "command": "hermesd board import" }),
+            "flotilla/owner_request",
+            json!({ "command": "flotillad board import" }),
             Duration::from_secs(5),
         )
         .await

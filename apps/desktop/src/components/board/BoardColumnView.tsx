@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import type { DragEvent, HTMLAttributes, ReactElement, ReactNode } from "react";
 import type { Bot } from "../../protocol/entities";
-import type { BoardColumn } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import BotAvatar from "../BotAvatar";
 import ColumnLimit from "./ColumnLimit";
 import type { WipSummary } from "./wip";

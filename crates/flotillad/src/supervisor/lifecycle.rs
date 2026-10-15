@@ -378,7 +378,7 @@ impl Supervisor {
             (was_stopping, h.consecutive_crashes)
         };
         if was_stopping {
-            self.set_state(bot_id, BotState::Stopped, "Stopped by the Hermes service");
+            self.set_state(bot_id, BotState::Stopped, "Stopped by the Flotilla service");
             return;
         }
         let reason = code.map_or_else(

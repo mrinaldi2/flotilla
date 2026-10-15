@@ -39,7 +39,7 @@ async fn step2(k: &mut K9) -> c::BoardSnapshot {
         .find(|p| p.id == proposal)
         .expect("shown");
     assert_eq!(open.state, "open");
-    let rows = hermesd::overview::attention_rows(&k.p.mac.app, &k.mac_rb).unwrap();
+    let rows = flotillad::overview::attention_rows(&k.p.mac.app, &k.mac_rb).unwrap();
     assert!(
         rows.rows
             .iter()

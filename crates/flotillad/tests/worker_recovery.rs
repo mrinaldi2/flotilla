@@ -25,7 +25,7 @@ async fn a_worker_left_without_its_task_gets_it() {
     let queued = d
         .app
         .db
-        .insert_worker(&hermesd::db::NewWorker {
+        .insert_worker(&flotillad::db::NewWorker {
             project_id: &pid,
             parent_bot_id: &parent.id,
             name: "ch-1",
@@ -37,14 +37,14 @@ async fn a_worker_left_without_its_task_gets_it() {
             deadline_hours: 24,
         })
         .expect("queue");
-    let actor = hermesd::db::Actor::Bot {
+    let actor = flotillad::db::Actor::Bot {
         id: &parent.id,
         project_id: &pid,
     };
-    let stranded = hermesd::botmgmt::create_worker_bot(
+    let stranded = flotillad::botmgmt::create_worker_bot(
         &d.app,
         &pid,
-        &hermesd::botmgmt::IdentityEdit {
+        &flotillad::botmgmt::IdentityEdit {
             name: Some("ch-1"),
             ..Default::default()
         },
@@ -74,9 +74,9 @@ async fn a_worker_left_without_its_task_gets_it() {
 async fn deleting_a_bot_twice_deletes_it_once() {
     let (d, pid) = book(1).await;
     let bot = bot_named(&d, &pid, "book").expect("book");
-    let user = hermesd::db::Actor::User;
-    hermesd::botmgmt::archive_bot(&d.app, &bot, &user, None).expect("first");
-    hermesd::botmgmt::archive_bot(&d.app, &bot, &user, None).expect("second");
+    let user = flotillad::db::Actor::User;
+    flotillad::botmgmt::archive_bot(&d.app, &bot, &user, None).expect("first");
+    flotillad::botmgmt::archive_bot(&d.app, &bot, &user, None).expect("second");
     let archived = d.app.db.get_bot(&bot.id).expect("db").expect("row");
     assert_eq!(archived.name.matches('#').count(), 1, "{}", archived.name);
 }

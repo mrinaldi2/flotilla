@@ -149,19 +149,19 @@ fn history_recall_blocks_but_mints_no_keyed_token() {
 fn the_paste_must_be_the_first_text_on_its_line() {
     let text = typed_text("deploy the fix", "N0nce123", 1);
     let needle = echo_needle(&text, "N0nce123");
-    let alone = "\x1b[2K\x1b[1G│ > Owner (Hermes app) ·N0nce123: de\r\n│   ploy the fix";
+    let alone = "\x1b[2K\x1b[1G│ > Owner (Flotilla app) ·N0nce123: de\r\n│   ploy the fix";
     assert!(first_on_line(alone.as_bytes(), &needle));
-    let bare = "\x1b[3;1HOwner (Hermes app) ·N0nce123: deploy the fix";
+    let bare = "\x1b[3;1HOwner (Flotilla app) ·N0nce123: deploy the fix";
     assert!(first_on_line(bare.as_bytes(), &needle));
     // A recalled or half-typed line in front of it: no CR.
-    let after_text = "\x1b[2K\x1b[1G│ > old prompt Owner (Hermes app) ·N0nce123: deploy";
+    let after_text = "\x1b[2K\x1b[1G│ > old prompt Owner (Flotilla app) ·N0nce123: deploy";
     assert!(echoed(after_text.as_bytes(), &needle));
     assert!(!first_on_line(after_text.as_bytes(), &needle));
     // Continued from a line above it, the line isn't its own either.
-    let wrapped = "\x1b[2K\x1b[1G│ > a long draft that wraps\r\n│ onward Owner (Hermes app) ·N0nce123: deploy";
+    let wrapped = "\x1b[2K\x1b[1G│ > a long draft that wraps\r\n│ onward Owner (Flotilla app) ·N0nce123: deploy";
     assert!(!first_on_line(wrapped.as_bytes(), &needle));
     // An earlier delivery's echo on screen doesn't count for this one.
-    let other = "\x1b[1G│ > Owner (Hermes app) ·0ther999: deploy\r\n│ > x Owner (Hermes app) ·N0nce123: deploy";
+    let other = "\x1b[1G│ > Owner (Flotilla app) ·0ther999: deploy\r\n│ > x Owner (Flotilla app) ·N0nce123: deploy";
     assert!(!first_on_line(other.as_bytes(), &needle));
 }
 

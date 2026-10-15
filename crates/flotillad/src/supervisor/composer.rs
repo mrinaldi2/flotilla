@@ -11,7 +11,7 @@
 //! - `keyed`: issued for a CR the owner typed through a verified terminal
 //!   (CE-030 K1: outside a paste, with no dialog open, after real input).
 //!
-//! **Hook events are bot-forgeable** (CE-029b K2): a bot can run `hermesd
+//! **Hook events are bot-forgeable** (CE-029b K2): a bot can run `flotillad
 //! hook <event>` itself. They only steer *when to try*; the echo of a
 //! per-delivery nonce (K3) is what lets a CR go out.
 

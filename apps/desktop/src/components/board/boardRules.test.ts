@@ -1,7 +1,7 @@
 import { create } from "@bufbuild/protobuf";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ItemType } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { MoveCheckSchema } from "../../protocol/gen/hermes/board/v1/requests_pb";
+import { ItemType } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { MoveCheckSchema } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import { card, column, unmet } from "../../test/boardFixtures";
 import { loadBoardPrefs, saveBoardPrefs } from "./boardPrefs";
 import type { BoardFilters } from "./filters";
@@ -137,7 +137,7 @@ describe("board prefs", () => {
   });
 
   it("falls back to defaults for unreadable storage", () => {
-    store.set("hermes.board.p1", "{nope");
+    store.set("flotilla.board.p1", "{nope");
     expect(loadBoardPrefs("p1").inboxOpen).toBe(false);
   });
 });

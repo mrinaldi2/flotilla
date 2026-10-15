@@ -20,7 +20,7 @@ pub struct Origin {
     /// The command line, without the pid.
     pub command: String,
     pub pid: u32,
-    /// The asker's executable name, e.g. `hermesd`.
+    /// The asker's executable name, e.g. `flotillad`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub process: Option<String>,
     /// The nearest ancestor that is an app or a terminal: Terminal, Code…
@@ -230,7 +230,13 @@ mod tests {
         assert_eq!(known_app("wezterm-gui"), Some("WezTerm"));
         assert_eq!(known_app("claude"), Some("claude"));
         for shell in [
-            "zsh", "bash", "login", "sudo", "codesign", "zedd", "hermesd",
+            "zsh",
+            "bash",
+            "login",
+            "sudo",
+            "codesign",
+            "zedd",
+            "flotillad",
         ] {
             assert_eq!(known_app(shell), None, "{shell}");
         }
@@ -239,9 +245,9 @@ mod tests {
     #[test]
     fn windows_process_names_lose_the_exe_suffix() {
         for (exe, name) in [
-            ("hermesd.exe", "hermesd"),
+            ("flotillad.exe", "flotillad"),
             ("Code.EXE", "Code"),
-            ("hermesd", "hermesd"),
+            ("flotillad", "flotillad"),
             (".exe", ".exe"),
             ("setup.exe.bak", "setup.exe.bak"),
             ("née.exe", "née"),
@@ -267,7 +273,7 @@ mod tests {
             (50, (1, 5, "Terminal")),
             (60, (50, 6, "login")),
             (70, (60, 7, "zsh")),
-            (80, (70, 8, "hermesd")),
+            (80, (70, 8, "flotillad")),
         ]));
         let name = |pid: u32| table.0.get(&pid).map(|row| row.2.to_string());
         assert_eq!(
@@ -277,7 +283,7 @@ mod tests {
         // Detached: nothing recognisable above it.
         let lone = Fake(HashMap::from([
             (1, (0, 0, "launchd")),
-            (80, (1, 8, "hermesd")),
+            (80, (1, 8, "flotillad")),
         ]));
         let name = |pid: u32| lone.0.get(&pid).map(|row| row.2.to_string());
         assert_eq!(launched_from(&lone, 80, &name), None);
@@ -288,7 +294,7 @@ mod tests {
         // 50 is now a newer Terminal than the command it supposedly started.
         let table = Fake(HashMap::from([
             (50, (1, 90, "Terminal")),
-            (80, (50, 8, "hermesd")),
+            (80, (50, 8, "flotillad")),
         ]));
         let name = |pid: u32| table.0.get(&pid).map(|row| row.2.to_string());
         assert_eq!(launched_from(&table, 80, &name), None);

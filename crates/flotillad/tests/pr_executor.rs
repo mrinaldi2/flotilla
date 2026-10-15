@@ -1,5 +1,5 @@
 //! The merge executor, PR-6b (H-284; H-261 §5.2, §5.3, §6.5, §15.2):
-//! `hermesd pr merge <n>` fast-forwards main to exactly the PR's head after
+//! `flotillad pr merge <n>` fast-forwards main to exactly the PR's head after
 //! the daemon re-checks it, only for DevOps with the `pr_merge` extra on its
 //! task; the merge moves the card to Verify once all its PRs merged; the
 //! branch goes only while it is still the merged commit; a merge DevOps
@@ -14,10 +14,10 @@ use chrono::{DateTime, Duration, Utc};
 use common::prs::{approve, clone, commit, error, give, move_main, opened, setup, Repo};
 use common::repo::{git, remote};
 use common::WsClient;
-use hermesd::kanban::model::Role;
-use hermesd::pr_cli::{merge_in, Plan};
-use hermesd::prs::merge::answer;
-use hermesd::prs::queue;
+use flotillad::kanban::model::Role;
+use flotillad::pr_cli::{merge_in, Plan};
+use flotillad::prs::merge::answer;
+use flotillad::prs::queue;
 use serde_json::{json, Value};
 
 const DEVOPS: usize = 0;
@@ -79,12 +79,12 @@ fn checkout(r: &Repo, origin: &Path, name: &str) -> PathBuf {
 
 /// The whole run: the gate, the git half, the record.
 fn merge(r: &Repo, number: u32, tree: &Path) -> Value {
-    let gate = ask(r, DEVOPS, "hermes/pr_merge", json!({"number": number})).unwrap();
+    let gate = ask(r, DEVOPS, "flotilla/pr_merge", json!({"number": number})).unwrap();
     let done = merge_in(tree, &plan(&gate)).unwrap();
     ask(
         r,
         DEVOPS,
-        "hermes/pr_merged",
+        "flotilla/pr_merged",
         json!({"number": number, "sha": gate["head_sha"],
                "branch": {"deleted": done.branch_deleted, "note": done.branch_note}}),
     )
@@ -129,7 +129,7 @@ async fn devops_with_the_extra_fast_forwards_main_to_the_head() {
     let main = tip(&r.origin, "refs/heads/main").unwrap();
     hand(&r, Utc::now());
 
-    let gate = |r: &Repo, bot| ask(r, bot, "hermes/pr_merge", json!({"number": 1}));
+    let gate = |r: &Repo, bot| ask(r, bot, "flotilla/pr_merge", json!({"number": 1}));
     assert!(refused(gate(&r, DEVOPS)).contains("pr_merge extra"));
     devops(&r, true);
     r.pair
@@ -177,7 +177,7 @@ async fn devops_with_the_extra_fast_forwards_main_to_the_head() {
     commit(&author, "later.txt", "later\n");
     git(&author, &["push", "-q", "origin", "H-1-search"]);
     let moved = tip(&r.origin, "refs/heads/H-1-search").unwrap();
-    assert!(hermesd::releases::git::delete_branch(&tree, "H-1-search", &head).is_err());
+    assert!(flotillad::releases::git::delete_branch(&tree, "H-1-search", &head).is_err());
     assert_eq!(tip(&r.origin, "refs/heads/H-1-search").unwrap(), moved);
 }
 
@@ -196,26 +196,26 @@ async fn a_head_behind_main_or_short_of_its_needs_is_refused() {
     let pr = app.db.board_read(|t| t.pr(&r.project, 1)).unwrap().unwrap();
     app.db.board_tx(|t| t.set_pr_needs(&pr.id, &[])).unwrap();
     hand(&r, Utc::now());
-    let why = refused(ask(&r, DEVOPS, "hermes/pr_merge", json!({"number": 1})));
+    let why = refused(ask(&r, DEVOPS, "flotilla/pr_merge", json!({"number": 1})));
     assert!(why.contains("architect"), "{why}");
     assert_eq!(pr_state(&r, 1), "open", "it leaves the queue");
 
     // Approved, handed again; then main moves on before the push.
     approve(&mut r, &head).await;
     hand(&r, Utc::now() + Duration::seconds(30));
-    let gate = ask(&r, DEVOPS, "hermes/pr_merge", json!({"number": 1})).unwrap();
+    let gate = ask(&r, DEVOPS, "flotilla/pr_merge", json!({"number": 1})).unwrap();
     move_main(&r, "x", "other.txt", "x\n");
     let main = tip(&r.origin, "refs/heads/main").unwrap();
     let tree = checkout(&r, &r.origin, "b");
     let why = merge_in(&tree, &plan(&gate)).unwrap_err().to_string();
     assert!(why.contains("not a fast-forward"), "{why}");
     assert_eq!(tip(&r.origin, "refs/heads/main").unwrap(), main);
-    let why = refused(ask(&r, DEVOPS, "hermes/pr_merge", json!({"number": 1})));
+    let why = refused(ask(&r, DEVOPS, "flotilla/pr_merge", json!({"number": 1})));
     assert!(why.contains("Needs update with main"), "{why}");
     let why = refused(ask(
         &r,
         DEVOPS,
-        "hermes/pr_merged",
+        "flotilla/pr_merged",
         json!({"number": 1, "sha": head}),
     ));
     assert!(why.contains("isn't waiting to merge"), "{why}");
@@ -255,7 +255,7 @@ async fn a_card_moves_to_verify_when_all_its_prs_merged() {
     clone(&origin2, &ios, "H-1-ios");
     commit(&ios, "ios.txt", "one\n");
     git(&ios, &["push", "-q", "origin", "H-1-ios"]);
-    let repo2 = hermesd::prs::repo::name_of(&url2);
+    let repo2 = flotillad::prs::repo::name_of(&url2);
     let opened2 = r.bots[1]
         .call(
             "pr_open",
@@ -364,7 +364,7 @@ async fn a_merge_without_a_gate_pass_is_never_recorded() {
         ask(
             r,
             DEVOPS,
-            "hermes/pr_merged",
+            "flotilla/pr_merged",
             json!({"number": 1, "sha": head, "branch": {"deleted": false, "note": "kept"}}),
         )
     };
@@ -379,7 +379,7 @@ async fn a_merge_without_a_gate_pass_is_never_recorded() {
     assert_eq!(rows.len(), 1, "{rows:?}");
 
     // A pass too old to vouch for this push counts as none.
-    ask(&r, DEVOPS, "hermes/pr_merge", json!({"number": 1})).unwrap();
+    ask(&r, DEVOPS, "flotilla/pr_merge", json!({"number": 1})).unwrap();
     let app = r.pair.d.app.clone();
     let pr = app.db.board_read(|t| t.pr(&r.project, 1)).unwrap().unwrap();
     let main = tip(&r.origin, "refs/heads/main").unwrap();

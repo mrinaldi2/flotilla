@@ -79,7 +79,7 @@ async fn a_release_gated_unlisted_move_is_the_owners_override() {
         &d.app.db,
         &project,
         "Legacy",
-        hermesd::kanban::model::Priority::P2,
+        flotillad::kanban::model::Priority::P2,
     );
     let Response::MoveCheck(check) = response(
         call(
@@ -147,7 +147,7 @@ async fn a_question_about_a_draft_closes_when_its_discussion_ends() {
         })
     };
     let open = |f: &common::cards::Fresh| {
-        hermesd::owner_threads::open_questions(&f.d.app, Some(&f.project), None).unwrap()
+        flotillad::owner_threads::open_questions(&f.d.app, Some(&f.project), None).unwrap()
     };
 
     // The invited bot asks about the draft: no comment on it, a question
@@ -198,7 +198,7 @@ async fn a_question_about_a_draft_closes_when_its_discussion_ends() {
     .await;
     assert_eq!(
         f.now(&draft.id).state,
-        hermesd::kanban::model::ItemState::Live
+        flotillad::kanban::model::ItemState::Live
     );
     assert!(open(&f).is_empty(), "{:?}", open(&f));
 }

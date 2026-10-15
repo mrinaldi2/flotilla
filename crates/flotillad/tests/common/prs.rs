@@ -3,9 +3,9 @@
 
 use std::path::{Path, PathBuf};
 
-use hermesd::actor::Actor;
-use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Priority, ProjectRole, Role};
+use flotillad::actor::Actor;
+use flotillad::db::{MoveTo, NewItem};
+use flotillad::kanban::model::{ItemType, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 use super::repo::{git, remote};
@@ -28,11 +28,11 @@ pub async fn setup() -> Repo {
 }
 
 /// [`setup`] with the daemon's config tweaked first.
-pub async fn setup_with(tweak: impl FnOnce(&mut hermesd::config::Config)) -> Repo {
+pub async fn setup_with(tweak: impl FnOnce(&mut flotillad::config::Config)) -> Repo {
     let remote_dir = tempfile::tempdir().expect("tempdir");
     let dev_dir = tempfile::tempdir().expect("tempdir");
     let origin = remote(remote_dir.path());
-    let dev = hermesd::safe_git::canonical(dev_dir.path()).expect("dev");
+    let dev = flotillad::safe_git::canonical(dev_dir.path()).expect("dev");
     let trusted = dev.display().to_string();
     let d = super::spawn_daemon_with(|cfg| {
         cfg.trusted_paths = vec![trusted];
@@ -101,7 +101,7 @@ impl Repo {
                 &Actor::User,
             )
             .unwrap();
-        let hermesd::db::Write::Done(item) = item else {
+        let flotillad::db::Write::Done(item) = item else {
             panic!("assign conflicted");
         };
         let to = MoveTo {

@@ -68,7 +68,7 @@ pub(super) fn stuck_merges(app: &AppState, b: &mut Builder<'_>) -> anyhow::Resul
     Ok(())
 }
 
-/// Main reached a PR's head with no `hermesd pr merge` pass for it (ARCH M1
+/// Main reached a PR's head with no `flotillad pr merge` pass for it (ARCH M1
 /// on H-284): nothing was recorded; the owner decides what to do.
 pub(super) fn mains_moved(app: &AppState, b: &mut Builder<'_>) -> anyhow::Result<()> {
     let moved = app.db.board_read(|t| t.mains_moved(b.project_id))?;

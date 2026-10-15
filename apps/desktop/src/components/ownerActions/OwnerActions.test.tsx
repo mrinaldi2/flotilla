@@ -53,11 +53,11 @@ describe("OwnerActionList", () => {
     expect(await screen.findByText("brew services stop colima")).toBeInTheDocument();
     expect(
       screen.getByRole("article", {
-        name: "DevOps asks you to run a command on this computer: Colima holds the old Hermes service program open",
+        name: "DevOps asks you to run a command on this computer: Colima holds the old Flotilla service program open",
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Why: Colima holds the old Hermes service program open"),
+      screen.getByText("Why: Colima holds the old Flotilla service program open"),
     ).toBeInTheDocument();
     expect(screen.getByText("Fingerprint 9f86d081")).toBeInTheDocument();
   });
@@ -230,7 +230,7 @@ describe("OwnerActionConfirm, before it runs", () => {
     );
     expect(
       screen.getByText(
-        "DevOps asks for this because: Colima holds the old Hermes service program open. It runs as you, with your permissions on win-pc, and can't be undone.",
+        "DevOps asks for this because: Colima holds the old Flotilla service program open. It runs as you, with your permissions on win-pc, and can't be undone.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();

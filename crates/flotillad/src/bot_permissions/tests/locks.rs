@@ -61,7 +61,7 @@ fn the_guard_is_told_worktrees_not_trusted_paths_are_writable() {
         cfg: &cfg,
         profile,
         extras,
-        project_name: "Hermes",
+        project_name: "Flotilla",
         bot_name: "Desktop Dev",
         bot_root: Path::new("/Users/me/.gravity/projects/p/bots/dev"),
         workspace: Path::new("/Users/me/.gravity/projects/p/bots/dev/workspace"),
@@ -105,7 +105,7 @@ fn the_guard_is_told_worktrees_not_trusted_paths_are_writable() {
         devops.contains("--full") && !devops.contains("--allow-main"),
         "{devops}"
     );
-    // H-284: `pr_merge` runs only `hermesd pr merge`; a raw push to main
+    // H-284: `pr_merge` runs only `flotillad pr merge`; a raw push to main
     // stays refused.
     let merger = start(PermissionProfile::Full, &[PermissionExtra::PrMerge]).guard_command();
     assert!(!merger.contains("--allow-main"), "{merger}");
@@ -117,19 +117,19 @@ fn the_guard_is_told_worktrees_not_trusted_paths_are_writable() {
     );
 }
 
-/// R2 rehearsal: after `migrate-home` the home is `~/.thehermes` and the
-/// config `hermesd.toml`. The profile follows the configured home, and the
+/// R2 rehearsal: after `migrate-home` the home is `~/.flotilla` and the
+/// config `flotillad.toml`. The profile follows the configured home, and the
 /// config lock covers both names, in the settings and in the guard.
 #[test]
 fn a_moved_home_keeps_its_locks_on_the_renamed_config() {
     let settings = generate(&SettingsInput {
         profile: PermissionProfile::Standard,
         extras: &[],
-        project_name: "Hermes",
-        home: Path::new("/Users/me/.thehermes"),
+        project_name: "Flotilla",
+        home: Path::new("/Users/me/.flotilla"),
         user_home: Path::new("/Users/me"),
-        workspace: Path::new("/Users/me/.thehermes/projects/p/bots/dev/workspace"),
-        hermesd: Path::new("/bin/hermesd"),
+        workspace: Path::new("/Users/me/.flotilla/projects/p/bots/dev/workspace"),
+        flotillad: Path::new("/bin/flotillad"),
         artifacts: None,
         trusted_paths: &[],
         served: &[],
@@ -137,16 +137,17 @@ fn a_moved_home_keeps_its_locks_on_the_renamed_config() {
         protected_branch: None,
         devops: false,
         port: 49777,
-        guard_command: "'/bin/hermesd' guard".to_string(),
+        guard_command: "'/bin/flotillad' guard".to_string(),
         extra_environment: &[],
         interim: None,
     });
     let deny = rules(&settings, "deny");
     for rule in [
-        "Read(//Users/me/.thehermes/secrets/**)",
-        "Bash(*.thehermes/secrets*)",
-        "Edit(//Users/me/.thehermes/hermesd.toml)",
-        "Edit(//Users/me/.thehermes/gravityd.toml)",
+        "Read(//Users/me/.flotilla/secrets/**)",
+        "Bash(*.flotilla/secrets*)",
+        "Edit(//Users/me/.flotilla/flotillad.toml)",
+        "Edit(//Users/me/.flotilla/hermesd.toml)",
+        "Edit(//Users/me/.flotilla/gravityd.toml)",
     ] {
         assert!(
             deny.contains(&rule.to_string()),
@@ -156,13 +157,28 @@ fn a_moved_home_keeps_its_locks_on_the_renamed_config() {
     assert!(!deny.iter().any(|r| r.contains(".gravity/")), "{deny:#?}");
 
     let mut ctx = guard_cases::ctx();
-    ctx.home = PathBuf::from("/Users/me/.thehermes");
+    ctx.home = PathBuf::from("/Users/me/.flotilla");
     for name in CONFIG_FILES {
         let input = json!({
             "tool_name": "Edit",
-            "tool_input": { "file_path": format!("/Users/me/.thehermes/{name}") },
+            "tool_input": { "file_path": format!("/Users/me/.flotilla/{name}") },
             "cwd": "/Users/me",
         });
         assert!(decide(&input, &ctx).is_some(), "{name} is not guarded");
+    }
+}
+
+/// Every name the daemon's home or config ever had is guarded: a name left
+/// out would let a bot write an old-named config an older daemon still
+/// reads, or reach the home through its old link.
+#[test]
+fn the_guarded_names_cover_every_rename() {
+    for name in crate::brand::all_daemon_files(".toml") {
+        assert!(CONFIG_FILES.contains(&name.as_str()), "{name}");
+    }
+    for name in
+        std::iter::once(crate::brand::HOME_DIR_NAME).chain(crate::brand::LEGACY_HOME_DIR_NAMES)
+    {
+        assert!(crate::bot_permissions::HOME_NAMES.contains(&name), "{name}");
     }
 }

@@ -5,7 +5,7 @@
 //! or a detached process elsewhere. The job writes its output to a log and
 //! its exit code to a status file, removes the stage and itself, and the
 //! tester reads the outcome from its next session
-//! (`hermesd release install <release> --status`).
+//! (`flotillad release install <release> --status`).
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -38,7 +38,7 @@ impl Job {
             .filter(|c| c.is_ascii_alphanumeric() || *c == '-')
             .collect();
         let (log, status) = outcome_files(home, &name);
-        let label = format!("com.thehermes.release-install.{name}");
+        let label = format!("com.flotilla.release-install.{name}");
         let extension = if cfg!(windows) { "cmd" } else { "plist" };
         Self {
             definition: home.join("run").join(format!("{label}.{extension}")),

@@ -80,7 +80,7 @@ function RunButton(props: {
 
 export default function OwnerActionConfirm(props: {
   readonly action: OwnerAction;
-  /** Who asks for it: a bot's name, or The Hermes. */
+  /** Who asks for it: a bot's name, or Flotilla. */
   readonly proposer: string;
   readonly onRun: () => void;
   readonly onCancel: () => void;

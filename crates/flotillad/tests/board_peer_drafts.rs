@@ -11,9 +11,9 @@ use common::peer_files::{owner_attach, screenshot};
 use common::peers::wait_until;
 use common::tasks::error_text;
 use common::terminal;
-use hermesd::actor::Actor;
-use hermesd::db::NewItem;
-use hermesd::kanban::model::{ItemType, Priority};
+use flotillad::actor::Actor;
+use flotillad::db::NewItem;
+use flotillad::kanban::model::{ItemType, Priority};
 use serde_json::json;
 
 fn read(project_id: &str, id: &str) -> serde_json::Value {

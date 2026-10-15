@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.manuelrinaldi.thehermesd</string>
+    <string>com.manuelrinaldi.flotillad</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/hermesd</string>
+        <string>/usr/local/bin/flotillad</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -18,9 +18,9 @@
     <key>ThrottleInterval</key>
     <integer>10</integer>
     <key>StandardOutPath</key>
-    <string>~/.thehermes/logs/hermesd.out.log</string>
+    <string>~/.flotilla/logs/flotillad.out.log</string>
     <key>StandardErrorPath</key>
-    <string>~/.thehermes/logs/hermesd.err.log</string>
+    <string>~/.flotilla/logs/flotillad.err.log</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>

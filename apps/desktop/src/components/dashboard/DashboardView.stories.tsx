@@ -32,7 +32,7 @@ function Window({
   readonly data: Dashboard;
   readonly flow?: { readonly metrics: FlowMetrics | null; readonly note: string | null };
 }): ReactElement {
-  const hermes = project({ id: "p1", name: "The Hermes" });
+  const flotilla = project({ id: "p1", name: "Flotilla" });
   const client = new FakeDaemon()
     .onRequest("dashboard_get", () => ({
       type: "dashboard",
@@ -44,10 +44,10 @@ function Window({
   const bots = data.team.map((row) => row.bot);
   return (
     <div className="main" style={{ height: 900 }}>
-      <ProjectWindow project={hermes} botCount={bots.length} tab="overview" onSelectTab={noTab}>
+      <ProjectWindow project={flotilla} botCount={bots.length} tab="overview" onSelectTab={noTab}>
         <DashboardView
           client={client}
-          project={hermes}
+          project={flotilla}
           bots={bots}
           connected
           canControl

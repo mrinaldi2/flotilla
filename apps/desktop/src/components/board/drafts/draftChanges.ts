@@ -2,7 +2,7 @@
 // looked at, who made them, and each as a field diff, an added criterion,
 // or an attached or linked document.
 
-import type { DraftRevision } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { DraftRevision } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 
 /** The owner's own changes: on the token or through a device. */
 export function isOwners(actor: string): boolean {

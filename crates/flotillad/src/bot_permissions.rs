@@ -20,7 +20,7 @@ mod shell;
 #[cfg(test)]
 mod tests;
 
-pub use exact::{command as hermesd_command, this_binary};
+pub use exact::{command as flotillad_command, this_binary};
 pub use settings::{generate, mode, rule_path, SettingsInput};
 
 /// The generated settings file's name, in the bot's directory.
@@ -133,7 +133,7 @@ impl BotStart<'_> {
     /// The guard hook's command line: this daemon binary, told whose folders
     /// are whose.
     pub fn guard_command(&self) -> String {
-        let exe = std::env::current_exe().unwrap_or_else(|_| PathBuf::from("hermesd"));
+        let exe = std::env::current_exe().unwrap_or_else(|_| PathBuf::from("flotillad"));
         let mut parts = vec![
             quote(&exe.display().to_string()),
             "guard".to_string(),
@@ -215,7 +215,7 @@ impl BotStart<'_> {
             home: &self.cfg.home,
             user_home: &self.cfg.user_home,
             workspace: self.workspace,
-            hermesd: &this_binary(),
+            flotillad: &this_binary(),
             artifacts: self.artifacts,
             trusted_paths: &trusted,
             served: &self.served_dirs(),
@@ -244,16 +244,27 @@ impl BotStart<'_> {
 /// The file the pre-H-031 setup applied by hand with `--settings`.
 pub const INTERIM_SETTINGS_FILE: &str = "bot-settings.json";
 
-/// The daemon's config in its home, under both names: `migrate-home` renames
-/// `gravityd.toml` to `hermesd.toml`, and the lock must follow it. Both are
-/// protected, so a home on either side of the move is covered. (R2 adds
-/// `brand::daemon_file`; once both branches land this can derive from it.)
-pub const CONFIG_FILES: [&str; 2] = ["gravityd.toml", "hermesd.toml"];
+/// The daemon's config in its home, under every name: `migrate-home` renames
+/// `hermesd.toml` (or `gravityd.toml`) to `flotillad.toml`, and the lock must
+/// follow it. All are protected, so a home on either side of a move is
+/// covered, and a bot can't plant an old-named config for an older daemon.
+/// Must list `brand::all_daemon_files(".toml")` (tested).
+pub const CONFIG_FILES: [&str; 3] = ["gravityd.toml", "hermesd.toml", "flotillad.toml"];
 
-/// The daemon home's folder name on either side of `migrate-home`. For one
-/// release the old name stays as a symlink to the new home, and the guard
-/// protects paths spelled through it too (CE-006 G1).
-pub const HOME_NAMES: [&str; 2] = [".gravity", ".thehermes"];
+/// `INSTALL_DENY` (settings.rs) for the pre-rename binaries, still in the
+/// old app or home for a while.
+pub(crate) const LEGACY_INSTALL_DENY: [&str; 4] = [
+    "Bash(*hermesd* service install*)",
+    "Bash(*hermesd* service uninstall*)",
+    "Bash(*gravityd* service install*)",
+    "Bash(*gravityd* service uninstall*)",
+];
+
+/// The daemon home's folder name on every side of `migrate-home`. For one
+/// release each old name stays as a link to the new home, and the guard
+/// protects paths spelled through them too (CE-006 G1). Must list
+/// `brand::HOME_DIR_NAME` and `LEGACY_HOME_DIR_NAMES` (tested).
+pub const HOME_NAMES: [&str; 3] = [".gravity", ".thehermes", ".flotilla"];
 
 /// The configured args without a hand-applied `--settings <file>` (the
 /// pre-H-031 setup), and that file's contents. Two `--settings` would fight;

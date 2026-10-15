@@ -4,7 +4,7 @@
 use sha2::{Digest, Sha256};
 
 /// What every typed owner message starts with; the nonce follows it.
-pub const PREFIX: &str = "Owner (Hermes app)";
+pub const PREFIX: &str = "Owner (Flotilla app)";
 /// PENDING S0 (e): Claude Code's paste-collapse threshold. A longer paste
 /// shows as `[Pasted text #1 …]`, which hides the nonce from the echo
 /// check. Conservative until S0 measures it on 2.1.292.

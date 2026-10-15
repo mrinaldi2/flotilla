@@ -17,8 +17,8 @@ fn a_bot_builds_and_cleans_only_its_own_target() {
     let allowed = [
         format!("cargo clean --target-dir {OWN}"),
         "cargo clean".to_string(),
-        "cargo build --release -p hermesd".to_string(),
-        "cargo +stable -q test -p hermesd".to_string(),
+        "cargo build --release -p flotillad".to_string(),
+        "cargo +stable -q test -p flotillad".to_string(),
         "CARGO_TARGET_DIR=../cargo-target cargo clean".to_string(),
         format!("cargo build --target-dir={OWN}"),
         format!("cargo --config build.target-dir='\"{OWN}\"' build"),
@@ -40,8 +40,8 @@ fn a_bot_builds_and_cleans_only_its_own_target() {
         format!("cargo --config build.target-dir='\"{OTHER}\"' clean"),
         format!("cargo +stable clean --target-dir {OTHER}"),
         format!("cargo -q clean --target-dir {OTHER}"),
-        format!("CARGO_TARGET_DIR={OTHER} cargo build --release -p hermesd"),
-        format!("cargo build --release --target-dir {OTHER} -p hermesd"),
+        format!("CARGO_TARGET_DIR={OTHER} cargo build --release -p flotillad"),
+        format!("cargo build --release --target-dir {OTHER} -p flotillad"),
         "CARGO_TARGET_DIR=~/.gravity cargo build".to_string(),
         "CARGO_TARGET_DIR=$NOWHERE cargo build".to_string(),
         "CARGO_TARGET_DIR=$(pwd)/x cargo build".to_string(),
@@ -143,7 +143,7 @@ fn cargo_aliases_and_subcommand_binaries_are_followed() {
     }
     for command in [
         "cargo ok",
-        "cargo ok -p hermesd",
+        "cargo ok -p flotillad",
         "cargo clippy --all-targets",
         "cargo-clippy clippy --all-targets",
         &format!("cargo-clippy clippy --target-dir '{own}'"),

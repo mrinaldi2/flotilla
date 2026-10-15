@@ -12,7 +12,7 @@
 //! - children of processes already recorded.
 //!
 //! [`session_processes`] adds the processes whose environment still carries
-//! a known `THEHERMES_SESSION`, which finds a detached process born between
+//! a known `FLOTILLA_SESSION`, which finds a detached process born between
 //! two sweeps. Windows has the session's Job Object for that instead
 //! (`runtime/pty/job.rs`). A process that both cleared its environment and
 //! was born and detached between sweeps escapes; it then shows up as a

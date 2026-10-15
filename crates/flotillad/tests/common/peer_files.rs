@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 
 use bus::contract::board::{self as c, board_request::Request, board_response::Response};
-use hermesd::kanban::attachments::local_path;
+use flotillad::kanban::attachments::local_path;
 
 use super::board::{call, response};
 use super::{TestDaemon, WsClient};
@@ -95,6 +95,6 @@ pub fn stored(home: &TestDaemon, project_id: &str, attachment_id: &str) -> PathB
         .unwrap()
         .expect("attachment");
     let project = db.get_project(project_id).unwrap().expect("project");
-    let artifacts = hermesd::paths::artifacts_dir(&home.app.cfg, &project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&home.app.cfg, &project.dir_name);
     local_path(&att, &artifacts).expect("bytes")
 }

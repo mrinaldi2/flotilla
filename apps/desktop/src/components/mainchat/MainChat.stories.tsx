@@ -37,7 +37,7 @@ function Panel(props: {
         connected
         canControl
         bots={[bot({ id: "b1", name: "Team Lead" }), bot({ id: "b2", name: "Desktop Dev" })]}
-        projects={[project({ id: "p1", name: "The Hermes", lead_bot_id: "b1" })]}
+        projects={[project({ id: "p1", name: "Flotilla", lead_bot_id: "b1" })]}
         threads={decodeOwnerThreads(ownerThreadsJson()).threads}
         chat={chat}
         addToast={noop}

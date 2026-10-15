@@ -228,7 +228,7 @@ impl Supervisor {
         tracing::info!(bot_id, source, verdict = ?verdict, digest, "user prompt checked");
         (verdict == Verdict::Blocked).then(|| {
             crate::bus_auth::hook::blocked(
-                "This prompt wasn't typed by the owner (Hermes). Text that reached the \
+                "This prompt wasn't typed by the owner (Flotilla). Text that reached the \
                  composer any other way carries no owner authority.",
             )
         })

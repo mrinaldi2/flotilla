@@ -119,12 +119,12 @@ fn a_dot_or_dot_dot_step_has_no_links_in_any_spelling() {
 #[test]
 fn the_page_links_the_install_and_escapes_what_it_shows() {
     let link = "itms-services://?action=download-manifest&url=https://m/r/ios/manifest.plist";
-    let html = page_html("The <Hermes>", "0.6.1", link);
+    let html = page_html("The <Flotilla>", "0.6.1", link);
     assert!(
         html.contains(r#"href="itms-services://?action=download-manifest&amp;url=https://m/r/ios/manifest.plist""#),
         "{html}"
     );
-    assert!(html.contains("The &lt;Hermes&gt; 0.6.1"), "{html}");
+    assert!(html.contains("The &lt;Flotilla&gt; 0.6.1"), "{html}");
     assert!(
         html.contains("this device may not be in the build's profile"),
         "{html}"
@@ -160,7 +160,7 @@ fn info(for_testing: bool, approved: Option<i64>) -> ReleaseInstall {
         for_testing,
         page_url: "https://m/r1/ios/index.html".into(),
         install_url: "itms-services://x".into(),
-        app_title: "The Hermes".into(),
+        app_title: "Flotilla".into(),
         approved_at: approved
             .map(|seconds| bus::contract::pbjson_types::Timestamp { seconds, nanos: 0 }),
         ..Default::default()
@@ -179,7 +179,7 @@ fn phone(connected: bool) -> InstallDevice {
 #[test]
 fn the_notification_names_the_version_and_why_it_waits() {
     let testing = offer(&info(true, None), &phone(true));
-    assert_eq!(testing.title, "The Hermes 0.6.1 (12) is ready to install");
+    assert_eq!(testing.title, "Flotilla 0.6.1 (12) is ready to install");
     assert_eq!(testing.body, "Ready to test. Tap to install.");
     assert!(testing.delivered && testing.for_testing);
     assert_eq!(testing.install_url, "itms-services://x");
@@ -193,6 +193,6 @@ fn the_notification_names_the_version_and_why_it_waits() {
     let mut same = info(false, None);
     same.build = "0.6.1".into();
     let plain = offer(&same, &phone(true));
-    assert_eq!(plain.title, "The Hermes 0.6.1 is ready to install");
+    assert_eq!(plain.title, "Flotilla 0.6.1 is ready to install");
     assert_eq!(plain.body, "Tap to install.");
 }

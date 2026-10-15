@@ -203,7 +203,7 @@ fn retention_keeps_the_newest_pre_migration_backups_and_nothing_else_goes() {
     for name in &ours {
         folder(dir, name, Some("pre-migration"));
     }
-    // `hermesd backup` before manifests had a kind, and since.
+    // `flotillad backup` before manifests had a kind, and since.
     folder(dir, "backup-20250101-000000", None);
     folder(dir, "backup-20250102-000000", Some("manual"));
     // The owner's own folder, pre-migration by name only.

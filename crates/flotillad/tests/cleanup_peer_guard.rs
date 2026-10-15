@@ -10,10 +10,10 @@ use std::time::Duration;
 use common::peer_board::board;
 use common::prs::{commit, head};
 use common::repo::{git, remote};
-use hermesd::cleanup::model::{JobState, Kind};
-use hermesd::cleanup::remote::serve_request;
-use hermesd::db::prs::NewPr;
-use hermesd::prs::model::PrWorktree;
+use flotillad::cleanup::model::{JobState, Kind};
+use flotillad::cleanup::remote::serve_request;
+use flotillad::db::prs::NewPr;
+use flotillad::prs::model::PrWorktree;
 
 #[tokio::test]
 async fn only_the_home_may_ask_and_an_unmerged_commit_is_held_here() {
@@ -34,7 +34,7 @@ async fn only_the_home_may_ask_and_an_unmerged_commit_is_held_here() {
     let tester = win.app.db.get_bot(&b.tester_id).unwrap().unwrap();
     let ws = PathBuf::from(&tester.workspace_path);
     std::fs::create_dir_all(ws.join("scratch")).unwrap();
-    let ws = hermesd::safe_git::canonical(&ws).unwrap();
+    let ws = flotillad::safe_git::canonical(&ws).unwrap();
     git(&ws, &["clone", "-q", &url, "repo"]);
     let main = ws.join("repo");
     let tree = ws.join("scratch").join("wt-a");
@@ -75,10 +75,10 @@ async fn only_the_home_may_ask_and_an_unmerged_commit_is_held_here() {
             Ok(t.pr_by_id(&pr.id)?.unwrap())
         })
         .unwrap();
-    hermesd::cleanup::enqueue(&mac.app, &pr).unwrap();
+    flotillad::cleanup::enqueue(&mac.app, &pr).unwrap();
     let jobs = || db.board_read(|t| t.cleanup_jobs_of_pr(&pr.id)).unwrap();
     let on_pc: Vec<_> = jobs().into_iter().filter(|j| j.machine == pc).collect();
-    let frame = hermesd::cleanup::batch_for(&mac.app, &pr, &url, &on_pc)
+    let frame = flotillad::cleanup::batch_for(&mac.app, &pr, &url, &on_pc)
         .unwrap()
         .to_frame(&b.mac_app);
     let home = win.app.db.get_peer(&b.p.win_peer_id).unwrap().unwrap();

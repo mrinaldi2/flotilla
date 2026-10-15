@@ -10,7 +10,7 @@ use bus::contract::board::{self as c, board_request::Request};
 use common::board::{call, snapshot};
 use common::cards::fresh;
 use common::tasks::error_text;
-use hermesd::kanban::model::Role;
+use flotillad::kanban::model::Role;
 use serde_json::json;
 
 #[tokio::test]

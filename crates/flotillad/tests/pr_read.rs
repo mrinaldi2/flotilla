@@ -1,5 +1,5 @@
 //! The PR read surface over WS, PR-8 (H-273; H-261 §9): `pr_list`, `pr_get`,
-//! `pr_diff` and `pr_comments` as `hermes.pr.v1` binary frames on the
+//! `pr_diff` and `pr_comments` as `flotilla.pr.v1` binary frames on the
 //! board's home; the pushes every PR change sends; the owner's `check_rerun`;
 //! and a linked computer's check log kept as opaque text.
 
@@ -13,7 +13,7 @@ use common::pr_wire::{self as w, call, error, expect_push, response};
 use common::prs::{approve, commit, opened, report, setup, Repo};
 use common::repo::git;
 use common::WsClient;
-use hermesd::prs::check_model::{CheckResult, NewCheck, Report};
+use flotillad::prs::check_model::{CheckResult, NewCheck, Report};
 use prost::Message;
 use serde_json::json;
 

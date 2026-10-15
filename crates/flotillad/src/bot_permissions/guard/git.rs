@@ -316,7 +316,7 @@ const DELETE: &str = "deleting a remote branch can't be undone by a bot; ask the
 fn denied(branch: &str) -> String {
     format!(
         "nobody pushes or merges to {branch} directly: push a feature branch and open a PR; \
-         {branch} moves through `hermesd pr merge`"
+         {branch} moves through `flotillad pr merge`"
     )
 }
 

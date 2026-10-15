@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import { ColumnKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { boards, proposals } from "../../../test/boardsFixtures";
 import { lastChangeLine, leadChanges, noticeLine, openProposals } from "./lastChange";
 import {

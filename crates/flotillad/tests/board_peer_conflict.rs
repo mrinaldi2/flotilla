@@ -6,7 +6,7 @@ use crate::common;
 
 use common::peer_board::board;
 use common::peers::wait_until;
-use hermesd::actor::Actor;
+use flotillad::actor::Actor;
 use serde_json::json;
 
 #[tokio::test]
@@ -36,7 +36,7 @@ async fn the_mirror_follows_every_version_the_home_writes() {
     let item = mac.app.db.get_item(&b.item).unwrap().expect("item");
     // A write outside the tools, as a retiring bot's handback does.
     let bot = mac.app.db.get_bot(&b.stand_in).unwrap().expect("stand-in");
-    hermesd::kanban::handback::items_to_lead(&mac.app, &bot, &Actor::User).expect("handback");
+    flotillad::kanban::handback::items_to_lead(&mac.app, &bot, &Actor::User).expect("handback");
     let now = mac.app.db.get_item(&b.item).unwrap().expect("item").version;
     assert!(now > item.version);
     let win_app = b.win_app.clone();

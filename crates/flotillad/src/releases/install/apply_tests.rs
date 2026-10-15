@@ -7,14 +7,14 @@ use super::{answers_from, bundle_sha256, parse, AppSwap};
 
 /// A fake app bundle holding one file that says which build it is.
 fn app(dir: &Path, build: &str) -> std::path::PathBuf {
-    let app = dir.join("The Hermes.app");
+    let app = dir.join("Flotilla.app");
     std::fs::create_dir_all(app.join("Contents/MacOS")).unwrap();
-    std::fs::write(app.join("Contents/MacOS/hermesd"), build).unwrap();
+    std::fs::write(app.join("Contents/MacOS/flotillad"), build).unwrap();
     app
 }
 
 fn build_in(app: &Path) -> String {
-    std::fs::read_to_string(app.join("Contents/MacOS/hermesd")).unwrap()
+    std::fs::read_to_string(app.join("Contents/MacOS/flotillad")).unwrap()
 }
 
 fn skip() -> Check {
@@ -38,12 +38,12 @@ fn the_app_swaps_in_and_the_one_it_replaced_is_kept_and_put_back() {
     let swap = swap_in(root.path());
     let kept = bundle_sha256(&swap.dest()).unwrap();
     let swapped = swap.swap(&skip()).expect("swapped");
-    assert_eq!(swapped.dest, swap.apps.join("The Hermes.app"));
+    assert_eq!(swapped.dest, swap.apps.join("Flotilla.app"));
     assert_eq!(build_in(&swapped.dest), "0.17.0");
     assert_eq!(build_in(&swap.backup()), "0.16.3");
     assert_eq!(swapped.backup_sha256.as_deref(), Some(kept.as_str()));
     assert!(
-        !swap.apps.join("The Hermes.app.new").exists(),
+        !swap.apps.join("Flotilla.app.new").exists(),
         "nothing left beside it"
     );
 
@@ -60,7 +60,7 @@ fn a_kept_app_changed_since_is_never_put_back() {
     let swapped = swap.swap(&skip()).unwrap();
     let kept = swapped.backup_sha256.unwrap();
     // A bot swaps what's in the backups folder (anyone can write there).
-    std::fs::write(swap.backup().join("Contents/MacOS/hermesd"), "evil").unwrap();
+    std::fs::write(swap.backup().join("Contents/MacOS/flotillad"), "evil").unwrap();
     let refused = swap.restore(&skip(), &kept).unwrap_err().to_string();
     assert!(refused.contains("changed since it was kept"), "{refused}");
     assert_eq!(
@@ -68,7 +68,7 @@ fn a_kept_app_changed_since_is_never_put_back() {
         "0.17.0",
         "the new app stays in place"
     );
-    assert!(!swap.apps.join("The Hermes.app.restore").exists());
+    assert!(!swap.apps.join("Flotilla.app.restore").exists());
 }
 
 #[test]
@@ -121,7 +121,7 @@ fn the_boot_gate_waits_for_the_new_binary_not_its_version() {
 
 #[test]
 fn the_job_runs_the_swap_with_its_rollback() {
-    let args = apply_args("r1", Path::new("/stage/unpacked/The Hermes.app"), "0.17.0");
+    let args = apply_args("r1", Path::new("/stage/unpacked/Flotilla.app"), "0.17.0");
     assert_eq!(
         args,
         [
@@ -129,7 +129,7 @@ fn the_job_runs_the_swap_with_its_rollback() {
             "apply-app",
             "r1",
             "--app",
-            "/stage/unpacked/The Hermes.app",
+            "/stage/unpacked/Flotilla.app",
             "--version",
             "0.17.0"
         ]

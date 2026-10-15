@@ -7,9 +7,9 @@ use crate::common;
 use bus::contract::board::{self as c, board_request::Request, board_response::Response};
 use common::board::*;
 use common::*;
-use hermesd::actor::Actor;
-use hermesd::db::NewItem;
-use hermesd::kanban::model::{ItemType, Priority};
+use flotillad::actor::Actor;
+use flotillad::db::NewItem;
+use flotillad::kanban::model::{ItemType, Priority};
 
 fn comment(id: &str, body: &str) -> Request {
     Request::ItemComment(c::ItemAddComment {
@@ -25,7 +25,7 @@ async fn the_owner_comments_from_the_drawer() {
     let d = spawn_daemon().await;
     let mut owner = WsClient::connect(&d).await;
     let mut watcher = WsClient::connect(&d).await;
-    let project_id = common::peers::project(&mut owner, "The Hermes").await;
+    let project_id = common::peers::project(&mut owner, "Flotilla").await;
     snapshot(
         call(
             &mut owner,

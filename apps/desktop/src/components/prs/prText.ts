@@ -1,11 +1,11 @@
 // The Pull requests tab's words (UX-051 decisions 2–4, 6, 11): every state is
 // a glyph plus a word, never colour alone. Pure functions over the
-// `hermes.pr.v1` messages, so the list, the detail and the tests share them.
+// `flotilla.pr.v1` messages, so the list, the detail and the tests share them.
 
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
-import type { Blocker, PullRequest, Review } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { BlockerKind, PrState, Verdict } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { Blocker, PullRequest, Review } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { BlockerKind, PrState, Verdict } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 
 /** How a state reads: ok (green), warn (amber), bad (red), you (accent), dim. */
 export type Tone = "ok" | "warn" | "bad" | "you" | "dim";

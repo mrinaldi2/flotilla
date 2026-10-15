@@ -55,7 +55,7 @@ pub(super) fn serve_call(app: &Arc<AppState>, peer: &Peer, frame: &Value) -> any
         return Err(refuse(
             "forbidden",
             "the board's home doesn't pause itself for another computer's install; update \
-             The Hermes on the installing computer",
+             Flotilla on the installing computer",
         ));
     }
     let stand_in = stand_in(app, peer, &link, bot_id)?;

@@ -140,7 +140,7 @@ fn walk(dir: &std::path::Path) -> Vec<std::path::PathBuf> {
 async fn the_disk_report_and_a_low_disk_row() {
     let r = setup().await;
     let cache = r.pair.d.app.db.get_bot(&r.pair.ids[1]).unwrap().unwrap();
-    let cache = hermesd::workers::target::bot_target(std::path::Path::new(&cache.workspace_path));
+    let cache = flotillad::workers::target::bot_target(std::path::Path::new(&cache.workspace_path));
     std::fs::create_dir_all(cache.join("debug")).unwrap();
     std::fs::write(cache.join("debug/lib"), vec![1u8; 300_000]).unwrap();
 
@@ -194,7 +194,7 @@ async fn the_disk_report_and_a_low_disk_row() {
     assert!(!cache.exists(), "Clean up trims a cache with no live PR");
     let fresh = &done["disk_report"];
     assert_eq!(fresh["machine"], machine.as_str(), "{done}");
-    if fresh["free_bytes"].as_u64().unwrap() >= hermesd::cleanup::disk::LOW {
+    if fresh["free_bytes"].as_u64().unwrap() >= flotillad::cleanup::disk::LOW {
         assert!(
             rows(&mut app, &r.project, "DISK_LOW").await.is_empty(),
             "a fresh report replaced the low one"

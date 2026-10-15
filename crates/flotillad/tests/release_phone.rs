@@ -13,7 +13,7 @@ use std::net::TcpListener;
 use common::release_phone::{ours, published, set_status};
 use common::releases::Releases;
 use common::WsClient;
-use hermesd::releases::model::ReleaseStatus;
+use flotillad::releases::model::ReleaseStatus;
 use serde_json::{json, Value};
 
 #[tokio::test]
@@ -83,7 +83,7 @@ async fn send_to_phone_reaches_only_that_device_and_waits_there() {
     let sent = owner.request(send(&device_id)).await;
     assert_eq!(sent["type"], "install_offer", "{sent}");
     let offer = &sent["offer"];
-    assert_eq!(offer["title"], "The Hermes 0.6.1 (12) is ready to install");
+    assert_eq!(offer["title"], "Flotilla 0.6.1 (12) is ready to install");
     assert_eq!(offer["body"], "Ready to test. Tap to install.");
     assert_eq!(offer["install_url"], install_url.as_str());
     assert_eq!(offer["page_url"], page_url.as_str());

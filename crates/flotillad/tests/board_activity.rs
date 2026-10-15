@@ -48,7 +48,7 @@ async fn board_with_card(d: &TestDaemon, owner: &mut WsClient) -> (String, Strin
         &d.app.db,
         &project_id,
         "Toasts",
-        hermesd::kanban::model::Priority::P1,
+        flotillad::kanban::model::Priority::P1,
     );
     (project_id, id)
 }
@@ -217,7 +217,7 @@ async fn a_facts_move_is_the_daemons_with_its_note() {
     {
         let mut feed = d.app.board.writer();
         let moved = [(id.clone(), "inbox".to_string())];
-        hermesd::kanban::api::publish_moves(&d.app, &mut feed, &project_id, &moved);
+        flotillad::kanban::api::publish_moves(&d.app, &mut feed, &project_id, &moved);
     }
     let pushed = owner.wait_for(activity).await;
     let a = &pushed["activity"];
@@ -245,9 +245,9 @@ async fn bot_state_names_the_card_its_turn_is_about() {
     }
     assert_eq!(d.app.supervisor.state(&bot_id).0, bus::BotState::Ready);
     let text = format!("[card {id}] The owner changed {id}");
-    let sender = hermesd::messaging::user_sender();
-    let dm = hermesd::messaging::Dm::new(&bot_id, &sender, bus::MessageKind::Note, &text);
-    let msg = hermesd::messaging::send_dm(&d.app.db, &d.app.events, dm).unwrap();
+    let sender = flotillad::messaging::user_sender();
+    let dm = flotillad::messaging::Dm::new(&bot_id, &sender, bus::MessageKind::Note, &text);
+    let msg = flotillad::messaging::send_dm(&d.app.db, &d.app.events, dm).unwrap();
     owner
         .wait_for_within(Duration::from_secs(10), |v| {
             v["type"] == "delivery_update"

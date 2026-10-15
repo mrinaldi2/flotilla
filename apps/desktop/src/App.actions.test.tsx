@@ -88,7 +88,7 @@ describe("App actions", () => {
 
     await user.click(screen.getByRole("button", { name: "Settings ▾" }));
     await user.click(screen.getByRole("menuitem", { name: "Conversations" }));
-    expect(screen.getByText("Conversations need a newer Hermes service.")).toBeInTheDocument();
+    expect(screen.getByText("Conversations need a newer Flotilla service.")).toBeInTheDocument();
 
     // Away to Projects (⌘0) and back: the window reopens where it was left.
     act(() => {
@@ -149,7 +149,7 @@ describe("App actions", () => {
 
     // A fresh daemon has no project card to wait for.
     await waitFor(() => {
-      expect(screen.getByText("Welcome to The Hermes")).toBeInTheDocument();
+      expect(screen.getByText("Welcome to Flotilla")).toBeInTheDocument();
     });
     // The post-create refresh must see what the daemon just made.
     daemon
@@ -335,7 +335,7 @@ describe("App actions", () => {
     const user = userEvent.setup();
     await renderHome();
 
-    await user.click(screen.getByRole("button", { name: /^Hermes service:/ }));
+    await user.click(screen.getByRole("button", { name: /^Flotilla service:/ }));
     const host = screen.getByLabelText("Computer host");
     await user.clear(host);
     await user.type(host, "mini");

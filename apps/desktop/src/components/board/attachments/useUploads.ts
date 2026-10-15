@@ -5,8 +5,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BoardApi } from "../../../protocol/board";
-import type { ItemAttachment } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import type { ItemDetail } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import type { ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { ItemDetail } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { errText } from "../../../util";
 import { attachedBytes, newUploadId, refusalFor } from "./attachments";
 import type { Upload } from "./transfer";
@@ -17,7 +17,7 @@ export interface UploadState {
   readonly name: string;
   readonly size: number;
   readonly received: number;
-  /** Why it was refused, by the caps here or by the Hermes service. */
+  /** Why it was refused, by the caps here or by the Flotilla service. */
   readonly refusal: string | null;
 }
 

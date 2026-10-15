@@ -1,4 +1,4 @@
-//! A check's whole process tree (H-291). `hermesd check run` starts the
+//! A check's whole process tree (H-291). `flotillad check run` starts the
 //! check's shell, which starts cargo, node or whatever the check runs; any
 //! of them may start more that outlive their parent. Ending only the runner
 //! would orphan them, still running in a checkout about to be deleted. So
@@ -40,7 +40,7 @@ use crate::prs::check_checkout;
 const GONE_WITHIN: Duration = Duration::from_secs(5);
 
 /// Set for a runner the daemon starts: it waits for "go" on its stdin.
-pub const LIFELINE_ENV: &str = "HERMES_CHECK_LIFELINE";
+pub const LIFELINE_ENV: &str = "FLOTILLA_CHECK_LIFELINE";
 
 /// One running check's tree and the job folder its checkout is in.
 struct Tree {

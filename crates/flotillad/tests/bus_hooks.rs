@@ -1,4 +1,4 @@
-//! Hooks by process identity (H-044 §5, tests 5 and 10). A real `hermesd
+//! Hooks by process identity (H-044 §5, tests 5 and 10). A real `flotillad
 //! hook` reports to the daemon's local endpoint as the bot whose session it
 //! runs in, with no token; and once bearers are refused, a session's
 //! environment holds none.
@@ -10,8 +10,8 @@ use std::process::Stdio;
 use std::time::Duration;
 
 use common::*;
-use hermesd::bus_auth::os::OsProcessTable;
-use hermesd::bus_auth::BearerPolicy;
+use flotillad::bus_auth::os::OsProcessTable;
+use flotillad::bus_auth::BearerPolicy;
 use serde_json::{json, Value};
 use tokio::io::AsyncWriteExt;
 use tokio::process::{Child, Command};
@@ -36,7 +36,7 @@ async fn eventually(check: impl Fn() -> bool) {
     panic!("condition never held");
 }
 
-/// Starts `hermesd hook <event>` as Claude Code would, with `payload` on
+/// Starts `flotillad hook <event>` as Claude Code would, with `payload` on
 /// stdin and `socket` as the session's inbox. `sh` waits for a line and then
 /// execs the hook in its own process, so `root_of` can record that process
 /// as a bot's session root first.
@@ -47,10 +47,10 @@ async fn spawn_hook(
     socket: &str,
     root_of: Option<&str>,
 ) -> Child {
-    let endpoint = hermesd::bus_auth::ipc::endpoint(&d.app.cfg);
+    let endpoint = flotillad::bus_auth::ipc::endpoint(&d.app.cfg);
     let script = format!(
         "read go; exec '{}' hook {event} --endpoint '{}'",
-        env!("CARGO_BIN_EXE_hermesd"),
+        env!("CARGO_BIN_EXE_flotillad"),
         endpoint.display()
     );
     let mut child = Command::new("sh")
@@ -168,7 +168,7 @@ async fn a_permission_prompt_is_answered_through_the_hook() {
 async fn session_start_waits_for_a_daemon_still_booting() {
     let dir = tempfile::tempdir().expect("tmp");
     let endpoint = dir.path().join("bus.sock");
-    let mut hook = Command::new(env!("CARGO_BIN_EXE_hermesd"))
+    let mut hook = Command::new(env!("CARGO_BIN_EXE_flotillad"))
         .args(["hook", "SessionStart", "--endpoint"])
         .arg(&endpoint)
         .stdin(Stdio::null())
@@ -213,7 +213,7 @@ async fn no_token_in_a_session_once_bearers_are_refused() {
     let d = spawn_daemon_with(|cfg| cfg.auth.bot_bearer = BearerPolicy::Refuse).await;
     let alice = bot(&d, "alice").await;
     let env = session_env(&d, &alice);
-    assert!(!env.contains("THEHERMES_TOKEN"), "{env}");
+    assert!(!env.contains("FLOTILLA_TOKEN"), "{env}");
     assert!(!env.contains("GRAVITY_TOKEN"), "{env}");
 }
 
@@ -223,6 +223,6 @@ async fn the_token_is_still_set_while_bearers_are_accepted() {
     let d = spawn_daemon().await;
     let alice = bot(&d, "alice").await;
     let env = session_env(&d, &alice);
-    assert!(env.contains("THEHERMES_TOKEN"), "{env}");
+    assert!(env.contains("FLOTILLA_TOKEN"), "{env}");
     assert!(env.contains("GRAVITY_TOKEN"), "{env}");
 }

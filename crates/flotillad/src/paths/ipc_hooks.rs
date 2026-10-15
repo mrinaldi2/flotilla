@@ -1,7 +1,7 @@
 //! Claude Code hook settings over the local endpoint (H-044), shared by Unix
 //! and Windows.
 
-/// The hooks as `hermesd hook <event>` over the local endpoint (H-044): the
+/// The hooks as `flotillad hook <event>` over the local endpoint (H-044): the
 /// hook process is a child of the session, so the daemon knows whose it is
 /// without a token. Claude Code's stdin payload goes through untouched, so
 /// the daemon reads Notification's `message` and Stop's `transcript_path`;

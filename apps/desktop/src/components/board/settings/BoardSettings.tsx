@@ -1,7 +1,7 @@
 // Board settings (⚙ Board, 0.19.0): a right-side panel the width of the
 // item drawer, with General, Columns, Automations and Item types. Every save
 // is one board change, checked against the board version read; a refusal is
-// shown at the foot in the Hermes service's words.
+// shown at the foot in the Flotilla service's words.
 
 import { X } from "lucide-react";
 import { useState } from "react";
@@ -9,11 +9,11 @@ import type { ReactElement } from "react";
 import { useDrawerEscape } from "../../../hooks/useDrawerEscape";
 import { useNow } from "../../control/useNow";
 import type { BoardApi } from "../../../protocol/board";
-import type { Board, BoardColumn } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { Board, BoardColumn } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import type {
   BoardProposal,
   BoardSnapshot,
-} from "../../../protocol/gen/hermes/board/v1/requests_pb";
+} from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import AutomationsSection from "./AutomationsSection";
 import type { ColumnChange } from "./columnEdits";
 import ColumnsSection from "./ColumnsSection";
@@ -138,7 +138,7 @@ function Section(props: {
           <p className="settings-note">
             <span aria-hidden="true">◇</span> Items use the built-in types (Epic, Feature, Bug,
             Spike, Chore) and their templates on every board. Types and templates of a board's own
-            come with a later Hermes service.
+            come with a later Flotilla service.
           </p>
         </section>
       );

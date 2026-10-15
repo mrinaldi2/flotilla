@@ -7,11 +7,11 @@ use crate::common;
 use std::collections::HashMap;
 
 use common::releases::{releases, Releases};
-use hermesd::actor::Actor;
-use hermesd::db::NewItem;
-use hermesd::events::Push;
-use hermesd::kanban::model::{ItemType, Priority};
-use hermesd::releases::blockers_watch;
+use flotillad::actor::Actor;
+use flotillad::db::NewItem;
+use flotillad::events::Push;
+use flotillad::kanban::model::{ItemType, Priority};
+use flotillad::releases::blockers_watch;
 use serde_json::{json, Value};
 
 /// A card on the release project's board, e.g. its REL work card.
@@ -226,10 +226,10 @@ async fn a_rel_card_is_found_and_changes_are_pushed() {
     {
         let db = &r.pair.d.app.db;
         let version = db.get_item(&cancelled).unwrap().unwrap().version;
-        let to = hermesd::db::MoveTo {
+        let to = flotillad::db::MoveTo {
             column: "cancelled",
             note: Some("duplicate"),
-            ..hermesd::db::MoveTo::default()
+            ..flotillad::db::MoveTo::default()
         };
         db.move_item(&cancelled, version, &to, &Actor::User)
             .unwrap();

@@ -1,4 +1,4 @@
-//! Claude Code hook settings on Windows: `hermesd hook` over the named pipe
+//! Claude Code hook settings on Windows: `flotillad hook` over the named pipe
 //! (H-044), or, when `bot_transport = "http"`, a PowerShell script posting
 //! with the bearer token, which serializes payloads so Windows pipe paths
 //! remain valid JSON.
@@ -17,7 +17,7 @@ pub fn settings(workspace: &Path, transport: &HookTransport) -> anyhow::Result<s
     };
     Ok(serde_json::json!({
         "crossSessionInbound": "accept",
-        "permissions": { "allow": [], "deny": ["Read(../**)", crate::paths::secrets_deny_rule(), crate::paths::legacy_secrets_deny_rule(), "Bash(rm -rf /*)"] },
+        "permissions": { "allow": [], "deny": crate::paths::workspace_deny_rules() },
         "hooks": hooks
     }))
 }

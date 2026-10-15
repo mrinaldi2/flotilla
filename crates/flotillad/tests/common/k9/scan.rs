@@ -13,7 +13,7 @@ use serde_json::{json, Value};
 
 use super::super::TestDaemon;
 use super::K9;
-use hermesd::kanban::model::TemplateKind;
+use flotillad::kanban::model::TemplateKind;
 
 /// A preset's name, offered by `board_create`: the built-in flow 0.18
 /// boards migrated to. Naming it is not a board of this project using it.

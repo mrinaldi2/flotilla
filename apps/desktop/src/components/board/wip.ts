@@ -1,8 +1,8 @@
 // WIP limits in column headers (H-018 §3.4). The state is always carried by
 // a word ("Full", "Over"), never by colour alone.
 
-import type { BoardColumn, ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { WipScope } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn, ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { WipScope } from "../../protocol/gen/flotilla/board/v1/board_pb";
 
 type WipState = "none" | "under" | "full" | "over";
 

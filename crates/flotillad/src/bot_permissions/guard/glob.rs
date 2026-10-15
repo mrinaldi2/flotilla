@@ -29,7 +29,7 @@ impl GuardContext {
     /// The protected path an expanded word with wildcards may match. The
     /// folder before the first wildcard is read both as spelled and
     /// resolved like a plain path, so a glob through a symlink (`~/.gravity`
-    /// → `~/.thehermes`) is judged by where it lands.
+    /// → `~/.flotilla`) is judged by where it lands.
     pub(super) fn glob_reaches(&self, expanded: &str, scope: &Scope, glob: Glob) -> Option<String> {
         // Glob options may make `^`, `#` and `~` patterns (CE-032 M3).
         let options = glob == Glob::Shell && scope.changes.globbing;

@@ -1,13 +1,13 @@
-//! `hermesd release tag <release> [--dry-run]` (H-272; H-261 §6.3): DevOps
+//! `flotillad release tag <release> [--dry-run]` (H-272; H-261 §6.3): DevOps
 //! tags a release cut from main, after the owner's approval. Main is already
 //! at the commit: only the annotated tag `desktop-v<version>` is pushed, and
 //! no release branch is made.
 //!
-//! The daemon checks first (`hermes/release_tag`, see `tag`). Then, in
+//! The daemon checks first (`flotilla/release_tag`, see `tag`). Then, in
 //! DevOps' own checkout, with git hooks off: origin must be the release's
 //! repo, the commit must be on main, an existing tag must already be on it;
 //! the tag is pushed, the repo asked for it, and the daemon records it
-//! (`hermes/release_tagged`) after asking the repo itself.
+//! (`flotilla/release_tagged`) after asking the repo itself.
 
 use std::path::Path;
 
@@ -18,7 +18,7 @@ use super::land::ask;
 use crate::config::Config;
 use crate::prs::repo;
 
-const USAGE: &str = "usage: hermesd release tag <release> [--dry-run]";
+const USAGE: &str = "usage: flotillad release tag <release> [--dry-run]";
 
 /// What to tag, as the daemon said.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -63,7 +63,12 @@ fn parse(args: &[String]) -> anyhow::Result<(String, bool)> {
 
 pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     let (release, dry_run) = parse(args)?;
-    let gate = ask(cfg, "hermes/release_tag", json!({ "release_id": release })).await?;
+    let gate = ask(
+        cfg,
+        "flotilla/release_tag",
+        json!({ "release_id": release }),
+    )
+    .await?;
     let plan = Plan::from_gate(&gate, &release, dry_run)?;
     let checkout = git::toplevel(&std::env::current_dir()?)?;
     tag_in(&checkout, &plan)?;
@@ -73,7 +78,7 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     }
     ask(
         cfg,
-        "hermes/release_tagged",
+        "flotilla/release_tagged",
         json!({ "release_id": release, "tag": plan.tag, "commit": plan.commit }),
     )
     .await?;

@@ -75,7 +75,7 @@ fn review_cases() -> Vec<(u8, Expect, Value)> {
         (36, D, tool("Write", "/Users/me/.claude/settings.json")),
         (37, D, tool("Write", "//Users/me/.claude/settings.json")),
         (38, F, tool("Write", "/Users/me/.zshrc")),
-        (39, A, bash("cargo test -p hermesd -- --test-threads=2")),
+        (39, A, bash("cargo test -p flotillad -- --test-threads=2")),
         (40, A, bash("git push origin feat/x")),
     ]
 }
@@ -178,7 +178,7 @@ fn rewordings_of_the_bypasses_are_blocked_too() {
 fn everyday_work_still_passes() {
     for command in [
         "cargo build --release 2>&1 | tail -5",
-        "cargo test -p hermesd -p bus -- --test-threads=2",
+        "cargo test -p flotillad -p bus -- --test-threads=2",
         "npx -y pnpm@10 --dir apps/desktop check",
         "git push -u origin H-031-fixes",
         "git push origin feat/main-menu",
@@ -193,7 +193,7 @@ fn everyday_work_still_passes() {
         "git ls-files -z '*.tmp' | xargs -0 rm -f",
         "for f in *.o; do rm \"$f\"; done",
         "sed -i '' 's/a/b/' notes.md",
-        "cp target/release/hermesd /tmp/hermesd",
+        "cp target/release/flotillad /tmp/flotillad",
         "echo done > /tmp/log.txt 2>&1",
         "python3 scripts/notices.py",
         "node scripts/verify.mjs",

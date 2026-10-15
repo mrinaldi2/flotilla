@@ -40,7 +40,7 @@ function Frame({ light }: { readonly light?: boolean }): ReactElement {
     <div className={`main ${light ? "theme-light" : ""}`} style={{ height: 1100 }}>
       <DashboardView
         client={client}
-        project={project({ id: "p1", name: "The Hermes" })}
+        project={project({ id: "p1", name: "Flotilla" })}
         bots={DASH_BOTS}
         connected
         canControl

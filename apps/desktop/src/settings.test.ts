@@ -29,8 +29,8 @@ afterEach(() => {
 
 /** What `scripts/dev.sh` bakes in so a dev build finds its own daemon. */
 function stubDevEnv(): void {
-  vi.stubEnv("VITE_GRAVITY_DEV_PORT", "55571");
-  vi.stubEnv("VITE_GRAVITY_DEV_TOKEN", "dev-daemon-token");
+  vi.stubEnv("VITE_FLOTILLA_DEV_PORT", "55571");
+  vi.stubEnv("VITE_FLOTILLA_DEV_TOKEN", "dev-daemon-token");
 }
 
 describe("loadEndpoint", () => {
@@ -65,7 +65,7 @@ describe("loadEndpoint", () => {
   });
 
   it("ignores a malformed dev port", () => {
-    vi.stubEnv("VITE_GRAVITY_DEV_PORT", "not-a-port");
+    vi.stubEnv("VITE_FLOTILLA_DEV_PORT", "not-a-port");
     stubStorage(null);
     expect(loadEndpoint()).toEqual(DEFAULT_ENDPOINT);
   });

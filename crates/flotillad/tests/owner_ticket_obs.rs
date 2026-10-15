@@ -11,7 +11,7 @@ use std::time::Duration;
 
 use common::proxy::{is_launched_by, Proxy};
 use common::*;
-use hermesd::bus_auth::owner::{CodeCheck, Peer};
+use flotillad::bus_auth::owner::{CodeCheck, Peer};
 use serde_json::{json, Value};
 
 /// The owner's app is the proxy with this launcher pid, and nothing else.
@@ -96,7 +96,7 @@ async fn health_counts_the_owners_tickets_and_the_logs_hold_none() {
     d.app.owner.set_check(Arc::new(AppIs(app.pid())));
     app.start().await;
     let reply = app
-        .answer("hermes/owner_ticket", json!({}), Duration::from_secs(10))
+        .answer("flotilla/owner_ticket", json!({}), Duration::from_secs(10))
         .await;
     let ticket = reply["result"]["ticket"]
         .as_str()

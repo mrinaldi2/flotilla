@@ -36,7 +36,7 @@ describe("QuiesceBanner", () => {
     const { fake } = setup(PAUSED, ["read", "control", "approve"]);
     expect(
       await screen.findByText(
-        /Every project on this computer is paused while The Hermes 0.17.0 installs/,
+        /Every project on this computer is paused while Flotilla 0.17.0 installs/,
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(
@@ -60,7 +60,7 @@ describe("QuiesceBanner", () => {
     await act(async () => {});
     expect(screen.queryByRole("status")).toBeNull();
     act(() => fake.emit("quiesce_update", { type: "quiesce_update", quiesce: PAUSED }));
-    expect(screen.getByRole("status")).toHaveTextContent("while The Hermes 0.17.0 installs");
+    expect(screen.getByRole("status")).toHaveTextContent("while Flotilla 0.17.0 installs");
   });
 
   it("leaves Resume now to the owner's approve grant", async () => {
@@ -82,7 +82,7 @@ describe("QuiesceBanner", () => {
     });
     const banner = await screen.findByRole("status");
     expect(banner).toHaveTextContent(
-      "The install is waiting for these programs to close the Hermes folder:",
+      "The install is waiting for these programs to close the Flotilla folder:",
     );
     expect(screen.getByText("node (process 4120) · Unity in PhD")).toBeInTheDocument();
     expect(screen.getByText("sleep (process 77)")).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe("QuiesceBanner", () => {
   it("says when the list of background services changed", async () => {
     setup({ ...PAUSED, report: { services_changed: true } });
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "The list of background services changed after the Hermes service started.",
+      "The list of background services changed after the Flotilla service started.",
     );
   });
 

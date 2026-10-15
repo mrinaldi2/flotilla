@@ -1,8 +1,8 @@
 import { create } from "@bufbuild/protobuf";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { MoveBlockSchema } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { MoveCheckSchema } from "../../protocol/gen/hermes/board/v1/requests_pb";
+import { MoveBlockSchema } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { MoveCheckSchema } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import { card, unmet } from "../../test/boardFixtures";
 import BoardCard from "./BoardCard";
 import { columnChecks, moveMenuItem, planMove, stuckLine } from "./moves";

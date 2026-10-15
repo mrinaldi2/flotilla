@@ -63,12 +63,12 @@ async fn a_bot_working_off_board_is_flagged_once_and_cleared() {
     app.supervisor.set_state(&dev, BotState::Working, "test");
     assert_eq!(app.supervisor.state(&dev).0, BotState::Working);
 
-    hermesd::offboard::sweep(&app, t0).unwrap();
-    hermesd::offboard::sweep(&app, t0 + Duration::minutes(9)).unwrap();
+    flotillad::offboard::sweep(&app, t0).unwrap();
+    flotillad::offboard::sweep(&app, t0 + Duration::minutes(9)).unwrap();
     assert!(app.off_board.flagged_since(&dev).is_none(), "too soon");
-    hermesd::offboard::sweep(&app, t0 + Duration::minutes(10)).unwrap();
+    flotillad::offboard::sweep(&app, t0 + Duration::minutes(10)).unwrap();
     assert_eq!(app.off_board.flagged_since(&dev), Some(t0));
-    hermesd::offboard::sweep(&app, t0 + Duration::minutes(20)).unwrap();
+    flotillad::offboard::sweep(&app, t0 + Duration::minutes(20)).unwrap();
     // The note reaches the inbox only once the delivery loop delivers it.
     wait_until("the lead's note is delivered", || {
         app.db
@@ -89,7 +89,7 @@ async fn a_bot_working_off_board_is_flagged_once_and_cleared() {
             json!({"to": "dev", "kind": "task", "item": card, "body": "this"}),
         )
         .await;
-    hermesd::offboard::sweep(&app, t0 + Duration::minutes(21)).unwrap();
+    flotillad::offboard::sweep(&app, t0 + Duration::minutes(21)).unwrap();
     assert!(app.off_board.flagged_since(&dev).is_none(), "cleared");
 }
 
@@ -100,7 +100,7 @@ async fn the_lead_off_board_is_a_row_without_a_note_to_itself() {
     let lead = pair.ids[0].clone();
     // The project's off-board Needs you rows (an attention row since 0.17.0).
     let off_board_rows = || {
-        hermesd::overview::attention_rows(&app, &project)
+        flotillad::overview::attention_rows(&app, &project)
             .unwrap()
             .rows
             .into_iter()
@@ -110,8 +110,8 @@ async fn the_lead_off_board_is_a_row_without_a_note_to_itself() {
     app.supervisor.set_state(&lead, BotState::Working, "test");
     assert_eq!(app.supervisor.state(&lead).0, BotState::Working);
     let t0 = Utc::now();
-    hermesd::offboard::sweep(&app, t0).unwrap();
-    hermesd::offboard::sweep(&app, t0 + Duration::minutes(10)).unwrap();
+    flotillad::offboard::sweep(&app, t0).unwrap();
+    flotillad::offboard::sweep(&app, t0 + Duration::minutes(10)).unwrap();
     assert!(app.off_board.flagged_since(&lead).is_some());
     let rows = off_board_rows();
     assert_eq!(rows.len(), 1, "{rows:?}");
@@ -125,7 +125,7 @@ async fn the_lead_off_board_is_a_row_without_a_note_to_itself() {
 
     // Idle ends the episode.
     app.supervisor.set_state(&lead, BotState::Ready, "test");
-    hermesd::offboard::sweep(&app, t0 + Duration::minutes(11)).unwrap();
+    flotillad::offboard::sweep(&app, t0 + Duration::minutes(11)).unwrap();
     assert!(app.off_board.flagged_since(&lead).is_none());
     assert!(off_board_rows().is_empty());
 }
@@ -137,8 +137,8 @@ async fn a_project_without_a_board_flags_nothing() {
     let dev = pair.ids[1].clone();
     app.supervisor.set_state(&dev, BotState::Working, "test");
     let t0 = Utc::now();
-    hermesd::offboard::sweep(&app, t0).unwrap();
-    hermesd::offboard::sweep(&app, t0 + Duration::minutes(30)).unwrap();
+    flotillad::offboard::sweep(&app, t0).unwrap();
+    flotillad::offboard::sweep(&app, t0 + Duration::minutes(30)).unwrap();
     assert!(app.off_board.flagged_since(&dev).is_none());
 }
 
@@ -257,19 +257,19 @@ async fn a_lead_reading_a_result_of_a_carded_task_is_on_the_board() {
     // lead holds no open task at all.
     bus_turn(&pair, &lead, &format!("[msg #{num} from DEV · done] Done."));
     app.supervisor.set_state(&lead, BotState::Working, "test");
-    assert!(hermesd::offboard::bus_turn_on_board(&app, &lead, num, None).unwrap());
+    assert!(flotillad::offboard::bus_turn_on_board(&app, &lead, num, None).unwrap());
     let t0 = Utc::now();
-    hermesd::offboard::sweep(&app, t0).unwrap();
-    hermesd::offboard::sweep(&app, t0 + Duration::minutes(15)).unwrap();
+    flotillad::offboard::sweep(&app, t0).unwrap();
+    flotillad::offboard::sweep(&app, t0 + Duration::minutes(15)).unwrap();
     assert!(app.off_board.flagged_since(&lead).is_none(), "on the board");
     // A bot that is neither end of the task gains nothing from its result.
-    assert!(!hermesd::offboard::bus_turn_on_board(&app, "nobody", num, None).unwrap());
+    assert!(!flotillad::offboard::bus_turn_on_board(&app, "nobody", num, None).unwrap());
 }
 
 #[tokio::test]
 async fn a_tester_on_a_deploy_task_is_on_the_board() {
-    use hermesd::messaging::{daemon_sender, send_dm, Dm};
-    use hermesd::releases::model::DeployAction;
+    use flotillad::messaging::{daemon_sender, send_dm, Dm};
+    use flotillad::releases::model::DeployAction;
 
     let mut r = common::releases::releases(1).await;
     let app = r.pair.d.app.clone();
@@ -295,8 +295,8 @@ async fn a_tester_on_a_deploy_task_is_on_the_board() {
         .unwrap();
     app.supervisor.set_state(&tester, BotState::Working, "test");
     let t0 = Utc::now();
-    hermesd::offboard::sweep(&app, t0).unwrap();
-    hermesd::offboard::sweep(&app, t0 + Duration::minutes(10)).unwrap();
+    flotillad::offboard::sweep(&app, t0).unwrap();
+    flotillad::offboard::sweep(&app, t0 + Duration::minutes(10)).unwrap();
     assert!(
         app.off_board.flagged_since(&tester).is_some(),
         "no card yet"
@@ -313,7 +313,7 @@ async fn a_tester_on_a_deploy_task_is_on_the_board() {
             )
         })
         .unwrap();
-    hermesd::offboard::sweep(&app, t0 + Duration::minutes(11)).unwrap();
+    flotillad::offboard::sweep(&app, t0 + Duration::minutes(11)).unwrap();
     assert!(
         app.off_board.flagged_since(&tester).is_none(),
         "a deploy task is on the board"

@@ -8,11 +8,11 @@ use crate::common;
 use bus::contract::home::{source::State, ProjectAttention, ProjectRow, ProjectsOverview};
 use common::peer_board::board;
 use common::peers::{project, wait_until};
-use hermesd::app::AppState;
+use flotillad::app::AppState;
 use serde_json::json;
 
 fn overview(app: &AppState) -> ProjectsOverview {
-    hermesd::overview::overview(app, &[]).expect("overview")
+    flotillad::overview::overview(app, &[]).expect("overview")
 }
 
 fn row(o: &ProjectsOverview, project_id: &str) -> ProjectRow {
@@ -63,7 +63,7 @@ async fn the_mac_counts_the_pcs_rows_once_and_keeps_them_while_it_is_away() {
     assert!(source.as_of.is_some());
 
     // Its row says to act on the PC, as the PC numbers it.
-    let rows = hermesd::overview::attention_rows(mac, &b.mac_app).expect("rows");
+    let rows = flotillad::overview::attention_rows(mac, &b.mac_app).expect("rows");
     let decision = rows
         .rows
         .iter()

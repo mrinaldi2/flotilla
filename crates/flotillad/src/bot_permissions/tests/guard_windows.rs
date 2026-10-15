@@ -1,6 +1,6 @@
 //! The guard on Windows, where one path has many spellings: `\` or `/`,
 //! a `\\?\` prefix, a drive letter or none, Git Bash's `/c/`, any case;
-//! and where `~/.gravity` is a junction to `~/.thehermes` after the move.
+//! and where `~/.gravity` is a junction to `~/.flotilla` after the move.
 
 use std::path::PathBuf;
 
@@ -58,7 +58,7 @@ fn a_glob_in_any_windows_spelling_is_denied_through_the_junction() {
         .expect("fake home");
     let user = root.path().canonicalize().expect("real root").join("u");
     let old = user.join(".gravity");
-    let new = user.join(".thehermes");
+    let new = user.join(".flotilla");
     std::fs::create_dir_all(new.join("secrets")).expect("mkdir");
     std::fs::create_dir_all(new.join("projects/p/bots/dev/workspace")).expect("mkdir");
     std::fs::write(new.join("secrets/tok"), "dummy").expect("write");
@@ -227,7 +227,7 @@ fn a_bot_cleans_its_own_cargo_target_on_windows() {
 /// it is refused for reading and writing; the null device stays allowed.
 #[test]
 fn device_paths_other_than_drive_and_unc_are_refused() {
-    let home = PathBuf::from(r"C:\Users\me\.thehermes");
+    let home = PathBuf::from(r"C:\Users\me\.flotilla");
     let ctx = GuardContext {
         home: home.clone(),
         user_home: PathBuf::from(r"C:\Users\me"),

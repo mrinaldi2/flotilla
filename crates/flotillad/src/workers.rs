@@ -93,7 +93,10 @@ impl Workers {
 /// Written to a retiring worker's workspace once its unpushed work has been
 /// saved, or found to need none, so a later pass does not try again. Never
 /// written when saving failed.
-const SALVAGED_MARKER: &str = ".gravity-salvaged";
+const SALVAGED_MARKER: &str = ".flotilla-salvaged";
+
+/// The marker's name before the rename, still honoured.
+const LEGACY_SALVAGED_MARKER: &str = ".gravity-salvaged";
 
 /// Tell clients a project's queue changed.
 pub(crate) fn changed(app: &AppState, project_id: &str) {
@@ -254,7 +257,10 @@ fn salvaged(app: &Arc<AppState>, bot: &bus::Bot) -> bool {
     let Some(checkout) = repo::checkout_of(&workspace) else {
         return true;
     };
-    if marker.exists() || Workers::set(&app.workers.salvage_failed).contains(&bot.id) {
+    if marker.exists()
+        || workspace.join(LEGACY_SALVAGED_MARKER).exists()
+        || Workers::set(&app.workers.salvage_failed).contains(&bot.id)
+    {
         return true;
     }
     if !Workers::set(&app.workers.salvaging).insert(bot.id.clone()) {

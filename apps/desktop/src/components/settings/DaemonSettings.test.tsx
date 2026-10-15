@@ -71,10 +71,10 @@ describe("DaemonSettings", () => {
 
     expect(await screen.findByText("50123 (not 49777)")).toBeInTheDocument();
     expect(screen.getByText(/Port 49777 was unavailable at startup/)).toHaveTextContent(
-      /Hermes is using 50123 for the app and bot bus/,
+      /Flotilla is using 50123 for the app and bot bus/,
     );
     expect(screen.getByText(/operating-system reservation/)).toHaveTextContent(
-      /choose an available port in hermesd.toml and restart the Hermes service/,
+      /choose an available port in flotillad.toml and restart the Flotilla service/,
     );
   });
 
@@ -183,24 +183,24 @@ describe("DaemonSettings", () => {
     invoke.mockResolvedValue(null);
     const { onToast } = renderPane(baseDaemon(), true, true);
 
-    await user.click(await screen.findByRole("button", { name: "Restart Hermes service" }));
+    await user.click(await screen.findByRole("button", { name: "Restart Flotilla service" }));
     expect(screen.getByText(/any in-flight turn is gone/)).toBeInTheDocument();
     expect(invoke).not.toHaveBeenCalled();
 
     await user.click(
-      screen.getAllByRole("button", { name: "Restart Hermes service" }).at(-1) as HTMLElement,
+      screen.getAllByRole("button", { name: "Restart Flotilla service" }).at(-1) as HTMLElement,
     );
     await waitFor(() => {
       expect(invoke).toHaveBeenCalledWith("restart_local_daemon");
     });
-    expect(onToast).toHaveBeenCalledWith("info", "Hermes service restarting", expect.any(String));
+    expect(onToast).toHaveBeenCalledWith("info", "Flotilla service restarting", expect.any(String));
   });
 
   it("leaves the daemon alone when the warning is dismissed", async () => {
     const user = userEvent.setup();
     const { onToast } = renderPane(baseDaemon(), true, true);
 
-    await user.click(await screen.findByRole("button", { name: "Restart Hermes service" }));
+    await user.click(await screen.findByRole("button", { name: "Restart Flotilla service" }));
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(screen.queryByText(/any in-flight turn is gone/)).not.toBeInTheDocument();
@@ -213,15 +213,15 @@ describe("DaemonSettings", () => {
     invoke.mockRejectedValue("no app-managed daemon is installed on this machine");
     const { onToast } = renderPane(baseDaemon(), true, true);
 
-    await user.click(await screen.findByRole("button", { name: "Restart Hermes service" }));
+    await user.click(await screen.findByRole("button", { name: "Restart Flotilla service" }));
     await user.click(
-      screen.getAllByRole("button", { name: "Restart Hermes service" }).at(-1) as HTMLElement,
+      screen.getAllByRole("button", { name: "Restart Flotilla service" }).at(-1) as HTMLElement,
     );
 
     await waitFor(() => {
       expect(onToast).toHaveBeenCalledWith(
         "error",
-        "Couldn't restart the Hermes service",
+        "Couldn't restart the Flotilla service",
         "no app-managed daemon is installed on this machine",
       );
     });
@@ -233,7 +233,7 @@ describe("DaemonSettings", () => {
     invoke.mockImplementation((command) => {
       if (command === "restart_local_daemon") {
         return Promise.reject(
-          "daemon restart failed: Error: no hermesd service installed at /u/Library/LaunchAgents/com.manuelrinaldi.thehermesd.plist",
+          "daemon restart failed: Error: no flotillad service installed at /u/Library/LaunchAgents/com.manuelrinaldi.flotillad.plist",
         );
       }
       if (command === "local_service_status") {
@@ -243,19 +243,19 @@ describe("DaemonSettings", () => {
     });
     const { onToast } = renderPane(baseDaemon(), true, true);
 
-    await user.click(await screen.findByRole("button", { name: "Restart Hermes service" }));
+    await user.click(await screen.findByRole("button", { name: "Restart Flotilla service" }));
     await user.click(
-      screen.getAllByRole("button", { name: "Restart Hermes service" }).at(-1) as HTMLElement,
+      screen.getAllByRole("button", { name: "Restart Flotilla service" }).at(-1) as HTMLElement,
     );
     await user.click(await screen.findByRole("button", { name: "Finish the update" }));
 
     await waitFor(() => {
-      expect(onToast).toHaveBeenCalledWith("info", "Hermes service running", expect.any(String));
+      expect(onToast).toHaveBeenCalledWith("info", "Flotilla service running", expect.any(String));
     });
     expect(invoke).toHaveBeenCalledWith("install_local_daemon");
     expect(onToast).not.toHaveBeenCalledWith(
       "error",
-      "Couldn't restart the Hermes service",
+      "Couldn't restart the Flotilla service",
       expect.any(String),
     );
     Reflect.deleteProperty(window, "__TAURI_INTERNALS__");
@@ -267,7 +267,7 @@ describe("DaemonSettings", () => {
     });
     renderPane(daemon, true, true);
     expect(
-      await screen.findByRole("button", { name: "Restart Hermes service" }),
+      await screen.findByRole("button", { name: "Restart Flotilla service" }),
     ).toBeInTheDocument();
   });
 });

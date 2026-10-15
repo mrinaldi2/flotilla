@@ -3,8 +3,8 @@
 use crate::common;
 
 use common::*;
+use flotillad::overrides::AUTO_COMPACT_META_KEY;
 use futures::StreamExt;
-use hermesd::overrides::AUTO_COMPACT_META_KEY;
 use serde_json::json;
 
 #[tokio::test]

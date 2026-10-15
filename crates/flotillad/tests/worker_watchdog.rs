@@ -9,8 +9,8 @@ use std::time::Duration;
 use bus::{TaskState, WorkerState};
 use common::peers::{bot_named, project};
 use common::*;
-use hermesd::runtime::double::DoubleAdapter;
-use hermesd::runtime::{BotSpec, Capabilities, RuntimeAdapter, StartedSession};
+use flotillad::runtime::double::DoubleAdapter;
+use flotillad::runtime::{BotSpec, Capabilities, RuntimeAdapter, StartedSession};
 use serde_json::json;
 
 /// The double, minus the socket it would report: what a lost SessionStart

@@ -1,7 +1,7 @@
 import type { Story } from "@ladle/react";
 import { useState } from "react";
 import type { ReactElement } from "react";
-import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import { mergingPr, ownerDaemon, recheckPr } from "../../test/ownerReviewFixtures";
 import { readyForYouPr } from "../../test/prFixtures";
 import { PrStoryFrame } from "../../test/prStoryFrame";

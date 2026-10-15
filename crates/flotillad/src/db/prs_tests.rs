@@ -87,7 +87,7 @@ fn prs_are_numbered_per_project_and_a_card_has_one_live_pr() {
 #[test]
 fn the_pr_migration_runs_again_without_losing_prs() {
     let db = Db::open_in_memory().unwrap();
-    let p = db.create_project("The Hermes", "the-hermes").unwrap();
+    let p = db.create_project("Flotilla", "flotilla").unwrap();
     db.ensure_board(&p.id, "d-mac", Some("H")).unwrap();
     let item = card(&db, &p.id, "one");
     let pr = db

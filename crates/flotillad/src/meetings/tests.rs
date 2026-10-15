@@ -64,7 +64,7 @@ fn meeting(project_id: &str, id: &str) -> Meeting {
 #[test]
 fn the_meetings_migration_runs_again_without_losing_meetings() {
     let db = Db::open_in_memory().unwrap();
-    let p = db.create_project("The Hermes", "the-hermes").unwrap();
+    let p = db.create_project("Flotilla", "flotilla").unwrap();
     db.board_tx(|t| {
         t.upsert_series(&series(&p.id))?;
         t.insert_meeting(&meeting(&p.id, "MTG-1"))
@@ -85,7 +85,7 @@ fn the_meetings_migration_runs_again_without_losing_meetings() {
 #[test]
 fn contributions_count_once_per_attendee_and_actions_carry_over() {
     let db = Db::open_in_memory().unwrap();
-    let p = db.create_project("The Hermes", "the-hermes").unwrap();
+    let p = db.create_project("Flotilla", "flotilla").unwrap();
     let now = Utc::now();
     let action = ActionItem {
         id: "a1".into(),

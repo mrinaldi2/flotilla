@@ -1,4 +1,4 @@
-//! `board_import` for the owner (B6), as `hermesd board import` sends it:
+//! `board_import` for the owner (B6), as `flotillad board import` sends it:
 //! the backlog's text, the project by id or name (left out, the one board
 //! on this computer) and `dry_run`. Needs `approve`: the plan makes the
 //! import the owner's (H-020 §1.5).

@@ -5,9 +5,9 @@ use crate::common;
 use std::time::Duration;
 
 use common::*;
-use hermesd::app::AppState;
-use hermesd::config::{Config, RuntimeKind};
-use hermesd::db::Db;
+use flotillad::app::AppState;
+use flotillad::config::{Config, RuntimeKind};
+use flotillad::db::Db;
 use serde_json::{json, Value};
 
 /// Inbox messages from other bots, dropping the daemon's introduction prompt.
@@ -197,7 +197,7 @@ async fn bus_survives_daemon_restart_with_pending_delivery() {
             .db
             .insert_message(
                 &conv.id,
-                &hermesd::messaging::user_sender(),
+                &flotillad::messaging::user_sender(),
                 bus::MessageKind::Task,
                 "durable?",
                 None,
@@ -217,7 +217,7 @@ async fn bus_survives_daemon_restart_with_pending_delivery() {
     let db = Db::open(&cfg.db_path()).expect("reopen db");
     let app = AppState::new(cfg, db).expect("app2");
     // No one starts the bot: booting the daemon reconciles it into a session.
-    hermesd::server::spawn_workers(&app);
+    flotillad::server::spawn_workers(&app);
 
     let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
     loop {

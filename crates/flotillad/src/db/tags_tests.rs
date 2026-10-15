@@ -296,10 +296,10 @@ fn open_uses_counts_what_the_tag_still_owes_the_owner() {
     assert_eq!(usage(&db, "spend").open_uses, 2);
 }
 
-/// Grant notes Hermes wrote before H-173 were stored as the owner's; the
-/// migration moves them to Hermes and leaves the owner's own words alone.
+/// Grant notes Flotilla wrote before H-173 were stored as the owner's; the
+/// migration moves them to Flotilla and leaves the owner's own words alone.
 #[test]
-fn the_grant_notes_hermes_already_wrote_become_its_own() {
+fn the_grant_notes_flotilla_already_wrote_become_its_own() {
     let (db, bot) = setup();
     let d = raise(&db, &bot, "one");
     for body in [

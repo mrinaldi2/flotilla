@@ -1,4 +1,4 @@
-//! A real `hermesd bus-proxy` talking to a test daemon's local endpoint
+//! A real `flotillad bus-proxy` talking to a test daemon's local endpoint
 //! (H-044). A launcher process waits, then runs the proxy, so a test can
 //! record the launcher (a session root, the owner's app) before the proxy
 //! connects:
@@ -10,8 +10,8 @@ use std::path::PathBuf;
 use std::process::Stdio;
 use std::time::Duration;
 
-use hermesd::bus_auth::os::OsProcessTable;
-use hermesd::bus_auth::session::ProcessTable;
+use flotillad::bus_auth::os::OsProcessTable;
+use flotillad::bus_auth::session::ProcessTable;
 use serde_json::{json, Value};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, Lines};
 use tokio::process::{Child, ChildStdin, ChildStdout, Command};
@@ -30,10 +30,10 @@ pub struct Proxy {
 
 #[cfg(unix)]
 fn launcher(d: &TestDaemon, _go: &std::path::Path) -> Command {
-    let endpoint = hermesd::bus_auth::ipc::endpoint(&d.app.cfg);
+    let endpoint = flotillad::bus_auth::ipc::endpoint(&d.app.cfg);
     let script = format!(
         "read go; exec '{}' bus-proxy --endpoint '{}'",
-        env!("CARGO_BIN_EXE_hermesd"),
+        env!("CARGO_BIN_EXE_flotillad"),
         endpoint.display()
     );
     let mut command = Command::new("sh");
@@ -43,7 +43,7 @@ fn launcher(d: &TestDaemon, _go: &std::path::Path) -> Command {
 
 #[cfg(windows)]
 fn launcher(d: &TestDaemon, go: &std::path::Path) -> Command {
-    let endpoint = hermesd::bus_auth::ipc::endpoint(&d.app.cfg);
+    let endpoint = flotillad::bus_auth::ipc::endpoint(&d.app.cfg);
     let script = go.with_extension("cmd");
     std::fs::write(
         &script,
@@ -55,7 +55,7 @@ fn launcher(d: &TestDaemon, go: &std::path::Path) -> Command {
         .args(["/d", "/q", "/c"])
         .arg(&script)
         .arg(go)
-        .arg(env!("CARGO_BIN_EXE_hermesd"))
+        .arg(env!("CARGO_BIN_EXE_flotillad"))
         .arg(endpoint);
     command
 }
@@ -67,7 +67,7 @@ impl Proxy {
 
     /// A proxy whose working directory is `dir`: a command run from there.
     pub fn spawn_in(d: &TestDaemon, dir: &std::path::Path) -> Self {
-        let go = std::env::temp_dir().join(format!("hermes-proxy-{}.go", uuid::Uuid::new_v4()));
+        let go = std::env::temp_dir().join(format!("flotilla-proxy-{}.go", uuid::Uuid::new_v4()));
         let mut child = launcher(d, &go)
             .current_dir(dir)
             .stdin(Stdio::piped())

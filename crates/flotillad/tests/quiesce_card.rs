@@ -11,8 +11,8 @@ use std::process::Command;
 use chrono::{Duration, Utc};
 use common::peers::{project, wait_until};
 use common::*;
-use hermesd::quiesce::services::QuiesceConfig;
-use hermesd::quiesce::{start, PauseRequest};
+use flotillad::quiesce::services::QuiesceConfig;
+use flotillad::quiesce::{start, PauseRequest};
 use serde_json::Value;
 
 fn request(bot: &str) -> PauseRequest<'_> {
@@ -87,7 +87,8 @@ async fn a_holder_the_pause_cant_stop_gets_one_run_card_that_clears_it() {
         1
     );
 
-    hermesd::owner_action::start_run(&d.app, "user", id, card["sha256"].as_str().unwrap()).unwrap();
+    flotillad::owner_action::start_run(&d.app, "user", id, card["sha256"].as_str().unwrap())
+        .unwrap();
     let db = &d.app.db;
     wait_until("the card ran", || {
         db.get_owner_action(id)

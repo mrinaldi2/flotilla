@@ -2,7 +2,7 @@
 // computer each ran on. Checks on earlier commits fold away.
 
 import type { ReactElement } from "react";
-import type { CheckRun, PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { CheckRun, PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import { checkResult, checksSummary, checkWhere, splitChecks, unroutableNote } from "./checkText";
 import { sha7 } from "./prText";
 

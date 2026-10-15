@@ -1,9 +1,9 @@
 //! Helpers for the per-platform release target tests
 //! (`release_ios_targets.rs`, H-176): the team, a package, a passing test.
 
-use hermesd::actor::Actor;
-use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Priority, ProjectRole, Role};
+use flotillad::actor::Actor;
+use flotillad::db::{MoveTo, NewItem};
+use flotillad::kanban::model::{ItemType, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 use super::tasks::{error_text, project_with_bots, Pair};

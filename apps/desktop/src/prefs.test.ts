@@ -70,13 +70,13 @@ describe("prefs", () => {
     updatePrefs({ toggleWindowShortcut: "Super+Shift+KeyG" });
     expect(getPrefs().toggleWindowShortcut).toBe("Super+Shift+KeyG");
 
-    stubLocalStorage({ "hermes.prefs": JSON.stringify({ toggleWindowShortcut: 7 }) });
+    stubLocalStorage({ "flotilla.prefs": JSON.stringify({ toggleWindowShortcut: 7 }) });
     reloadPrefsForTest();
     expect(getPrefs().toggleWindowShortcut).toBe("");
   });
 
   it("survives malformed stored json", () => {
-    stubLocalStorage({ "hermes.prefs": "{nope" });
+    stubLocalStorage({ "flotilla.prefs": "{nope" });
     reloadPrefsForTest();
     expect(getPrefs()).toEqual(DEFAULT_PREFS);
   });

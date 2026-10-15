@@ -1,21 +1,21 @@
-//! The build's identity, as `hermesd --version` and `/health` say it (H-114):
-//! whether this hermesd knows the owner's app, and how.
+//! The build's identity, as `flotillad --version` and `/health` say it (H-114):
+//! whether this flotillad knows the owner's app, and how.
 
 use crate::common;
 
 use common::*;
-use hermesd::bus_auth::app_identity::identity_line;
+use flotillad::bus_auth::app_identity::identity_line;
 
 #[test]
 fn version_prints_the_identity_after_the_version() {
-    let out = std::process::Command::new(env!("CARGO_BIN_EXE_hermesd"))
+    let out = std::process::Command::new(env!("CARGO_BIN_EXE_flotillad"))
         .arg("--version")
         .output()
-        .expect("run hermesd --version");
+        .expect("run flotillad --version");
     assert!(out.status.success());
     let text = String::from_utf8_lossy(&out.stdout);
     let mut lines = text.lines();
-    let version = format!("hermesd {}", hermesd::app::DAEMON_VERSION);
+    let version = format!("flotillad {}", flotillad::app::DAEMON_VERSION);
     let identity = format!("identity: {}", identity_line());
     assert_eq!(lines.next(), Some(version.as_str()));
     assert_eq!(lines.next(), Some(identity.as_str()));
@@ -33,6 +33,6 @@ async fn health_reports_the_identity() {
     assert_eq!(health["identity"]["line"], identity_line(), "{health}");
     assert_eq!(
         health["identity"]["dev_build"],
-        hermesd::bus_auth::app_identity::DEV_BUILD
+        flotillad::bus_auth::app_identity::DEV_BUILD
     );
 }

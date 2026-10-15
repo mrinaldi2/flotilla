@@ -21,14 +21,11 @@ use crate::channel::MsgSocket;
 
 /// The daemon's home variables, which no bot session inherits. The daemon
 /// hands its home to whatever needs it explicitly (the guard hook gets
-/// `--home`); a bot that ran `hermesd service install` or an installer from
+/// `--home`); a bot that ran `flotillad service install` or an installer from
 /// its shell with them set would act on the daemon's home instead of the
 /// user's default.
-pub(crate) fn withheld_env() -> [String; 2] {
-    [
-        crate::brand::env_name("HOME"),
-        crate::brand::legacy_env_name("HOME"),
-    ]
+pub(crate) fn withheld_env() -> Vec<String> {
+    crate::brand::all_env_names("HOME")
 }
 
 #[derive(Debug, Clone, Serialize)]

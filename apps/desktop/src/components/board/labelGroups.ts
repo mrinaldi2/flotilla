@@ -2,7 +2,7 @@
 // belongs to the group `<group>`; a board declares the groups it filters
 // on, with the values it offers (`platform: ios, android`).
 
-import type { Board, LabelGroup } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { Board, LabelGroup } from "../../protocol/gen/flotilla/board/v1/board_pb";
 
 /** A group's name and values, as the filter bar and the cards read them. */
 export interface LabelGroupView {

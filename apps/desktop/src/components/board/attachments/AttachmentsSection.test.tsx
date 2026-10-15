@@ -2,7 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { UploadProgressSchema } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import { UploadProgressSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { draftDetail } from "../../../test/boardsFixtures";
 import { boardsClient, STORY_BOTS } from "../../../test/boardStory";
 import { recipeColumns } from "../../../test/boardsFixtures";

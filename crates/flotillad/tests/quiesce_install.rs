@@ -10,7 +10,7 @@ use chrono::{Duration, Utc};
 use common::releases::releases;
 use common::tasks::error_text;
 use common::*;
-use hermesd::quiesce::{
+use flotillad::quiesce::{
     check_deadline, extend, file_sha256, install_started, on_boot, pause_all, PauseRequest,
 };
 use serde_json::{json, Value};

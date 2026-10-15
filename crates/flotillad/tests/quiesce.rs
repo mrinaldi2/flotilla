@@ -9,8 +9,8 @@ use bus::{OverlapPolicy, RoutineRunState, Trigger, WorkerState};
 use chrono::{Duration, Utc};
 use common::peers::{project, wait_until};
 use common::*;
-use hermesd::db::Db;
-use hermesd::quiesce::{check_deadline, pause_all, resume_all, PauseRequest};
+use flotillad::db::Db;
+use flotillad::quiesce::{check_deadline, pause_all, resume_all, PauseRequest};
 use serde_json::json;
 
 fn request() -> PauseRequest<'static> {
@@ -72,11 +72,11 @@ async fn a_pause_holds_every_project_and_resume_brings_it_back() {
         )
         .unwrap();
     // A message to bob waits in the queue.
-    let sender = hermesd::messaging::user_sender();
-    hermesd::messaging::send_dm(
+    let sender = flotillad::messaging::user_sender();
+    flotillad::messaging::send_dm(
         &d.app.db,
         &d.app.events,
-        hermesd::messaging::Dm::new(&bob, &sender, bus::MessageKind::Note, "hello"),
+        flotillad::messaging::Dm::new(&bob, &sender, bus::MessageKind::Note, "hello"),
     )
     .unwrap();
     // A worker asked for stays queued.

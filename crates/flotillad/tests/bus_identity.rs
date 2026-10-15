@@ -1,5 +1,5 @@
 //! Bus identity by process (H-044 §5, tests 1, 2, 4 and 8). A real
-//! `hermesd bus-proxy` relays JSON-RPC to the daemon's local endpoint, and
+//! `flotillad bus-proxy` relays JSON-RPC to the daemon's local endpoint, and
 //! the daemon decides who it is from its place under a recorded session
 //! root, never from anything it sends. A stolen bearer token is worthless
 //! once bearers are refused.
@@ -8,7 +8,7 @@ use crate::common;
 
 use common::proxy::Proxy;
 use common::*;
-use hermesd::bus_auth::BearerPolicy;
+use flotillad::bus_auth::BearerPolicy;
 use serde_json::json;
 
 /// Two bots, "alice" and "bob", in one project; their ids and tokens.

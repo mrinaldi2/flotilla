@@ -11,7 +11,7 @@ use chrono::Utc;
 use common::cleanup::{job_at, linked, merged, step, workspace};
 use common::prs::setup;
 use common::repo::git;
-use hermesd::cleanup::model::JobState;
+use flotillad::cleanup::model::JobState;
 
 const ARCHITECT: usize = 2;
 

@@ -7,7 +7,7 @@ use serde_json::{json, Value};
 use super::deployed_via::history;
 use super::releases::{releases, rule, Releases};
 use super::WsClient;
-use hermesd::kanban::model::{ProjectRole, Role};
+use flotillad::kanban::model::{ProjectRole, Role};
 
 pub const SHA: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 

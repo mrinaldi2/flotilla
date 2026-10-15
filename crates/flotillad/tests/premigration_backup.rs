@@ -8,7 +8,7 @@ use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
 use bus::schema::MIGRATIONS;
-use hermesd::db::{schema_version, Db};
+use flotillad::db::{schema_version, Db};
 
 struct Home {
     _dirs: (tempfile::TempDir, tempfile::TempDir),
@@ -35,7 +35,7 @@ fn older_home() -> Home {
         .and_then(|l| l.local_addr())
         .expect("free port")
         .port();
-    let config = config_dir.path().join("hermesd.toml");
+    let config = config_dir.path().join("flotillad.toml");
     std::fs::write(
         &config,
         format!(
@@ -52,14 +52,14 @@ fn older_home() -> Home {
 }
 
 fn start(home: &Home) -> Child {
-    Command::new(env!("CARGO_BIN_EXE_hermesd"))
+    Command::new(env!("CARGO_BIN_EXE_flotillad"))
         .arg("--config")
         .arg(&home.config)
         .arg("--scratch")
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
         .spawn()
-        .expect("start hermesd")
+        .expect("start flotillad")
 }
 
 fn version(home: &Path) -> usize {
@@ -88,14 +88,14 @@ fn a_start_on_an_older_database_backs_it_up_then_migrates() {
     let mut daemon = start(&home);
     let deadline = Instant::now() + Duration::from_secs(60);
     while version(&home.home) != MIGRATIONS.len() {
-        if let Some(status) = daemon.try_wait().expect("poll hermesd") {
-            panic!("hermesd exited with {status}");
+        if let Some(status) = daemon.try_wait().expect("poll flotillad") {
+            panic!("flotillad exited with {status}");
         }
-        assert!(Instant::now() < deadline, "hermesd never migrated");
+        assert!(Instant::now() < deadline, "flotillad never migrated");
         std::thread::sleep(Duration::from_millis(100));
     }
-    daemon.kill().expect("stop hermesd");
-    daemon.wait().expect("reap hermesd");
+    daemon.kill().expect("stop flotillad");
+    daemon.wait().expect("reap flotillad");
 
     let backups = pre_migration_backups(&home.home);
     assert_eq!(backups.len(), 1, "{backups:?}");
@@ -119,12 +119,12 @@ fn a_start_whose_backup_fails_migrates_nothing() {
     let mut daemon = start(&home);
     let deadline = Instant::now() + Duration::from_secs(60);
     let status = loop {
-        if let Some(status) = daemon.try_wait().expect("poll hermesd") {
+        if let Some(status) = daemon.try_wait().expect("poll flotillad") {
             break status;
         }
         if Instant::now() > deadline {
             let _ = daemon.kill();
-            panic!("hermesd kept running without its backup");
+            panic!("flotillad kept running without its backup");
         }
         std::thread::sleep(Duration::from_millis(100));
     };

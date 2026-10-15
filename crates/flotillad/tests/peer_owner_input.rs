@@ -9,7 +9,7 @@ use crate::common;
 use common::devtools::{recording_devtools, start_browser};
 use common::peers::{team, team_trusting_on_the_pc, wait_until, Team};
 use common::*;
-use hermesd::db::OwnerVia;
+use flotillad::db::OwnerVia;
 use serde_json::json;
 
 /// Everything the bot's terminal has shown.

@@ -1,5 +1,5 @@
 //! A release cut from main (H-261 §6.1, §9) adds `tag`, `commit`, `prs` and
-//! `also_included` to the release payload (`hermes.pr.v1.ReleaseFromMain`).
+//! `also_included` to the release payload (`flotilla.pr.v1.ReleaseFromMain`).
 //! They must be new keys, so a client reading today's release is unaffected,
 //! and the four of them must read back as the contract's message.
 

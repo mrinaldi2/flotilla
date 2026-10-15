@@ -118,13 +118,13 @@ fn a_new_session_ends_the_bots_last_and_finished_sessions_are_forgotten() {
 #[test]
 fn procargs_env_is_read_past_the_path_and_arguments() {
     let mut buf = 2i32.to_ne_bytes().to_vec();
-    buf.extend_from_slice(b"/bin/sh\0\0\0\0sh\0-c\0HOME=/Users/u\0THEHERMES_SESSION=abc\0\0junk");
+    buf.extend_from_slice(b"/bin/sh\0\0\0\0sh\0-c\0HOME=/Users/u\0FLOTILLA_SESSION=abc\0\0junk");
     let env = procs::parse_procargs_env(&buf);
     assert_eq!(
         env,
         vec![
             ("HOME".to_string(), "/Users/u".to_string()),
-            ("THEHERMES_SESSION".to_string(), "abc".to_string()),
+            ("FLOTILLA_SESSION".to_string(), "abc".to_string()),
         ]
     );
     assert!(procs::parse_procargs_env(&[1, 0]).is_empty());

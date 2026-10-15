@@ -4,7 +4,7 @@
 
 import type { ReactElement } from "react";
 import type { BoardApi } from "../../../protocol/board";
-import type { ItemAttachment } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { useAttachmentImage } from "./useAttachmentImage";
 
 interface AttachmentThumbProps {

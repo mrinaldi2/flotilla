@@ -1,5 +1,5 @@
-use hermesd::runtime::codex::{CodexAdapter, CodexSpec, NativeCodexAdapter};
-use hermesd::runtime::{BotSpec, PermissionAnswer, RuntimeAdapter, SessionEvent, StartedSession};
+use flotillad::runtime::codex::{CodexAdapter, CodexSpec, NativeCodexAdapter};
+use flotillad::runtime::{BotSpec, PermissionAnswer, RuntimeAdapter, SessionEvent, StartedSession};
 use serde_json::Value;
 use std::path::Path;
 use std::time::Duration;
@@ -25,7 +25,7 @@ fn spec(root: &Path) -> BotSpec {
             port: 49777,
             bus: serde_json::json!({
                 "url": "http://127.0.0.1:49777/mcp",
-                "bearer_token_env_var": "THEHERMES_TOKEN",
+                "bearer_token_env_var": "FLOTILLA_TOKEN",
             }),
             artifacts: Some(root.join("artifacts")),
             browser: None,
@@ -33,7 +33,7 @@ fn spec(root: &Path) -> BotSpec {
         env: vec![
             ("GRAVITY_TOKEN".into(), "test-token".into()),
             (
-                "THEHERMES_TEST_LOG".into(),
+                "FLOTILLA_TEST_LOG".into(),
                 root.join("rpc.jsonl").display().to_string(),
             ),
         ],
@@ -270,7 +270,7 @@ async fn tool_items_are_recorded_for_the_chat() {
         .iter()
         .filter_map(|r| r["message"]["content"][0]["name"].as_str())
         .collect();
-    assert_eq!(tools, ["Bash", "Edit", "mcp__hermes-bus__send_message"]);
+    assert_eq!(tools, ["Bash", "Edit", "mcp__flotilla-bus__send_message"]);
     let patch = records
         .iter()
         .find_map(|r| r["toolUseResult"]["structuredPatch"].as_array())

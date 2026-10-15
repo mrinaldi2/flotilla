@@ -3,7 +3,7 @@ use crate::legacy;
 
 use bus::BotRuntime;
 use common::{spawn_daemon, spawn_daemon_with, WsClient};
-use hermesd::db::Db;
+use flotillad::db::Db;
 use serde_json::json;
 
 #[test]

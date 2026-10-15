@@ -28,7 +28,7 @@ pub(crate) const DEFAULT_AUTO_COMPACT_WINDOW: u32 = 250_000;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
-    /// Root of all daemon state (`~/.thehermes`).
+    /// Root of all daemon state (`~/.flotilla`).
     pub home: PathBuf,
     /// Addresses to bind. Localhost plus, optionally, a Tailscale interface.
     pub bind: Vec<IpAddr>,
@@ -39,7 +39,7 @@ pub struct Config {
     /// allowlisted. Set from `configured_port` unless a fallback was
     /// negotiated at startup.
     pub port: u16,
-    /// The port `hermesd.toml` asked for, kept so a negotiated fallback can be
+    /// The port `flotillad.toml` asked for, kept so a negotiated fallback can be
     /// reported as the compromise it is rather than passed off as the setting.
     #[serde(skip)]
     pub configured_port: u16,
@@ -52,7 +52,7 @@ pub struct Config {
     pub negotiate_port: bool,
     /// Scratch mode for repros and rehearsals (H-171): no bot starts, no peer
     /// link, no routines, deliveries or workers, no bot-folder writes, no git
-    /// push. Set by `--scratch` or `HERMES_SCRATCH=1`.
+    /// push. Set by `--scratch` or `FLOTILLA_SCRATCH=1`.
     pub scratch: bool,
     /// Take the owner acts a linked computer forwards (H-285, H-301). Never
     /// read from a config file: off in every daemon until signed approvals
@@ -223,7 +223,7 @@ impl Default for Config {
     }
 }
 
-/// Whether `THEHERMES_HOME` (or `GRAVITY_HOME`) points the daemon at a home
+/// Whether `FLOTILLA_HOME` (or `GRAVITY_HOME`) points the daemon at a home
 /// of the user's choosing; only the default home is migrated automatically.
 /// Set to either default home, as the service launchers do, it is not.
 pub fn home_is_overridden() -> bool {

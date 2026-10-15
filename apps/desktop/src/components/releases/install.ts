@@ -36,9 +36,9 @@ const STATE_WORDS: Readonly<Record<string, string>> = {
   deployed: "live",
 };
 
-/** "The Hermes 0.6.1 (12) · approved". */
+/** "Flotilla 0.6.1 (12) · approved". */
 export function installLine(release: Release, info: ReleaseInstall | null): string {
-  const title = info?.app_title ?? "The Hermes";
+  const title = info?.app_title ?? "Flotilla";
   const version = info?.version ?? release.display_version ?? release.name;
   const build = info?.build ?? release.builds.find((b) => b.platform === "ios")?.version;
   const named = build && build !== version ? `${version} (${build})` : version;

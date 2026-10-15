@@ -1,7 +1,7 @@
-# The Hermes daemon configuration — copy to ~/.thehermes/hermesd.toml
+# Flotilla daemon configuration — copy to ~/.flotilla/flotillad.toml
 # Every key is optional; defaults shown.
 
-# home = "/Users/you/.thehermes"
+# home = "/Users/you/.flotilla"
 
 # Bind addresses. Add your Tailscale interface IP for remote clients;
 # never bind 0.0.0.0.

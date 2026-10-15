@@ -45,7 +45,7 @@ impl Conn {
             self.reply_err(
                 req_id,
                 "forbidden",
-                "this client can't show terminal approval cards; answer it in The Hermes desktop app",
+                "this client can't show terminal approval cards; answer it in Flotilla desktop app",
             );
             return Ok(());
         }

@@ -358,7 +358,7 @@ pub(super) fn with_command(answer: &mut Value) {
     };
     let binary = crate::bot_permissions::this_binary();
     let args = format!("release install {id}");
-    answer["command"] = json!(crate::bot_permissions::hermesd_command(&binary, &args));
+    answer["command"] = json!(crate::bot_permissions::flotillad_command(&binary, &args));
 }
 
 /// The contract's how-to-test steps as stored: `[{item_id?, platform, steps}]`.

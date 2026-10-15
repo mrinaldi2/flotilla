@@ -10,11 +10,11 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
+use flotillad::app::AppState;
+use flotillad::config::{Config, RuntimeKind};
+use flotillad::db::Db;
+use flotillad::runtime::RuntimeAdapter;
 use futures::{SinkExt, StreamExt};
-use hermesd::app::AppState;
-use hermesd::config::{Config, RuntimeKind};
-use hermesd::db::Db;
-use hermesd::runtime::RuntimeAdapter;
 use serde_json::{json, Value};
 use tokio_tungstenite::tungstenite::Message as WsMsg;
 
@@ -76,8 +76,8 @@ pub async fn spawn_daemon_on(
     // No tool probe or check routing behind a test's back (H-283).
     cfg.checks.probe_interval_secs = 0;
     cfg.checks.dispatch_interval_secs = 0;
-    // The test binary isn't hermesd: checks run through the real runner.
-    cfg.checks.runner = Some(env!("CARGO_BIN_EXE_hermesd").into());
+    // The test binary isn't flotillad: checks run through the real runner.
+    cfg.checks.runner = Some(env!("CARGO_BIN_EXE_flotillad").into());
     // A shared computer's free disk is no test's business; AC2 sets its own.
     cfg.checks.disk_floor_gb = 0;
     // Nor is it the cleanup's: every test daemon sees 1 TB free, so no Needs
@@ -93,7 +93,7 @@ pub async fn spawn_daemon_on(
     // one that outlives every test here, not a daemon's tempdir that goes
     // when its test ends while others still run git.
     static GIT_HOME: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
-    hermesd::safe_git::set_home(GIT_HOME.get_or_init(|| tempfile::tempdir().unwrap().keep()));
+    flotillad::safe_git::set_home(GIT_HOME.get_or_init(|| tempfile::tempdir().unwrap().keep()));
     let db = Db::open(&cfg.db_path()).expect("db");
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
@@ -108,8 +108,8 @@ pub async fn spawn_daemon_on(
     // A slow hello must not outlive its ticket; the product keeps 60 s (H-333).
     app.owner
         .set_ticket_ttl_for_tests(Duration::from_secs(600) * timeout_scale());
-    hermesd::server::spawn_workers(&app);
-    let router = hermesd::server::router(app.clone());
+    flotillad::server::spawn_workers(&app);
+    let router = flotillad::server::router(app.clone());
     tokio::spawn(async move {
         let service = router.into_make_service_with_connect_info::<std::net::SocketAddr>();
         let _ = axum::serve(listener, service).await;

@@ -58,7 +58,7 @@ fn labels(values: &[&str]) -> Option<c::StringList> {
 async fn a_018_client_round_trips_platforms_without_losing_or_doubling_labels() {
     let d = spawn_daemon().await;
     let mut owner = WsClient::connect(&d).await;
-    let project_id = common::peers::project(&mut owner, "The Hermes").await;
+    let project_id = common::peers::project(&mut owner, "Flotilla").await;
     call(
         &mut owner,
         Request::BoardGet(c::BoardGet {

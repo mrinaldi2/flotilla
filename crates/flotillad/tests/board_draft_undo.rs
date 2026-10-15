@@ -8,9 +8,9 @@ use bus::contract::board::{self as c, board_request::Request, board_response::Re
 use common::board::*;
 use common::tasks::project_with_bots;
 use common::{McpClient, WsClient};
-use hermesd::kanban::admin::{self, By, Structure};
-use hermesd::kanban::model::Role;
-use hermesd::kanban::presets::Preset;
+use flotillad::kanban::admin::{self, By, Structure};
+use flotillad::kanban::model::Role;
+use flotillad::kanban::presets::Preset;
 use serde_json::json;
 
 fn edited(body: bus::contract::wire::envelope::Body) -> c::edit_result::Outcome {
@@ -126,7 +126,7 @@ async fn the_owner_undoes_a_bots_changes_to_a_draft_one_at_a_time() {
     )
     .await;
     let project = db.get_project(&project_id).unwrap().unwrap();
-    let artifacts = hermesd::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
     std::fs::create_dir_all(&artifacts).unwrap();
     std::fs::write(artifacts.join("spec.md"), "# Spec\n").unwrap();
     lead.call("item_attach", json!({"id": id, "artifact": "spec.md"}))
@@ -312,7 +312,7 @@ async fn undoing_an_attachment_takes_back_that_one_not_another_of_its_name() {
     )
     .await;
     let project = db.get_project(&project_id).unwrap().unwrap();
-    let artifacts = hermesd::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
     std::fs::create_dir_all(artifacts.join("v2")).unwrap();
     std::fs::write(artifacts.join("spec.md"), "# Spec\n").unwrap();
     std::fs::write(artifacts.join("v2/spec.md"), "# Spec, again\n").unwrap();

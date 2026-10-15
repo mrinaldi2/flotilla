@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
 import type { Bot, Project } from "../../protocol/entities";
-import type { OwnerThread, ThreadMessage } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { OwnerThread, ThreadMessage } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { unverifiedLabel } from "../../protocol/home";
 import { sendOnCmdEnter } from "../../util";
 import BotAvatar from "../BotAvatar";

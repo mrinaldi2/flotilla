@@ -1,4 +1,4 @@
-//! `hermesd bus-proxy --endpoint <socket or pipe>` (H-044 §1): the stdio MCP
+//! `flotillad bus-proxy --endpoint <socket or pipe>` (H-044 §1): the stdio MCP
 //! server a session starts as its own child. It relays JSON-RPC lines
 //! between its stdin/stdout and the daemon's local endpoint, and holds
 //! nothing secret: the daemon knows who it is from its place in the process
@@ -28,7 +28,7 @@ pub async fn run(args: &[String]) -> i32 {
 async fn connect(endpoint: &str) -> anyhow::Result<()> {
     let stream = open(endpoint)
         .await
-        .map_err(|e| anyhow::anyhow!("can't reach the Hermes service at {endpoint}: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("can't reach the Flotilla service at {endpoint}: {e}"))?;
     relay(stream).await
 }
 
@@ -37,7 +37,7 @@ pub(super) type Stream = tokio::net::UnixStream;
 #[cfg(windows)]
 pub(super) type Stream = tokio::net::windows::named_pipe::NamedPipeClient;
 
-/// Connects to the daemon's endpoint. Shared with `hermesd hook`.
+/// Connects to the daemon's endpoint. Shared with `flotillad hook`.
 #[cfg(unix)]
 pub(super) async fn open(endpoint: &str) -> std::io::Result<Stream> {
     tokio::net::UnixStream::connect(endpoint).await

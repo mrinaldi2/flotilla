@@ -34,7 +34,7 @@ pub fn record(log_dir: &Path, args: &[String]) {
 }
 
 /// The process that ran this one and the one that launched it, e.g.
-/// `/Applications/The Hermes.app/Contents/MacOS/hermes-desktop (pid 36676), launched from launchd`.
+/// `/Applications/Flotilla.app/Contents/MacOS/flotilla-desktop (pid 36676), launched from launchd`.
 fn caller() -> String {
     let table = OsProcessTable;
     let Some(parent) = table.info(std::process::id()).map(|me| me.ppid) else {
@@ -50,7 +50,7 @@ fn caller() -> String {
 
 fn line(at: &str, args: &[String], caller: &str) -> String {
     format!(
-        "{at} hermesd {} {} by {caller}\n",
+        "{at} flotillad {} {} by {caller}\n",
         env!("CARGO_PKG_VERSION"),
         args.join(" ")
     )
@@ -61,11 +61,11 @@ mod tests {
     #[test]
     fn a_line_says_when_what_and_who() {
         let args = ["service", "install", "--no-migrate"].map(String::from);
-        let line = super::line("2026-10-07T03:22:31Z", &args, "/A/hermes-desktop (pid 7)");
+        let line = super::line("2026-10-07T03:22:31Z", &args, "/A/flotilla-desktop (pid 7)");
         assert_eq!(
             line,
             format!(
-                "2026-10-07T03:22:31Z hermesd {} service install --no-migrate by /A/hermes-desktop (pid 7)\n",
+                "2026-10-07T03:22:31Z flotillad {} service install --no-migrate by /A/flotilla-desktop (pid 7)\n",
                 env!("CARGO_PKG_VERSION")
             )
         );

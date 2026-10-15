@@ -145,7 +145,7 @@ export async function isManagedLocalDaemon(endpoint: Endpoint): Promise<boolean>
   }
 }
 
-/** What `hermesd service status --json` adds up to; see `daemon/status.rs`. */
+/** What `flotillad service status --json` adds up to; see `daemon/status.rs`. */
 export type ServiceState =
   | "healthy"
   | "not_installed"
@@ -177,7 +177,7 @@ export interface ServiceStatus {
 }
 
 /**
- * The state of the Hermes service on this machine, from the bundled daemon's
+ * The state of the Flotilla service on this machine, from the bundled daemon's
  * own `service status`. `null` outside the Tauri shell, for a home set by
  * environment, and when the check itself fails: no answer is never a reason
  * to offer an install.

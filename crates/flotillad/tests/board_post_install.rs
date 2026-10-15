@@ -10,10 +10,10 @@ use common::releases::{releases, rule};
 use common::tasks::{drain_until, error_text};
 use common::team::{get, item, team, OWNER};
 use common::WsClient;
-use hermesd::db::{ItemEdit, Write};
+use flotillad::db::{ItemEdit, Write};
 use serde_json::json;
 
-fn with_criteria(db: &hermesd::db::Db, id: &str, texts: &[&str]) {
+fn with_criteria(db: &flotillad::db::Db, id: &str, texts: &[&str]) {
     let current = db.get_item(id).unwrap().unwrap();
     let texts: Vec<String> = texts.iter().map(|t| (*t).to_string()).collect();
     let edit = ItemEdit {
@@ -47,7 +47,7 @@ async fn a_post_install_criterion_skips_submit_and_holds_done() {
     ops.call(
         "release_attach_build",
         json!({"release_id": id, "platform": "daemon", "version": "0.16.3",
-               "artifact": "/builds/hermesd", "sha256": "a".repeat(64)}),
+               "artifact": "/builds/flotillad", "sha256": "a".repeat(64)}),
     )
     .await;
     r.passed(&id).await;

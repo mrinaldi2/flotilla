@@ -8,8 +8,8 @@ use common::board::{new_item, walk};
 use common::releases::releases;
 use common::tasks::project_with_bots;
 use common::*;
-use hermesd::actor::Actor;
-use hermesd::kanban::model::Priority;
+use flotillad::actor::Actor;
+use flotillad::kanban::model::Priority;
 use serde_json::{json, Value};
 
 const OWNER: Actor<'static> = Actor::User;

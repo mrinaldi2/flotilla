@@ -10,9 +10,9 @@ use bus::MessageKind;
 use common::board::{call, new_item, response};
 use common::tasks::project_with_bots;
 use common::*;
-use hermesd::actor::Actor;
-use hermesd::db::Db;
-use hermesd::kanban::model::Priority;
+use flotillad::actor::Actor;
+use flotillad::db::Db;
+use flotillad::kanban::model::Priority;
 use serde_json::json;
 
 const LEAD: usize = 0;
@@ -116,7 +116,7 @@ async fn a_dismissed_question_tells_the_bot_that_asked() {
             json!({"id": card, "body": "Which colour?", "asks_owner": true}),
         )
         .await;
-    let rows = hermesd::overview::attention_rows(&pair.d.app, &project_id).expect("rows");
+    let rows = flotillad::overview::attention_rows(&pair.d.app, &project_id).expect("rows");
     let row = rows
         .rows
         .iter()

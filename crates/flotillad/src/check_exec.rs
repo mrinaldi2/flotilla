@@ -2,7 +2,7 @@
 //! check passed. The daemon of the computer the check was routed to makes
 //! a fresh checkout at the exact sha in the job's folder under its `run/`
 //! (which bots can't write), then starts the runner command
-//! `hermesd check run <job folder>` with a clean environment. The runner
+//! `flotillad check run <job folder>` with a clean environment. The runner
 //! runs the job's `run` from the base's `checks.toml` in that checkout, its
 //! output going to `check.log`, and exits [`PASS`] when it exited 0,
 //! [`FAIL`] when it didn't, and [`COULDNT_RUN`] when it couldn't start. The
@@ -209,16 +209,16 @@ fn remove_all(dir: &Path) -> std::io::Result<()> {
     }
 }
 
-/// `hermesd check run <job folder>`: runs the job's command in its
+/// `flotillad check run <job folder>`: runs the job's command in its
 /// `check/`, all output to its `check.log`, and exits [`PASS`], [`FAIL`] or
 /// [`COULDNT_RUN`]. Started by the daemon, with the environment it chose.
 pub fn run_cli(args: &[String]) -> i32 {
     let [verb, dir] = args else {
-        eprintln!("usage: hermesd check run <job folder>");
+        eprintln!("usage: flotillad check run <job folder>");
         return COULDNT_RUN;
     };
     if verb != "run" {
-        eprintln!("usage: hermesd check run <job folder>");
+        eprintln!("usage: flotillad check run <job folder>");
         return COULDNT_RUN;
     }
     let dir = Path::new(dir);
@@ -227,7 +227,7 @@ pub fn run_cli(args: &[String]) -> i32 {
     };
     match run_command(dir, &log) {
         Ok(status) => {
-            let _ = writeln!(log, "\n[hermesd: the check exited with {status}]");
+            let _ = writeln!(log, "\n[flotillad: the check exited with {status}]");
             if status.success() {
                 PASS
             } else {
@@ -235,7 +235,7 @@ pub fn run_cli(args: &[String]) -> i32 {
             }
         }
         Err(error) => {
-            let _ = writeln!(log, "[hermesd: the check couldn't start: {error:#}]");
+            let _ = writeln!(log, "[flotillad: the check couldn't start: {error:#}]");
             COULDNT_RUN
         }
     }

@@ -12,9 +12,9 @@ use std::process::Command;
 
 use chrono::{Duration, Utc};
 use common::*;
-use hermesd::holders::{ledger, procs};
-use hermesd::quiesce::services::{QuiesceConfig, ServiceSpec};
-use hermesd::quiesce::{resume_all, start, PauseRequest};
+use flotillad::holders::{ledger, procs};
+use flotillad::quiesce::services::{QuiesceConfig, ServiceSpec};
+use flotillad::quiesce::{resume_all, start, PauseRequest};
 
 /// The lineage ledger is per process, and every test's quiesce reaps all
 /// of it: one test at a time.

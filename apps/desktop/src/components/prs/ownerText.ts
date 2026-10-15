@@ -4,8 +4,13 @@
 // Needs you and the tests share them.
 
 import { timestampDate } from "@bufbuild/protobuf/wkt";
-import type { PullRequest, ReviewSettings } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { BlockerKind, OwnerReview, PrState, Verdict } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest, ReviewSettings } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import {
+  BlockerKind,
+  OwnerReview,
+  PrState,
+  Verdict,
+} from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { OwnerReviewMode } from "../../protocol/prOwner";
 import { checksSummary, splitChecks } from "./checkText";
 import { joinNames, OWNER_ROLE, reviewOf, roleLabel, sha7, waitingFor } from "./prText";
@@ -142,7 +147,7 @@ const AREA_LABELS: ReadonlyMap<string, string> = new Map([
   ["docs", "Docs"],
   ["desktop", "Desktop screens"],
   ["ios", "iPhone and iPad screens"],
-  ["service", "Hermes service"],
+  ["service", "Flotilla service"],
 ]);
 
 /** An area's name: "Security and permissions" for `security`; an unknown key as it is. */

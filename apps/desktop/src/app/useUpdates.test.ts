@@ -107,7 +107,7 @@ describe("useUpdates", () => {
     await waitFor(() => {
       expect(addToast).toHaveBeenCalledWith(
         "error",
-        "Couldn't update the Hermes service",
+        "Couldn't update the Flotilla service",
         expect.stringContaining("no such file"),
         expect.objectContaining({
           sticky: true,
@@ -118,7 +118,7 @@ describe("useUpdates", () => {
     expect(invoke).not.toHaveBeenCalledWith("relaunch_app");
 
     const relaunch = addToast.mock.calls.find(
-      (call) => call[1] === "Couldn't update the Hermes service",
+      (call) => call[1] === "Couldn't update the Flotilla service",
     )?.[3]?.action;
     relaunch?.run();
     await waitFor(() => {
@@ -194,11 +194,11 @@ describe("useUpdates", () => {
     await waitFor(() => {
       expect(addToast).toHaveBeenCalledWith(
         "info",
-        "Hermes service update available",
+        "Flotilla service update available",
         expect.stringContaining("0.4.0"),
         expect.objectContaining({
           sticky: true,
-          action: expect.objectContaining({ label: "Update Hermes service" }),
+          action: expect.objectContaining({ label: "Update Flotilla service" }),
         }),
       );
     });
@@ -244,17 +244,17 @@ describe("useUpdates", () => {
     await waitFor(() => {
       expect(addToast).toHaveBeenCalledWith(
         "error",
-        "Hermes service update needed",
+        "Flotilla service update needed",
         expect.stringContaining("0.6.0"),
         expect.objectContaining({
           sticky: true,
-          action: expect.objectContaining({ label: "Update Hermes service" }),
+          action: expect.objectContaining({ label: "Update Flotilla service" }),
         }),
       );
     });
 
     addToast.mock.calls
-      .find((call) => call[1] === "Hermes service update needed")?.[3]
+      .find((call) => call[1] === "Flotilla service update needed")?.[3]
       ?.action?.run();
     await waitFor(() => {
       expect(invoke).toHaveBeenCalledWith("install_local_daemon", { currentVersion: "0.6.0" });

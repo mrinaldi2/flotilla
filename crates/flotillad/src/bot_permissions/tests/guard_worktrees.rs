@@ -111,7 +111,7 @@ fn the_inline_code_deny_says_report_it() {
 }
 
 /// CE-006 G1: after `migrate-home`, `~/.gravity` is a symlink to
-/// `~/.thehermes`. A glob spelled through the old name must still be judged
+/// `~/.flotilla`. A glob spelled through the old name must still be judged
 /// by where it lands. The fake home lives under `target/`, not a temp dir:
 /// the guard treats the temp dirs as writable, which would hide a miss.
 /// On Windows the link is a junction, as `migrate-home` makes it.
@@ -125,7 +125,7 @@ fn a_glob_through_the_old_home_link_is_denied_before_and_after_the_move() {
         .expect("fake home");
     let user = root.path().canonicalize().expect("real root").join("u");
     let old = user.join(".gravity");
-    let new = user.join(".thehermes");
+    let new = user.join(".flotilla");
     for dir in ["secrets", "projects/p/artifacts"].iter().chain(&[
         "projects/p/bots/dev/workspace",
         "projects/p/bots/other/workspace",
@@ -144,7 +144,7 @@ fn a_glob_through_the_old_home_link_is_denied_before_and_after_the_move() {
         format!("cat {g}/*/tok"),
         format!("cd {g} && cat sec*/tok"),
         format!("cat {g}/gravityd.to?"),
-        format!("cat {g}/hermesd.*"),
+        format!("cat {g}/flotillad.*"),
         format!("sed -i '' s/a/b/ {g}/gravityd*"),
         format!("rm -rf {g}/projects/p/bots/oth*/workspace"),
         format!("rm -rf {g}/projects/p/bots/?ther"),
@@ -218,12 +218,12 @@ fn a_glob_through_the_old_home_link_is_denied_before_and_after_the_move() {
     check(&old, "before the move");
     // The move: rename the home and the config, leave the old name as a link.
     std::fs::rename(&old, &new).expect("move home");
-    std::fs::rename(new.join("gravityd.toml"), new.join("hermesd.toml")).expect("rename config");
+    std::fs::rename(new.join("gravityd.toml"), new.join("flotillad.toml")).expect("rename config");
     link_home(&new, &old);
     let after = check(&new, "after the move");
     // Defence in depth: the old name's lexical forms are protected too.
     assert!(after.protected().contains(&old.join("secrets")));
-    assert!(after.protected().contains(&old.join("hermesd.toml")));
+    assert!(after.protected().contains(&old.join("flotillad.toml")));
 }
 
 /// A path as a shell word: on Windows without `\\?\` and with `/`, the

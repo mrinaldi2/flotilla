@@ -8,7 +8,7 @@ use bus::contract::board::{self as c, board_request::Request};
 use common::board::{call, snapshot};
 use common::tasks::project_with_bots;
 use common::WsClient;
-use hermesd::kanban::model::TextValue;
+use flotillad::kanban::model::TextValue;
 use serde_json::{json, Value};
 
 fn tool_names(list: &Value) -> Vec<String> {

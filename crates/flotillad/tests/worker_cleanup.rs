@@ -7,8 +7,8 @@ use crate::common;
 
 use common::peers::{bot_named, wait_until};
 use common::repo::{book, git};
-use hermesd::workers::bundle::SALVAGE_DIR;
-use hermesd::workers::scratch::{remove_idle_target, shared_target, SCRATCH_DIR};
+use flotillad::workers::bundle::SALVAGE_DIR;
+use flotillad::workers::scratch::{remove_idle_target, shared_target, SCRATCH_DIR};
 use serde_json::json;
 
 #[tokio::test]
@@ -19,7 +19,7 @@ async fn a_retired_workers_clone_and_build_output_are_removed() {
     let workspace = checkout.parent().expect("workspace").to_path_buf();
     let build = workspace.join(SCRATCH_DIR).join("other-clone/target/debug");
     std::fs::create_dir_all(&build).expect("build dir");
-    std::fs::write(build.join("hermesd"), vec![0u8; 4096]).expect("build output");
+    std::fs::write(build.join("flotillad"), vec![0u8; 4096]).expect("build output");
 
     b.bus.call("cancel_worker", json!({ "name": "ch-1" })).await;
     wait_until("ch-1 retires", || bot_named(&b.d, &b.pid, "ch-1").is_none()).await;

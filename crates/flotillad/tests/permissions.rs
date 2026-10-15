@@ -5,8 +5,8 @@
 use crate::common;
 
 use common::*;
-use hermesd::approval::OwnerAnswer;
-use hermesd::bus_auth::origin::Origin;
+use flotillad::approval::OwnerAnswer;
+use flotillad::bus_auth::origin::Origin;
 use serde_json::{json, Value};
 
 struct Bot {
@@ -16,7 +16,7 @@ struct Bot {
     token: String,
 }
 
-async fn bot_with(tweak: impl FnOnce(&mut hermesd::config::Config)) -> Bot {
+async fn bot_with(tweak: impl FnOnce(&mut flotillad::config::Config)) -> Bot {
     let d = spawn_daemon_with(tweak).await;
     let mut c = WsClient::connect(&d).await;
     let project = c
@@ -194,16 +194,16 @@ fn the_hook_is_installed_with_a_timeout_longer_than_the_window() {
         )
         .expect("json")
     };
-    // `hermesd hook` over the local endpoint (H-044).
-    let ipc = hermesd::bus_auth::HookTransport::Ipc {
-        command: "/bin/hermesd".to_string(),
+    // `flotillad hook` over the local endpoint (H-044).
+    let ipc = flotillad::bus_auth::HookTransport::Ipc {
+        command: "/bin/flotillad".to_string(),
         endpoint: "/home/run/bus.sock".to_string(),
         provenance: false,
     };
-    hermesd::paths::write_hook_settings(dir.path(), &ipc).expect("write");
+    flotillad::paths::write_hook_settings(dir.path(), &ipc).expect("write");
     let settings = read();
     let hook = &settings["hooks"]["PermissionRequest"][0]["hooks"][0];
-    assert_eq!(hook["timeout"], hermesd::approval::HOOK_TIMEOUT_SECS);
+    assert_eq!(hook["timeout"], flotillad::approval::HOOK_TIMEOUT_SECS);
     let command = hook["command"].as_str().expect("command");
     assert!(
         command.contains(" hook PermissionRequest --endpoint "),
@@ -212,14 +212,14 @@ fn the_hook_is_installed_with_a_timeout_longer_than_the_window() {
 
     // The rollback: Unix inlines the request in the command; Windows runs a
     // PowerShell script beside the settings that makes it.
-    let http = hermesd::bus_auth::HookTransport::Http {
+    let http = flotillad::bus_auth::HookTransport::Http {
         port: 49777,
         token_env: "GRAVITY_TOKEN".to_string(),
     };
-    hermesd::paths::write_hook_settings(dir.path(), &http).expect("write");
+    flotillad::paths::write_hook_settings(dir.path(), &http).expect("write");
     let settings = read();
     let hook = &settings["hooks"]["PermissionRequest"][0]["hooks"][0];
-    assert_eq!(hook["timeout"], hermesd::approval::HOOK_TIMEOUT_SECS);
+    assert_eq!(hook["timeout"], flotillad::approval::HOOK_TIMEOUT_SECS);
     let command = hook["command"].as_str().expect("command");
     #[cfg(unix)]
     assert!(command.contains("/hook/permission"), "{command}");
@@ -281,7 +281,7 @@ async fn a_control_device_answers_bot_cards_but_not_terminal_ones() {
 
     let app = b.d.app.clone();
     let asking = tokio::spawn(async move {
-        hermesd::approval::ask_owner(&app, &origin("hermesd board import")).await
+        flotillad::approval::ask_owner(&app, &origin("flotillad board import")).await
     });
     let terminal_card = device
         .wait_for(|v| v["type"] == "permission_request" && v["request"]["bot_id"] == "terminal")

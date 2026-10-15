@@ -9,10 +9,10 @@ use std::collections::BTreeMap;
 use std::time::Duration;
 
 use common::prs::{branch, give, head, set_policy, setup_with, Repo};
-use hermesd::kanban::model::Role;
-use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
-use hermesd::prs::check_model::{CheckResult, CheckRun};
-use hermesd::releases::machines;
+use flotillad::kanban::model::Role;
+use flotillad::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
+use flotillad::prs::check_model::{CheckResult, CheckRun};
+use flotillad::releases::machines;
 use serde_json::json;
 
 /// Two heavy checks long enough to overlap, a cargo check that says it

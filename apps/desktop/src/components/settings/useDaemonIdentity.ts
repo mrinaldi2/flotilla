@@ -1,5 +1,5 @@
 // How the daemon's build knows this app (H-114), from its `/health`: the
-// same line `hermesd --version` and `service status` print.
+// same line `flotillad --version` and `service status` print.
 
 import { useEffect, useState } from "react";
 import type { Endpoint } from "../../protocol/connection";

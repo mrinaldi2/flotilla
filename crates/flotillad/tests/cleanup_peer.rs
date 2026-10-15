@@ -13,9 +13,9 @@ use chrono::Utc;
 use common::peer_board::board;
 use common::prs::{commit, head};
 use common::repo::{git, remote};
-use hermesd::cleanup::model::{JobState, Kind, NewJob};
-use hermesd::db::prs::NewPr;
-use hermesd::prs::model::PrWorktree;
+use flotillad::cleanup::model::{JobState, Kind, NewJob};
+use flotillad::db::prs::NewPr;
+use flotillad::prs::model::PrWorktree;
 
 #[tokio::test]
 async fn the_computer_holding_a_worktree_removes_it_and_an_offline_one_waits() {
@@ -36,7 +36,7 @@ async fn the_computer_holding_a_worktree_removes_it_and_an_offline_one_waits() {
     let tester = win.app.db.get_bot(&b.tester_id).unwrap().unwrap();
     let ws = PathBuf::from(&tester.workspace_path);
     std::fs::create_dir_all(ws.join("scratch")).unwrap();
-    let ws = hermesd::safe_git::canonical(&ws).unwrap();
+    let ws = flotillad::safe_git::canonical(&ws).unwrap();
     git(&ws, &["clone", "-q", &url, "repo"]);
     let main = ws.join("repo");
     let tree = ws.join("scratch").join("wt-a");
@@ -81,7 +81,7 @@ async fn the_computer_holding_a_worktree_removes_it_and_an_offline_one_waits() {
             Ok(t.pr_by_id(&pr.id)?.unwrap())
         })
         .unwrap();
-    hermesd::cleanup::enqueue(&mac.app, &pr).unwrap();
+    flotillad::cleanup::enqueue(&mac.app, &pr).unwrap();
     // A computer this project is on that isn't connected.
     let away = NewJob {
         project_id: b.mac_app.clone(),
@@ -94,7 +94,7 @@ async fn the_computer_holding_a_worktree_removes_it_and_an_offline_one_waits() {
     };
     db.board_tx(|t| t.add_cleanup_job(&away)).unwrap();
 
-    hermesd::cleanup::step(&mac.app, Utc::now()).await;
+    flotillad::cleanup::step(&mac.app, Utc::now()).await;
     let jobs = || db.board_read(|t| t.cleanup_jobs_of_pr(&pr.id)).unwrap();
     let deadline = tokio::time::Instant::now() + Duration::from_secs(30);
     while jobs()

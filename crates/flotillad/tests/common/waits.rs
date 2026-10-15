@@ -3,9 +3,9 @@
 use std::time::Duration;
 
 /// How much longer every wait here runs on a loaded computer:
-/// `HERMES_TEST_TIMEOUT_SCALE` (default 1). Waits only bound a failing run.
+/// `FLOTILLA_TEST_TIMEOUT_SCALE` (default 1). Waits only bound a failing run.
 pub fn timeout_scale() -> u32 {
-    std::env::var("HERMES_TEST_TIMEOUT_SCALE")
+    std::env::var("FLOTILLA_TEST_TIMEOUT_SCALE")
         .ok()
         .and_then(|s| s.parse().ok())
         .filter(|n| *n > 0)
@@ -23,9 +23,9 @@ pub fn frame_wait() -> Duration {
 /// and bots. The first run after a build is cold, and every test binary
 /// starts its daemons at once, so a bot's workspace can take far longer to
 /// provision than [`frame_wait`] on a slow disk or under a virus scan.
-/// `HERMES_TEST_SETUP_WAIT_SECS` overrides it.
+/// `FLOTILLA_TEST_SETUP_WAIT_SECS` overrides it.
 pub fn setup_wait() -> Duration {
-    std::env::var("HERMES_TEST_SETUP_WAIT_SECS")
+    std::env::var("FLOTILLA_TEST_SETUP_WAIT_SECS")
         .ok()
         .and_then(|s| s.parse().ok())
         .map_or(

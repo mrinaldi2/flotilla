@@ -1,10 +1,10 @@
 //! This daemon's own binary in permission rules and commands (H-166).
 //!
-//! Bots have no `hermesd` on their PATH: they run the daemon by its full
-//! path, which on a Mac has a space (`/Applications/The Hermes.app/…`). A
-//! rule for a bare `hermesd …` never matches that, so auto mode sent
+//! Bots have no `flotillad` on their PATH: they run the daemon by its full
+//! path, which on a Mac has a space (`/Applications/Flotilla.app/…`). A
+//! rule for a bare `flotillad …` never matches that, so auto mode sent
 //! `release install` to the classifier, which refused it. A bare name would
-//! also be too wide: it allows whatever `hermesd` the bot's PATH finds
+//! also be too wide: it allows whatever `flotillad` the bot's PATH finds
 //! first. So a rule names this binary by its exact path, in each way a bot
 //! may quote it, and only the subcommand's arguments are a wildcard.
 
@@ -13,8 +13,8 @@ use std::path::{Path, PathBuf};
 /// `Bash(<this binary> <sub> *)` for every spelling of the path, plus the
 /// PowerShell forms on Windows. None when the path itself holds a character
 /// a rule would read as a pattern.
-pub(super) fn rules(hermesd: &Path, sub: &str) -> Vec<String> {
-    let path = hermesd.display().to_string();
+pub(super) fn rules(flotillad: &Path, sub: &str) -> Vec<String> {
+    let path = flotillad.display().to_string();
     if path.is_empty() || path.contains(['*', '(', ')', '"', '\'']) {
         return Vec::new();
     }
@@ -42,18 +42,18 @@ pub(super) fn rules(hermesd: &Path, sub: &str) -> Vec<String> {
     rules
 }
 
-/// Whether a bot could rebuild or replace the binary at `hermesd` (CE-023
+/// Whether a bot could rebuild or replace the binary at `flotillad` (CE-023
 /// F2): a cargo target (a dev daemon), anything under `~/Developer`, the
 /// trusted paths, the bots' own folders, `~/.cargo` or a temp dir. A rule
 /// naming such a binary would pre-approve whatever a bot puts there, so it
 /// gets none and the call goes to the classifier.
 pub(super) fn bot_writable(
-    hermesd: &Path,
+    flotillad: &Path,
     home: &Path,
     user_home: &Path,
     trusted: &[PathBuf],
 ) -> bool {
-    let cargo_target = hermesd.ancestors().skip(1).any(|dir| {
+    let cargo_target = flotillad.ancestors().skip(1).any(|dir| {
         dir.file_name().is_some_and(|n| n == "target")
             || dir.join(".rustc_info.json").exists()
             || dir.join("CACHEDIR.TAG").exists()
@@ -75,11 +75,11 @@ pub(super) fn bot_writable(
         .into_iter()
         .map(PathBuf::from),
     );
-    let real = hermesd.canonicalize().ok();
+    let real = flotillad.canonicalize().ok();
     cargo_target
         || roots.iter().any(|root| {
             let real_root = root.canonicalize().ok();
-            [Some(hermesd), real.as_deref()]
+            [Some(flotillad), real.as_deref()]
                 .into_iter()
                 .flatten()
                 .any(|p| {
@@ -89,9 +89,9 @@ pub(super) fn bot_writable(
 }
 
 /// The command line a bot runs, in the first spelling `rules` allows:
-/// `"/Applications/The Hermes.app/Contents/MacOS/hermesd" release install <id>`.
-pub fn command(hermesd: &Path, args: &str) -> String {
-    let path = hermesd.display().to_string();
+/// `"/Applications/Flotilla.app/Contents/MacOS/flotillad" release install <id>`.
+pub fn command(flotillad: &Path, args: &str) -> String {
+    let path = flotillad.display().to_string();
     if path.contains(char::is_whitespace) {
         format!("\"{path}\" {args}")
     } else {
@@ -101,7 +101,7 @@ pub fn command(hermesd: &Path, args: &str) -> String {
 
 /// This daemon's binary, as `rules` and `command` take it.
 pub fn this_binary() -> PathBuf {
-    std::env::current_exe().unwrap_or_else(|_| "hermesd".into())
+    std::env::current_exe().unwrap_or_else(|_| "flotillad".into())
 }
 
 #[cfg(test)]
@@ -109,7 +109,7 @@ mod tests {
     use super::*;
 
     #[cfg(not(windows))]
-    const APP: &str = "/Applications/The Hermes.app/Contents/MacOS/hermesd";
+    const APP: &str = "/Applications/Flotilla Beta.app/Contents/MacOS/flotillad";
 
     #[cfg(not(windows))]
     #[test]
@@ -132,18 +132,18 @@ mod tests {
     #[cfg(not(windows))]
     #[test]
     fn a_plain_path_is_allowed_bare_and_quoted() {
-        let rules = rules(Path::new("/usr/local/bin/hermesd"), "quiesce");
-        assert_eq!(rules[0], "Bash(/usr/local/bin/hermesd quiesce *)");
+        let rules = rules(Path::new("/usr/local/bin/flotillad"), "quiesce");
+        assert_eq!(rules[0], "Bash(/usr/local/bin/flotillad quiesce *)");
         assert_eq!(rules.len(), 3);
-        assert!(!rules.iter().any(|r| r.starts_with("Bash(hermesd")));
+        assert!(!rules.iter().any(|r| r.starts_with("Bash(flotillad")));
     }
 
     #[test]
     fn a_path_a_rule_would_read_as_a_pattern_gets_no_rule() {
         for odd in [
-            "/opt/*/hermesd",
-            "/opt/a(b)/hermesd",
-            "/opt/it's/hermesd",
+            "/opt/*/flotillad",
+            "/opt/a(b)/flotillad",
+            "/opt/it's/flotillad",
             "",
         ] {
             assert!(rules(Path::new(odd), "quiesce").is_empty(), "{odd}");
@@ -153,16 +153,16 @@ mod tests {
     #[cfg(not(windows))]
     #[test]
     fn a_binary_a_bot_could_rebuild_is_bot_writable() {
-        let (home, user) = (Path::new("/Users/me/.thehermes"), Path::new("/Users/me"));
+        let (home, user) = (Path::new("/Users/me/.flotilla"), Path::new("/Users/me"));
         let trusted = [PathBuf::from("/Users/me/Code")];
         for dev in [
-            "/Users/me/Developer/gravity/target/debug/hermesd",
-            "/Users/me/Developer/hermesd",
-            "/Users/me/elsewhere/target/release/hermesd",
-            "/Users/me/Code/gravity/out/hermesd",
-            "/Users/me/.cargo/bin/hermesd",
-            "/Users/me/.thehermes/projects/p/bots/dev/workspace/hermesd",
-            "/tmp/hermesd",
+            "/Users/me/Developer/gravity/target/debug/flotillad",
+            "/Users/me/Developer/flotillad",
+            "/Users/me/elsewhere/target/release/flotillad",
+            "/Users/me/Code/gravity/out/flotillad",
+            "/Users/me/.cargo/bin/flotillad",
+            "/Users/me/.flotilla/projects/p/bots/dev/workspace/flotillad",
+            "/tmp/flotillad",
         ] {
             assert!(bot_writable(Path::new(dev), home, user, &trusted), "{dev}");
         }

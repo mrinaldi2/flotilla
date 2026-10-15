@@ -6,7 +6,7 @@ use super::*;
 fn gravity_home_uses_the_new_namespace() {
     assert_eq!(
         resolve_home(None, PathBuf::from("/Users/tester")),
-        PathBuf::from("/Users/tester/.thehermes")
+        PathBuf::from("/Users/tester/.flotilla")
     );
     assert_eq!(
         resolve_home(

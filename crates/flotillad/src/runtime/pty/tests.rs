@@ -177,12 +177,12 @@ async fn a_bot_never_inherits_the_daemon_home() {
         claude_bin: "/bin/sh".into(),
         claude_args: vec![
             "-c".into(),
-            "echo \"[${THEHERMES_HOME-unset}|${GRAVITY_HOME-unset}|$THEHERMES_TOKEN]\"".into(),
+            "echo \"[${FLOTILLA_HOME-unset}|${GRAVITY_HOME-unset}|$FLOTILLA_TOKEN]\"".into(),
         ],
         env: vec![
-            ("THEHERMES_HOME".into(), "/home".into()),
+            ("FLOTILLA_HOME".into(), "/home".into()),
             ("GRAVITY_HOME".into(), "/home".into()),
-            ("THEHERMES_TOKEN".into(), "t".into()),
+            ("FLOTILLA_TOKEN".into(), "t".into()),
         ],
         cols: 80,
         rows: 24,

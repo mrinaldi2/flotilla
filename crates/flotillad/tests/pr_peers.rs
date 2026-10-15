@@ -14,9 +14,9 @@ use common::pr_wire::{self as w, call, error};
 use common::prs::{clone, commit};
 use common::repo::{git, remote};
 use common::{create_bot, McpClient, WsClient};
-use hermesd::actor::Actor;
-use hermesd::db::MoveTo;
-use hermesd::kanban::model::{ProjectRole, Role};
+use flotillad::actor::Actor;
+use flotillad::db::MoveTo;
+use flotillad::kanban::model::{ProjectRole, Role};
 use serde_json::json;
 
 /// The Mac's project on a fresh repository, H-1 in Doing, and the PC's
@@ -57,7 +57,7 @@ fn ready(b: &Board, dir: &std::path::Path) -> (std::path::PathBuf, String) {
     (tree, head)
 }
 
-fn on_mac(b: &Board, number: u32) -> hermesd::prs::model::Pr {
+fn on_mac(b: &Board, number: u32) -> flotillad::prs::model::Pr {
     let db = &b.p.mac.app.db;
     db.board_read(|t| t.pr(&b.mac_app, number))
         .unwrap()

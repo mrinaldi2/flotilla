@@ -9,7 +9,7 @@ use common::board::{new_item, walk};
 use common::peers::project;
 use common::tasks::project_with_bots;
 use common::*;
-use hermesd::kanban::model::Priority;
+use flotillad::kanban::model::Priority;
 use serde_json::json;
 
 #[tokio::test]

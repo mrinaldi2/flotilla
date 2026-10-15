@@ -12,7 +12,7 @@ pub(super) const OWNER: Actor<'static> = Actor::User;
 
 pub(super) fn board() -> (Db, String) {
     let db = Db::open_in_memory().unwrap();
-    let p = db.create_project("The Hermes", "the-hermes").unwrap();
+    let p = db.create_project("Flotilla", "flotilla").unwrap();
     let lead = db
         .create_bot(&p.id, "Team Lead", "", "", "", "/tmp/a", "team-lead", None)
         .unwrap();

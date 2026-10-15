@@ -72,7 +72,7 @@ mod tests {
         let mut linked = Vec::new();
         with_bot_target(&mut linked, Path::new(""));
         assert!(linked.is_empty());
-        let mut env = vec![("THEHERMES_TOKEN".to_string(), "t".to_string())];
+        let mut env = vec![("FLOTILLA_TOKEN".to_string(), "t".to_string())];
         with_bot_target(&mut env, &workspace);
         let expected = bot.join(BOT_TARGET_DIR).display().to_string();
         assert_eq!(
@@ -96,7 +96,7 @@ mod tests {
         std::fs::create_dir_all(&workspace).unwrap();
         let target = bot_target(&workspace);
         std::fs::create_dir_all(target.join("debug")).unwrap();
-        std::fs::write(target.join("debug").join("hermesd"), b"x").unwrap();
+        std::fs::write(target.join("debug").join("flotillad"), b"x").unwrap();
         remove_bot_target(&workspace);
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
         while target.exists() && std::time::Instant::now() < deadline {

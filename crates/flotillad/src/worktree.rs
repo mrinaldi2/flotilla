@@ -9,7 +9,17 @@ use serde::{Deserialize, Serialize};
 
 use crate::safe_git::SafeGit;
 
-pub const METADATA_FILE: &str = ".gravity-worktree.json";
+/// Ownership metadata in a bot's worktree.
+pub const METADATA_FILE: &str = ".flotilla-worktree.json";
+
+/// The name worktrees made before the rename carry; still read and cleaned.
+pub const LEGACY_METADATA_FILE: &str = ".gravity-worktree.json";
+
+/// Whether `name` (a path relative to the worktree) is the metadata file,
+/// under either name.
+pub fn is_metadata_file(name: &str) -> bool {
+    name == METADATA_FILE || name == LEGACY_METADATA_FILE
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorktreeMeta {
@@ -114,8 +124,12 @@ pub fn provision(spec: &WorktreeSpec) -> anyhow::Result<PathBuf> {
 }
 
 pub fn read_meta(worktree: &Path) -> anyhow::Result<WorktreeMeta> {
-    let raw = std::fs::read_to_string(worktree.join(METADATA_FILE))
-        .context("reading worktree ownership metadata")?;
+    let file = [METADATA_FILE, LEGACY_METADATA_FILE]
+        .iter()
+        .map(|name| worktree.join(name))
+        .find(|path| path.is_file())
+        .unwrap_or_else(|| worktree.join(METADATA_FILE));
+    let raw = std::fs::read_to_string(file).context("reading worktree ownership metadata")?;
     Ok(serde_json::from_str(&raw)?)
 }
 
@@ -145,7 +159,7 @@ pub fn cleanup(worktree: &Path) -> anyhow::Result<CleanupOutcome> {
     let dirty: Vec<&str> = changed
         .lines()
         .chain(untracked.lines())
-        .filter(|l| !l.is_empty() && *l != METADATA_FILE)
+        .filter(|l| !l.is_empty() && !is_metadata_file(l))
         .collect();
     if !dirty.is_empty() {
         return Ok(CleanupOutcome::KeptDirty {
@@ -166,6 +180,7 @@ pub fn cleanup(worktree: &Path) -> anyhow::Result<CleanupOutcome> {
     }
 
     std::fs::remove_file(worktree.join(METADATA_FILE)).ok();
+    std::fs::remove_file(worktree.join(LEGACY_METADATA_FILE)).ok();
     // `worktree remove` runs `status` in the tree: empty its filters too.
     SafeGit::local(&meta.repo)?
         .without_filters_of(worktree)?
@@ -231,6 +246,22 @@ mod tests {
         }
     }
 
+    /// A worktree made before the rename carries `.gravity-worktree.json`:
+    /// still read, and still not counted as a change of the bot's.
+    #[test]
+    fn a_pre_rename_worktree_is_still_recognised() {
+        let dir = tempfile::tempdir().unwrap();
+        let meta = serde_json::json!({
+            "version": 1, "bot_id": "b1", "bot_name": "alice", "repo": "/r",
+            "base_ref": "main", "created_at": "2026-10-01T00:00:00Z",
+        });
+        std::fs::write(dir.path().join(LEGACY_METADATA_FILE), meta.to_string()).unwrap();
+        assert_eq!(read_meta(dir.path()).unwrap().bot_name, "alice");
+        assert!(is_metadata_file(LEGACY_METADATA_FILE));
+        assert!(is_metadata_file(METADATA_FILE));
+        assert!(!is_metadata_file("src/main.rs"));
+    }
+
     #[test]
     fn provision_copies_allowlist_and_writes_meta() {
         let repo = init_repo();
@@ -244,7 +275,7 @@ mod tests {
             git(&wt, &["branch", "--show-current"])
                 .expect("current branch")
                 .trim(),
-            "gravity/alice"
+            "flotilla/alice"
         );
         let meta = read_meta(&wt).unwrap();
         assert_eq!(meta.bot_name, "alice");

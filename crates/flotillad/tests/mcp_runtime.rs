@@ -4,7 +4,7 @@ use crate::common;
 
 use bus::BotRuntime;
 use common::{spawn_daemon, spawn_daemon_with, McpClient, TestDaemon, WsClient};
-use hermesd::config::RuntimeKind;
+use flotillad::config::RuntimeKind;
 use serde_json::{json, Value};
 
 async fn lead(d: &TestDaemon, runtime: BotRuntime) -> (Value, McpClient) {

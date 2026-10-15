@@ -2,7 +2,7 @@
 //! manifests. Secrets are never included.
 //!
 //! A backup reads the database as it is on disk: it never migrates it, so a
-//! newer `hermesd` backs up what an older one wrote, and restoring never
+//! newer `flotillad` backs up what an older one wrote, and restoring never
 //! changes the backup it restores from.
 
 use std::path::{Path, PathBuf};
@@ -22,7 +22,7 @@ pub fn backups_dir(cfg: &Config) -> PathBuf {
     cfg.home.join("backups")
 }
 
-/// Create a backup directory containing `bus.sqlite`, `hermesd.toml` (if any),
+/// Create a backup directory containing `bus.sqlite`, `flotillad.toml` (if any),
 /// per-project/bot config files, and a manifest. Secrets and workspaces are
 /// excluded.
 pub fn backup(cfg: &Config, out: &Path) -> anyhow::Result<PathBuf> {

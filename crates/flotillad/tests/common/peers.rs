@@ -160,7 +160,7 @@ async fn paired_with(trust: bool) -> Paired {
 }
 
 /// A computer as [`paired`] makes them, with its config tweaked.
-pub async fn computer(tweak: impl FnOnce(&mut hermesd::config::Config)) -> TestDaemon {
+pub async fn computer(tweak: impl FnOnce(&mut flotillad::config::Config)) -> TestDaemon {
     spawn_daemon_with(|cfg| {
         cfg.user_home = cfg.home.join("user");
         tweak(cfg);

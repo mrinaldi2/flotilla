@@ -52,7 +52,7 @@ function setup(reads: readonly Dashboard[]) {
   render(
     <DashboardView
       client={fake}
-      project={project({ name: "The Hermes" })}
+      project={project({ name: "Flotilla" })}
       bots={DASH_BOTS}
       connected
       canControl

@@ -75,16 +75,16 @@ async fn a_published_ruling_arrives_from_the_user_not_from_a_peer() {
         .await;
     let id = raised["decision"]["id"].as_str().unwrap().to_string();
 
-    hermesd::decisions::answer(
+    flotillad::decisions::answer(
         &pair.d.app,
-        &hermesd::db::Actor::User,
+        &flotillad::db::Actor::User,
         &id,
         None,
         "Let it fire, we learn more from the pause than from the spend.",
         None,
     )
     .unwrap();
-    let outcome = hermesd::decisions::publish(&pair.d.app, &id, None).unwrap();
+    let outcome = flotillad::decisions::publish(&pair.d.app, &id, None).unwrap();
     assert_eq!(outcome.notified.len(), 1);
 
     let delivered = drain_until(&mut c[0], "· settled").await;
@@ -110,17 +110,17 @@ async fn publishing_twice_does_not_tell_a_bot_the_same_ruling_twice() {
         )
         .await;
     let id = raised["decision"]["id"].as_str().unwrap().to_string();
-    hermesd::decisions::answer(
+    flotillad::decisions::answer(
         &pair.d.app,
-        &hermesd::db::Actor::User,
+        &flotillad::db::Actor::User,
         &id,
         None,
         "GO",
         None,
     )
     .unwrap();
-    hermesd::decisions::publish(&pair.d.app, &id, None).unwrap();
-    hermesd::decisions::publish(&pair.d.app, &id, None).unwrap();
+    flotillad::decisions::publish(&pair.d.app, &id, None).unwrap();
+    flotillad::decisions::publish(&pair.d.app, &id, None).unwrap();
 
     let delivered = drain_all(&mut c[0]).await;
     let rulings = delivered
@@ -211,16 +211,16 @@ async fn a_settled_ruling_comes_back_from_the_registry_rather_than_a_ledger() {
         )
         .await;
     let id = raised["decision"]["id"].as_str().unwrap().to_string();
-    hermesd::decisions::answer(
+    flotillad::decisions::answer(
         &pair.d.app,
-        &hermesd::db::Actor::User,
+        &flotillad::db::Actor::User,
         &id,
         None,
         "It stays unpinned.",
         None,
     )
     .unwrap();
-    hermesd::decisions::publish(&pair.d.app, &id, None).unwrap();
+    flotillad::decisions::publish(&pair.d.app, &id, None).unwrap();
 
     let settled = c[0]
         .call(

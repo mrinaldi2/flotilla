@@ -3,8 +3,8 @@
 //! owner gives every other role, so a test says who is who, as the owner
 //! would, right after the board starts.
 
-use hermesd::db::Db;
-use hermesd::kanban::model::{ProjectRole, Role};
+use flotillad::db::Db;
+use flotillad::kanban::model::{ProjectRole, Role};
 
 /// The role a test bot's name stands for, if any.
 fn role_of(name: &str) -> Option<Role> {

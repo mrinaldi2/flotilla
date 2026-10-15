@@ -23,13 +23,13 @@ interface RailProps {
   readonly onOpenSettings: (category?: SettingsCategory) => void;
 }
 
-/** The Hermes service's state as a dot, opening the connection settings. */
+/** Flotilla service's state as a dot, opening the connection settings. */
 function Connection(
   props: Pick<RailProps, "status" | "endpoint" | "canControl" | "onOpenSettings">,
 ): ReactElement {
   const { status, endpoint } = props;
   const readOnly = status === "connected" && !props.canControl ? " · read-only" : "";
-  const label = `Hermes service: ${connectionStatusLabel(status)}${readOnly} (${endpoint.host}:${endpoint.port})`;
+  const label = `Flotilla service: ${connectionStatusLabel(status)}${readOnly} (${endpoint.host}:${endpoint.port})`;
   return (
     <button
       type="button"

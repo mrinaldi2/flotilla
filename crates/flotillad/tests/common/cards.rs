@@ -70,7 +70,7 @@ impl Fresh {
     }
 
     /// The item as it is now.
-    pub fn now(&self, id: &str) -> hermesd::kanban::model::Item {
+    pub fn now(&self, id: &str) -> flotillad::kanban::model::Item {
         self.d.app.db.get_item(id).unwrap().expect("item")
     }
 

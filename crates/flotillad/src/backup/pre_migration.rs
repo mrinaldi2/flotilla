@@ -1,6 +1,6 @@
 //! The backup a starting daemon takes before it migrates the database (0.19.0
 //! plan, "Data migration"). Migrations only go forward, so when the stored
-//! schema is older than this binary's, the same backup `hermesd backup` takes
+//! schema is older than this binary's, the same backup `flotillad backup` takes
 //! goes into `backups/` first, named for the two versions. If it can't be
 //! taken, nothing is migrated and the daemon doesn't start.
 //!
@@ -141,7 +141,7 @@ fn refusal(db: &Path, dir: &Path, pending: Pending, e: &anyhow::Error) -> anyhow
     anyhow!(
         "refusing to start: could not back up {} before migrating it from schema {} to {} \
          ({e:#}). Nothing was migrated and the database is unchanged. Free disk space and \
-         make sure {} is a folder hermesd can write to, then start hermesd again. To keep \
+         make sure {} is a folder flotillad can write to, then start flotillad again. To keep \
          the database as it is, reinstall the previous version instead.",
         db.display(),
         pending.from,

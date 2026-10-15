@@ -1,7 +1,7 @@
 //! Closed, unmerged PRs (H-261 §15.4, CL-2; retention per ruling 7629a873):
 //! the worktrees wait 7 days, then go under the same rules as a merged PR's
 //! (a dirty or unpushed one is salvaged and held); the remote branch waits
-//! 14 days, then DevOps' next `hermesd pr merge` deletes it while its tip is
+//! 14 days, then DevOps' next `flotillad pr merge` deletes it while its tip is
 //! still the head the PR was closed at. A PR opened again on the branch
 //! within the window cancels both.
 

@@ -2,7 +2,7 @@ import type { Story } from "@ladle/react";
 import { create } from "@bufbuild/protobuf";
 import { useRef } from "react";
 import type { ReactElement } from "react";
-import { MoveResultSchema } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import { MoveResultSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { draftDetail, recipeColumns } from "../../../test/boardsFixtures";
 import { boardsClient, STORY_BOTS } from "../../../test/boardStory";
 import { unmet } from "../../../test/boardFixtures";

@@ -1,8 +1,8 @@
-//! `hermesd release build-installer <release> [--commit <sha>]
+//! `flotillad release build-installer <release> [--commit <sha>]
 //! [--script <path>] [--output <file>] [--timeout <minutes>]` (H-117 X3,
 //! H-104): Tester Win builds the Windows installer with no owner prompt.
 //!
-//! The daemon checks first (`hermes/release_build_installer`): the
+//! The daemon checks first (`flotilla/release_build_installer`): the
 //! `build_installers` extra and a release still open for builds, and names
 //! the commit its builds were made from, if any yet (ARCH-R52 M1). Then:
 //! - the commit is that one (`--commit` may only restate it), else the
@@ -17,7 +17,7 @@
 //!   with a time limit;
 //! - the installer is copied to `<checkout>/target/release-installers/`,
 //!   hashed and recorded on the release with the commit
-//!   (`hermes/release_installer_built`), and the temp worktree removed.
+//!   (`flotilla/release_installer_built`), and the temp worktree removed.
 //!
 //! Only this command is allowed, never the script itself: the bot can edit
 //! the script in its worktree, so a rule for it would run anything.
@@ -34,7 +34,7 @@ use super::git::{self, git as run_git};
 use super::land::ask;
 use crate::config::Config;
 
-const USAGE: &str = "usage: hermesd release build-installer <release> [--commit <sha>] \
+const USAGE: &str = "usage: flotillad release build-installer <release> [--commit <sha>] \
                      [--script <path>] [--output <file>] [--timeout <minutes>]";
 
 const SCRIPT: &str = "scripts/build-nsis.ps1";
@@ -170,7 +170,7 @@ pub struct Fresh {
 
 impl Fresh {
     pub fn add(repo: &Path, commit: &str) -> anyhow::Result<Fresh> {
-        let dir = std::env::temp_dir().join(format!("hermes-installer-{}", bus::new_id()));
+        let dir = std::env::temp_dir().join(format!("flotilla-installer-{}", bus::new_id()));
         let mut args: Vec<&str> = git::no_hooks().to_vec();
         let path = dir.display().to_string();
         args.extend(["worktree", "add", "--detach", &path, commit]);
@@ -228,7 +228,7 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     let args = parse(args)?;
     let gate = ask(
         cfg,
-        "hermes/release_build_installer",
+        "flotilla/release_build_installer",
         json!({ "release_id": args.release }),
     )
     .await?;
@@ -261,12 +261,12 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     let file = file.display().to_string();
     ask(
         cfg,
-        "hermes/release_installer_built",
+        "flotilla/release_installer_built",
         json!({ "release_id": args.release, "commit": commit, "file": file, "sha256": sha256 }),
     )
     .await?;
     println!(
-        "built {file}\nsha256 {sha256}\nnext: hermesd release publish {} <file>",
+        "built {file}\nsha256 {sha256}\nnext: flotillad release publish {} <file>",
         args.release
     );
     Ok(())

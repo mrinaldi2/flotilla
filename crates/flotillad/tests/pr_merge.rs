@@ -13,11 +13,11 @@ use chrono::{Duration, Utc};
 use common::prs::{approve, clone, commit, give, opened, pr, setup, Repo};
 use common::repo::git;
 use common::WsClient;
-use hermesd::kanban::model::Role;
-use hermesd::prs::check_jobs::SYSTEM_RUNNER;
-use hermesd::prs::check_model::CheckResult;
-use hermesd::prs::checks::RunLog;
-use hermesd::prs::{checks, queue};
+use flotillad::kanban::model::Role;
+use flotillad::prs::check_jobs::SYSTEM_RUNNER;
+use flotillad::prs::check_model::CheckResult;
+use flotillad::prs::checks::RunLog;
+use flotillad::prs::{checks, queue};
 use serde_json::{json, Value};
 
 const POLICY: &str = "[[check]]\nname = \"unit\"\nrun = \"true\"\n";
@@ -201,7 +201,7 @@ async fn after_a_merge_the_next_pr_updates_and_keeps_its_approvals() {
     let pr1 = app.db.board_read(|t| t.pr(&r.project, 1)).unwrap().unwrap();
     app.db
         .board_tx(|t| {
-            t.set_pr_state(&pr1, hermesd::prs::model::PrState::Merged)?;
+            t.set_pr_state(&pr1, flotillad::prs::model::PrState::Merged)?;
             t.dequeue(&pr1.id)
         })
         .unwrap();

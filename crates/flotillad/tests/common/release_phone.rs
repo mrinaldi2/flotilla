@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 
 use bus::PermissionExtra;
-use hermesd::releases::model::ReleaseStatus;
+use flotillad::releases::model::ReleaseStatus;
 use serde_json::json;
 
 use super::releases::{releases_on, Releases};

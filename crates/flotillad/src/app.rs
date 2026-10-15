@@ -54,7 +54,7 @@ pub const CAPABILITIES: &[&str] = &[
     // the turn didn't `message_owner` (H-192).
     "owner_answers",
     "project_pin",
-    // Pull requests and their checks (H-273): `hermes.pr.v1` reads and pushes,
+    // Pull requests and their checks (H-273): `flotilla.pr.v1` reads and pushes,
     // as `bus::contract::pr::CAPABILITIES` names them.
     "pull_requests",
     "checks",

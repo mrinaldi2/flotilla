@@ -6,7 +6,7 @@
 //! the daemon owns and deletes when the worker retires:
 //! - `repo/`: its clone of the project repository (`repo::CHECKOUT_DIR`);
 //! - `scratch/`: any other clone or worktree, named to the worker as
-//!   `$THEHERMES_SCRATCH`. A git worktree there is pruned from the repository
+//!   `$FLOTILLA_SCRATCH`. A git worktree there is pruned from the repository
 //!   it belongs to, so that repository doesn't keep listing it.
 //!
 //! On Windows, where every worker building the Rust workspace made its own
@@ -21,7 +21,7 @@ use crate::app::AppState;
 /// A worker's folder for clones and worktrees, relative to its workspace.
 pub const SCRATCH_DIR: &str = "scratch";
 /// The variable naming that folder to the worker.
-pub const SCRATCH_ENV: &str = "THEHERMES_SCRATCH";
+pub const SCRATCH_ENV: &str = "FLOTILLA_SCRATCH";
 
 /// Workers share one Cargo target here, so each doesn't build its own.
 pub fn shares_target() -> bool {
@@ -51,7 +51,11 @@ pub fn session_env(home: &Path, workspace: &Path, temporary: bool) -> Vec<(Strin
     if let Err(error) = std::fs::create_dir_all(&scratch) {
         tracing::warn!(path = %scratch.display(), %error, "can't create a worker's scratch folder");
     }
-    let mut env = vec![(SCRATCH_ENV.to_string(), scratch.display().to_string())];
+    // A worker whose memory still says `$THEHERMES_SCRATCH` finds it too.
+    let mut env: Vec<(String, String)> = std::iter::once(SCRATCH_ENV.to_string())
+        .chain(crate::brand::legacy_env_names("SCRATCH"))
+        .map(|name| (name, scratch.display().to_string()))
+        .collect();
     if shares_target() {
         let target = shared_target(home);
         env.push(("CARGO_TARGET_DIR".to_string(), target.display().to_string()));

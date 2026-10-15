@@ -2,7 +2,7 @@ import type { Story } from "@ladle/react";
 import { create } from "@bufbuild/protobuf";
 import type { MessageInitShape } from "@bufbuild/protobuf";
 import type { ReactElement } from "react";
-import { ItemCardSchema, MoveBlockSchema } from "../../protocol/gen/hermes/board/v1/board_pb";
+import { ItemCardSchema, MoveBlockSchema } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import { DaemonError } from "../../protocol/connection";
 import { boardsSnapshot, RECIPES_ID } from "../../test/boardsFixtures";
 import { BoardWindow, boardsClient } from "../../test/boardStory";
@@ -86,7 +86,7 @@ export const Loading: Story = () => (
   <BoardWindow client={boardsClient().onBoard("boardWatch", () => new Promise(noop))} />
 );
 
-/** Offline: waiting for the Hermes service. */
+/** Offline: waiting for the Flotilla service. */
 export const Offline: Story = () => <BoardWindow connected={false} />;
 
 function Sheet(props: { readonly name?: string; readonly keyText?: string }): ReactElement {

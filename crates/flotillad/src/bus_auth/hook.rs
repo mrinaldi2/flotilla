@@ -1,4 +1,4 @@
-//! `hermesd hook <event> --endpoint <socket or pipe>` (H-044 §1): Claude
+//! `flotillad hook <event> --endpoint <socket or pipe>` (H-044 §1): Claude
 //! Code's lifecycle and permission hooks, sent over the local endpoint
 //! instead of curl or PowerShell with a bearer token. The hook runs as a
 //! child of the session, so the daemon knows whose it is from the process
@@ -15,9 +15,9 @@ use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use crate::app::AppState;
 
 /// A lifecycle event: `{event, body}`, answered with `{}`.
-const HOOK: &str = "hermes/hook";
+const HOOK: &str = "flotilla/hook";
 /// A permission prompt: `{body}`, answered with the hook output or null.
-const PERMISSION: &str = "hermes/permission";
+const PERMISSION: &str = "flotilla/permission";
 
 /// How long SessionStart keeps trying a daemon that isn't serving yet: it
 /// is the only report of the session's inbox socket (H-038).
@@ -72,7 +72,8 @@ pub async fn run(args: &[String]) -> i32 {
 }
 
 /// Why a `user` prompt was blocked when the daemon couldn't be asked.
-const UNANSWERED: &str = "Hermes isn't answering, so this prompt can't be shown to be the owner's.";
+const UNANSWERED: &str =
+    "Flotilla isn't answering, so this prompt can't be shown to be the owner's.";
 
 /// UserPromptSubmit's output that blocks the prompt, with the reason the bot
 /// and the terminal see.
@@ -151,7 +152,7 @@ pub(crate) async fn send(
             Err(e) if retry && booting(&e) && tokio::time::Instant::now() < deadline => {
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
-            Err(e) => anyhow::bail!("can't reach the Hermes service at {endpoint}: {e}"),
+            Err(e) => anyhow::bail!("can't reach the Flotilla service at {endpoint}: {e}"),
         }
     };
     let exchange = async {

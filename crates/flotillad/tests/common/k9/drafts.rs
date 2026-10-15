@@ -99,7 +99,7 @@ async fn lead_shapes(k: &mut K9, id: &str, shot: &[u8]) {
         .await;
     let d = &k.p.mac;
     let project = d.app.db.get_project(&k.mac_rb).unwrap().expect("project");
-    let artifacts = hermesd::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&d.app.cfg, &project.dir_name);
     std::fs::create_dir_all(&artifacts).unwrap();
     std::fs::write(artifacts.join(SPEC), "# Scaling\n\nScale by servings.\n").unwrap();
     let doc = k

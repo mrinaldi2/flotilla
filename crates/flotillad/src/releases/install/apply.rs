@@ -1,5 +1,5 @@
 //! The app swap, run by the system's install job and never by the bot's
-//! session (H-117 X1). `hermesd release install` checks a build in its
+//! session (H-117 X1). `flotillad release install` checks a build in its
 //! private stage and hands this step off; the job, outside every session:
 //! 1. copies the app beside `/Applications/<name>.app` and checks its
 //!    signature there again (that copy is what runs);
@@ -36,7 +36,7 @@ const BOOT_GATE: Duration = Duration::from_secs(120);
 pub(crate) const FAILED_MARKER: &str = "rollback-failed.json";
 
 const USAGE: &str =
-    "usage: hermesd release apply-app <release> --app <bundle> --version <v> [--config <path>]";
+    "usage: flotillad release apply-app <release> --app <bundle> --version <v> [--config <path>]";
 
 /// One app swap: the checked bundle in the stage, where apps live, and
 /// where the replaced one is kept.
@@ -210,7 +210,7 @@ pub(crate) fn parse(args: &[String]) -> anyhow::Result<Args> {
     })
 }
 
-/// `service install` from the hermesd at `binary`.
+/// `service install` from the flotillad at `binary`.
 fn service_install(binary: &Path, config: Option<&str>) -> anyhow::Result<()> {
     let mut command = Command::new(binary);
     command.args(["service", "install"]);
@@ -223,7 +223,7 @@ fn service_install(binary: &Path, config: Option<&str>) -> anyhow::Result<()> {
 }
 
 fn app_binary(app: &Path) -> PathBuf {
-    app.join("Contents/MacOS/hermesd")
+    app.join("Contents/MacOS/flotillad")
 }
 
 /// Whether the service answers from the binary hashed `want` within
@@ -269,7 +269,7 @@ pub fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     let probe = || crate::server::probe_binary(port(), Duration::from_secs(2));
     if installed.is_ok() && answers_from(probe, &want, BOOT_GATE, Duration::from_secs(2)) {
         println!(
-            "release {}: the Hermes service runs the new {}",
+            "release {}: the Flotilla service runs the new {}",
             args.release, args.version
         );
         return Ok(());

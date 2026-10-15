@@ -1,12 +1,12 @@
-//! `hermesd release leave-out <id>` (H-272; UX-051 decision 10): DevOps, on
+//! `flotillad release leave-out <id>` (H-272; UX-051 decision 10): DevOps, on
 //! the daemon's task, reverts the PRs the owner left out of a release.
 //!
-//! The daemon says what (`hermes/leave_out`): the branch name, main as it
+//! The daemon says what (`flotilla/leave_out`): the branch name, main as it
 //! saw it, and, newest first, each PR's merged range. In a fresh worktree of
 //! DevOps' checkout at that main (git hooks off), each range is reverted with
 //! `git revert --no-edit <from>..<to>`; the branch is pushed (never forced)
 //! and the worktree removed. The daemon then opens it as the owner's PR
-//! (`hermes/leave_out_pushed`), which merges through the normal queue.
+//! (`flotilla/leave_out_pushed`), which merges through the normal queue.
 
 use std::path::{Path, PathBuf};
 
@@ -17,7 +17,7 @@ use super::land::ask;
 use crate::config::Config;
 use crate::prs::repo;
 
-const USAGE: &str = "usage: hermesd release leave-out <leave-out id>";
+const USAGE: &str = "usage: flotillad release leave-out <leave-out id>";
 
 /// What to revert, as the daemon said.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -63,13 +63,13 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     let [id] = args else {
         anyhow::bail!("{USAGE}");
     };
-    let gate = ask(cfg, "hermes/leave_out", json!({ "id": id })).await?;
+    let gate = ask(cfg, "flotilla/leave_out", json!({ "id": id })).await?;
     let plan = Plan::from_gate(&gate)?;
     let checkout = git::toplevel(&std::env::current_dir()?)?;
     let head = revert_in(&checkout, &plan, &std::env::temp_dir())?;
     let reply = ask(
         cfg,
-        "hermes/leave_out_pushed",
+        "flotilla/leave_out_pushed",
         json!({ "id": id, "branch": plan.branch, "head": head }),
     )
     .await?;
@@ -91,7 +91,7 @@ pub fn revert_in(checkout: &Path, plan: &Plan, scratch: &Path) -> anyhow::Result
         plan.repo_url
     );
     git::fetch(checkout, &["main"])?;
-    let tree: PathBuf = scratch.join(format!("hermes-leave-out-{}", uuid::Uuid::new_v4()));
+    let tree: PathBuf = scratch.join(format!("flotilla-leave-out-{}", uuid::Uuid::new_v4()));
     let path = tree.display().to_string();
     run_git(
         checkout,

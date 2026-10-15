@@ -106,7 +106,7 @@ pub async fn hook_handler(
 }
 
 /// A lifecycle hook from `bot_id`'s session, over HTTP or the local endpoint
-/// (`hermesd hook`, H-044). False when it names no event.
+/// (`flotillad hook`, H-044). False when it names no event.
 pub(crate) fn on_hook(app: &AppState, bot_id: &str, event: &str, body: &Value) -> bool {
     if event.is_empty() {
         return false;

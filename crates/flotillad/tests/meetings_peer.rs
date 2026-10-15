@@ -6,10 +6,10 @@ use crate::common;
 
 use common::peer_board::board;
 use common::tasks::error_text;
-use hermesd::actor::Actor;
-use hermesd::meetings::run::{self, AdHoc};
-use hermesd::meetings::series::{self, SeriesEdit};
-use hermesd::meetings::Party;
+use flotillad::actor::Actor;
+use flotillad::meetings::run::{self, AdHoc};
+use flotillad::meetings::series::{self, SeriesEdit};
+use flotillad::meetings::Party;
 use serde_json::json;
 
 #[tokio::test]

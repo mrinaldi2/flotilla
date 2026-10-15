@@ -10,10 +10,10 @@ use std::time::Duration;
 use chrono::Utc;
 use common::prs::{branch, give, head, set_policy, setup, Repo};
 use common::WsClient;
-use hermesd::kanban::model::Role;
-use hermesd::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
-use hermesd::prs::check_model::{CheckResult, CheckRun};
-use hermesd::releases::machines;
+use flotillad::kanban::model::Role;
+use flotillad::prs::check_jobs::{dispatch, SYSTEM_RUNNER};
+use flotillad::prs::check_model::{CheckResult, CheckRun};
+use flotillad::releases::machines;
 use serde_json::{json, Value};
 
 /// The `path` check echoes its PATH in the computer's shell: `sh -c` here,
@@ -99,7 +99,7 @@ fn published(r: &Repo, run: &CheckRun) -> String {
     let app = &r.pair.d.app;
     let project = app.db.get_project(&r.project).unwrap().unwrap();
     let log = run.log_artifact.as_deref().expect("a log");
-    std::fs::read_to_string(hermesd::paths::artifacts_dir(&app.cfg, &project.dir_name).join(log))
+    std::fs::read_to_string(flotillad::paths::artifacts_dir(&app.cfg, &project.dir_name).join(log))
         .unwrap()
 }
 
@@ -155,7 +155,7 @@ async fn a_check_runs_with_the_derived_tool_path() {
     dispatch(&r.pair.d.app.clone(), &r.project).await.unwrap();
     let run = finished(&r, &sha, "path").await;
     assert_eq!(run.result, CheckResult::Pass, "{run:?}");
-    let want = hermesd::tool_path::tool_path();
+    let want = flotillad::tool_path::tool_path();
     let log = published(&r, &run);
     assert!(
         log.contains(&format!("PATH={}", want.to_string_lossy())),

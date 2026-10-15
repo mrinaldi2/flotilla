@@ -16,8 +16,8 @@ use bus::PermissionExtra;
 use chrono::Utc;
 use common::prs::{approve, give, opened, setup_with};
 use common::WsClient;
-use hermesd::kanban::model::Role;
-use hermesd::prs::queue::{EVERY, WINDOW};
+use flotillad::kanban::model::Role;
+use flotillad::prs::queue::{EVERY, WINDOW};
 use serde_json::json;
 
 const DEVOPS: usize = 0;
@@ -41,7 +41,7 @@ async fn the_ticker_hands_an_expired_window_to_devops() {
 
     // The ticker queues the mergeable PR by itself.
     let generous = EVERY * 3 + Duration::from_secs(20);
-    let row = |db: &hermesd::db::Db| db.board_read(|t| t.queue_row(&pr.id)).unwrap();
+    let row = |db: &flotillad::db::Db| db.board_read(|t| t.queue_row(&pr.id)).unwrap();
     let start = Instant::now();
     while row(&db).is_none() {
         assert!(start.elapsed() < generous, "the ticker never queued PR #1");

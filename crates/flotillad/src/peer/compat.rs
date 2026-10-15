@@ -108,7 +108,7 @@ const NEWER_TOOLS: [&str; 8] = [
 pub fn single_board_args(home: &str, name: &str, args: &Value) -> anyhow::Result<Value> {
     anyhow::ensure!(
         !NEWER_TOOLS.contains(&name),
-        "{home} holds this board and runs an older Gravity, with one board per project and \
+        "{home} holds this board and runs an older Flotilla release, with one board per project and \
          no attachments: {name} works once {home} is updated"
     );
     let mut args = args.clone();

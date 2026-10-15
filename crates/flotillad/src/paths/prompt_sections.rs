@@ -56,7 +56,7 @@ pub(super) fn temporary() -> String {
 /// Where a worker puts any other clone or worktree, and why (H-109).
 const SCRATCH_NOTE: &str = "## Your scratch folder\n\n\
      Put any clone, worktree or build output that isn't `repo/` under \
-     `$THEHERMES_SCRATCH` (the `scratch/` folder in your workspace), never \
+     `$FLOTILLA_SCRATCH` (the `scratch/` folder in your workspace), never \
      elsewhere on the disk. When you retire, the daemon deletes `repo/` and \
      `scratch/` for you, so you don't need to, and nothing outside them is \
      ever cleaned up.\n\n";
@@ -238,7 +238,7 @@ pub(super) fn pull_requests(on: bool) -> &'static str {
      - `pr_close` with a reason only to abandon a PR.\n\
      - You can't review a PR you opened, pushed to, or whose card you hold.\n\
      - Nobody merges by hand: a mergeable PR goes to DevOps as a merge task,\n\
-     run with `hermesd pr merge`, and a raw push to the project's branch is\n\
+     run with `flotillad pr merge`, and a raw push to the project's branch is\n\
      refused.\n\
      - The owner reviews, approves, runs commands, grants extras, types into\n\
      terminals and answers prompts only on the board's home computer or\n\
@@ -348,9 +348,9 @@ mod tests {
         assert_eq!(repo(None, false, "lead", "b2"), "");
         let shared = bus::ProjectRepo::parse("git@host:me/book.git", None).expect("repo");
         let worker = repo(Some(&shared), true, "ch-1", "0123456789");
-        assert!(worker.contains("$THEHERMES_SCRATCH"));
+        assert!(worker.contains("$FLOTILLA_SCRATCH"));
         assert!(worker.contains("--branch main git@host:me/book.git repo"));
-        assert!(worker.contains("`git push origin HEAD:gravity/ch-1-01234567`"));
+        assert!(worker.contains("`git push origin HEAD:flotilla/ch-1-01234567`"));
         assert!(!worker.contains("HEAD:main"));
         assert!(worker.contains("Nobody pushes to `main` directly"));
         let parent = repo(Some(&shared), false, "lead", "b2");

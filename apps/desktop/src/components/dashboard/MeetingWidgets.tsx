@@ -105,7 +105,7 @@ export function MeetingsWidget(props: {
       : offHomeText(
           off,
           "meetings",
-          `Meetings are kept on ${off.home}. Open The Hermes there to see them.`,
+          `Meetings are kept on ${off.home}. Open Flotilla there to see them.`,
         );
   return (
     <Widget id="dash-meetings" title="Meetings">

@@ -1,4 +1,4 @@
-//! `hermesd peer …`: pairing and linking from a terminal. The commands talk
+//! `flotillad peer …`: pairing and linking from a terminal. The commands talk
 //! to the running daemon over its control plane with the owner token, so they
 //! work while it serves, and they are exactly what the app will send.
 
@@ -9,12 +9,12 @@ use tokio_tungstenite::tungstenite::Message;
 use crate::config::Config;
 
 const USAGE: &str = "usage:
-  hermesd peer invite <name> [--url ws://host:port/peer]
-  hermesd peer add <name> <invite>
-  hermesd peer list
-  hermesd peer bots <peer>
-  hermesd peer link <peer> <bot> --project <project>
-  hermesd peer revoke <peer>";
+  flotillad peer invite <name> [--url ws://host:port/peer]
+  flotillad peer add <name> <invite>
+  flotillad peer list
+  flotillad peer bots <peer>
+  flotillad peer link <peer> <bot> --project <project>
+  flotillad peer revoke <peer>";
 
 pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     let arg = |i: usize| args.get(i).map(String::as_str);
@@ -34,7 +34,7 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
             let reply = daemon.request(req).await?;
             println!("Invite for {name} (shown once):\n");
             println!("{}", reply["invite"].as_str().unwrap_or_default());
-            println!("\nOn {name}, run: hermesd peer add <name for this machine> <invite>");
+            println!("\nOn {name}, run: flotillad peer add <name for this machine> <invite>");
         }
         (Some("add"), Some(name), Some(invite)) => {
             daemon
@@ -135,14 +135,14 @@ impl Daemon {
         let url = format!("ws://127.0.0.1:{port}/ws");
         let (socket, _) = tokio_tungstenite::connect_async(url.as_str())
             .await
-            .map_err(|e| anyhow::anyhow!("hermesd is not answering on {url}: {e}"))?;
+            .map_err(|e| anyhow::anyhow!("flotillad is not answering on {url}: {e}"))?;
         let mut daemon = Self { socket, next: 1 };
         daemon
             .request(json!({
                 "type": "hello",
                 "protocol_version": crate::app::PROTOCOL_VERSION,
                 "token": token.trim(),
-                "client": "hermesd-cli"
+                "client": "flotillad-cli"
             }))
             .await?;
         Ok(daemon)
@@ -167,7 +167,7 @@ impl Daemon {
             }
             return Ok(reply);
         }
-        anyhow::bail!("hermesd closed the connection")
+        anyhow::bail!("flotillad closed the connection")
     }
 
     async fn peers(&mut self) -> anyhow::Result<Vec<Value>> {

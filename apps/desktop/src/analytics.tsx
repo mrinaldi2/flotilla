@@ -237,7 +237,7 @@ function ErrorFallback(): ReactElement {
   return (
     <div className="setup-screen">
       <div className="setup-panel">
-        <h1 className="setup-title">The Hermes stopped unexpectedly</h1>
+        <h1 className="setup-title">Flotilla stopped unexpectedly</h1>
         <p className="setup-note">Restart the app to continue.</p>
       </div>
     </div>

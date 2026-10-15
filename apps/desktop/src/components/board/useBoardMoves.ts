@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import type { AddToast } from "../../app/useToasts";
 import type { BoardApi } from "../../protocol/board";
 import { boardCall } from "../../protocol/board";
-import type { BoardColumn, ItemCard, Unmet } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn, ItemCard, Unmet } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import type { ColumnChecks } from "./moves";
 import { columnChecks, MoveCheckCache, planMove } from "./moves";
 

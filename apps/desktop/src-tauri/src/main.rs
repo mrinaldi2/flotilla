@@ -1,5 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    hermes_desktop_lib::run();
+    flotilla_desktop_lib::run();
 }

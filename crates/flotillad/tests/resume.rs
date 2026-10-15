@@ -52,7 +52,7 @@ fn notes(inbox: &[Value]) -> Vec<&str> {
     inbox
         .iter()
         .filter_map(|m| m["body"].as_str())
-        .filter(|b| b.starts_with(hermesd::resume::HEADER))
+        .filter(|b| b.starts_with(flotillad::resume::HEADER))
         .collect()
 }
 
@@ -65,7 +65,7 @@ struct Team {
 }
 
 /// lead and dev; lead has given dev a task, which dev was in the middle of.
-async fn interrupted(tweak: impl FnOnce(&mut hermesd::config::Config)) -> Team {
+async fn interrupted(tweak: impl FnOnce(&mut flotillad::config::Config)) -> Team {
     let d = spawn_daemon_with(|cfg| {
         cfg.user_home = cfg.home.join("user");
         cfg.supervision_interval_ms = 250;
@@ -160,7 +160,7 @@ async fn a_restart_while_reading_the_note_doesnt_stack_another() {
     let reading = json!({"type": "user", "uuid": "t-note", "timestamp": "2026-10-01T10:05:00Z",
         "isMeta": true, "origin": {"kind": "peer"},
         "message": {"content": format!(
-            "Another Claude session sent a message:\n[msg #9 from HERMES · note] {}",
+            "Another Claude session sent a message:\n[msg #9 from FLOTILLA · note] {}",
             notes(&first)[0])}});
     transcript(&t.d, &t.dev, &[reading]);
     let ok =

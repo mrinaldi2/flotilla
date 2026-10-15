@@ -195,7 +195,7 @@ mod tests {
              Authorization: Bearer abc.def.ghi\n\
              password=hunter2 rest\n\
              -----BEGIN OPENSSH PRIVATE KEY-----\nAAAA\n-----END OPENSSH PRIVATE KEY-----\n\
-             /Users/alice/.thehermes/logs ready",
+             /Users/alice/.flotilla/logs ready",
         );
         assert!(!out.contains("0123456789abcdef0123"), "{out}");
         assert!(!out.contains("ghp_abc"), "{out}");
@@ -203,7 +203,7 @@ mod tests {
         assert!(!out.contains("hunter2"), "{out}");
         assert!(out.contains("password=[redacted] rest"), "{out}");
         assert!(!out.contains("AAAA"), "{out}");
-        assert!(out.contains("/Users/~/.thehermes/logs ready"), "{out}");
+        assert!(out.contains("/Users/~/.flotilla/logs ready"), "{out}");
         assert!(out.contains(" ok"), "{out}");
     }
 

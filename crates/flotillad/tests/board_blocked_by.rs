@@ -6,9 +6,9 @@ use crate::common;
 
 use common::releases::releases;
 use common::tasks::error_text;
-use hermesd::actor::Actor;
-use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Priority, Size};
+use flotillad::actor::Actor;
+use flotillad::db::{MoveTo, NewItem};
+use flotillad::kanban::model::{ItemType, Priority, Size};
 use serde_json::json;
 
 #[tokio::test]

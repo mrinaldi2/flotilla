@@ -54,7 +54,7 @@ async fn a_closed_card_takes_no_new_task() {
     let card = item(&pair, &project, "ready", None);
     let db = &pair.d.app.db;
     let version = db.get_item(&card).unwrap().unwrap().version;
-    let to = hermesd::db::MoveTo {
+    let to = flotillad::db::MoveTo {
         column: "cancelled",
         note: Some("dropped"),
         ..Default::default()

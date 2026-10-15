@@ -5,7 +5,7 @@
 import { useEffect, useRef } from "react";
 import type { ReactElement, ReactNode } from "react";
 import type { DaemonApi } from "../../protocol/api";
-import type { ThreadMessage } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { ThreadMessage } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { useOwnerThread } from "../home/useOwnerThreads";
 import { Bubble } from "./ChatParts";
 

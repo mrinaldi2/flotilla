@@ -10,7 +10,7 @@ use chrono::{Duration, Utc};
 use common::grants::{comments, desktop, drop_link, extras, grant, said, settled};
 use common::peers::{team_trusting, Team};
 use common::WsClient;
-use hermesd::db::GrantRuling;
+use flotillad::db::GrantRuling;
 use serde_json::json;
 
 /// The ruling's grants were waiting for the PC when this happened to it.
@@ -75,7 +75,7 @@ async fn a_withdrawn_decision_grants_nothing() {
         .await;
     let id = raised["decision"]["id"].as_str().expect("id").to_string();
     let stored = t.mac.app.db.get_decision(&id).unwrap().unwrap();
-    let sha = hermesd::decisions::grants::sha(&stored.options[0]);
+    let sha = flotillad::decisions::grants::sha(&stored.options[0]);
     let peer = t
         .mac
         .app
@@ -100,7 +100,7 @@ async fn a_withdrawn_decision_grants_nothing() {
         .request(json!({"type": "withdraw_decision", "decision_id": id, "reason": "no"}))
         .await;
     assert_eq!(withdrawn["decision"]["state"], "withdrawn", "{withdrawn}");
-    hermesd::decisions::grants_peer::deliver(&t.mac.app, None).await;
+    flotillad::decisions::grants_peer::deliver(&t.mac.app, None).await;
     said(&t.mac, &id, "No longer granted on win: the ruling changed").await;
     assert!(extras(&t).is_empty());
 }
@@ -159,7 +159,7 @@ async fn a_grant_waiting_a_day_expires() {
     // A settled ruling whose grants this computer filed earlier.
     let id = grant(&mut t, &["publish"], |_| {}).await;
     let stored = t.mac.app.db.get_decision(&id).unwrap().unwrap();
-    let sha = hermesd::decisions::grants::sha(&stored.options[0]);
+    let sha = flotillad::decisions::grants::sha(&stored.options[0]);
     let peer = t
         .mac
         .app
@@ -183,7 +183,7 @@ async fn a_grant_waiting_a_day_expires() {
     let old = (Utc::now() - Duration::hours(25)).to_rfc3339();
     conn.execute("UPDATE peer_grant SET created_at = ?1", [old])
         .unwrap();
-    hermesd::decisions::grants_peer::deliver(&t.mac.app, None).await;
+    flotillad::decisions::grants_peer::deliver(&t.mac.app, None).await;
     said(&t.mac, &id, "Not sent: win was unreachable for a day").await;
     assert!(comments(&t.mac, &id)
         .iter()

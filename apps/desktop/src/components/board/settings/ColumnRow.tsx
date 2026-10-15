@@ -5,7 +5,7 @@
 import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { ReactElement } from "react";
-import type { BoardColumn } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import ColumnRules from "./ColumnRules";
 import type { ColumnChange } from "./columnEdits";
 import { afterFor, limitChange, policyLine } from "./columnEdits";

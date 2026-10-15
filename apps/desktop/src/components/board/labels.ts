@@ -1,7 +1,7 @@
 // Owner-facing words for the board's enums (ux-glossary §5).
 // Every type carries a glyph and a word, so nothing depends on colour.
 
-import { ItemType, Priority } from "../../protocol/gen/hermes/board/v1/board_pb";
+import { ItemType, Priority } from "../../protocol/gen/flotilla/board/v1/board_pb";
 
 interface TypeLabel {
   readonly glyph: string;

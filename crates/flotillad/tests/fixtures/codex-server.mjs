@@ -2,7 +2,7 @@ import { appendFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { listen, terminal } from "./codex-websocket.mjs";
 
-const log = process.env.THEHERMES_TEST_LOG ?? "../codex-fixture-rpc.jsonl";
+const log = process.env.FLOTILLA_TEST_LOG ?? "../codex-fixture-rpc.jsonl";
 let send = (value) => { process.stdout.write(`${JSON.stringify(value)}\n`); };
 const notify = (method, params) => { send({ method, params }); };
 let active = false;
@@ -32,7 +32,7 @@ function receive(request, respond) {
       notify("item/completed", { item: { id: "cmd-1", type: "commandExecution", command: "cargo test",
         cwd: "/w", aggregatedOutput: "test result: ok", exitCode: 0, status: "completed" } });
       notify("item/completed", { item: change });
-      notify("item/completed", { item: { id: "mcp-1", type: "mcpToolCall", server: "hermes-bus",
+      notify("item/completed", { item: { id: "mcp-1", type: "mcpToolCall", server: "flotilla-bus",
         tool: "send_message", status: "completed", arguments: { to: "lead", kind: "note", body: "built" },
         result: { content: [{ type: "text", text: "{}" }] }, error: null } });
       notify("item/completed", { item: { type: "agentMessage", text: "Built it." } });
@@ -61,7 +61,7 @@ function receive(request, respond) {
 
 const args = process.argv.slice(2);
 if (args.includes("--remote")) {
-  await terminal(args[args.indexOf("--remote") + 1], process.env.THEHERMES_CODEX_REMOTE_TOKEN);
+  await terminal(args[args.indexOf("--remote") + 1], process.env.FLOTILLA_CODEX_REMOTE_TOKEN);
 } else if (args.includes("--ws-auth")) {
   send = listen(args[args.indexOf("--listen") + 1], args[args.indexOf("--ws-token-sha256") + 1], receive);
 } else {

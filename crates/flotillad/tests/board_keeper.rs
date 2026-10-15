@@ -247,7 +247,7 @@ async fn a_card_past_the_boards_stale_time_is_flagged_and_pushed() {
 #[tokio::test]
 async fn the_owner_hears_what_the_keeper_did_as_automatic() {
     use bus::contract::home::BoardActivityKind;
-    use hermesd::events::Push;
+    use flotillad::events::Push;
 
     let (mut f, _) = fresh(&["Builder"]).await;
     let app = f.d.app.clone();

@@ -9,8 +9,8 @@ use crate::common;
 
 use common::prs::{approve, clone, commit, error, give, move_main, opened, pr, report, setup};
 use common::repo::git;
-use hermesd::db::prs::Head;
-use hermesd::kanban::model::Role;
+use flotillad::db::prs::Head;
+use flotillad::kanban::model::Role;
 use serde_json::json;
 
 /// AC1: an approval holds across an update with main that keeps the change,

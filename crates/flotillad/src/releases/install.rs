@@ -1,4 +1,4 @@
-//! `hermesd release install <release> [--dry-run | --status]` (B8, H-020
+//! `flotillad release install <release> [--dry-run | --status]` (B8, H-020
 //! §2.6 a): the supported way a tester installs a release on their computer.
 //!
 //! Run from the tester's session, it asks the daemon over the local endpoint
@@ -9,7 +9,7 @@
 //! 1. copies or downloads it into a fresh private stage and checks its
 //!    sha256 there (`stage`);
 //! 2. unpacks it and checks its code signature against the identity
-//!    compiled into hermesd, saying so when it can't (`signature`);
+//!    compiled into flotillad, saying so when it can't (`signature`);
 //! 3. hands the rest to the operating system (`handoff`), because it
 //!    restarts this very session: for an app, the job swaps it into place,
 //!    keeping the one it replaces, and rolls back unless the new service
@@ -39,7 +39,7 @@ use unpack::unpack;
 #[cfg(test)]
 use stage::verify;
 
-const USAGE: &str = "usage: hermesd release install <release> [--dry-run | --status]";
+const USAGE: &str = "usage: flotillad release install <release> [--dry-run | --status]";
 
 /// How long the gate check may take: forwarded to the home when the board
 /// lives on another computer.
@@ -65,7 +65,7 @@ pub(crate) enum Kind {
     AppDmg,
     /// The Windows setup: it installs the app and the service itself.
     WindowsSetup,
-    /// A bare `hermesd`: `service install` from it.
+    /// A bare `flotillad`: `service install` from it.
     Daemon,
 }
 
@@ -143,8 +143,8 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     }
     if !args.dry_run {
         println!(
-            "The service install runs on its own now and restarts the Hermes service, and this \
-             session with it. When you're back: `hermesd release install {release} --status`, \
+            "The service install runs on its own now and restarts the Flotilla service, and this \
+             session with it. When you're back: `flotillad release install {release} --status`, \
              smoke-test, then report with deploy_confirm (release {release}, machine {}).",
             answer["machine"].as_str().unwrap_or("this computer")
         );
@@ -183,12 +183,16 @@ fn prepare_one(args: &Args, build: &Build, stage: &stage::Stage) -> anyhow::Resu
     }
     let (program, mut service_args, binary) = match kind {
         // The swap itself is the job's, outside this session (H-117 X1):
-        // a copy of this hermesd runs `release apply-app` from the stage.
+        // a copy of this flotillad runs `release apply-app` from the stage.
         Kind::AppZip | Kind::AppDmg => {
-            let runner = stage.dir.join("hermesd-apply");
+            let runner = stage.dir.join("flotillad-apply");
             std::fs::copy(std::env::current_exe()?, &runner)?;
             let apply = apply_args(&args.release, &unpacked, &build.version);
-            (runner, apply, Some(unpacked.join("Contents/MacOS/hermesd")))
+            (
+                runner,
+                apply,
+                Some(unpacked.join("Contents/MacOS/flotillad")),
+            )
         }
         // The setup's own hook runs `service install` (installer-hooks.nsh).
         Kind::WindowsSetup => (unpacked, vec!["/S".to_string()], None),
@@ -327,7 +331,7 @@ pub(crate) fn for_this_computer(builds: &[Build], macos: bool, windows: bool) ->
 
 pub(crate) fn kind_of(name: &str, macos: bool, windows: bool) -> anyhow::Result<Kind> {
     let lower = name.to_ascii_lowercase();
-    if lower.starts_with("hermesd") {
+    if lower.starts_with("flotillad") {
         return Ok(Kind::Daemon);
     }
     let kind = match () {

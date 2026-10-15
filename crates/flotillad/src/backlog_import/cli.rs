@@ -1,4 +1,4 @@
-//! `hermesd board import <path> [--project <name>] [--dry-run]`: the owner's
+//! `flotillad board import <path> [--project <name>] [--dry-run]`: the owner's
 //! import from a terminal. The file is read here and sent to the running
 //! daemon over its control plane with the owner token, so the daemon that
 //! writes is the board's home and no other.
@@ -8,7 +8,7 @@ use serde_json::json;
 use crate::config::Config;
 use crate::peer::cli::Daemon;
 
-const USAGE: &str = "usage: hermesd board import <path> [--project <name>] [--dry-run]";
+const USAGE: &str = "usage: flotillad board import <path> [--project <name>] [--dry-run]";
 
 pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     let flag = |name: &str| {

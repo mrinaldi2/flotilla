@@ -302,7 +302,7 @@ fn pr_ref(cut: &Cut, p: &super::model::CutPr) -> Value {
             "title": p.title, "repo": cut.repo, "reverted": p.reverted, "revert": p.revert })
 }
 
-/// The `hermes.pr.v1.ReleaseFromMain` keys on the release JSON, plus the
+/// The `flotilla.pr.v1.ReleaseFromMain` keys on the release JSON, plus the
 /// cards planned but not merged and where the range starts.
 pub fn extend_json(release: &Release, cut: &Cut, out: &mut Value) {
     let planned = |item: &str| cut.planned.iter().any(|p| p == item);

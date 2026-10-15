@@ -1,9 +1,9 @@
 //! A project with a board and a team of bots, and items placed on it, for
 //! the board workflow tests (H-099).
 
-use hermesd::actor::Actor;
-use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Priority};
+use flotillad::actor::Actor;
+use flotillad::db::{MoveTo, NewItem};
+use flotillad::kanban::model::{ItemType, Priority};
 use serde_json::json;
 
 use super::tasks::{project_with_bots, Pair};
@@ -49,8 +49,8 @@ pub fn item(pair: &Pair, project: &str, column: &str, assignee: Option<&str>) ->
     };
     let moved = db.move_item(&item.id, item.version, &to, &OWNER).unwrap();
     let version = match moved {
-        hermesd::db::Write::Done(item) => item.version,
-        hermesd::db::Write::Conflict(_) => unreachable!(),
+        flotillad::db::Write::Done(item) => item.version,
+        flotillad::db::Write::Conflict(_) => unreachable!(),
     };
     db.assign_item(&item.id, version, assignee, &OWNER).unwrap();
     item.id

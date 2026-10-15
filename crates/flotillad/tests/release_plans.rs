@@ -7,9 +7,9 @@ use crate::common;
 use common::releases::{releases, Releases};
 use common::tasks::error_text;
 use common::WsClient;
-use hermesd::actor::Actor;
-use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Priority};
+use flotillad::actor::Actor;
+use flotillad::db::{MoveTo, NewItem};
+use flotillad::kanban::model::{ItemType, Priority};
 use serde_json::{json, Value};
 
 /// A new item left where `create_item` puts it (not in Verify).

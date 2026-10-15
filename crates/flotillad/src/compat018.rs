@@ -193,7 +193,7 @@ pub fn args_for_018_home(home: &str, name: &str, args: &mut Value) -> anyhow::Re
     if query {
         anyhow::ensure!(
             rest.is_empty(),
-            "{home} holds this board and runs an older Gravity, which filters by platform only: \
+            "{home} holds this board and runs an older Flotilla release, which filters by platform only: \
              ask without the other labels, or once {home} is updated"
         );
         fields.remove("labels");

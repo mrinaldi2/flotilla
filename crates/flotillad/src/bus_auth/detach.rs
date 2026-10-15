@@ -3,7 +3,7 @@
 //! keystrokes into its composer with TIOCSTI. One in a session of its own
 //! gets `EPERM` instead.
 
-/// `hermesd mcp-exec -- <command> [args…]`: runs a stdio MCP server in a new
+/// `flotillad mcp-exec -- <command> [args…]`: runs a stdio MCP server in a new
 /// session. Returns an exit code only when it could not be started.
 pub fn mcp_exec(args: &[String]) -> i32 {
     let args = match args.first().map(String::as_str) {

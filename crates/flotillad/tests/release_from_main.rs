@@ -12,8 +12,8 @@ use common::prs::{clone, commit, error};
 use common::releases::rule;
 use common::repo::git;
 use common::WsClient;
-use hermesd::releases::tag::answer;
-use hermesd::releases::tag_cli::{tag_in, Plan};
+use flotillad::releases::tag::answer;
+use flotillad::releases::tag_cli::{tag_in, Plan};
 use serde_json::json;
 
 /// AC1: the tip by default; a commit that isn't on main is refused.
@@ -153,7 +153,7 @@ async fn a_cut_release_goes_through_the_gate_and_is_tagged_after_approval() {
     let commit = release["commit"].as_str().unwrap().to_string();
     let build = |source: &str| {
         json!({"release_id": id, "platform": "daemon", "version": "0.18.0",
-               "artifact": "/builds/hermesd", "sha256": "a".repeat(64),
+               "artifact": "/builds/flotillad", "sha256": "a".repeat(64),
                "source_commit": source})
     };
     let raw = r.bots[DEVOPS]
@@ -179,17 +179,17 @@ async fn a_cut_release_goes_through_the_gate_and_is_tagged_after_approval() {
     let app = r.pair.d.app.clone();
     let devops = r.pair.ids[DEVOPS].clone();
     let gate = |method: &str, params| answer(&app, &devops, method, &params);
-    let early = gate("hermes/release_tag", json!({"release_id": id})).unwrap_err();
+    let early = gate("flotilla/release_tag", json!({"release_id": id})).unwrap_err();
     assert!(
         early
             .to_string()
             .contains("only a release the owner approved"),
         "{early}"
     );
-    let land = hermesd::releases::gates::serve(
+    let land = flotillad::releases::gates::serve(
         &app,
         &devops,
-        &json!({"method": "hermes/release_land", "params": {"release_id": id}}),
+        &json!({"method": "flotilla/release_land", "params": {"release_id": id}}),
     )
     .unwrap();
     assert!(
@@ -208,14 +208,14 @@ async fn a_cut_release_goes_through_the_gate_and_is_tagged_after_approval() {
     )
     .await;
     assert_eq!(ruled["release"]["status"], "approved", "{ruled}");
-    let plan = gate("hermes/release_tag", json!({"release_id": id})).unwrap();
+    let plan = gate("flotilla/release_tag", json!({"release_id": id})).unwrap();
     assert_eq!(plan["tag"], "desktop-v0.18.0");
     let tree = checkout(&r, &r.origin, "tag");
     tag_in(&tree, &Plan::from_gate(&plan, &id, false).unwrap()).unwrap();
     let tagged = git(&r.origin, &["rev-parse", "refs/tags/desktop-v0.18.0^{}"]);
     assert_eq!(tagged.trim(), commit, "the tag is on the cut commit");
     gate(
-        "hermes/release_tagged",
+        "flotilla/release_tagged",
         json!({"release_id": id, "tag": "desktop-v0.18.0", "commit": commit}),
     )
     .unwrap();

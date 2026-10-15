@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { create } from "@bufbuild/protobuf";
 import type { OwnerBlocker, Release } from "../../protocol/releases";
-import { ReleaseBriefSchema } from "../../protocol/gen/hermes/home/v1/home_pb";
+import { ReleaseBriefSchema } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { FakeDaemon } from "../../test/fakeDaemon";
 import * as fx from "../../test/fixtures";
 import { deployment, release } from "../../test/releaseFixtures";

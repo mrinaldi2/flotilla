@@ -1,7 +1,7 @@
-//! `hermesd pr merge <n> [--dry-run]` (H-284; H-261 §5.2): DevOps, on the
+//! `flotillad pr merge <n> [--dry-run]` (H-284; H-261 §5.2): DevOps, on the
 //! daemon's `pr_merge` task, fast-forwards `main` to exactly the PR's head.
 //!
-//! The daemon checks first (`hermes/pr_merge`, see `prs::merge`): the
+//! The daemon checks first (`flotilla/pr_merge`, see `prs::merge`): the
 //! `pr_merge` extra, the DevOps role, the task, and every §5.1 condition
 //! with the needs read again at the merge. Then, in DevOps' own checkout,
 //! with git hooks off:
@@ -12,7 +12,7 @@
 //!   main is at the head;
 //! - the branch is deleted only while its tip is still the merged commit
 //!   (a lease); otherwise it is kept and reported;
-//! - the daemon records it (`hermes/pr_merged`) after its own fetch.
+//! - the daemon records it (`flotilla/pr_merged`) after its own fetch.
 //!
 //! A raw `git push … main` still goes through the guard, unchanged.
 //!
@@ -30,7 +30,7 @@ use crate::prs::repo;
 use crate::releases::git::{self, git as run_git};
 use crate::releases::land::ask;
 
-const USAGE: &str = "usage: hermesd pr merge <number> [--dry-run]";
+const USAGE: &str = "usage: flotillad pr merge <number> [--dry-run]";
 
 pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     let (sub, rest) = args
@@ -38,7 +38,7 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
         .ok_or_else(|| anyhow::anyhow!("{USAGE}"))?;
     anyhow::ensure!(sub == "merge", "{USAGE}");
     let (number, dry_run) = parse(rest)?;
-    let gate = ask(cfg, "hermes/pr_merge", json!({ "number": number })).await?;
+    let gate = ask(cfg, "flotilla/pr_merge", json!({ "number": number })).await?;
     let plan = Plan::from_gate(&gate, dry_run)?;
     let here = git::toplevel(&std::env::current_dir()?)?;
     let done = merge_in(&here, &plan)?;
@@ -52,7 +52,7 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     let stale = drop_stale(&here, &plan);
     let reply = ask(
         cfg,
-        "hermes/pr_merged",
+        "flotilla/pr_merged",
         json!({ "number": number, "sha": plan.head,
                 "branch": { "deleted": done.branch_deleted, "note": done.branch_note },
                 "stale_branches": stale }),

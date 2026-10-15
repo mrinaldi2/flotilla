@@ -8,10 +8,10 @@ use bus::contract::board::{
 };
 use common::board::*;
 use common::*;
-use hermesd::actor::Actor;
-use hermesd::kanban::admin::{self, By, Outcome, Structure};
-use hermesd::kanban::model::Role;
-use hermesd::kanban::presets::Preset;
+use flotillad::actor::Actor;
+use flotillad::kanban::admin::{self, By, Outcome, Structure};
+use flotillad::kanban::model::Role;
+use flotillad::kanban::presets::Preset;
 
 fn applied(body: bus::contract::wire::envelope::Body) -> c::BoardSnapshot {
     match response(body) {
@@ -311,7 +311,7 @@ async fn board_get_leaves_out_an_archived_board_and_names_the_default_key() {
         .create_board(&project, "Recipes", "RC", Preset::Simple)
         .unwrap();
     let owner = || By::Owner(Actor::User);
-    let update = |board: &hermesd::kanban::model::Board| c::BoardUpdate {
+    let update = |board: &flotillad::kanban::model::Board| c::BoardUpdate {
         board_id: board.id.clone(),
         version: board.version,
         ..Default::default()

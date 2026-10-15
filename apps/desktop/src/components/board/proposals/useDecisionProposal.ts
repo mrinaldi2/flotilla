@@ -8,8 +8,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { DaemonApi } from "../../../protocol/api";
 import { boardCall, PROTO_ENCODING } from "../../../protocol/board";
 import type { Decision } from "../../../protocol/decisions";
-import type { Board, BoardColumn } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import type { BoardProposal } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import type { Board, BoardColumn } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { BoardProposal } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { errText } from "../../../util";
 
 export interface FoundProposal {
@@ -29,7 +29,7 @@ export interface DecisionProposal {
 }
 
 /**
- * Whether a decision reads as one the Hermes service raised for a lead's
+ * Whether a decision reads as one the Flotilla service raised for a lead's
  * proposal: a question whose body ends "Proposal <id>.". Only then is the
  * project's board read, since `board_get` starts a board where there is
  * none, and Decisions must not do that for every project it shows.

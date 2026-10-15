@@ -6,11 +6,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
 import type { Project } from "../../protocol/entities";
-import type { ReviewSettings } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { ReviewSettings } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import PrDetail from "./PrDetail";
 import type { PrFilter } from "./PrList";
 import PrList, { inFilter } from "./PrList";
-import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { Loaded } from "./usePullRequests";
 import { usePr, usePrList } from "./usePullRequests";
 import type { PrClient } from "./usePrOwner";

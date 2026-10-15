@@ -13,7 +13,7 @@ use common::board::{new_item, next_envelope, send_raw};
 use common::peers::project;
 use common::tasks::project_with_bots;
 use common::*;
-use hermesd::kanban::model::{Priority, ProjectRole, Role};
+use flotillad::kanban::model::{Priority, ProjectRole, Role};
 use prost::Message;
 use serde_json::{json, Value};
 use std::time::Duration;

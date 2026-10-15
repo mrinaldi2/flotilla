@@ -32,7 +32,7 @@ async fn bot_with_bus(
 /// took deploys.
 #[tokio::test]
 async fn a_deleted_bot_loses_its_board_roles() {
-    use hermesd::kanban::model::{ProjectRole, Role};
+    use flotillad::kanban::model::{ProjectRole, Role};
 
     let d = spawn_daemon().await;
     let mut c = WsClient::connect(&d).await;
@@ -68,7 +68,7 @@ async fn a_deleted_bot_loses_its_board_roles() {
     };
     assert!(roles_of(&tester) > 0);
     assert_eq!(
-        hermesd::releases::testers_on(&d.app, &pid, "win-pc").unwrap(),
+        flotillad::releases::testers_on(&d.app, &pid, "win-pc").unwrap(),
         std::slice::from_ref(&tester)
     );
 
@@ -77,7 +77,7 @@ async fn a_deleted_bot_loses_its_board_roles() {
 
     assert_eq!(roles_of(&tester), 0, "its roles went with it");
     assert!(
-        hermesd::releases::testers_on(&d.app, &pid, "win-pc")
+        flotillad::releases::testers_on(&d.app, &pid, "win-pc")
             .unwrap()
             .is_empty(),
         "no deploy goes to a deleted tester"

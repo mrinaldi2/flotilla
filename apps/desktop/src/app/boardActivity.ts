@@ -4,8 +4,8 @@
 // fold into one toast, so a bot that moves a card and finishes its turn says
 // so once; at most `MAX_ACTIVITY_TOASTS` show, newest on top.
 
-import { BoardActivityKind as Kind } from "../protocol/gen/hermes/home/v1/home_pb";
-import type { BoardActivity } from "../protocol/gen/hermes/home/v1/home_pb";
+import { BoardActivityKind as Kind } from "../protocol/gen/flotilla/home/v1/home_pb";
+import type { BoardActivity } from "../protocol/gen/flotilla/home/v1/home_pb";
 import type { BotState } from "../protocol/entities";
 import type { BoardActivityKind, BoardActivityPrefs } from "../prefs";
 

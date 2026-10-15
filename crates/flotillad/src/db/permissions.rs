@@ -101,7 +101,7 @@ mod tests {
     #[test]
     fn profiles_default_to_standard_and_extras_replace() {
         let db = Db::open_in_memory().unwrap();
-        let p = db.create_project("Hermes", "hermes").unwrap();
+        let p = db.create_project("Flotilla", "flotilla").unwrap();
         let bot = db
             .create_bot(&p.id, "DevOps", "", "", "", "/tmp/w", "devops", None)
             .unwrap();
@@ -139,7 +139,7 @@ mod tests {
     #[test]
     fn the_table_accepts_every_extra() {
         let db = Db::open_in_memory().unwrap();
-        let p = db.create_project("Hermes", "hermes").unwrap();
+        let p = db.create_project("Flotilla", "flotilla").unwrap();
         let bot = db
             .create_bot(&p.id, "DevOps", "", "", "", "/tmp/w", "devops", None)
             .unwrap();

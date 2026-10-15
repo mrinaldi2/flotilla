@@ -1,9 +1,9 @@
 //! A project ready for releases: a board homed here, a lead, DevOps and a
 //! tester on machine "mac", and items already in Verify.
 
-use hermesd::actor::Actor;
-use hermesd::db::{MoveTo, NewItem};
-use hermesd::kanban::model::{ItemType, Priority, ProjectRole, Role};
+use flotillad::actor::Actor;
+use flotillad::db::{MoveTo, NewItem};
+use flotillad::kanban::model::{ItemType, Priority, ProjectRole, Role};
 use serde_json::{json, Value};
 
 use super::tasks::{project_with_bots_on, Pair};

@@ -1,6 +1,6 @@
 //! The backlog import end to end (B6): the lead's `board_import` tool over a
 //! fixture in the project's artifacts, and the owner's WS request that
-//! `hermesd board import` sends. Never the real backlog.md.
+//! `flotillad board import` sends. Never the real backlog.md.
 
 use crate::common;
 
@@ -28,7 +28,7 @@ async fn the_lead_imports_the_backlog_once_over_mcp() {
     let db = &pair.d.app.db;
     let project_id = db.get_bot(&pair.ids[0]).unwrap().unwrap().project_id;
     let project = db.get_project(&project_id).unwrap().unwrap();
-    let artifacts = hermesd::paths::artifacts_dir(&pair.d.app.cfg, &project.dir_name);
+    let artifacts = flotillad::paths::artifacts_dir(&pair.d.app.cfg, &project.dir_name);
     std::fs::create_dir_all(&artifacts).unwrap();
     std::fs::write(artifacts.join("backlog.md"), FIXTURE).unwrap();
     db.ensure_board(&project_id, &db.daemon_id().unwrap(), None)

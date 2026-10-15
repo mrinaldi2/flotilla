@@ -1,7 +1,7 @@
 //! Publishing a build to the tailnet and checking it at install (H-020 §6.6).
 //!
 //! DevOps with the Publish extra stages a build file with `release_publish`
-//! (what `hermesd release publish` calls): it is copied into the served
+//! (what `flotillad release publish` calls): it is copied into the served
 //! directory, hashed, and attached to the package with its HTTPS `url` and
 //! `install_url`. `install_release` re-hashes every served build against the
 //! frozen sha256 and refuses on a mismatch, pausing the rollout.
@@ -115,7 +115,7 @@ pub fn publish(
     let staged = serve::stage(&dirs, &base, &release.id, &platform, src)?;
     let install_url = match bundle_id.filter(|_| ios) {
         Some(bundle) => {
-            let title = cfg.releases.ios_title.as_deref().unwrap_or("The Hermes");
+            let title = cfg.releases.ios_title.as_deref().unwrap_or("Flotilla");
             let manifest = serve::write_manifest(&dirs, &staged, &bundle, &version, title)?;
             let link = format!("itms-services://?action=download-manifest&url={manifest}");
             // The page Copy link and the QR code open (H-229). A page left

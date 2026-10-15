@@ -23,7 +23,7 @@ function outcomeLine(q: Quiesce): string | null {
   const what = installing(q);
   switch (resumed?.outcome) {
     case "install_ok":
-      return `The Hermes ${what} is installed. Everything is running again.`;
+      return `Flotilla ${what} is installed. Everything is running again.`;
     case "rolled_back":
       return `The install of ${what} didn't work, so this computer went back to ${resumed.running_version ?? "the previous version"}. Everything is running again.`;
     case "deadline": {
@@ -73,7 +73,7 @@ export function useQuiesce(
         markTold(ended.id);
         const warn = ended.report?.resumed?.outcome !== "install_ok";
         addToast(warn ? "warn" : "info", line, "");
-        void notifyNatively("The Hermes", line);
+        void notifyNatively("Flotilla", line);
       }
     } catch {
       // An older daemon has no pause to show.

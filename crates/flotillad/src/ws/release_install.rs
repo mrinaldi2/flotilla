@@ -1,5 +1,5 @@
 //! Installing an iOS package on a phone over the WebSocket (H-229, UX-043;
-//! `hermes.home.v1` ReleaseInstall*): the desktop reads what a package
+//! `flotilla.home.v1` ReleaseInstall*): the desktop reads what a package
 //! offers and sends the link to a paired device; the device reads its
 //! waiting offer and dismisses it.
 

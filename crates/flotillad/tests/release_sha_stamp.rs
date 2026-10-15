@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use common::release_phone::{ours, published, set_status};
 use common::WsClient;
-use hermesd::releases::model::ReleaseStatus;
+use flotillad::releases::model::ReleaseStatus;
 use serde_json::{json, Value};
 
 /// The served IPA swapped for other bytes of the same size, its old mtime

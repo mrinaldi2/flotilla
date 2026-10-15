@@ -11,7 +11,7 @@ use std::time::Duration;
 
 use common::proxy::{is_launched_by, Proxy};
 use common::*;
-use hermesd::bus_auth::owner::{self, CodeCheck, Peer};
+use flotillad::bus_auth::owner::{self, CodeCheck, Peer};
 use serde_json::{json, Value};
 
 /// The owner's app is the proxy with this launcher pid, and nothing else.
@@ -44,7 +44,7 @@ async fn the_pinned_app_is_the_owner_and_nothing_else_is() {
     let mut app = Proxy::spawn(&d);
     d.app.owner.set_check(Arc::new(AppIs(app.pid())));
     app.start().await;
-    let ticket = ticket_of(&ask(&mut app, "hermes/owner_ticket", json!({}), 10).await);
+    let ticket = ticket_of(&ask(&mut app, "flotilla/owner_ticket", json!({}), 10).await);
 
     let hello = raw_hello(&d, &ticket).await;
     assert_eq!(hello["type"], "hello_ok", "{hello}");
@@ -56,7 +56,7 @@ async fn the_pinned_app_is_the_owner_and_nothing_else_is() {
     // Another process: a bot's tool, or a lookalike binary.
     let mut other = Proxy::spawn(&d);
     other.start().await;
-    let refused = ask(&mut other, "hermes/owner_ticket", json!({}), 10).await;
+    let refused = ask(&mut other, "flotilla/owner_ticket", json!({}), 10).await;
     assert_eq!(
         refused["error"]["message"], "not the owner's app",
         "{refused}"
@@ -70,7 +70,7 @@ async fn the_pinned_app_is_the_owner_and_nothing_else_is() {
     session.root_of(&d, bot["id"].as_str().expect("id"));
     d.app.owner.set_check(Arc::new(AppIs(session.pid())));
     session.start().await;
-    let refused = ask(&mut session, "hermes/owner_ticket", json!({}), 10).await;
+    let refused = ask(&mut session, "flotilla/owner_ticket", json!({}), 10).await;
     assert_eq!(refused["error"]["message"], "a bot can't act as the owner");
 }
 
@@ -81,12 +81,12 @@ async fn a_cli_owner_command_runs_only_when_the_owner_allows_it() {
     // The default card timeout: the owner's answer never races the clock,
     // however loaded the machine (WIN-CHK-3). Expiry has its own daemon.
     let d = spawn_daemon().await;
-    let request = json!({ "command": "hermesd board import --dry-run" });
+    let request = json!({ "command": "flotillad board import --dry-run" });
 
     // No app open to ask: refused at once.
     let mut alone = Proxy::spawn(&d);
     alone.start().await;
-    let refused = ask(&mut alone, "hermes/owner_request", request.clone(), 10).await;
+    let refused = ask(&mut alone, "flotilla/owner_request", request.clone(), 10).await;
     assert_eq!(refused["error"]["message"], owner::NO_APP);
 
     // The owner's app is open and answers the card.
@@ -97,8 +97,8 @@ async fn a_cli_owner_command_runs_only_when_the_owner_allows_it() {
         let asking = tokio::spawn(async move {
             let reply = ask(
                 &mut cli,
-                "hermes/owner_request",
-                json!({ "command": "hermesd board import" }),
+                "flotilla/owner_request",
+                json!({ "command": "flotillad board import" }),
                 20,
             )
             .await;
@@ -108,7 +108,7 @@ async fn a_cli_owner_command_runs_only_when_the_owner_allows_it() {
             .wait_for(|v| v["type"] == "permission_request" && v["request"]["bot_id"] == "terminal")
             .await;
         assert_eq!(
-            card["request"]["origin"]["command"], "hermesd board import",
+            card["request"]["origin"]["command"], "flotillad board import",
             "{card}"
         );
         let answered = owner
@@ -130,7 +130,7 @@ async fn a_cli_owner_command_runs_only_when_the_owner_allows_it() {
     let _owner = WsClient::connect(&d).await;
     let mut late = Proxy::spawn(&d);
     late.start().await;
-    let refused = ask(&mut late, "hermes/owner_request", request, 20).await;
+    let refused = ask(&mut late, "flotilla/owner_request", request, 20).await;
     assert_eq!(refused["error"]["message"], owner::EXPIRED, "{refused}");
 }
 
@@ -155,9 +155,9 @@ async fn a_terminal_card_says_where_the_command_came_from() {
         cli.start().await;
         // The client reports its directory, as the real CLI does; Windows
         // can't read another process's, so there the card relies on it.
-        let request = json!({ "command": "hermesd board import --dry-run", "cwd": dir });
+        let request = json!({ "command": "flotillad board import --dry-run", "cwd": dir });
         let asking = tokio::spawn(async move {
-            let reply = ask(&mut cli, "hermes/owner_request", request, 20).await;
+            let reply = ask(&mut cli, "flotilla/owner_request", request, 20).await;
             (cli, reply)
         });
         let card = owner
@@ -165,13 +165,13 @@ async fn a_terminal_card_says_where_the_command_came_from() {
             .await;
         let origin = &card["request"]["origin"];
         assert_eq!(
-            origin["command"], "hermesd board import --dry-run",
+            origin["command"], "flotillad board import --dry-run",
             "{origin}"
         );
         // Windows has no exec: the launcher runs the proxy as its child.
         let asker = origin["pid"].as_u64().expect("pid") as u32;
         assert!(is_launched_by(launcher, asker), "{origin}");
-        assert_eq!(origin["process"], "hermesd", "{origin}");
+        assert_eq!(origin["process"], "flotillad", "{origin}");
         let cwd = std::path::PathBuf::from(origin["cwd"].as_str().expect("cwd"));
         assert_eq!(real(&cwd), real(&dir), "{origin}");
         match bot_name {

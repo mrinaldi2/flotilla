@@ -3,9 +3,9 @@
 // criteria are one per line; labels are separated by commas.
 
 import type { MessageInitShape } from "@bufbuild/protobuf";
-import type { Item } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { ItemType, Priority, Size } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import type { ItemUpdateSchema } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import type { Item } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { ItemType, Priority, Size } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { ItemUpdateSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 
 export interface ItemForm {
   readonly title: string;

@@ -131,7 +131,7 @@ async fn the_owners_ruling_applies_the_extras_its_option_grants() {
     let got = owner
         .request(json!({"type": "get_decision", "decision_id": id}))
         .await;
-    // Hermes applied them, not the owner (H-173).
+    // Flotilla applied them, not the owner (H-173).
     let applied = got["decision"]["comments"]
         .as_array()
         .and_then(|cs| {
@@ -143,7 +143,7 @@ async fn the_owners_ruling_applies_the_extras_its_option_grants() {
         })
         .unwrap_or_else(|| panic!("no applied-grants comment: {got}"));
     assert_eq!(applied["author_kind"], "system", "{applied}");
-    assert_eq!(applied["author_name"], "Hermes", "{applied}");
+    assert_eq!(applied["author_name"], "Flotilla", "{applied}");
 }
 
 #[tokio::test]

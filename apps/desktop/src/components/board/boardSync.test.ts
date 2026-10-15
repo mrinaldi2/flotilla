@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { DaemonError } from "../../protocol/connection";
-import { BoardEventKind } from "../../protocol/gen/hermes/board/v1/requests_pb";
-import type { BoardSnapshot } from "../../protocol/gen/hermes/board/v1/requests_pb";
+import { BoardEventKind } from "../../protocol/gen/flotilla/board/v1/requests_pb";
+import type { BoardSnapshot } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import { boardEvent, card, moved, snapshot } from "../../test/boardFixtures";
 import { FakeDaemon } from "../../test/fakeDaemon";
 import type { BoardModel, BoardStatus, EventOutcome } from "./boardSync";
@@ -248,7 +248,7 @@ describe("BoardSync", () => {
       .onBoard("boardWatch", () => reply(snapshot([h1], 0n)))
       .onBoard("boardUnwatch", () => ({
         case: "unwatched",
-        value: { $typeName: "hermes.board.v1.BoardUnwatched", projectId: "p1" },
+        value: { $typeName: "flotilla.board.v1.BoardUnwatched", projectId: "p1" },
       }));
     const { sync, seen } = startSync(fake);
     await vi.waitFor(() => {

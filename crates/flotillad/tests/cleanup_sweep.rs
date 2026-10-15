@@ -11,13 +11,13 @@ use chrono::{Duration, Utc};
 use common::cleanup::{linked, main_clone, notes, open, workspace};
 use common::prs::{setup, Repo};
 use common::repo::git;
-use hermesd::cleanup::model::Job;
-use hermesd::cleanup::sweep_remote::run_now;
+use flotillad::cleanup::model::Job;
+use flotillad::cleanup::sweep_remote::run_now;
 
 const DEV: usize = 1;
 
 fn real(path: &Path) -> String {
-    hermesd::safe_git::canonical(path)
+    flotillad::safe_git::canonical(path)
         .unwrap_or(path.to_path_buf())
         .display()
         .to_string()
@@ -26,7 +26,7 @@ fn real(path: &Path) -> String {
 fn job(r: &Repo, path: &Path) -> Option<Job> {
     let db = &r.pair.d.app.db;
     db.board_read(|t| {
-        let here = hermesd::releases::machines::this_computer(t)?;
+        let here = flotillad::releases::machines::this_computer(t)?;
         t.sweep_job(&here, &real(path))
     })
     .unwrap()

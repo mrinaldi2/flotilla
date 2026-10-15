@@ -1,7 +1,7 @@
 #![cfg(windows)]
 //! Opt-in native CLI startup check, isolated from account data and model traffic.
-use hermesd::runtime::pty::PtyAdapter;
-use hermesd::runtime::{BotSpec, RuntimeAdapter, SessionEvent};
+use flotillad::runtime::pty::PtyAdapter;
+use flotillad::runtime::{BotSpec, RuntimeAdapter, SessionEvent};
 use serde_json::json;
 use std::time::Duration;
 
@@ -18,7 +18,7 @@ async fn native_claude_reaches_its_prompt_without_asking_for_workspace_trust() {
         "hasCompletedOnboarding": true, "lastOnboardingVersion": "2.1.286", "numStartups": 1, "theme": "dark",
         "customApiKeyResponses": {"approved": [fake_key.chars().skip(fake_key.len() - 20).collect::<String>()], "rejected": []}
     })).unwrap()).unwrap();
-    hermesd::paths::trust_workspace(&config, &workspace).unwrap();
+    flotillad::paths::trust_workspace(&config, &workspace).unwrap();
     let spec = BotSpec {
         codex: None,
         bot_id: "native-trust".into(),

@@ -62,7 +62,7 @@ pub fn comments(d: &TestDaemon, id: &str) -> Vec<String> {
         .collect()
 }
 
-/// Waits until the decision's thread carries `needle`, written by Hermes
+/// Waits until the decision's thread carries `needle`, written by Flotilla
 /// rather than by the owner (H-173).
 pub async fn said(d: &TestDaemon, id: &str, needle: &str) {
     wait_until(&format!("the decision says '{needle}'"), || {

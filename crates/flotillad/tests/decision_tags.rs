@@ -21,16 +21,16 @@ async fn a_bot_may_not_retire_a_tag_that_files_the_owners_history() {
             )
             .await;
         let id = raised["decision"]["id"].as_str().unwrap().to_string();
-        hermesd::decisions::answer(
+        flotillad::decisions::answer(
             &pair.d.app,
-            &hermesd::db::Actor::User,
+            &flotillad::db::Actor::User,
             &id,
             None,
             "no",
             None,
         )
         .unwrap();
-        hermesd::decisions::publish(&pair.d.app, &id, None).unwrap();
+        flotillad::decisions::publish(&pair.d.app, &id, None).unwrap();
     }
     let raw = c[0]
         .call_raw("retire_tag", json!({"name": "backups"}))
@@ -93,9 +93,9 @@ async fn a_bot_cannot_retag_a_decision_that_is_not_its_own() {
         .await;
     let id = raised["decision"]["id"].as_str().unwrap().to_string();
 
-    let err = hermesd::decisions::set_tags(
+    let err = flotillad::decisions::set_tags(
         &pair.d.app,
-        &hermesd::db::Actor::Bot {
+        &flotillad::db::Actor::Bot {
             id: &pair.ids[1],
             project_id: &pair
                 .d
@@ -113,9 +113,9 @@ async fn a_bot_cannot_retag_a_decision_that_is_not_its_own() {
     assert!(err.to_string().contains("not yours to retag"), "{err}");
 
     // And the owner still can.
-    hermesd::decisions::set_tags(
+    flotillad::decisions::set_tags(
         &pair.d.app,
-        &hermesd::db::Actor::User,
+        &flotillad::db::Actor::User,
         &id,
         &["misc".to_string()],
     )

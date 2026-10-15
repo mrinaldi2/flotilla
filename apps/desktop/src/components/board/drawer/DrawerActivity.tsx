@@ -5,9 +5,9 @@
 
 import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
-import type { ItemComment, ItemEvent } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { ItemEventKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import type { ItemDetail } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import type { ItemComment, ItemEvent } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { ItemEventKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { ItemDetail } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { sendOnCmdEnter } from "../../../util";
 import LinkedText from "../../cards/LinkedText";
 import { eventLine, when } from "./drawerText";

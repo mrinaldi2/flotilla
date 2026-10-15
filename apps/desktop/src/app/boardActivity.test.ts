@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 import {
   BoardActivityKind as Kind,
   BoardActivitySchema,
-} from "../protocol/gen/hermes/home/v1/home_pb";
-import type { BoardActivity } from "../protocol/gen/hermes/home/v1/home_pb";
+} from "../protocol/gen/flotilla/home/v1/home_pb";
+import type { BoardActivity } from "../protocol/gen/flotilla/home/v1/home_pb";
 import type { BoardActivityPrefs } from "../prefs";
 import {
   ACTIVITY_TTL_MS,

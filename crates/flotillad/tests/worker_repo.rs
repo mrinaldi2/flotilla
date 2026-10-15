@@ -106,7 +106,7 @@ async fn work_left_unpushed_after_finishing_is_saved_to_the_workers_branch() {
         .nth(1)
         .and_then(|rest| rest.split_whitespace().next())
         .expect("branch");
-    assert!(branch.starts_with("gravity/ch-1-"), "{branch}");
+    assert!(branch.starts_with("flotilla/ch-1-"), "{branch}");
     assert_eq!(
         git(&b.origin, &["show", &format!("{branch}:ch-1.md")]),
         "Forgot to push.\n"

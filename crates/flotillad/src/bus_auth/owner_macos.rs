@@ -1,6 +1,6 @@
 //! macOS: the app's code signature (H-044 §3, H-110). A peer is the owner's
 //! app when the running process, named by its audit token, satisfies the
-//! requirement compiled into hermesd: signed by Apple's Developer ID chain
+//! requirement compiled into flotillad: signed by Apple's Developer ID chain
 //! for the owner's team, as the app's bundle identifier.
 
 use super::owner::Peer;
