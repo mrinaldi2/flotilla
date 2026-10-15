@@ -119,7 +119,7 @@ try {
             $resolved = (Resolve-Path -LiteralPath $testRoot).Path
             $temporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
             if (!$resolved.StartsWith($temporaryRoot + '\', [StringComparison]::OrdinalIgnoreCase) -or
-                [IO.Path]::GetFileName($resolved) -notlike 'gravity-installer-smoke-*') {
+                [IO.Path]::GetFileName($resolved) -notlike 'flotilla-installer-smoke-*') {
                 throw 'Refusing cleanup outside the isolated installer test directory.'
             }
             if (Get-ChildItem -LiteralPath $resolved -Recurse -Force -Attributes ReparsePoint) {
