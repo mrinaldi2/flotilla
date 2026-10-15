@@ -5,7 +5,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import type { Bot } from "../../protocol/entities";
-import type { Board, BoardColumn, ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { Board, BoardColumn, ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import type { BotOption } from "./BoardFilterBar";
 import type { BoardPrefs } from "./boardPrefs";
 import { loadBoardPrefs, saveBoardPrefs } from "./boardPrefs";

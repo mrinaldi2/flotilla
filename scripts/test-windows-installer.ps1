@@ -8,18 +8,18 @@ $installerPath = (Resolve-Path -LiteralPath $Installer).Path
 # needs an elevated shell, as the owner's own install does.
 $elevated = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (!$elevated) { throw 'Run the installer smoke test from an elevated PowerShell.' }
-$uninstallKey = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\The Hermes'
-$productKey = 'HKLM:\Software\mikolajczuk\The Hermes'
+$uninstallKey = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Flotilla'
+$productKey = 'HKLM:\Software\manuelrinaldi\Flotilla'
 if ((Test-Path -LiteralPath $uninstallKey) -or (Test-Path -LiteralPath $productKey)) {
-    throw 'Installer smoke test requires a clean The Hermes installation registry.'
+    throw 'Installer smoke test requires a clean Flotilla installation registry.'
 }
-$testRoot = Join-Path ([IO.Path]::GetTempPath()) ('gravity-installer-smoke-' + [guid]::NewGuid())
+$testRoot = Join-Path ([IO.Path]::GetTempPath()) ('flotilla-installer-smoke-' + [guid]::NewGuid())
 $installDir = Join-Path $testRoot 'app with spaces'
 $stateDir = Join-Path $testRoot 'daemon state'
-$daemon = Join-Path $installDir 'hermesd.exe'
+$daemon = Join-Path $installDir 'flotillad.exe'
 $uninstaller = Join-Path $installDir 'uninstall.exe'
-$previousGravityHome = $env:GRAVITY_HOME
-$expectedDaemon = Join-Path $repoRoot 'apps/desktop/src-tauri/binaries/hermesd-x86_64-pc-windows-msvc.exe'
+$previousHome = $env:FLOTILLA_HOME
+$expectedDaemon = Join-Path $repoRoot 'apps/desktop/src-tauri/binaries/flotillad-x86_64-pc-windows-msvc.exe'
 $expectedHash = (Get-FileHash -LiteralPath $expectedDaemon -Algorithm SHA256).Hash
 
 function Wait-For([scriptblock]$Condition, [string]$Failure) {
@@ -35,7 +35,7 @@ function Install-App {
     $process = Start-Process -FilePath $installerPath -ArgumentList @('/S', "/D=$installDir") -WindowStyle Hidden -PassThru -Wait
     if ($process.ExitCode -ne 0) { throw "Installer exited $($process.ExitCode)" }
     Wait-For {
-        $portFile = Join-Path $stateDir 'hermesd.port'
+        $portFile = Join-Path $stateDir 'flotillad.port'
         if (!(Test-Path -LiteralPath $portFile)) { return $false }
         $port = (Get-Content -LiteralPath $portFile -Raw).Trim()
         try {
@@ -43,15 +43,15 @@ function Install-App {
             return $health.status -eq 'ok'
         } catch { return $false }
     } 'Installer did not start a healthy bundled daemon.'
-    foreach ($binary in @($daemon, (Join-Path $stateDir 'bin/hermesd.exe'))) {
+    foreach ($binary in @($daemon, (Join-Path $stateDir 'bin/flotillad.exe'))) {
         if ((Get-FileHash -LiteralPath $binary -Algorithm SHA256).Hash -ne $expectedHash) {
             throw 'Installed daemon differs from the installer sidecar.'
         }
     }
-    if (!(Test-Path -LiteralPath (Join-Path $stateDir 'hermesd-task.xml'))) {
+    if (!(Test-Path -LiteralPath (Join-Path $stateDir 'flotillad-task.xml'))) {
         throw 'Installer did not register the daemon task.'
     }
-    $app = Join-Path $installDir 'hermes-desktop.exe'
+    $app = Join-Path $installDir 'flotilla-desktop.exe'
     if (Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $app }) {
         throw 'The silent install must start the daemon without launching the desktop.'
     }
@@ -63,16 +63,16 @@ function Uninstall-App {
     # NSIS may relaunch the uninstaller from a temporary directory.
     Wait-For {
         return !(Test-Path -LiteralPath $uninstallKey) -and
-            !(Test-Path -LiteralPath (Join-Path $installDir 'hermes-desktop.exe')) -and
-            !(Test-Path -LiteralPath (Join-Path $stateDir 'hermesd-task.xml')) -and
-            !(Test-Path -LiteralPath (Join-Path $stateDir 'bin/hermesd.exe'))
+            !(Test-Path -LiteralPath (Join-Path $installDir 'flotilla-desktop.exe')) -and
+            !(Test-Path -LiteralPath (Join-Path $stateDir 'flotillad-task.xml')) -and
+            !(Test-Path -LiteralPath (Join-Path $stateDir 'bin/flotillad.exe'))
     } 'Uninstaller left the app or managed daemon installed.'
 }
 
 try {
     New-Item -ItemType Directory -Path $stateDir -Force | Out-Null
-    $env:GRAVITY_HOME = $stateDir
-    $config = Join-Path $stateDir 'hermesd.toml'
+    $env:FLOTILLA_HOME = $stateDir
+    $config = Join-Path $stateDir 'flotillad.toml'
     $configText = "port = 49777`nruntime = `"double`"`nmax_bots_per_project = 7`n"
     [IO.File]::WriteAllText($config, $configText)
     $projectDir = Join-Path $stateDir 'projects/installer-sentinel'
@@ -81,10 +81,10 @@ try {
     [IO.File]::WriteAllText($sentinel, 'preserved project data')
 
     Install-App
-    $firstPid = (Get-Content -LiteralPath (Join-Path $stateDir 'hermesd-task.pid') -Raw).Trim()
+    $firstPid = (Get-Content -LiteralPath (Join-Path $stateDir 'flotillad-task.pid') -Raw).Trim()
     Write-Output 'Fresh install started the matching daemon without opening the app.'
     Install-App
-    $secondPid = (Get-Content -LiteralPath (Join-Path $stateDir 'hermesd-task.pid') -Raw).Trim()
+    $secondPid = (Get-Content -LiteralPath (Join-Path $stateDir 'flotillad-task.pid') -Raw).Trim()
     if ($firstPid -eq $secondPid) { throw 'Same-version reinstall did not refresh the daemon.' }
     if ((Get-Content -LiteralPath $config -Raw) -ne $configText -or
         (Get-Content -LiteralPath $sentinel -Raw) -ne 'preserved project data') {
@@ -105,21 +105,21 @@ try {
 } finally {
     try {
         if (Test-Path -LiteralPath $uninstaller) { Uninstall-App }
-        $marker = Join-Path $stateDir 'hermesd-task.xml'
+        $marker = Join-Path $stateDir 'flotillad-task.xml'
         if (Test-Path -LiteralPath $marker) {
             & $expectedDaemon service uninstall
             if ($LASTEXITCODE -ne 0) { throw 'Could not clean up the isolated daemon.' }
         }
         if (Test-Path -LiteralPath $productKey) {
             $registeredDir = (Get-Item -LiteralPath $productKey).GetValue('')
-            if ($registeredDir -ne $installDir) { throw 'Another The Hermes install replaced test registration.' }
+            if ($registeredDir -ne $installDir) { throw 'Another Flotilla install replaced test registration.' }
             Remove-Item -LiteralPath $productKey -Recurse -Force
         }
         if (Test-Path -LiteralPath $testRoot) {
             $resolved = (Resolve-Path -LiteralPath $testRoot).Path
             $temporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
             if (!$resolved.StartsWith($temporaryRoot + '\', [StringComparison]::OrdinalIgnoreCase) -or
-                [IO.Path]::GetFileName($resolved) -notlike 'gravity-installer-smoke-*') {
+                [IO.Path]::GetFileName($resolved) -notlike 'flotilla-installer-smoke-*') {
                 throw 'Refusing cleanup outside the isolated installer test directory.'
             }
             if (Get-ChildItem -LiteralPath $resolved -Recurse -Force -Attributes ReparsePoint) {
@@ -127,5 +127,5 @@ try {
             }
             Remove-Item -LiteralPath $resolved -Recurse -Force
         }
-    } finally { $env:GRAVITY_HOME = $previousGravityHome }
+    } finally { $env:FLOTILLA_HOME = $previousHome }
 }

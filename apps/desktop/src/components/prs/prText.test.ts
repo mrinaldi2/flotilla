@@ -7,7 +7,7 @@ import {
   CleanupSchema,
   CleanupState,
   PrState,
-} from "../../protocol/gen/hermes/pr/v1/pr_pb";
+} from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import {
   HEAD,
   mergedPr,

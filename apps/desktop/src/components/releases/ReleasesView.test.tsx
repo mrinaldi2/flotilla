@@ -26,7 +26,7 @@ function renderTab(releases: readonly Release[]) {
   render(
     <ReleasesView
       client={client}
-      project={fx.project({ id: "p1", name: "The Hermes" })}
+      project={fx.project({ id: "p1", name: "Flotilla" })}
       bots={[fx.bot({ id: "ops", name: "DevOps", project_id: "p1" })]}
       connected
       canControl
@@ -81,7 +81,7 @@ describe("ReleasesView", () => {
     render(
       <ReleasesView
         client={client}
-        project={fx.project({ id: "p1", name: "The Hermes" })}
+        project={fx.project({ id: "p1", name: "Flotilla" })}
         bots={[]}
         connected
         canControl
@@ -117,7 +117,7 @@ function renderDecisions(client: FakeDaemon, decisionId: string): void {
   render(
     <ControlCenterView
       client={client}
-      projects={[fx.project({ id: "p1", name: "The Hermes" })]}
+      projects={[fx.project({ id: "p1", name: "Flotilla" })]}
       bots={[fx.bot({ id: "ops", name: "DevOps", project_id: "p1" })]}
       connected
       canControl

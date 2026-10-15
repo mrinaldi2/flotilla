@@ -1,7 +1,7 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { PrState } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { PrState } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import { mergingPr } from "../../test/ownerReviewFixtures";
 import { PR_NOW } from "../../test/prFixtures";
 import MergeBar from "./MergeBar";

@@ -6,7 +6,7 @@ import type {
   ItemCard,
   ProjectRole,
   Unmet,
-} from "../protocol/gen/hermes/board/v1/board_pb";
+} from "../protocol/gen/flotilla/board/v1/board_pb";
 import {
   BoardColumnSchema,
   BoardSettingsSchema,
@@ -17,13 +17,13 @@ import {
   ProjectRoleSchema,
   UnmetSchema,
   WipScope,
-} from "../protocol/gen/hermes/board/v1/board_pb";
-import type { BoardEvent, BoardSnapshot } from "../protocol/gen/hermes/board/v1/requests_pb";
+} from "../protocol/gen/flotilla/board/v1/board_pb";
+import type { BoardEvent, BoardSnapshot } from "../protocol/gen/flotilla/board/v1/requests_pb";
 import {
   BoardEventKind,
   BoardEventSchema,
   BoardSnapshotSchema,
-} from "../protocol/gen/hermes/board/v1/requests_pb";
+} from "../protocol/gen/flotilla/board/v1/requests_pb";
 
 const PROJECT = "p1";
 

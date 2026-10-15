@@ -12,7 +12,7 @@ use prost_types::{DescriptorProto, FieldDescriptorProto, FileDescriptorSet};
 use serde_json::{json, Map, Value};
 
 /// The packages bots get tools from: the board, and pull requests (H-266).
-const PACKAGES: &[&str] = &["hermes.board.v1", "hermes.pr.v1"];
+const PACKAGES: &[&str] = &["flotilla.board.v1", "flotilla.pr.v1"];
 
 /// Plain (implicit-presence) fields a bot may leave out, where "" means not
 /// given: they shipped plain, and `optional` would break the wire (buf breaking).

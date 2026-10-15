@@ -1,4 +1,4 @@
-//! The typed wire contract, generated from `proto/hermes/<surface>/v1/*.proto`
+//! The typed wire contract, generated from `proto/flotilla/<surface>/v1/*.proto`
 //! (ADR-001 §1) by `build.rs`. Nothing here is written by hand except the
 //! version map. Golden proto-JSON fixtures under `crates/bus/fixtures/` pin
 //! the shapes for Rust, TypeScript and Swift.
@@ -17,36 +17,36 @@ pub use pbjson_types;
 /// The generated code, nested as its proto packages are, so a message of one
 /// package can name another's (the wire `Envelope` carries the board's).
 #[allow(clippy::all, clippy::pedantic, missing_docs)]
-mod hermes {
+mod flotilla {
     pub mod board {
         pub mod v1 {
-            include!(concat!(env!("OUT_DIR"), "/hermes.board.v1.rs"));
-            include!(concat!(env!("OUT_DIR"), "/hermes.board.v1.serde.rs"));
+            include!(concat!(env!("OUT_DIR"), "/flotilla.board.v1.rs"));
+            include!(concat!(env!("OUT_DIR"), "/flotilla.board.v1.serde.rs"));
         }
     }
     pub mod home {
         pub mod v1 {
-            include!(concat!(env!("OUT_DIR"), "/hermes.home.v1.rs"));
-            include!(concat!(env!("OUT_DIR"), "/hermes.home.v1.serde.rs"));
+            include!(concat!(env!("OUT_DIR"), "/flotilla.home.v1.rs"));
+            include!(concat!(env!("OUT_DIR"), "/flotilla.home.v1.serde.rs"));
         }
     }
     pub mod pr {
         pub mod v1 {
-            include!(concat!(env!("OUT_DIR"), "/hermes.pr.v1.rs"));
-            include!(concat!(env!("OUT_DIR"), "/hermes.pr.v1.serde.rs"));
+            include!(concat!(env!("OUT_DIR"), "/flotilla.pr.v1.rs"));
+            include!(concat!(env!("OUT_DIR"), "/flotilla.pr.v1.serde.rs"));
         }
     }
     pub mod wire {
         pub mod v1 {
-            include!(concat!(env!("OUT_DIR"), "/hermes.wire.v1.rs"));
-            include!(concat!(env!("OUT_DIR"), "/hermes.wire.v1.serde.rs"));
+            include!(concat!(env!("OUT_DIR"), "/flotilla.wire.v1.rs"));
+            include!(concat!(env!("OUT_DIR"), "/flotilla.wire.v1.serde.rs"));
         }
     }
 }
 
 /// The board surface (H-017): entities, requests, responses and pushes.
 pub mod board {
-    pub use super::hermes::board::v1::*;
+    pub use super::flotilla::board::v1::*;
 
     /// Bumped only on a breaking change to this surface.
     pub const VERSION: u32 = 1;
@@ -60,7 +60,7 @@ pub mod board {
 /// The projects home (H-128): the overview, attention rows, and the peer
 /// messages that build them across computers.
 pub mod home {
-    pub use super::hermes::home::v1::*;
+    pub use super::flotilla::home::v1::*;
 
     /// Bumped only on a breaking change to this surface.
     pub const VERSION: u32 = 1;
@@ -69,7 +69,7 @@ pub mod home {
 /// Pull requests and checks (H-261): PRs bound to the commits reviewed,
 /// checks per commit, cleanup after merge, and the bots' tools.
 pub mod pr {
-    pub use super::hermes::pr::v1::*;
+    pub use super::flotilla::pr::v1::*;
 
     /// Bumped only on a breaking change to this surface.
     pub const VERSION: u32 = 1;
@@ -81,7 +81,7 @@ pub mod pr {
 
 /// What a WebSocket binary frame carries: an `Envelope` per frame.
 pub mod wire {
-    pub use super::hermes::wire::v1::*;
+    pub use super::flotilla::wire::v1::*;
 }
 
 /// Every contract surface this build speaks, with its version.

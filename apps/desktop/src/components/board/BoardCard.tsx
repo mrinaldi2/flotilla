@@ -1,7 +1,7 @@
 import { MoreHorizontal } from "lucide-react";
 import type { DragEvent, KeyboardEvent, ReactElement } from "react";
 import type { Bot } from "../../protocol/entities";
-import type { ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import BotAvatar from "../BotAvatar";
 import { labelGroupOf, labelWord } from "./labelGroups";
 import { typeLabel, urgentPriority } from "./labels";

@@ -11,8 +11,8 @@ import {
   PrPushSchema,
   PrState,
   PullRequestSchema,
-} from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import type { PrPush, PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+} from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import type { PrPush, PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import { CARD_PROJECT } from "../../test/cardFixtures";
 import type { FakeDaemon } from "../../test/fakeDaemon";
 import {
@@ -190,7 +190,7 @@ describe("PullRequestsView: one PR", () => {
   it("goes back to the list from the crumb", async () => {
     const user = userEvent.setup();
     show(prDaemon(), 42);
-    await user.click(await screen.findByRole("button", { name: "The Hermes › Pull requests ›" }));
+    await user.click(await screen.findByRole("button", { name: "Flotilla › Pull requests ›" }));
     expect(await screen.findByRole("list", { name: "Pull requests" })).toBeInTheDocument();
   });
 
@@ -214,7 +214,7 @@ describe("PullRequestsView: one PR", () => {
     await user.keyboard("{Enter}");
     await screen.findByRole("heading", { level: 3, name: /^#42 · / });
     await user.tab({ shift: true });
-    expect(screen.getByRole("button", { name: "The Hermes › Pull requests ›" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Flotilla › Pull requests ›" })).toHaveFocus();
     await user.keyboard("{Enter}");
     // As the drawers do (UX-012).
     expect(await screen.findByRole("button", { name: ROW })).toHaveFocus();
@@ -250,7 +250,9 @@ describe("PullRequestsView on the PR-0 fixtures (H-265)", () => {
     show(prDaemon([decode("pr_behind")]), 45);
     const banner = await screen.findByRole("status");
     expect(banner).toHaveTextContent("Needs update with main");
-    expect(banner).toHaveTextContent("apps/desktop/src/styles/base.css, crates/hermesd/src/app.rs");
+    expect(banner).toHaveTextContent(
+      "apps/desktop/src/styles/base.css, crates/flotillad/src/app.rs",
+    );
     expect(screen.getByText(/Not needed: No screens change \(Team Lead\)/)).toBeInTheDocument();
     expect(screen.getByText(/new commits since the last reported push/)).toBeInTheDocument();
   });

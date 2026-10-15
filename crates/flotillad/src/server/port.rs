@@ -1,0 +1,241 @@
+//! Reserving the daemon's port: the collision policy, the negotiated
+//! fallback, and the watch that takes the configured port back.
+
+use std::io::{Read, Write};
+use std::net::{IpAddr, SocketAddr};
+use std::time::Duration;
+
+#[cfg(test)]
+mod tests;
+
+const PORT_NEGOTIATION_ATTEMPTS: usize = 10;
+/// How long whatever owns the preferred port gets to answer `/health`.
+const OCCUPANT_PROBE_TIMEOUT: Duration = Duration::from_millis(500);
+/// How long the configured port gets to clear before a fallback is negotiated.
+const PORT_GRACE: Duration = Duration::from_secs(5);
+const PORT_GRACE_INTERVAL: Duration = Duration::from_millis(250);
+/// How often a daemon on a fallback port checks whether it can go home.
+pub(super) const PORT_RECLAIM_INTERVAL: Duration = Duration::from_secs(30);
+
+fn port_unavailable(error: &std::io::Error) -> bool {
+    error.kind() == std::io::ErrorKind::AddrInUse
+        // Hyper-V can reserve the preferred loopback port without a listener.
+        || (cfg!(windows) && error.raw_os_error() == Some(10013))
+}
+
+/// What a collision on the configured port means for this launch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PortPolicy {
+    /// Fail, naming the port. The default, and the only behaviour a direct
+    /// launch or a remotely reachable daemon ever gets.
+    Strict,
+    /// Fall back to an OS-assigned port, which the app rediscovers locally.
+    Negotiate,
+}
+
+/// Listeners reserved before application startup, all serving on one port.
+pub struct BoundServer {
+    port: u16,
+    pub(super) configured_port: u16,
+    pub(super) listeners: Vec<(SocketAddr, tokio::net::TcpListener)>,
+}
+
+impl BoundServer {
+    pub fn port(&self) -> u16 {
+        self.port
+    }
+
+    /// True when the configured port was taken and a fallback was negotiated.
+    pub fn negotiated(&self) -> bool {
+        self.port != self.configured_port
+    }
+}
+
+async fn bind_port(
+    bind: &[IpAddr],
+    port: u16,
+    configured_port: u16,
+) -> std::io::Result<BoundServer> {
+    let mut listeners = Vec::with_capacity(bind.len());
+    let mut selected_port = port;
+    for ip in bind {
+        let addr = SocketAddr::new(*ip, selected_port);
+        let listener = tokio::net::TcpListener::bind(addr).await?;
+        let actual_addr = listener.local_addr()?;
+        selected_port = actual_addr.port();
+        listeners.push((actual_addr, listener));
+    }
+    Ok(BoundServer {
+        port: selected_port,
+        configured_port,
+        listeners,
+    })
+}
+
+/// Whether this launch may negotiate its port away.
+///
+/// Negotiation is opt-in from the managed service (`--negotiate-port`), can be
+/// switched off in `flotillad.toml`, and never applies to a daemon bound to
+/// anything but loopback: a client on another machine is configured with a port
+/// and has no way to learn that it moved.
+pub fn port_policy(cfg: &crate::config::Config, requested: bool) -> PortPolicy {
+    if !requested {
+        return PortPolicy::Strict;
+    }
+    if !cfg.negotiate_port {
+        tracing::info!("port negotiation disabled in flotillad.toml");
+        return PortPolicy::Strict;
+    }
+    if let Some(addr) = cfg.bind.iter().find(|ip| !ip.is_loopback()) {
+        tracing::info!(
+            %addr,
+            "reachable from other machines; keeping the configured port"
+        );
+        return PortPolicy::Strict;
+    }
+    PortPolicy::Negotiate
+}
+
+/// Reserves every configured address on the configured port, negotiating a
+/// fallback only when [`PortPolicy::Negotiate`] allows it.
+pub async fn bind(
+    addresses: &[IpAddr],
+    configured_port: u16,
+    policy: PortPolicy,
+) -> anyhow::Result<BoundServer> {
+    bind_with_grace(addresses, configured_port, policy, PORT_GRACE).await
+}
+
+async fn bind_with_grace(
+    addresses: &[IpAddr],
+    configured_port: u16,
+    policy: PortPolicy,
+    grace: Duration,
+) -> anyhow::Result<BoundServer> {
+    anyhow::ensure!(!addresses.is_empty(), "no bind addresses configured");
+    let error = match bind_port(addresses, configured_port, configured_port).await {
+        Ok(bound) => return Ok(bound),
+        Err(error) => error,
+    };
+    if policy == PortPolicy::Strict || !port_unavailable(&error) {
+        return Err(anyhow::Error::new(error).context(format!(
+            "binding port {configured_port}: another process or an operating-system \
+             reservation may block this port; choose an available `port` in flotillad.toml"
+        )));
+    }
+
+    // A daemon already answering here is the one case negotiation must not
+    // paper over: it owns the same state directory this one is about to open,
+    // and moving aside would leave two of them running.
+    refuse_a_live_daemon(configured_port).await?;
+
+    // A restart usually collides with its own predecessor's listener, or with
+    // whatever raced it to the port during an update; both clear in about a
+    // second. Waiting that out is cheaper than moving the bus off the
+    // allowlisted /mcp URL and restarting later to take the port back.
+    let deadline = tokio::time::Instant::now() + grace;
+    while tokio::time::Instant::now() < deadline {
+        tokio::time::sleep(PORT_GRACE_INTERVAL).await;
+        match bind_port(addresses, configured_port, configured_port).await {
+            Ok(bound) => {
+                tracing::info!(port = configured_port, "configured port cleared in time");
+                return Ok(bound);
+            }
+            // Still taken: ask again, so a daemon too busy to answer the
+            // first probe in time is not moved aside for (H-183).
+            Err(error) if port_unavailable(&error) => {
+                refuse_a_live_daemon(configured_port).await?;
+            }
+            Err(error) => return Err(error.into()),
+        }
+    }
+
+    tracing::warn!(
+        port = configured_port,
+        error = %error,
+        "configured port unavailable; negotiating a fallback"
+    );
+    for _ in 0..PORT_NEGOTIATION_ATTEMPTS {
+        match bind_port(addresses, 0, configured_port).await {
+            Ok(bound) => return Ok(bound),
+            Err(error) if port_unavailable(&error) => {}
+            Err(error) => return Err(error.into()),
+        }
+    }
+    anyhow::bail!("could not reserve a fallback port after {PORT_NEGOTIATION_ATTEMPTS} attempts")
+}
+
+/// An error naming the daemon that answers `/health` on `port`, if one does.
+async fn refuse_a_live_daemon(port: u16) -> anyhow::Result<()> {
+    if let Ok(Some(version)) =
+        tokio::task::spawn_blocking(move || probe_health(port, OCCUPANT_PROBE_TIMEOUT)).await
+    {
+        anyhow::bail!(
+            "port {port} is already served by a daemon (version {version}); \
+             stop it before starting this one"
+        );
+    }
+    Ok(())
+}
+
+/// Asks whatever owns `port` on loopback whether it is one of our daemons,
+/// returning the version it reports. Hand-rolled because this runs before the
+/// app exists and the daemon has no HTTP client of its own.
+pub(crate) fn probe_health(port: u16, timeout: Duration) -> Option<String> {
+    health_field(&health_response(port, timeout)?, "version")
+}
+
+/// The sha256 of the binary the daemon on `port` runs, as `/health` says:
+/// what tells a reinstall's new daemon from the old one (ARCH-R52 M3).
+pub(crate) fn probe_binary(port: u16, timeout: Duration) -> Option<String> {
+    health_field(&health_response(port, timeout)?, "binary_sha256")
+}
+
+fn health_response(port: u16, timeout: Duration) -> Option<String> {
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let mut stream = std::net::TcpStream::connect_timeout(&addr, timeout).ok()?;
+    stream.set_read_timeout(Some(timeout)).ok()?;
+    stream.set_write_timeout(Some(timeout)).ok()?;
+    stream
+        .write_all(b"GET /health HTTP/1.0\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
+        .ok()?;
+    let mut response = Vec::new();
+    let mut chunk = [0_u8; 1024];
+    while response.len() < 8192 {
+        match stream.read(&mut chunk) {
+            Ok(0) | Err(_) => break,
+            Ok(n) => response.extend_from_slice(&chunk[..n]),
+        }
+    }
+    Some(String::from_utf8_lossy(&response).into_owned())
+}
+
+/// The string `field` a 200 `/health` response reports, if it looks like one.
+fn health_field(response: &str, field: &str) -> Option<String> {
+    let (status, body) = response.split_once("\r\n")?;
+    if !status.starts_with("HTTP/1.") || !status.contains(" 200") {
+        return None;
+    }
+    let (_, rest) = body.split_once(&format!("\"{field}\""))?;
+    let (_, rest) = rest.split_once(':')?;
+    let (_, rest) = rest.split_once('"')?;
+    let (version, _) = rest.split_once('"')?;
+    Some(version.to_string())
+}
+
+/// Resolves once the configured port can be bound again, so a daemon parked on
+/// a fallback can go home.
+pub(super) async fn wait_for_configured_port(
+    addresses: Vec<IpAddr>,
+    port: u16,
+    interval: Duration,
+) {
+    loop {
+        tokio::time::sleep(interval).await;
+        // The listener is dropped right here; the restart re-binds it, and
+        // loses the race only to something that would have taken it anyway.
+        if bind_port(&addresses, port, port).await.is_ok() {
+            return;
+        }
+    }
+}

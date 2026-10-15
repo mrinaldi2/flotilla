@@ -6,8 +6,8 @@
 import { useState } from "react";
 import type { ReactElement } from "react";
 import type { Bot } from "../../protocol/entities";
-import type { BoardColumn, ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { ColumnCategory, ColumnKind } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn, ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { ColumnCategory, ColumnKind } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import BoardCard from "./BoardCard";
 import BoardColumnView, { InboxRail } from "./BoardColumnView";
 import type { DropState } from "./BoardColumnView";

@@ -54,7 +54,7 @@ export function release(over: Partial<Release> = {}): Release {
       {
         platform: "desktop-mac",
         version: "0.16.0",
-        artifact: "/builds/The Hermes 0.16.0.dmg",
+        artifact: "/builds/Flotilla 0.16.0.dmg",
         url: null,
         install_url: null,
         sha256: MAC_SHA,
@@ -64,7 +64,7 @@ export function release(over: Partial<Release> = {}): Release {
       {
         platform: "desktop-win",
         version: "0.16.0",
-        artifact: "/builds/The Hermes 0.16.0.msi",
+        artifact: "/builds/Flotilla 0.16.0.msi",
         url: null,
         install_url: null,
         sha256: WIN_SHA,

@@ -4,7 +4,7 @@ The 0.19.0 acceptance scenario ([kanban-rework.md](kanban-rework.md), "Acceptanc
 scenario (K9)") runs automatically on two test daemons:
 
 ```sh
-cargo test -p hermesd --test integration k9_acceptance::
+cargo test -p flotillad --test integration k9_acceptance::
 ```
 
 This checklist is for what the test can't reach: the desktop app's UI, the
@@ -33,16 +33,16 @@ with `.claude/skills/bus-live-test/scripts/bus.mjs mcp`.
 On each computer, note the version you have now:
 
 ```sh
-~/.thehermes/bin/hermesd --version
+~/.flotilla/bin/flotillad --version
 ```
 
 ```powershell
-& "$env:USERPROFILE\.thehermes\bin\hermesd.exe" --version
+& "$env:USERPROFILE\.flotilla\bin\flotillad.exe" --version
 ```
 
 The branch migrates the database once, when its daemon starts (boards,
 labels, roles). The migration only goes forward, so the daemon backs the
-database up first, the same backup `hermesd backup` takes, into
+database up first, the same backup `flotillad backup` takes, into
 `backups/pre-migration-<UTC time>-schema-<from>-to-<to>` in the home. If that
 backup can't be written, the daemon migrates nothing and doesn't start; its
 error log says why (free disk space, then start it again). A backup holds the
@@ -52,16 +52,16 @@ For extra safety you can still take one by hand now, with the version you
 have:
 
 ```sh
-~/.thehermes/bin/hermesd backup        # prints the backup folder; note it
+~/.flotilla/bin/flotillad backup        # prints the backup folder; note it
 ```
 
 ```powershell
-& "$env:USERPROFILE\.thehermes\bin\hermesd.exe" backup
+& "$env:USERPROFILE\.flotilla\bin\flotillad.exe" backup
 ```
 
 ## 2. Build the branch the usual way
 
-The release workflow builds the DMG, the Windows installer and the `hermesd`
+The release workflow builds the DMG, the Windows installer and the `flotillad`
 tarball. Run by hand on a branch, it only uploads them to the run. It pushes
 no tag, makes no GitHub release and publishes no `latest.json`, so no
 installed app is offered this build.
@@ -74,7 +74,7 @@ gh run download <run-id> -n release-macos -n release-windows -D ~/Downloads/k9-b
 ```
 
 The two artifacts land in `release-macos/` and `release-windows/` under
-that folder. The run needs the `HERMES_TEAM_ID` variable that releases
+that folder. The run needs the `FLOTILLA_TEAM_ID` variable that releases
 already use.
 
 The branch keeps version 0.18.3 (nothing is bumped until 0.19.0), so an
@@ -88,29 +88,29 @@ ad-hoc signed app may not count as yours, and then it can't act as the owner.
 
 ## 3. Install
 
-**Mac.** Quit The Hermes, open the DMG and drag the app over the installed
+**Mac.** Quit Flotilla, open the DMG and drag the app over the installed
 one. The app's version doesn't change, so install the daemon from the
 tarball. This is the release notes' "daemon only" path, and it restarts every
 bot on this Mac:
 
 ```sh
 cd ~/Downloads/k9-build/release-macos
-tar -xzf hermesd-0.18.3-aarch64-apple-darwin.tar.gz
-hermesd-0.18.3/hermesd service install
-shasum -a 256 hermesd-0.18.3/hermesd ~/.thehermes/bin/hermesd   # must match
+tar -xzf flotillad-0.18.3-aarch64-apple-darwin.tar.gz
+flotillad-0.18.3/flotillad service install
+shasum -a 256 flotillad-0.18.3/flotillad ~/.flotilla/bin/flotillad   # must match
 ```
 
 **Windows.** Use the prompt in section 6: your Windows bot compiles, tests
 and installs the branch, and that is the condition for merging 0.19.0 into
 `main`. To install by hand instead, run
-`release-windows/hermes-desktop-0.18.3-x64-setup.exe`. It installs per machine (Windows asks for an admin) and
+`release-windows/flotilla-desktop-0.18.3-x64-setup.exe`. It installs per machine (Windows asks for an admin) and
 refreshes the managed daemon even at the same version.
 
-**`hermesd release install`.** Bots use this to deploy an approved release
+**`flotillad release install`.** Bots use this to deploy an approved release
 to their computer. Trying a branch doesn't need it. To exercise it as well,
 use a scratch project, not Recipe Box, which must stay free of releases
-(step 8). There DevOps publishes the run's files with `hermesd release
-publish`, you approve the release, and the tester runs `hermesd release
+(step 8). There DevOps publishes the run's files with `flotillad release
+publish`, you approve the release, and the tester runs `flotillad release
 install <release>` in its session. The swap is rolled back unless the new
 service answers with the new build.
 
@@ -120,32 +120,32 @@ the daemon's log has "backed up the database before migrating it" with its
 path:
 
 ```sh
-ls -d ~/.thehermes/backups/pre-migration-*
-grep "before migrating" ~/.thehermes/logs/hermesd.err.log
+ls -d ~/.flotilla/backups/pre-migration-*
+grep "before migrating" ~/.flotilla/logs/flotillad.err.log
 ```
 
 ```powershell
-Get-ChildItem "$env:USERPROFILE\.thehermes\backups" -Filter "pre-migration-*"
+Get-ChildItem "$env:USERPROFILE\.flotilla\backups" -Filter "pre-migration-*"
 ```
 
 Only the newest three pre-migration backups are kept; your own backups are
 never removed. Rename one (without the `pre-migration-` prefix) to keep it.
 
 **To go back**, reinstall 0.18.3 from its GitHub release (the DMG and
-`hermesd service install` from its tarball, or the Windows installer). Then
+`flotillad service install` from its tarball, or the Windows installer). Then
 restore the pre-migration backup (or your manual one) with that 0.18.3
-`hermesd`:
+`flotillad`:
 
 ```sh
-~/.thehermes/bin/hermesd restore --from <backup folder> --overwrite
-~/.thehermes/bin/hermesd service restart
+~/.flotilla/bin/flotillad restore --from <backup folder> --overwrite
+~/.flotilla/bin/flotillad service restart
 ```
 
 Don't run 0.18.3 on the migrated database without restoring it.
 
 **A rehearsal with no risk.** `scripts/dev.sh` in a checkout of the branch
 runs its own daemon under `.dev/` on its own port and never touches
-`~/.thehermes`. It listens on 127.0.0.1 only, so the phone and the PC can't
+`~/.flotilla`. It listens on 127.0.0.1 only, so the phone and the PC can't
 reach it. Use it to walk through steps 2–5 on the desktop alone.
 
 ## 4. The scenario
@@ -234,7 +234,7 @@ that PC, the Windows bot included, so the prompt has it report before
 installing and check again once it is back.
 
 ```text
-Compile, test and install the Gravity 0.19.0 kanban branch `k9-acceptance`
+Compile, test and install the Flotilla 0.19.0 kanban branch `k9-acceptance`
 (github.com/mrinaldi2/gravity, stacked on PR #23) on this Windows PC. This is
 the rollout condition before release-0.19.0-kanban-rework may merge into
 main, so report exactly what happened, failures included.
@@ -258,28 +258,28 @@ Rules:
      cargo test --locked --workspace --all-targets --no-fail-fast
    Then stage the debug daemon as the native shell's sidecar:
      New-Item -ItemType Directory -Force apps/desktop/src-tauri/binaries
-     Copy-Item target/debug/hermesd.exe apps/desktop/src-tauri/binaries/hermesd-x86_64-pc-windows-msvc.exe
+     Copy-Item target/debug/flotillad.exe apps/desktop/src-tauri/binaries/flotillad-x86_64-pc-windows-msvc.exe
    and run cargo fmt --check, cargo clippy -D warnings and cargo test with
    `--manifest-path apps/desktop/src-tauri/Cargo.toml`.
-   Also run `cargo test -p hermesd --test integration k9_acceptance::`
+   Also run `cargo test -p flotillad --test integration k9_acceptance::`
    (must pass) and the same with `-- --ignored` (the two k9_gap tests are
    expected to fail; quote their first lines).
    For each failing test, run it alone again. If it still fails, run it on
    origin/main in a second worktree, and say whether main fails it too.
 3. Build the installer with `powershell -File scripts/build-nsis.ps1`, the
-   script `hermesd release build-installer` runs for Windows releases.
+   script `flotillad release build-installer` runs for Windows releases.
    Record the setup.exe path under
    apps/desktop/src-tauri/target/release/bundle/nsis/ and its SHA-256, and
    the SHA-256 of
-   apps/desktop/src-tauri/binaries/hermesd-x86_64-pc-windows-msvc.exe.
+   apps/desktop/src-tauri/binaries/flotillad-x86_64-pc-windows-msvc.exe.
    scripts/test-windows-installer.ps1 needs an elevated shell and a PC
-   without The Hermes installed. Run it only if both hold; otherwise say
+   without Flotilla installed. Run it only if both hold; otherwise say
    it wasn't run and why.
-4. Before installing, record `hermesd.exe --version`, `service status`, the
-   SHA-256 of %USERPROFILE%\.thehermes\bin\hermesd.exe and the number of
+4. Before installing, record `flotillad.exe --version`, `service status`, the
+   SHA-256 of %USERPROFILE%\.flotilla\bin\flotillad.exe and the number of
    projects and bots. Then take a backup by hand as extra safety (the new
    daemon also takes one before it migrates):
-   `& "$env:USERPROFILE\.thehermes\bin\hermesd.exe" backup`.
+   `& "$env:USERPROFILE\.flotilla\bin\flotillad.exe" backup`.
    Write the results so far to an artifact, send the owner a short summary
    with message_owner, and note in FACTS.md that after the restart you go on
    with step 6.
@@ -288,14 +288,14 @@ Rules:
    tell the owner the installer's path and stop. The install restarts this
    session.
 6. Once you are back, check:
-   - `hermesd.exe --version` and `service status`;
-   - /health answers on the port in %USERPROFILE%\.thehermes\hermesd.port;
-   - the installed hermesd.exe hashes to the sidecar from step 3;
+   - `flotillad.exe --version` and `service status`;
+   - /health answers on the port in %USERPROFILE%\.flotilla\flotillad.port;
+   - the installed flotillad.exe hashes to the sidecar from step 3;
    - every project and bot from step 4 is still there;
-   - %USERPROFILE%\.thehermes\backups has one new `pre-migration-*`
+   - %USERPROFILE%\.flotilla\backups has one new `pre-migration-*`
      folder (record its name), and the daemon's log names it;
    - the desktop app opens and shows the board;
-   - `hermesd.exe release install no-such-release --dry-run`, run from your
+   - `flotillad.exe release install no-such-release --dry-run`, run from your
      session, ends with the daemon's refusal, not a crash.
    If anything is broken, don't try to repair or roll back. Tell the owner,
    with the backup folders from steps 4 and 6.

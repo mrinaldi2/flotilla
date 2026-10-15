@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { DaemonApi } from "../../protocol/api";
-import type { ReviewSettings } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { ReviewSettings } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { PrOwnerRequestBody } from "../../protocol/prOwner";
 import { decodeReviewSettings } from "../../protocol/prOwner";
 import type { PrApi } from "../../protocol/prs";

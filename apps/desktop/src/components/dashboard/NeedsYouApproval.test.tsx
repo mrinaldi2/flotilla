@@ -27,7 +27,7 @@ function setup(needsYou: readonly NeedsYouRow[], count?: number) {
   render(
     <DashboardView
       client={fake}
-      project={project({ name: "The Hermes" })}
+      project={project({ name: "Flotilla" })}
       bots={DASH_BOTS}
       connected
       canControl

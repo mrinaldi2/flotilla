@@ -26,7 +26,7 @@ function holderLine(h: QuiesceHolder): string {
   return `${h.command} (process ${h.pid})${who}`;
 }
 
-/** What still holds the Hermes folder, while the install waits on it. */
+/** What still holds the Flotilla folder, while the install waits on it. */
 function Blocked({ quiesce }: { readonly quiesce: Quiesce }): ReactElement | null {
   const holders = quiesce.report?.unresolved ?? [];
   if (quiesce.phase !== "blocked" || holders.length === 0) {
@@ -34,7 +34,7 @@ function Blocked({ quiesce }: { readonly quiesce: Quiesce }): ReactElement | nul
   }
   return (
     <div className="service-recovery-body">
-      The install is waiting for these programs to close the Hermes folder:
+      The install is waiting for these programs to close the Flotilla folder:
       <ul className="quiesce-holders">
         {holders.map((h) => (
           <li key={h.pid}>{holderLine(h)}</li>
@@ -59,8 +59,8 @@ export function QuiesceBanner({ quiesce, canResume, onResume }: QuiesceBannerPro
     <div className="service-recovery quiesce-banner" role="status">
       <div className="service-recovery-text">
         <div className="service-recovery-title">
-          <span aria-hidden="true">⏸ </span>Every project on this computer is paused while The
-          Hermes {what} installs
+          <span aria-hidden="true">⏸ </span>Every project on this computer is paused while Flotilla{" "}
+          {what} installs
         </div>
         <div className="service-recovery-body">
           Bots, routines, workers and messages are on hold. They pick up where they left off when
@@ -72,9 +72,9 @@ export function QuiesceBanner({ quiesce, canResume, onResume }: QuiesceBannerPro
           <div className="service-recovery-body">
             <strong>
               <span aria-hidden="true">⚠ </span>The list of background services changed after the
-              Hermes service started.
+              Flotilla service started.
             </strong>{" "}
-            This install uses the earlier list; restart the Hermes service to use the new one.
+            This install uses the earlier list; restart the Flotilla service to use the new one.
           </div>
         ) : null}
       </div>

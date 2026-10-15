@@ -18,8 +18,8 @@ export default function HomeMigrationConfirm(): ReactElement | null {
   }
   return (
     <ConfirmDialog
-      title="Move your Hermes data?"
-      body={`Updating the Hermes service migrates this computer. ${request.summary}`}
+      title="Move your Flotilla data?"
+      body={`Updating the Flotilla service migrates this computer. ${request.summary}`}
       confirmLabel="Move and restart"
       onConfirm={() => {
         request.answer(true);

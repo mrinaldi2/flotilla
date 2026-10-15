@@ -51,11 +51,11 @@ describe("useSelection project windows", () => {
     openProject(result, { kind: "project", projectId: "p1" });
 
     expect(result.current.selection).toEqual({ kind: "project", projectId: "p1", tab: "meetings" });
-    expect(store.get("hermes.project-tab.p1")).toBe("meetings");
+    expect(store.get("flotilla.project-tab.p1")).toBe("meetings");
   });
 
   it("remembers the tab per project", () => {
-    stubLocalStorage({ "hermes.project-tab.p1": "board" });
+    stubLocalStorage({ "flotilla.project-tab.p1": "board" });
     const result = render();
 
     openProject(result, { kind: "project", projectId: "p2" });
@@ -68,7 +68,7 @@ describe("useSelection project windows", () => {
   });
 
   it("ignores a stored tab that no longer exists", () => {
-    stubLocalStorage({ "hermes.project-tab.p1": "timeline" });
+    stubLocalStorage({ "flotilla.project-tab.p1": "timeline" });
     const result = render();
 
     openProject(result, { kind: "project", projectId: "p1" });

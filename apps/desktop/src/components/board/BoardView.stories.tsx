@@ -2,9 +2,9 @@ import type { Story } from "@ladle/react";
 import { create } from "@bufbuild/protobuf";
 import type { ReactElement } from "react";
 import type { ProjectTab } from "../../app/selection";
-import type { ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { MoveCheckSchema } from "../../protocol/gen/hermes/board/v1/requests_pb";
-import type { MoveCheck } from "../../protocol/gen/hermes/board/v1/requests_pb";
+import type { ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { MoveCheckSchema } from "../../protocol/gen/flotilla/board/v1/requests_pb";
+import type { MoveCheck } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import {
   card,
   column,
@@ -35,7 +35,12 @@ function checkFor(id: string): MoveCheck {
       columnKey: c.key,
       unmet:
         c.key === "verify" || c.key === "deploying"
-          ? [unmet("move.daemon_only", `${c.name} is entered by the Hermes service, not by hand.`)]
+          ? [
+              unmet(
+                "move.daemon_only",
+                `${c.name} is entered by the Flotilla service, not by hand.`,
+              ),
+            ]
           : c.key === "review"
             ? [
                 unmet("review.branch", "Link a branch first.", "Link the item's branch."),
@@ -62,7 +67,7 @@ function Window({
   readonly cards: readonly ItemCard[];
   readonly canRule?: boolean;
 }): ReactElement {
-  const acme = project({ id: "story-board", name: "The Hermes" });
+  const acme = project({ id: "story-board", name: "Flotilla" });
   return (
     <div className="main" style={{ height: 640 }}>
       <ProjectWindow project={acme} botCount={BOTS.length} tab="board" onSelectTab={noTab}>

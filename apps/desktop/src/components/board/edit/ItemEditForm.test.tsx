@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { DaemonError } from "../../../protocol/connection";
-import { EditResultSchema } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import { EditResultSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { unmet } from "../../../test/boardFixtures";
 import { draftItem } from "../../../test/boardsFixtures";
 import { STORY_BOTS } from "../../../test/boardStory";

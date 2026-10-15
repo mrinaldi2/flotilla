@@ -5,7 +5,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { ReactElement } from "react";
-import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import OverlayShell from "../overlay/OverlayShell";
 import { approveBlocked, approveCopy, changesCopy } from "./ownerText";
 import { OWNER_ROLE, reviewChip, reviewRoles, sha7 } from "./prText";

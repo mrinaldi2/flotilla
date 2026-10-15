@@ -166,7 +166,7 @@ export interface PermissionRequest {
 export interface TerminalOrigin {
   readonly command: string;
   readonly pid: number;
-  /** The asker's executable, e.g. `hermesd`. */
+  /** The asker's executable, e.g. `flotillad`. */
   readonly process?: string;
   /** The nearest app or terminal it ran under: Terminal, iTerm2, Code, claude… */
   readonly launched_from?: string;

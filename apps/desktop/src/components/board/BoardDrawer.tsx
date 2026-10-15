@@ -8,7 +8,7 @@ import type { ReactElement, ReactNode } from "react";
 import type { DaemonApi } from "../../protocol/api";
 import type { BoardApi } from "../../protocol/board";
 import type { Bot } from "../../protocol/entities";
-import type { BoardColumn, ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn, ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import ItemDrawer from "./drawer/ItemDrawer";
 import type { Anchor } from "./useBoardMoves";
 

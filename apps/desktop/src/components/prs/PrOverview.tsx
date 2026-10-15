@@ -3,8 +3,8 @@
 // note, its checks at the head, and the cleanup once merged.
 
 import type { ReactElement, ReactNode } from "react";
-import type { Finding, PullRequest, Review } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { PrState, Severity } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { Finding, PullRequest, Review } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { PrState, Severity } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import CardLink from "../cards/CardLink";
 import LinkedText from "../cards/LinkedText";
 import { cleanupItemLine, cleanupLine } from "./checkText";

@@ -11,7 +11,7 @@ import type {
   OwnerThread,
   ProjectRow,
   SummaryBrief,
-} from "../../protocol/gen/hermes/home/v1/home_pb";
+} from "../../protocol/gen/flotilla/home/v1/home_pb";
 import type { MeetingSummary } from "../../protocol/meetings";
 import { OWNER } from "../../protocol/meetings";
 import BotAvatar from "../BotAvatar";

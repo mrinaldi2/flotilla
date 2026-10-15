@@ -2,7 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { PrPushSchema } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import { PrPushSchema } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import { CARD_PROJECT } from "../../test/cardFixtures";
 import type { FakeDaemon } from "../../test/fakeDaemon";
 import { mergingPr, ownerDaemon, recheckPr } from "../../test/ownerReviewFixtures";

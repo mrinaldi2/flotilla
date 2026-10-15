@@ -1,7 +1,7 @@
 // The pure part of a column row in Board settings (0.19.0): where a move
 // puts it, what a typed WIP limit changes, and its rules in one line.
 
-import type { BoardColumn, ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn, ColumnKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import type { Policy } from "./ColumnRules";
 import { moverWords, ruleWords } from "./rules";
 

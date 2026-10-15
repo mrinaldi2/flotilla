@@ -1,8 +1,8 @@
-// What an item may carry (0.19.0): the types and caps the Hermes service
+// What an item may carry (0.19.0): the types and caps the Flotilla service
 // enforces, checked here first so a file is refused at once with its
 // reason, and the words the drawer shows for each attachment.
 
-import type { ItemAttachment } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 
 const MB = 1024 * 1024;
 /** At most this much data per `attachment_upload` chunk. */
@@ -11,7 +11,7 @@ export const CHUNK = 512 * 1024;
 const IMAGES = new Set(["png", "jpg", "jpeg", "webp", "gif"]);
 const FILES = new Set(["pdf", "md", "txt", "log"]);
 
-/** The caps the Hermes service applies by default (kanban-rework.md, decision 6). */
+/** The caps the Flotilla service applies by default (kanban-rework.md, decision 6). */
 export const CAPS = { image: 10 * MB, file: 25 * MB, item: 100 * MB } as const;
 
 function extension(name: string): string {
@@ -61,7 +61,7 @@ export function refusalFor(name: string, bytes: number, onItem: number): string 
 }
 
 /**
- * What the item's stored files hold, counted as the Hermes service counts
+ * What the item's stored files hold, counted as the Flotilla service counts
  * its cap: a detached file too (its bytes are kept for the history), a
  * stored copy once however often it is attached, and no doc.
  */

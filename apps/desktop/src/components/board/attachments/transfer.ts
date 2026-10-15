@@ -4,7 +4,7 @@
 
 import type { BoardApi } from "../../../protocol/board";
 import { boardCall } from "../../../protocol/board";
-import type { ItemDetail } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import type { ItemDetail } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { CHUNK } from "./attachments";
 
 /** What an upload reads from: a `File` or anything else with a name. */

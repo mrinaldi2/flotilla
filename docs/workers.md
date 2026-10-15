@@ -1,7 +1,7 @@
 # Temporary workers
 
 Status: implemented in the daemon and covered by
-`crates/hermesd/tests/workers.rs` and `crates/hermesd/tests/worker_repo.rs`.
+`crates/flotillad/tests/workers.rs` and `crates/flotillad/tests/worker_repo.rs`.
 The desktop app marks workers in the bot list, and its project settings show
 the project's workers (running, queued, recently finished, each cancellable)
 and set the shared repository.
@@ -40,7 +40,7 @@ slot while waiting on children that are stuck in the queue.
 
 ## Limits
 
-Workers have a cap of their own, `max_workers_per_project` in `hermesd.toml`
+Workers have a cap of their own, `max_workers_per_project` in `flotillad.toml`
 (default 4). It counts the workers running on this machine, per project. It
 is separate from `max_bots_per_project`, so a project whose permanent bots
 fill their cap can still fan out. Workers do not count toward that cap.
@@ -72,7 +72,7 @@ instead.
    and workspace are kept until retention reclaims them. A temporary bot that
    is never given a task is retired after ten minutes.
 5. **Cleaned up.** Right after it retires, the daemon deletes the worker's
-   `repo/` clone and its `scratch/` folder (`$THEHERMES_SCRATCH`), where the
+   `repo/` clone and its `scratch/` folder (`$FLOTILLA_SCRATCH`), where the
    worker is told to put any other clone, worktree or build output. A git
    worktree there is also pruned from the repository it came from. The bot
    needs no permission for this, and it doesn't wait on the bot: a worker
@@ -106,8 +106,8 @@ above where it runs. Each must be the bot's own. One it can't resolve, such
 as a variable it doesn't know, a substitution or a `--config` file, is refused.
 
 Release builds never trust `$CARGO_TARGET_DIR`. `scripts/prepare-sidecar.sh`
-(a build without `HERMES_DEV_BUILD`, or with `HERMES_RELEASE_BUILD=1`) and
-`prepare-sidecar.ps1`/`build-nsis.ps1` (`HERMES_RELEASE_BUILD=1`) build into
+(a build without `FLOTILLA_DEV_BUILD`, or with `FLOTILLA_RELEASE_BUILD=1`) and
+`prepare-sidecar.ps1`/`build-nsis.ps1` (`FLOTILLA_RELEASE_BUILD=1`) build into
 the checkout's own `target/` and copy from it in the same step. A dev build
 uses the session's target. `scripts/dev.sh` runs the daemon from it.
 

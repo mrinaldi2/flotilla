@@ -30,7 +30,7 @@ describe("Needs you: pull requests in the Overview", () => {
     render(
       <DashboardView
         client={fake}
-        project={project({ id: "p1", name: "The Hermes" })}
+        project={project({ id: "p1", name: "Flotilla" })}
         bots={DASH_BOTS}
         connected
         canControl

@@ -58,7 +58,7 @@ export const Confirm: Story = () => (
         target_name: "win-pc",
         shell: "powershell",
         content: "Stop-Service docker\nGet-Process com.docker.* | Stop-Process",
-        reason: "Docker holds the Hermes folder open",
+        reason: "Docker holds the Flotilla folder open",
       })}
       proposer="Tester Win"
       onRun={noop}

@@ -1,6 +1,11 @@
 import { resolveMacDownloadUrl } from "./release";
 
-const MANIFEST_PATH = "/desktop/gravity/latest.json";
+// The Flotilla path, plus the pre-rename path that already installed apps keep polling.
+// Both answer identically; never drop the legacy alias.
+const MANIFEST_PATHS: ReadonlySet<string> = new Set([
+  "/desktop/flotilla/latest.json",
+  "/desktop/gravity/latest.json",
+]);
 
 function unavailable(): Response {
   return new Response("The update manifest is temporarily unavailable.", {
@@ -13,7 +18,7 @@ export async function proxyUpdateManifest(
   request: Request,
   manifestUrl: string | undefined,
 ): Promise<Response> {
-  if (new URL(request.url).pathname !== MANIFEST_PATH) {
+  if (!MANIFEST_PATHS.has(new URL(request.url).pathname)) {
     return new Response("Not found", { status: 404 });
   }
   if (request.method !== "GET" && request.method !== "HEAD") {

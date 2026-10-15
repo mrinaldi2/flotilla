@@ -2,9 +2,9 @@ import type { Story } from "@ladle/react";
 import { create } from "@bufbuild/protobuf";
 import type { MessageInitShape } from "@bufbuild/protobuf";
 import type { ReactElement } from "react";
-import { ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { BoardProposalSchema } from "../../../protocol/gen/hermes/board/v1/requests_pb";
-import type { BoardProposal } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import { ColumnKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { BoardProposalSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
+import type { BoardProposal } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { boards, RECIPES_ID, recipeColumns } from "../../../test/boardsFixtures";
 import ProposalReview from "./ProposalReview";
 

@@ -1,7 +1,7 @@
 import type { Story } from "@ladle/react";
 import { useRef } from "react";
 import type { ReactElement } from "react";
-import type { Board, BoardColumn } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { Board, BoardColumn } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { DaemonError } from "../../../protocol/connection";
 import { useClickOnce } from "../../../test/storyClick";
 import { board, boards, mainColumns, proposals, recipeColumns } from "../../../test/boardsFixtures";
@@ -99,7 +99,7 @@ export const RemoveColumn: Story = () => {
   );
 };
 
-/** A change the Hermes service refuses: its words at the foot of the panel. */
+/** A change the Flotilla service refuses: its words at the foot of the panel. */
 export const Refused: Story = () => {
   const box = useRef<HTMLDivElement | null>(null);
   useClickOnce(box, "Make this the default board");

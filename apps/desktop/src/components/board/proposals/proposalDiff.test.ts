@@ -1,8 +1,8 @@
 import { create } from "@bufbuild/protobuf";
 import type { MessageInitShape } from "@bufbuild/protobuf";
 import { describe, expect, it } from "vitest";
-import { ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { BoardProposalSchema } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import { ColumnKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { BoardProposalSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { RECIPES_ID, recipeColumns } from "../../../test/boardsFixtures";
 import { proposalDiff } from "./proposalDiff";
 

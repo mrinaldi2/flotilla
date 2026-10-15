@@ -6,7 +6,7 @@
 // Several PRs are one row each: no bulk approve.
 
 import type { AttentionRowJson } from "../../protocol/dashboard";
-import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import { botsDone, recheckBase, reviewRowMeta } from "../prs/ownerText";
 import { sha7 } from "../prs/prText";
 import type { RowViewProps } from "./NeedsYou";

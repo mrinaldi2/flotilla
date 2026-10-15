@@ -1,7 +1,7 @@
 # Each bot's own browser
 
-Status: implemented in the daemon (`crates/hermesd/src/browser/`) and the
-desktop app (the bot's Browser tab). Tests: `crates/hermesd/tests/agent_browser.rs`.
+Status: implemented in the daemon (`crates/flotillad/src/browser/`) and the
+desktop app (the bot's Browser tab). Tests: `crates/flotillad/tests/agent_browser.rs`.
 
 ## Why
 
@@ -74,7 +74,7 @@ Streaming happens only while some client watches that bot.
 
 ## Configuration
 
-`[browser]` in `hermesd.toml`:
+`[browser]` in `flotillad.toml`:
 
 | Key | Default | Meaning |
 |---|---|---|

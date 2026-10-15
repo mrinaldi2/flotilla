@@ -1,6 +1,6 @@
 import { create } from "@bufbuild/protobuf";
 import { describe, expect, it } from "vitest";
-import { DraftRevisionSchema } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import { DraftRevisionSchema } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { draftChanges } from "../../../test/boardsFixtures";
 import { changeWords, isOwners, unseenChanges, unseenLine } from "./draftChanges";
 

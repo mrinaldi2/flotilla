@@ -54,7 +54,7 @@ function info(over: Partial<ReleaseInstall> = {}): ReleaseInstall {
     site: { serving: true },
     computer: "mac",
     devices: [IPHONE],
-    app_title: "The Hermes",
+    app_title: "Flotilla",
     ...over,
   };
 }
@@ -96,7 +96,7 @@ describe("InstallBox", () => {
     const client = daemon(info());
     render(<Box release={ios()} client={client} />);
     const box = screen.getByRole("region", { name: "Install on iPhone or iPad" });
-    expect(within(box).getByText("The Hermes 0.6.1 (12) · approved")).toBeInTheDocument();
+    expect(within(box).getByText("Flotilla 0.6.1 (12) · approved")).toBeInTheDocument();
     const copy = await within(box).findByRole("button", { name: "Copy the install link" });
     await waitFor(() => expect(copy).toBeEnabled());
     await userEvent.click(copy);
@@ -104,7 +104,7 @@ describe("InstallBox", () => {
     expect(await within(box).findByText("✓ Link copied")).toBeInTheDocument();
 
     const qr = within(box).getByRole("img", {
-      name: "QR code for the install page of The Hermes 0.6.1",
+      name: "QR code for the install page of Flotilla 0.6.1",
     });
     const cells = encode(PAGE, { ecc: "M", border: 2 }).data;
     const path = cells
@@ -145,7 +145,7 @@ describe("InstallBox", () => {
     await userEvent.click(screen.getByRole("menuitem", { name: "iPad · seen 2h ago" }));
     expect(
       await screen.findByText(
-        "Sent to iPad. It shows next time The Hermes opens there, under Releases.",
+        "Sent to iPad. It shows next time Flotilla opens there, under Releases.",
       ),
     ).toBeInTheDocument();
   });
@@ -207,7 +207,7 @@ describe("InstallBox", () => {
       screen.getByRole("region", { name: "Install on iPhone or iPad to test" }),
     ).toBeInTheDocument();
     expect(
-      await screen.findByText("The Hermes 0.6.1 (12) · ready for you to test"),
+      await screen.findByText("Flotilla 0.6.1 (12) · ready for you to test"),
     ).toBeInTheDocument();
   });
 });
@@ -224,7 +224,7 @@ describe("install words", () => {
 
   it("names the version and build once, and a device already on it", () => {
     expect(installLine(ios({ status: "deployed" }), info({ build: "0.6.1" }))).toBe(
-      "The Hermes 0.6.1 · live",
+      "Flotilla 0.6.1 · live",
     );
     expect(deviceLine({ ...IPHONE, app_version: "0.6.1 (12)" }, "0.6.1", NOW)).toBe(
       "iPhone 16 · has 0.6.1",

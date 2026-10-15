@@ -167,7 +167,7 @@ export const SettledQuestionExpanded: Story = () => (
   </Frame>
 );
 
-/** Hermes notes the grants a ruling applied, not the owner (H-173). */
+/** Flotilla notes the grants a ruling applied, not the owner (H-173). */
 export const SettledGrantsApplied: Story = () => (
   <Frame>
     <DecisionReader
@@ -176,7 +176,7 @@ export const SettledGrantsApplied: Story = () => (
         comments: [
           decisionComment({
             author_kind: "system",
-            author_name: "Hermes",
+            author_name: "Flotilla",
             body: "Applied this ruling's grants. auction: install; ledger: publish.",
             created_at: iso(-3 * HOUR),
           }),

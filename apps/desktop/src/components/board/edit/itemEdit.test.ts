@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ItemType, Priority, Size } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import { ItemType, Priority, Size } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { draftDetail } from "../../../test/boardsFixtures";
 import { formOf, formProblem, updateFor } from "./itemEdit";
 

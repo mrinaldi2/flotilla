@@ -3,7 +3,7 @@
 // the snapshot, newest first.
 
 import { timestampDate } from "@bufbuild/protobuf/wkt";
-import type { BoardProposal } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import type { BoardProposal } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { age } from "../../control/decisions";
 
 function at(proposal: BoardProposal): string {

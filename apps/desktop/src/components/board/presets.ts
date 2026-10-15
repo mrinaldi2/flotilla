@@ -1,8 +1,8 @@
 // The presets a new board starts from (kanban/presets.rs), as the New board
-// sheet previews them. The Hermes service builds the board; this is only
+// sheet previews them. Flotilla service builds the board; this is only
 // what the owner sees before choosing.
 
-import { ColumnKind } from "../../protocol/gen/hermes/board/v1/board_pb";
+import { ColumnKind } from "../../protocol/gen/flotilla/board/v1/board_pb";
 
 export type PresetName = "simple" | "simple_review" | "software" | "release_gated";
 

@@ -1,14 +1,14 @@
 ---
 name: release
-description: Cut a new Gravity release — pick the version, land the version-bump PR, tag it, watch the release workflow, and verify the DMG, the Windows installer, the hermesd tarball and any configured updater manifest were published. Use when someone asks to release, ship, cut, publish or tag a new version, bump the version, or when a `v*` release run needs monitoring or diagnosing.
+description: Cut a new Flotilla release — pick the version, land the version-bump PR, tag it, watch the release workflow, and verify the DMG, the Windows installer, the flotillad tarball and any configured updater manifest were published. Use when someone asks to release, ship, cut, publish or tag a new version, bump the version, or when a `v*` release run needs monitoring or diagnosing.
 ---
 
-# Releasing Gravity
+# Releasing Flotilla
 
 A release is an annotated `v*` tag on `main`; use the configured signing
 identity for official tags. Pushing that tag runs
 `.github/workflows/release.yml`. It builds the desktop app on GitHub-hosted
-macOS ARM64 and Windows x64 runners in parallel, packages `hermesd`, and a
+macOS ARM64 and Windows x64 runners in parallel, packages `flotillad`, and a
 final job creates the GitHub release once both builds pass.
 Signing, notarization and updater artifacts are configurable; see
 `docs/public-builds.md` for the required variables and secrets. Verify that
@@ -76,7 +76,7 @@ is enabled:
 
 ```bash
 git fetch origin
-git tag -a -m "Gravity X.Y.Z" vX.Y.Z <merge-commit-sha>
+git tag -a -m "Flotilla X.Y.Z" vX.Y.Z <merge-commit-sha>
 git push origin vX.Y.Z
 ```
 
@@ -121,7 +121,7 @@ gh release view vX.Y.Z --json name,url,assets
 # Fetch the updater endpoint configured for this distribution, if enabled.
 ```
 
-Expect the DMG, the Windows `x64-setup.exe` and the `hermesd` tarball. With
+Expect the DMG, the Windows `x64-setup.exe` and the `flotillad` tarball. With
 updater signing enabled, also expect `.app.tar.gz`, the `.sig` for it and for
 the Windows installer, and `latest.json` with `darwin-aarch64` and
 `windows-x86_64` entries. Fetch the configured manifest and
@@ -135,11 +135,11 @@ Apple credentials; official notarized distributions should treat it as a failure
 
 ## Swapping only the app never restarts the service
 
-Rule (H-193): opening a newer app on a machine whose Hermes service answers never replaces that service, and so never restarts its bots. The app offers the bundled service as the "Update Hermes service" toast, and nothing happens until someone clicks it.
+Rule (H-193): opening a newer app on a machine whose Flotilla service answers never replaces that service, and so never restarts its bots. The app offers the bundled service as the "Update Flotilla service" toast, and nothing happens until someone clicks it.
 
 The service, and every bot with it, is replaced only in these cases:
 - that click;
-- a release install (`hermesd release install`, with its quiesce);
+- a release install (`flotillad release install`, with its quiesce);
 - the app's launch-time self-heal, when the service is broken (its binary is missing, or a switch-over was interrupted) **and** nothing answers on its port.
 
 To find out what restarted a service, read `<home>/logs/service-install.log`. Every `service install` appends one line there, with the time, version and arguments, plus the executable that ran it and what launched that executable.

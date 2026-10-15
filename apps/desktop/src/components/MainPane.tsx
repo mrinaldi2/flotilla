@@ -32,7 +32,7 @@ function WelcomeState({ daemon, onCreateProject }: EmptyStateProps): ReactElemen
     <div className="empty-pane" data-tauri-drag-region="deep">
       <div className="empty-state">
         <img className="empty-art-hero" src={heroArt} alt="" draggable={false} />
-        <h1>Welcome to The Hermes</h1>
+        <h1>Welcome to Flotilla</h1>
         <p>Projects hold your bots. Create one to get started.</p>
         {daemon.canControl ? <NewProjectForm onCreate={onCreateProject} /> : null}
       </div>
@@ -51,11 +51,11 @@ function EmptyState(props: EmptyStateProps): ReactElement {
     <div className="empty-pane" data-tauri-drag-region="deep">
       <div className="empty-state">
         <img className="empty-art-quiet" src={quietArt} alt="" draggable={false} />
-        <h1>The Hermes</h1>
-        <p>{connected ? "This is no longer here." : "Waiting for the Hermes service."}</p>
+        <h1>Flotilla</h1>
+        <p>{connected ? "This is no longer here." : "Waiting for the Flotilla service."}</p>
         {connected ? null : (
           <p className={`conn-hint conn-${status}`}>
-            {`Hermes service: ${connectionStatusLabel(status)} (${endpoint.host}:${endpoint.port})`}
+            {`Flotilla service: ${connectionStatusLabel(status)} (${endpoint.host}:${endpoint.port})`}
           </p>
         )}
       </div>

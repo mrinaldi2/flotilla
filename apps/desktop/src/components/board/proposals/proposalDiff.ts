@@ -4,7 +4,7 @@
 // drops. Computed from the change the snapshot carries and the board as
 // the owner sees it now.
 
-import type { BoardColumn, ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn, ColumnKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import type {
   AutomationSet,
   BoardCreate,
@@ -13,7 +13,7 @@ import type {
   ColumnAdd,
   ColumnRemove,
   ColumnUpdate,
-} from "../../../protocol/gen/hermes/board/v1/requests_pb";
+} from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { PRESETS } from "../presets";
 import { factWord, moverWords, ruleWords } from "../settings/rules";
 

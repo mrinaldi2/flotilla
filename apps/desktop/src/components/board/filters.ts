@@ -1,8 +1,8 @@
 // The board's filter bar: bot, type and the board's label groups.
 // Filtered-out cards are hidden, but column counts still read "2 of 5".
 
-import type { ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { ItemType } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { ItemType } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import { labelGroupOf } from "./labelGroups";
 
 export interface BoardFilters {

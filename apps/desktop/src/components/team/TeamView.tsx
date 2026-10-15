@@ -5,7 +5,7 @@
 
 import type { ReactElement } from "react";
 import type { Bot, BotActivity, BotState } from "../../protocol/entities";
-import type { OwnerThread, ProjectRow } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { OwnerThread, ProjectRow } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { fromTheBot } from "../../protocol/home";
 import BotAvatar from "../BotAvatar";
 import { BOT_STATE_LABEL } from "../bot/botStates";

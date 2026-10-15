@@ -1,6 +1,10 @@
 import { create } from "@bufbuild/protobuf";
 import { describe, expect, it } from "vitest";
-import { OwnerReview, PrState, ReviewSettingsSchema } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import {
+  OwnerReview,
+  PrState,
+  ReviewSettingsSchema,
+} from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import { decodeReviewSettings } from "../../protocol/prOwner";
 import { mergingPr, recheckPr } from "../../test/ownerReviewFixtures";
 import { HEAD, OLDER, PR_NOW, readyForYouPr, waitingPr } from "../../test/prFixtures";
@@ -79,7 +83,7 @@ describe("ownerText", () => {
       "Docs",
       "Desktop screens",
       "iPhone and iPad screens",
-      "Hermes service",
+      "Flotilla service",
       "billing",
     ]);
     const unknown = decodeReviewSettings({

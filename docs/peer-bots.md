@@ -2,11 +2,11 @@
 
 Status: the daemon side (pairing, linking, forwarding, task mirroring,
 artifact transfer and linked projects) is implemented and covered by
-`crates/hermesd/tests/peer_bots.rs` and `crates/hermesd/tests/linked_projects.rs`.
-The desktop UI is not built yet; pair and link with `hermesd peer …` until
+`crates/flotillad/tests/peer_bots.rs` and `crates/flotillad/tests/linked_projects.rs`.
+The desktop UI is not built yet; pair and link with `flotillad peer …` until
 it is. Requests are listed in [protocol.md](protocol.md).
 
-A team can span two Gravity daemons. The motivating case is an app built for
+A team can span two Flotilla daemons. The motivating case is an app built for
 macOS and Windows: a lead and a Mac developer run on the Mac, a Windows
 developer runs on a Windows PC, and the lead hands the Windows side its work
 without the user switching the desktop app between daemons to relay messages
@@ -18,22 +18,22 @@ artifacts those results attach.
 
 ## Setting it up
 
-On the Windows PC, add its Tailscale address to `bind` in `hermesd.toml`
+On the Windows PC, add its Tailscale address to `bind` in `flotillad.toml`
 (next to `127.0.0.1`) and restart the daemon. Then create an invite for the
 Mac:
 
 ```sh
-hermesd peer invite mac
+flotillad peer invite mac
 ```
 
 On the Mac, add the PC with that invite, check that the link is up, and link
 the Windows bot into the project the lead works in:
 
 ```sh
-hermesd peer add win-pc "ws://100.x.y.z:49777/peer#…"
-hermesd peer list
-hermesd peer bots win-pc
-hermesd peer link win-pc windev --project my-app
+flotillad peer add win-pc "ws://100.x.y.z:49777/peer#…"
+flotillad peer list
+flotillad peer bots win-pc
+flotillad peer link win-pc windev --project my-app
 ```
 
 The lead can now `send_message(to: "windev", kind: "task", …)`. The first
@@ -421,7 +421,7 @@ their `daemon_id`, so they can pair again.
 ## Delivery plan
 
 1. **Peers and forwarding (daemon).** The schema, `daemon_id`, pairing and
-   revocation as control-plane requests (plus `hermesd peer …` commands that
+   revocation as control-plane requests (plus `flotillad peer …` commands that
    drive the local daemon, so this is usable before the UI lands), the `/peer`
    route and dialer, linking, and forwarding of every message kind with task
    mirroring. Tested with two in-process daemons on the double runtime.

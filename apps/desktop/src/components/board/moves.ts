@@ -1,8 +1,8 @@
 // Moving items (H-018 §3.3). The board never invents rules: it asks the
-// Hermes service (`item_move_check`) and shows what comes back.
+// Flotilla service (`item_move_check`) and shows what comes back.
 
-import type { MoveBlock, Unmet } from "../../protocol/gen/hermes/board/v1/board_pb";
-import type { MoveCheck } from "../../protocol/gen/hermes/board/v1/requests_pb";
+import type { MoveBlock, Unmet } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import type { MoveCheck } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 
 /** Guards the owner clears by typing something, rather than by changing the item. */
 const REASON = "reason.required";

@@ -7,7 +7,7 @@ import type { ReactElement } from "react";
 import type { AddToast } from "../../app/useToasts";
 import type { DaemonApi } from "../../protocol/api";
 import type { Bot, Project } from "../../protocol/entities";
-import type { OwnerThread } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { OwnerThread } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { errText } from "../../util";
 import { useNow } from "../control/useNow";
 import OwnerThreadView from "./OwnerThreadView";
@@ -34,7 +34,7 @@ function projectName(projects: readonly Project[], id: string | undefined): stri
 
 function blockedReason(connected: boolean, canControl: boolean): string | null {
   if (!connected) {
-    return "Not connected to the Hermes service";
+    return "Not connected to the Flotilla service";
   }
   return canControl ? null : "Read-only connection";
 }

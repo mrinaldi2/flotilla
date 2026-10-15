@@ -6,7 +6,7 @@
 import { useRef, useState } from "react";
 import type { FormEvent, ReactElement } from "react";
 import type { BoardApi } from "../../../protocol/board";
-import type { ItemAttachment } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { kindLabel, sizeWords } from "./attachments";
 import AttachmentThumb from "./AttachmentThumb";
 import type { UploadState } from "./useUploads";

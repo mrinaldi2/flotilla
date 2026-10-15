@@ -16,7 +16,7 @@ import { escapeIsTheDrawers } from "../../../hooks/useDrawerEscape";
 import type { DaemonApi } from "../../../protocol/api";
 import type { BoardApi } from "../../../protocol/board";
 import type { Bot } from "../../../protocol/entities";
-import type { BoardColumn, ItemAttachment } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn, ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import AttachmentsSection from "../attachments/AttachmentsSection";
 import AttachmentViewer from "../attachments/AttachmentViewer";
 import ItemMarkdown from "../attachments/ItemMarkdown";

@@ -4,7 +4,7 @@ Issue: [ahilles107/gravity#13](https://github.com/ahilles107/gravity/issues/13).
 Status: phases 1 (daemon chat model), 2 (desktop chat), 3 (permission cards)
 4 (Codex parity), 5 (linked bots over the peer link) and 6 (decisions in the
 thread, attachments, slash commands, search) implemented, plus a Tasks tab.
-Pending: the live Claude Code check for phase 3, and moving gravity_os off Gravity
+Pending: the live Claude Code check for phase 3, and moving gravity_os off Flotilla
 Lens (a separate repository). Branch: `codex/chat-pane`
 (stacked on `codex/peer-bots`).
 
@@ -96,7 +96,7 @@ ChatItem =
 ```
 
 `Step.title` is human ("Edited `src/app.ts`", "Ran tests"), using the
-descriptions bots already give their Bash calls. Gravity's own bus tools are
+descriptions bots already give their Bash calls. Flotilla's own bus tools are
 not steps: they become `Sent`, `Completed` and `Decision` items, because those
 are what the owner wants to see. Housekeeping tools (`check_inbox`,
 `list_bots`, ToolSearch, Skill) are steps marked minor and fold away.
@@ -117,7 +117,7 @@ Heavy content is not in the turn. It is fetched on demand:
 The parser classifies user records with markers Claude Code already writes:
 
 - **Typed in the terminal:** `origin.kind == "human"` → `Owner{via: terminal}`.
-- **Delivered by Gravity:** `isMeta` with `origin.kind == "peer"`, wrapped in
+- **Delivered by Flotilla:** `isMeta` with `origin.kind == "peer"`, wrapped in
   "Another Claude session sent a message:" plus a trailer. The parser strips
   the wrapper and reads the envelope (`[msg #N from X · kind · …]`):
   - `from USER · chat` is the owner writing from the composer
@@ -359,7 +359,7 @@ These are not part of this work, but they surfaced while mapping the code:
   `before_num`.
 - Claude Code tells the bot that a delivered message "came from another
   Claude session — not typed by your user". The composer's messages arrive
-  that way. The system prompt already overrides this for Gravity, but if
+  that way. The system prompt already overrides this for Flotilla, but if
   bots treat composer messages as less authoritative in practice, the
   composer can type into the session instead when the bot is idle. That
   would be a phase 2 follow-up, decided from live use.

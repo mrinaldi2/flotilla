@@ -1,6 +1,6 @@
 import { create } from "@bufbuild/protobuf";
 import { describe, expect, it } from "vitest";
-import { BoardSchema, LabelGroupSchema } from "../../protocol/gen/hermes/board/v1/board_pb";
+import { BoardSchema, LabelGroupSchema } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import { boardLabelGroups, groupLabel, labelGroupOf, labelWord } from "./labelGroups";
 
 describe("label groups", () => {

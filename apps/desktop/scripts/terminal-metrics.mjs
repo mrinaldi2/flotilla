@@ -1,11 +1,11 @@
 /* oxlint-disable no-console, no-await-in-loop -- CLI script; bots are attached one at a time on purpose */
 // Read-only measurement of what a fresh attach paints for every bot on a live
-// hermesd: replays each ring into a headless xterm and reports the state the
+// flotillad: replays each ring into a headless xterm and reports the state the
 // desktop would be in. Used to compare Claude Code's renderer modes.
 //
 //   node scripts/terminal-metrics.mjs [--out file.json] [--port N]
 //
-// Reads the port and client token from ~/.thehermes like the desktop does.
+// Reads the port and client token from ~/.flotilla like the desktop does.
 import fs from "node:fs";
 import os from "node:os";
 import headless from "@xterm/headless";
@@ -21,8 +21,8 @@ const flag = (name) => {
   const index = args.indexOf(name);
   return index >= 0 ? args[index + 1] : undefined;
 };
-const home = process.env.GRAVITY_HOME ?? `${os.homedir()}/.thehermes`;
-const port = Number(flag("--port") ?? fs.readFileSync(`${home}/hermesd.port`, "utf8").trim());
+const home = process.env.FLOTILLA_HOME ?? `${os.homedir()}/.flotilla`;
+const port = Number(flag("--port") ?? fs.readFileSync(`${home}/flotillad.port`, "utf8").trim());
 const token = fs.readFileSync(`${home}/secrets/client.token`, "utf8").trim();
 const outPath = flag("--out");
 
@@ -149,7 +149,7 @@ ws.addEventListener("open", async () => {
   rows.sort((a, b) => a.name.localeCompare(b.name));
 
   console.log(
-    `hermesd ${hello.server_version} · ${rows.length} bots · headless xterm ${COLS}x${ROWS}\n`,
+    `flotillad ${hello.server_version} · ${rows.length} bots · headless xterm ${COLS}x${ROWS}\n`,
   );
   console.log(
     `${pad("bot", 16)} ${pad("alt screen", 10)} ${pad("mouse", 6)} ${pad("wheel", 20)} ${pad("scrollback", 10, true)} ${pad("visible", 8, true)} ${pad("normal buf", 10, true)} ${pad("replay KB", 10, true)}`,

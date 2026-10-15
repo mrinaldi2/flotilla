@@ -8,8 +8,8 @@ import type {
   Cleanup,
   CleanupItem,
   PullRequest,
-} from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { CheckResult, CleanupKind, CleanupState } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+} from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { CheckResult, CleanupKind, CleanupState } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { Tone } from "./prText";
 
 const RESULTS: Readonly<

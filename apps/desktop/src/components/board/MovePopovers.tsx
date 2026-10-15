@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent, ReactElement, ReactNode } from "react";
-import type { BoardColumn, ItemCard, Unmet } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn, ItemCard, Unmet } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import OverlayShell from "../overlay/OverlayShell";
 import type { ColumnChecks } from "./moves";
 import { moveMenuItem, planMove } from "./moves";
@@ -189,7 +189,7 @@ interface RefusalPopoverProps {
   readonly onClose: () => void;
 }
 
-/** Every unmet guard or rule, with its fix, as the Hermes service words them. */
+/** Every unmet guard or rule, with its fix, as the Flotilla service words them. */
 export function UnmetList({ unmet }: { readonly unmet: readonly Unmet[] }): ReactElement {
   return (
     <ul className="board-refusal-list">
@@ -208,7 +208,7 @@ export function UnmetList({ unmet }: { readonly unmet: readonly Unmet[] }): Reac
   );
 }
 
-/** "Can't move H-024 to Ready": every unmet guard, as the Hermes service words it (H-018 O2). */
+/** "Can't move H-024 to Ready": every unmet guard, as the Flotilla service words it (H-018 O2). */
 export function RefusalPopover({
   card,
   to,

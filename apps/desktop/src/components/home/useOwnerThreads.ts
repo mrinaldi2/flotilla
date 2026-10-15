@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLoadOnConnect } from "../../hooks/useLoadOnConnect";
 import type { DaemonApi } from "../../protocol/api";
-import type { OwnerThread, OwnerThreadPage } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { OwnerThread, OwnerThreadPage } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { decodeOwnerThread, decodeOwnerThreads } from "../../protocol/home";
 
 /** Whether the daemon keeps owner threads (H-132). */

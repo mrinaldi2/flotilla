@@ -76,7 +76,7 @@ export default function DiscussPanel(props: DiscussPanelProps): ReactElement {
         </p>
       )}
       <ChatComposer
-        disabledReason={props.connected ? null : "Waiting for the Hermes service"}
+        disabledReason={props.connected ? null : "Waiting for the Flotilla service"}
         placeholder={`Message ${bot.name} about ${itemId}…`}
         onSend={send}
         dictation={nativeDictation}

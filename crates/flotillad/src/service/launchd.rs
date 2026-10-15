@@ -1,0 +1,359 @@
+//! The launchd side of an install: which agents exist, stopping one with
+//! everything it started, and loading one. `launchctl` itself sits behind
+//! [`Launchctl`], so tests never call it.
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::time::{Duration, Instant};
+
+use anyhow::Context;
+
+use super::sequence::{Host, Identity};
+use super::stage::remove_if_present;
+use super::{render_plist, ServicePaths, LAUNCHD_LABEL};
+
+/// The `launchctl` calls an install makes, plus the version and health
+/// probes, which tests replace as well.
+pub(super) trait Launchctl {
+    /// The PID launchd reports for the loaded agent `label`, if it runs.
+    fn pid(&self, label: &str) -> Option<u32>;
+    /// Unloads the agent; returns once its process has exited. An agent
+    /// that is not loaded is not an error.
+    fn bootout(&self, plist: &Path) -> anyhow::Result<()>;
+    /// Loads the agent, which starts it (`RunAtLoad`).
+    fn bootstrap(&self, plist: &Path) -> anyhow::Result<()>;
+    /// Whether launchd has the agent `label` loaded, running or not.
+    fn is_loaded(&self, label: &str) -> bool;
+    /// Marks `label` disabled in launchd's override database, which outlives
+    /// a logout: its plist no longer loads at login, and `bootstrap` refuses
+    /// it until [`Launchctl::enable`].
+    fn disable(&self, label: &str) -> anyhow::Result<()>;
+    /// Undoes [`Launchctl::disable`]. Enabling an enabled agent is not an
+    /// error.
+    fn enable(&self, label: &str) -> anyhow::Result<()>;
+    fn version_of(&self, binary: &Path) -> anyhow::Result<String> {
+        super::stage::version_of(binary)
+    }
+    fn wait_healthy(&self, home: &Path, port: u16, version: &str) -> anyhow::Result<()> {
+        super::sequence::wait_healthy(home, port, version)
+    }
+}
+
+/// The real `launchctl`, in the user's GUI domain.
+pub(super) struct System;
+
+fn gui_domain() -> anyhow::Result<String> {
+    let out = Command::new("id")
+        .arg("-u")
+        .output()
+        .context("running id -u")?;
+    let uid = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    anyhow::ensure!(!uid.is_empty(), "could not determine uid");
+    Ok(format!("gui/{uid}"))
+}
+
+impl Launchctl for System {
+    fn pid(&self, label: &str) -> Option<u32> {
+        let target = format!("{}/{label}", gui_domain().ok()?);
+        let out = Command::new("launchctl")
+            .args(["print", &target])
+            .output()
+            .ok()?;
+        parse_agent_pid(&String::from_utf8_lossy(&out.stdout))
+    }
+
+    fn is_loaded(&self, label: &str) -> bool {
+        let Ok(domain) = gui_domain() else {
+            return false;
+        };
+        Command::new("launchctl")
+            .args(["print", &format!("{domain}/{label}")])
+            .output()
+            .is_ok_and(|out| out.status.success())
+    }
+
+    fn disable(&self, label: &str) -> anyhow::Result<()> {
+        override_state("disable", label)
+    }
+
+    fn enable(&self, label: &str) -> anyhow::Result<()> {
+        override_state("enable", label)
+    }
+
+    fn bootout(&self, plist: &Path) -> anyhow::Result<()> {
+        let domain = gui_domain()?;
+        let out = Command::new("launchctl")
+            .args(["bootout", &domain])
+            .arg(plist)
+            .output()
+            .context("running launchctl bootout")?;
+        // A failure here is normal when nothing is loaded yet.
+        tracing::info!(
+            %domain,
+            plist = %plist.display(),
+            status = out.status.code().unwrap_or(-1),
+            stderr = %String::from_utf8_lossy(&out.stderr).trim(),
+            "launchctl bootout"
+        );
+        Ok(())
+    }
+
+    fn bootstrap(&self, plist: &Path) -> anyhow::Result<()> {
+        let domain = gui_domain()?;
+        let out = Command::new("launchctl")
+            .args(["bootstrap", &domain])
+            .arg(plist)
+            .output()
+            .context("running launchctl bootstrap")?;
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        anyhow::ensure!(
+            out.status.success(),
+            "launchctl bootstrap {} failed: {}",
+            plist.display(),
+            stderr.trim()
+        );
+        Ok(())
+    }
+}
+
+/// `launchctl enable|disable gui/<uid>/<label>`.
+fn override_state(verb: &str, label: &str) -> anyhow::Result<()> {
+    let target = format!("{}/{label}", gui_domain()?);
+    let out = Command::new("launchctl")
+        .args([verb, &target])
+        .output()
+        .with_context(|| format!("running launchctl {verb}"))?;
+    anyhow::ensure!(
+        out.status.success(),
+        "launchctl {verb} {target} failed: {}",
+        String::from_utf8_lossy(&out.stderr).trim()
+    );
+    Ok(())
+}
+
+pub(super) fn parse_agent_pid(print: &str) -> Option<u32> {
+    print
+        .lines()
+        .find_map(|line| line.trim().strip_prefix("pid = "))
+        .and_then(|pid| pid.trim().parse().ok())
+}
+
+/// The agents an install moves between: the pre-rename ones (The Hermes's
+/// and any Gravity one left over), whose daemon runs from `old_home`, and
+/// the current one in `paths`' home. [`Identity::Legacy`] stands for every
+/// pre-rename agent installed.
+pub(super) struct Launchd<'a, L: Launchctl> {
+    pub(super) paths: &'a ServicePaths,
+    pub(super) old_home: PathBuf,
+    pub(super) port: u16,
+    pub(super) launchctl: L,
+}
+
+impl<L: Launchctl> Launchd<'_, L> {
+    /// `(label, plist)` of each agent `id` stands for that is installed.
+    fn agents(&self, id: Identity) -> Vec<(&'static str, PathBuf)> {
+        match id {
+            Identity::Legacy => self
+                .paths
+                .installed_legacy_agents()
+                .into_iter()
+                .map(|(label, plist, _)| (label, plist))
+                .collect(),
+            Identity::Current => vec![(LAUNCHD_LABEL, self.paths.plist_path())],
+        }
+    }
+
+    /// The homes `id`'s daemon may hold.
+    fn homes(&self, id: Identity) -> Vec<PathBuf> {
+        let mut homes: Vec<PathBuf> = match id {
+            Identity::Legacy => std::iter::once(self.old_home.clone())
+                .chain(
+                    self.paths
+                        .installed_legacy_agents()
+                        .into_iter()
+                        .map(|(_, _, home)| home),
+                )
+                .collect(),
+            Identity::Current => vec![self.paths.home.clone()],
+        };
+        // The same home under two spellings (`~/.gravity` links to
+        // `~/.thehermes`) is stopped and waited for once.
+        let mut seen = Vec::new();
+        homes.retain(|home| {
+            let key = home.canonicalize().unwrap_or_else(|_| home.clone());
+            home.is_dir() && !seen.contains(&key) && {
+                seen.push(key);
+                true
+            }
+        });
+        homes
+    }
+
+    /// Bot sessions do not die with the daemon: a detached child (an MCP
+    /// server, a browser) outlives the terminal hangup, and the migration
+    /// would find it holding the home. Groups come from the daemon's process
+    /// tree before the bootout and from the sessions it recorded (a 0.14
+    /// daemon records none); only those still holding the home are stopped.
+    fn stop_sessions(&self, homes: &[PathBuf], mut groups: std::collections::BTreeSet<u32>) {
+        for home in homes {
+            groups.extend(crate::holders::recorded_sessions(home));
+            match crate::holders::stop_owned(home, &groups) {
+                Ok(stopped) if !stopped.is_empty() => {
+                    tracing::info!(?stopped, home = %home.display(), "stopped bot session groups")
+                }
+                Ok(_) => {}
+                Err(error) => tracing::warn!(%error, "could not stop bot session groups"),
+            }
+        }
+    }
+}
+
+impl<L: Launchctl> Host for Launchd<'_, L> {
+    fn installed(&self) -> Vec<Identity> {
+        // With an overridden home the pre-rename agent is the user's main
+        // daemon, which this install neither migrates nor may stop.
+        [Identity::Legacy, Identity::Current]
+            .into_iter()
+            .filter(|id| match id {
+                Identity::Legacy => !self.paths.installed_legacy_agents().is_empty(),
+                Identity::Current => self.paths.plist_path().is_file(),
+            })
+            .collect()
+    }
+
+    fn disable(&self, id: Identity) -> anyhow::Result<()> {
+        // `bootout` unloads the agent, so KeepAlive cannot relaunch it, and
+        // its plist stays for a rollback to load again. The pre-rename plist
+        // would also load again at the next login, should the install die
+        // before it is removed, and run against the moved home; disabling
+        // its label keeps it down, as Task Scheduler's `/disable` does.
+        match id {
+            Identity::Legacy => self
+                .agents(id)
+                .iter()
+                .try_for_each(|(label, _)| self.launchctl.disable(label)),
+            Identity::Current => Ok(()),
+        }
+    }
+
+    fn owned(&self, ids: &[Identity]) -> crate::holders::Owned {
+        let mut owned = crate::holders::Owned::default();
+        for id in ids {
+            let homes = self.homes(*id);
+            // The agent's daemon, and any copy launchd no longer tracks,
+            // which `stop` reaps.
+            let daemons = self
+                .agents(*id)
+                .iter()
+                .filter_map(|(label, _)| self.launchctl.pid(label))
+                .chain(super::reap::running(&managed_binaries(&homes)))
+                .collect::<Vec<_>>();
+            for pid in daemons {
+                owned.add_daemon(pid);
+            }
+            for home in &homes {
+                owned.groups.extend(crate::holders::recorded_sessions(home));
+            }
+        }
+        owned
+    }
+
+    fn stop(&self, id: Identity) -> anyhow::Result<()> {
+        let homes = self.homes(id);
+        let mut groups = std::collections::BTreeSet::new();
+        for (label, plist) in self.agents(id) {
+            if let Some(pid) = self.launchctl.pid(label) {
+                groups.extend(crate::holders::descendant_groups(pid));
+            }
+            self.launchctl.bootout(&plist)?;
+        }
+        self.stop_sessions(&homes, groups);
+        // A daemon launchd no longer tracks (an earlier bootout that timed
+        // out, a hand-started copy) still runs the managed binary.
+        super::reap::reap(&managed_binaries(&homes))?;
+        for home in &homes {
+            wait_released(home)?;
+        }
+        Ok(())
+    }
+
+    fn definition_files(&self) -> Vec<PathBuf> {
+        vec![self.paths.plist_path()]
+    }
+
+    fn write_definition(&self) -> anyhow::Result<()> {
+        let plist = self.paths.plist_path();
+        std::fs::create_dir_all(&self.paths.launch_agents)?;
+        std::fs::write(
+            &plist,
+            render_plist(
+                &self.paths.bin_path(),
+                &self.paths.log_dir(),
+                &self.paths.user_home,
+            ),
+        )
+        .with_context(|| format!("writing {}", plist.display()))
+    }
+
+    fn start(&self, id: Identity) -> anyhow::Result<()> {
+        for (label, plist) in self.agents(id) {
+            // launchd refuses to bootstrap a disabled label; a rollback
+            // enables the pre-rename agents [`Host::disable`] disabled.
+            if id == Identity::Legacy {
+                self.launchctl.enable(label)?;
+            }
+            // An agent whose bootout failed is still loaded; bootstrapping it
+            // again would fail although it is where a rollback wants it.
+            if !self.launchctl.is_loaded(label) {
+                self.launchctl.bootstrap(&plist)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn remove(&self, id: Identity) -> anyhow::Result<()> {
+        for (_, plist) in self.agents(id) {
+            if plist.is_file() {
+                self.launchctl.bootout(&plist)?;
+            }
+            remove_if_present(&plist)?;
+        }
+        Ok(())
+    }
+
+    fn version_of(&self, binary: &Path) -> anyhow::Result<String> {
+        self.launchctl.version_of(binary)
+    }
+
+    fn wait_healthy(&self, version: &str) -> anyhow::Result<()> {
+        self.launchctl
+            .wait_healthy(&self.paths.home, self.port, version)
+    }
+}
+
+/// The daemon binaries a service installed in `homes` runs, under the
+/// current name and every earlier one.
+fn managed_binaries(homes: &[PathBuf]) -> Vec<PathBuf> {
+    homes
+        .iter()
+        .flat_map(|home| {
+            let bin = home.join("bin");
+            crate::brand::all_daemon_files("")
+                .into_iter()
+                .map(move |name| bin.join(name))
+        })
+        .collect()
+}
+
+/// Waits for the stopped daemon to let go of `home`'s lock.
+fn wait_released(home: &Path) -> anyhow::Result<()> {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    loop {
+        match crate::home::lock(home) {
+            Ok(_lock) => return Ok(()),
+            Err(error) if Instant::now() >= deadline => {
+                return Err(error).context("waiting for the managed daemon to stop")
+            }
+            Err(_) => std::thread::sleep(Duration::from_millis(100)),
+        }
+    }
+}

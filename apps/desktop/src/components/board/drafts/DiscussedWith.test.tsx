@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { ItemDetail } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import type { ItemDetail } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { draftDetail, recipeColumns } from "../../../test/boardsFixtures";
 import { boardsClient, STORY_BOTS } from "../../../test/boardStory";
 import ItemDrawer from "../drawer/ItemDrawer";

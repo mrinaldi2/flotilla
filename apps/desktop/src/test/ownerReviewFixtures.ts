@@ -5,7 +5,7 @@
 import { create } from "@bufbuild/protobuf";
 import type { MessageInitShape } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
-import type { LineComment, PullRequest } from "../protocol/gen/hermes/pr/v1/pr_pb";
+import type { LineComment, PullRequest } from "../protocol/gen/flotilla/pr/v1/pr_pb";
 import {
   BlockerKind,
   LineCommentSchema,
@@ -16,7 +16,7 @@ import {
   Severity,
   Side,
   Verdict,
-} from "../protocol/gen/hermes/pr/v1/pr_pb";
+} from "../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { FakeDaemon } from "./fakeDaemon";
 import { HEAD, OLDER, PR_NOW, prDaemon, prList, readyForYouPr } from "./prFixtures";
 

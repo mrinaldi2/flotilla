@@ -2,7 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 import { primaryTabs } from "../../app/selection";
 import type { ProjectTab } from "../../app/selection";
 import type { Project } from "../../protocol/entities";
-import type { ProjectRow } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { ProjectRow } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { releasePill } from "../home/homeText";
 import ProjectTabs, { PROJECT_PANEL_ID, projectTabId } from "./ProjectTabs";
 import { useProjectKeys } from "./useProjectKeys";

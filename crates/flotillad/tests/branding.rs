@@ -1,0 +1,103 @@
+use flotillad::brand;
+use flotillad::paths::{write_hook_settings, write_mcp_config};
+
+/// The HTTP entry with the bearer token, as before H-044's stdio proxy.
+fn http() -> serde_json::Value {
+    flotillad::bus_auth::http_entry(7777, brand::BOT_TOKEN_ENV)
+}
+
+#[test]
+fn mcp_config_registers_the_active_bus_name_with_the_new_token_variable() {
+    let tmp = tempfile::tempdir().expect("tmp");
+    write_mcp_config(tmp.path(), &http(), None).expect("write mcp config");
+    let raw = std::fs::read_to_string(tmp.path().join("mcp.json")).expect("read mcp config");
+    let mcp: serde_json::Value = serde_json::from_str(&raw).expect("parse mcp config");
+
+    let bus = &mcp["mcpServers"][brand::ACTIVE_MCP_SERVER];
+    assert!(bus.is_object());
+    assert_eq!(bus["headers"]["Authorization"], "Bearer ${FLOTILLA_TOKEN}");
+}
+
+#[test]
+fn mcp_config_carries_the_bots_own_browser() {
+    let tmp = tempfile::tempdir().expect("tmp");
+    let browser = serde_json::json!({
+        "command": "/opt/node/bin/npx", "args": ["-y", "@playwright/mcp@0.0.83"],
+        "env": { "PATH": "/opt/node/bin" }
+    });
+    write_mcp_config(tmp.path(), &http(), Some(&browser)).expect("write");
+    let raw = std::fs::read_to_string(tmp.path().join("mcp.json")).expect("read mcp config");
+    let mcp: serde_json::Value = serde_json::from_str(&raw).expect("parse mcp config");
+    let server = &mcp["mcpServers"]["playwright"];
+    assert_eq!(server["type"], "stdio");
+    assert_eq!(server["command"], "/opt/node/bin/npx");
+    assert!(mcp["mcpServers"][brand::ACTIVE_MCP_SERVER].is_object());
+}
+
+/// The home moved to `~/.flotilla`; `~/.thehermes` (and an older
+/// `~/.gravity`) stays a link to it for a release, so the secrets rule
+/// guards every spelling.
+#[test]
+fn hook_settings_use_the_new_token_and_guard_the_current_home() {
+    let tmp = tempfile::tempdir().expect("tmp");
+    // The rollback transport (`bot_transport = "http"`) still names a token.
+    let http = flotillad::bus_auth::HookTransport::Http {
+        port: 49777,
+        token_env: brand::BOT_TOKEN_ENV.to_string(),
+    };
+    write_hook_settings(tmp.path(), &http).expect("write");
+    let raw = std::fs::read_to_string(tmp.path().join(".claude/settings.json")).expect("read");
+    assert!(raw.contains("Read(~/.flotilla/secrets/**)"));
+    assert!(raw.contains("Read(~/.thehermes/secrets/**)"));
+    assert!(raw.contains("Read(~/.gravity/secrets/**)"));
+    #[cfg(unix)]
+    {
+        assert!(raw.contains("${FLOTILLA_TOKEN}"));
+        assert!(!raw.contains("GRAVITY_TOKEN"));
+        assert!(!raw.contains("THEHERMES_TOKEN"));
+    }
+}
+
+#[test]
+fn the_bus_is_registered_as_flotilla_bus() {
+    assert_eq!(brand::ACTIVE_MCP_SERVER, "flotilla-bus");
+    assert_eq!(brand::DISPLAY_NAME, "Flotilla");
+    assert_eq!(brand::HOME_DIR_NAME, ".flotilla");
+    assert_eq!(brand::LAUNCHD_LABEL, "com.manuelrinaldi.flotillad");
+    assert_eq!(brand::WINDOWS_TASK, "Flotilla");
+}
+
+/// A bot provisioned before the rename has `gravity-bus` in its `mcp.json`.
+/// The rewrite on its next start leaves only the new name, so the session
+/// never sees the bus twice.
+#[test]
+fn regenerating_a_pre_rename_mcp_config_drops_the_old_name() {
+    let tmp = tempfile::tempdir().expect("tmp");
+    let stale = serde_json::json!({"mcpServers": {"gravity-bus": {
+        "type": "http", "url": "http://127.0.0.1:7777/mcp",
+        "headers": {"Authorization": "Bearer ${GRAVITY_TOKEN}"}
+    }}});
+    std::fs::write(tmp.path().join("mcp.json"), stale.to_string()).expect("stale");
+    write_mcp_config(tmp.path(), &http(), None).expect("rewrite");
+    let raw = std::fs::read_to_string(tmp.path().join("mcp.json")).expect("read");
+    let mcp: serde_json::Value = serde_json::from_str(&raw).expect("parse");
+    let servers = mcp["mcpServers"].as_object().expect("servers");
+    assert_eq!(servers.keys().collect::<Vec<_>>(), ["flotilla-bus"]);
+}
+
+/// A bot provisioned by The Hermes has `hermes-bus` in its `mcp.json`; the
+/// rewrite at its next start leaves only `flotilla-bus`.
+#[test]
+fn regenerating_a_hermes_mcp_config_drops_the_old_name() {
+    let tmp = tempfile::tempdir().expect("tmp");
+    let stale = serde_json::json!({"mcpServers": {"hermes-bus": {
+        "type": "http", "url": "http://127.0.0.1:7777/mcp",
+        "headers": {"Authorization": "Bearer ${THEHERMES_TOKEN}"}
+    }}});
+    std::fs::write(tmp.path().join("mcp.json"), stale.to_string()).expect("stale");
+    write_mcp_config(tmp.path(), &http(), None).expect("rewrite");
+    let raw = std::fs::read_to_string(tmp.path().join("mcp.json")).expect("read");
+    let mcp: serde_json::Value = serde_json::from_str(&raw).expect("parse");
+    let servers = mcp["mcpServers"].as_object().expect("servers");
+    assert_eq!(servers.keys().collect::<Vec<_>>(), ["flotilla-bus"]);
+}

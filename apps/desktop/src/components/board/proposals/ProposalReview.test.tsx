@@ -2,7 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { act, render, renderHook, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { StructureResultSchema } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import { StructureResultSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { boards, boardsSnapshot, proposals, recipeColumns } from "../../../test/boardsFixtures";
 import { decision } from "../../../test/decisionFixtures";
 import { FakeDaemon } from "../../../test/fakeDaemon";
@@ -14,7 +14,7 @@ if (open === undefined) {
   throw new Error("the fixture has an open proposal");
 }
 
-/** A decision as the Hermes service raises one for a lead's proposal. */
+/** A decision as the Flotilla service raises one for a lead's proposal. */
 function proposed(over: Parameters<typeof decision>[0]) {
   return decision({
     kind: "question",

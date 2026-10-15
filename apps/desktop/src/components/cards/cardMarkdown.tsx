@@ -9,8 +9,7 @@ import { defaultUrlTransform } from "react-markdown";
 import { isCardId, splitCardIds } from "./cardIds";
 import CardLink from "./CardLink";
 import { useCardLinks } from "./CardLinks";
-
-const SCHEME = "hermes://item/";
+import { linkedId, SCHEME } from "./cardScheme";
 
 interface MdNode {
   type: string;
@@ -59,21 +58,22 @@ function remarkCardIds(pattern: RegExp | null) {
 }
 
 function urlTransform(url: string): string {
-  return url.startsWith(SCHEME) ? url : defaultUrlTransform(url);
+  return linkedId(url) !== null ? url : defaultUrlTransform(url);
 }
 
 type Anchor = (props: { children?: ReactNode; href?: string }) => ReactElement;
 
 /**
  * The props a `ReactMarkdown` takes to link card ids. `inert` draws every
- * other link; a written `hermes://item/` link is a card link only when its
+ * other link; a written `flotilla://item/` link (or one from before the
+ * rename, `hermes://item/`) is a card link only when its
  * id is one, so a bot can't put other words behind it.
  */
 export function useCardMarkdown(inert: Anchor) {
   const pattern = useCardLinks()?.pattern ?? null;
   return useMemo(() => {
     const a: Anchor = ({ children, href }) => {
-      const id = href?.startsWith(SCHEME) ? href.slice(SCHEME.length) : null;
+      const id = linkedId(href);
       return id !== null && pattern !== null && isCardId(id, pattern) ? (
         <CardLink id={id} />
       ) : (

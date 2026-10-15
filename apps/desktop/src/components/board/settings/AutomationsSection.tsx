@@ -3,7 +3,7 @@
 // item where it is, and its card says so.
 
 import type { ReactElement } from "react";
-import type { Board, BoardColumn } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { Board, BoardColumn } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { FACTS } from "./rules";
 
 interface AutomationsSectionProps {

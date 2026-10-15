@@ -3,7 +3,7 @@
 
 import { Settings } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
-import type { Board } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { Board } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import BoardSwitcher from "./BoardSwitcher";
 
 interface BoardToolbarProps {

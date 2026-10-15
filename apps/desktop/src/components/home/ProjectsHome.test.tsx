@@ -63,7 +63,7 @@ describe("ProjectsHome", () => {
     const cards = await screen.findAllByTestId("project-card");
     expect(cards.map((card) => card.getAttribute("aria-label"))).toEqual([
       "PhD",
-      "The Hermes",
+      "Flotilla",
       "Aurora Notes",
     ]);
     const pinned = within(cardAt(cards, 0));
@@ -159,7 +159,7 @@ describe("ProjectsHome", () => {
     const user = userEvent.setup();
     const onOpenProject = vi.fn<(projectId: string) => void>();
     renderHome(daemonWithOverview(), onOpenProject);
-    const card = await screen.findByRole("article", { name: "The Hermes" });
+    const card = await screen.findByRole("article", { name: "Flotilla" });
     await user.click(within(card).getByRole("button", { name: "Open project" }));
     expect(onOpenProject).toHaveBeenCalledWith("p1");
   });
@@ -183,7 +183,7 @@ describe("ProjectsHome", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /Couldn't load what each project needs \(the service failed on 'projects_overview'\)/,
     );
-    expect(screen.queryByText(/older Hermes service/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/older Flotilla service/)).not.toBeInTheDocument();
     const card = screen.getByRole("article", { name: "Acme" });
     await user.click(within(card).getByRole("button", { name: "Open project" }));
     expect(onOpenProject).toHaveBeenCalledWith("p1");

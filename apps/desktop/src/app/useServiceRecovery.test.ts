@@ -77,7 +77,7 @@ describe("useServiceRecovery", () => {
       expect(result.current.offer).toBeNull();
     });
     expect(invoke).toHaveBeenCalledWith("install_local_daemon");
-    expect(addToast).toHaveBeenCalledWith("info", "Hermes service running", expect.any(String));
+    expect(addToast).toHaveBeenCalledWith("info", "Flotilla service running", expect.any(String));
   });
 
   it("asks before an install that moves the home", async () => {

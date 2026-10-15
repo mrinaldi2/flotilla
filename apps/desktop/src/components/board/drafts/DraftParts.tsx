@@ -10,8 +10,8 @@ import type {
   BoardColumn,
   DraftRevision,
   Unmet,
-} from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
+} from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { ColumnKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import OverlayShell from "../../overlay/OverlayShell";
 import { UnmetList } from "../MovePopovers";
 import { changeWords, unseenLine } from "./draftChanges";

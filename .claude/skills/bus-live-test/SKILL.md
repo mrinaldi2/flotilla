@@ -1,11 +1,11 @@
 ---
 name: bus-live-test
-description: Test hermesd's cross-session bot communication against a live daemon, in two modes — synthetic (double runtime, drive the MCP bus directly as the bots, free and deterministic) and real (pty runtime spawning billed Claude Code sessions, observing genuine bot behavior). Use when changing send_message/complete_task, the bus guardrails (reply caps, fan-out, hop limits, terminal kinds, deadlines/expiry), delivery, the system prompt's bus sections, or the artifacts flow — or when someone asks to demo, smoke-test, or observe bot-to-bot traffic on a dev daemon.
+description: Test flotillad's cross-session bot communication against a live daemon, in two modes — synthetic (double runtime, drive the MCP bus directly as the bots, free and deterministic) and real (pty runtime spawning billed Claude Code sessions, observing genuine bot behavior). Use when changing send_message/complete_task, the bus guardrails (reply caps, fan-out, hop limits, terminal kinds, deadlines/expiry), delivery, the system prompt's bus sections, or the artifacts flow — or when someone asks to demo, smoke-test, or observe bot-to-bot traffic on a dev daemon.
 ---
 
 # Live bus / cross-session communication test
 
-Runs a real `hermesd` on a throwaway home and exercises bot-to-bot traffic
+Runs a real `flotillad` on a throwaway home and exercises bot-to-bot traffic
 end to end. Two modes, cheapest first:
 
 - **Synthetic** (`runtime = "double"`): no Claude sessions; you act as the
@@ -20,11 +20,11 @@ end to end. Two modes, cheapest first:
 ## Shared setup
 
 ```bash
-cargo build -p hermesd
+cargo build -p flotillad
 umask 077
 BUS_HOME=$(mktemp -d "${TMPDIR:-/tmp}/gravity-bus.XXXXXX")
 BUS_HOME=$(cd "$BUS_HOME" && pwd -P)
-cat > "$BUS_HOME/hermesd.toml" <<EOF
+cat > "$BUS_HOME/flotillad.toml" <<EOF
 home = "$BUS_HOME"
 bind = ["127.0.0.1"]
 port = 49666                 # verify this test port is free first
@@ -35,11 +35,11 @@ supervision_interval_ms = 1000
 [scheduler]
 tick_interval_ms = 2000      # fast expiry sweeps; default is 30s
 EOF
-./target/debug/hermesd --config "$BUS_HOME/hermesd.toml" > "$BUS_HOME/hermesd.log" 2>&1 &
+./target/debug/flotillad --config "$BUS_HOME/flotillad.toml" > "$BUS_HOME/flotillad.log" 2>&1 &
 BUS_DAEMON_PID=$!
 ```
 
-Wait for the published `$BUS_HOME/hermesd.port`, verify it is 49666, and
+Wait for the published `$BUS_HOME/flotillad.port`, verify it is 49666, and
 check `curl --fail http://127.0.0.1:49666/health`. Confirm the recorded PID
 is still running; stop on startup failure. Never reuse the installed daemon
 or stop another process to free this port.

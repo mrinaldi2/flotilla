@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { ProjectRow, Source } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { ProjectRow, Source } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import CardLink from "../cards/CardLink";
 import {
   botsLine,

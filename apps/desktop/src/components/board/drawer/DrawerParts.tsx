@@ -3,8 +3,8 @@
 
 import { Pencil, X } from "lucide-react";
 import type { ReactElement } from "react";
-import type { BoardColumn, Item } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { Priority, Size } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn, Item } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { Priority, Size } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { typeLabel } from "../labels";
 import type { Anchor } from "../useBoardMoves";
 import type { NextStep } from "./drawerText";

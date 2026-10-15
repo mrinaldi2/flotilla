@@ -9,7 +9,7 @@ import { boardCall } from "../../../protocol/board";
 import type {
   BoardSnapshot,
   StructureResult,
-} from "../../../protocol/gen/hermes/board/v1/requests_pb";
+} from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { errText } from "../../../util";
 
 /** The structure arms of a board request. */
@@ -31,7 +31,7 @@ export interface Structure {
   /** Sends `call`; resolves with the result, or null when it was refused (see `error`). */
   readonly run: (call: StructureCall) => Promise<StructureResult | null>;
   readonly busy: boolean;
-  /** The Hermes service's refusal of the last call, in its words. */
+  /** Flotilla service's refusal of the last call, in its words. */
   readonly error: string | null;
   readonly clearError: () => void;
 }

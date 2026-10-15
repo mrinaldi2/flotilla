@@ -13,9 +13,9 @@ import {
   Priority,
   Size,
   VerificationResult,
-} from "../protocol/gen/hermes/board/v1/board_pb";
-import { ItemDetailSchema, MoveCheckSchema } from "../protocol/gen/hermes/board/v1/requests_pb";
-import type { ItemDetail, MoveCheck } from "../protocol/gen/hermes/board/v1/requests_pb";
+} from "../protocol/gen/flotilla/board/v1/board_pb";
+import { ItemDetailSchema, MoveCheckSchema } from "../protocol/gen/flotilla/board/v1/requests_pb";
+import type { ItemDetail, MoveCheck } from "../protocol/gen/flotilla/board/v1/requests_pb";
 import { defaultColumns, unmet } from "./boardFixtures";
 
 const at = (iso: string) => timestampFromDate(new Date(iso));

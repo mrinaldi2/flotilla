@@ -122,7 +122,7 @@ export default function SetupScreen(props: SetupScreenProps): ReactElement {
     setPhase({
       kind: "error",
       message:
-        `Couldn't reach the Hermes service. It was installed but never answered on ${
+        `Couldn't reach the Flotilla service. It was installed but never answered on ${
           result.ports.length > 1 ? `ports ${ports}` : `port ${ports}`
         }.` + (tail.length > 0 ? `\n\n${tail}` : ""),
     });
@@ -145,19 +145,19 @@ export default function SetupScreen(props: SetupScreenProps): ReactElement {
   return (
     <div className="setup-screen">
       <div className="setup-panel">
-        <h1 className="setup-title">The Hermes</h1>
+        <h1 className="setup-title">Flotilla</h1>
         {phase.kind === "probing" ? (
-          <p className="setup-note">Looking for the Hermes service on this computer…</p>
+          <p className="setup-note">Looking for the Flotilla service on this computer…</p>
         ) : null}
         {phase.kind === "connecting" ? (
-          <p className="setup-note">Connecting to the Hermes service…</p>
+          <p className="setup-note">Connecting to the Flotilla service…</p>
         ) : null}
         {phase.kind === "installing" ? (
           <>
-            <p className="setup-note">Installing the Hermes service on this computer…</p>
+            <p className="setup-note">Installing the Flotilla service on this computer…</p>
             <p className="setup-detail">
-              The Hermes service starts when you sign in and keeps running in the background after
-              you close the app.
+              Flotilla service starts when you sign in and keeps running in the background after you
+              close the app.
             </p>
             {phase.waited > 0 ? (
               <p className="setup-detail">
@@ -238,8 +238,8 @@ function ManualConnectForm(props: ManualConnectFormProps): ReactElement {
       }}
     >
       <p className="setup-detail">
-        Connect to the Hermes service on another computer or server on your tailnet. A device token
-        is only needed when the service runs on another computer.
+        Connect to the Flotilla service on another computer or server on your tailnet. A device
+        token is only needed when the service runs on another computer.
       </p>
       <input
         aria-label="Computer host"

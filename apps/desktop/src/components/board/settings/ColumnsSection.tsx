@@ -4,8 +4,8 @@
 import { useState } from "react";
 import type { FormEvent, ReactElement } from "react";
 import { useDialogKeys } from "../../../hooks/useReturnFocus";
-import type { Board, BoardColumn } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type { Board, BoardColumn } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { ColumnKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import OverlayShell from "../../overlay/OverlayShell";
 import ColumnRow from "./ColumnRow";
 import type { ColumnChange } from "./columnEdits";

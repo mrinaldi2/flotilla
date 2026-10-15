@@ -24,7 +24,7 @@ OUTPUTS = {
     "marketing": "apps/marketing/public/THIRD_PARTY_NOTICES.txt",
 }
 INPUTS = [
-    "Cargo.lock", "Cargo.toml", "crates/hermesd/Cargo.toml", "crates/bus/Cargo.toml",
+    "Cargo.lock", "Cargo.toml", "crates/flotillad/Cargo.toml", "crates/bus/Cargo.toml",
     "apps/desktop/src-tauri/Cargo.lock", "apps/desktop/src-tauri/Cargo.toml",
     "apps/desktop/src-tauri/tauri.conf.json", "apps/desktop/package.json",
     "apps/desktop/pnpm-lock.yaml", "apps/desktop/vite.config.ts",
@@ -221,14 +221,14 @@ def generate():
         records.append(p)
     outputs = {}
     for component, name in OUTPUTS.items():
-        content = (f"GRAVITY {component.upper()} THIRD-PARTY NOTICES\n\n"
-                   "Gravity's MIT license is separate from these upstream terms.\n"
+        content = (f"FLOTILLA {component.upper()} THIRD-PARTY NOTICES\n\n"
+                   "Flotilla's MIT license is separate from these upstream terms.\n"
                    f"Native inventory targets: {', '.join(TARGETS)}.\n"
                    "Runtime dependency closures are conservative; tree-shaken code may be absent.\n"
                    "Build/test notices are included conservatively for generated code; their\n"
                    "presence does not mean the tools themselves are distributed.\n"
                    "Source URLs identify the exact unmodified dependency versions.\n"
-                   "See third-party/README.md in the Gravity source for scope and maintenance.\n"
+                   "See third-party/README.md in the Flotilla source for scope and maintenance.\n"
                    + "".join(sections[component]))
         path = ROOT / name
         path.parent.mkdir(parents=True, exist_ok=True)

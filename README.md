@@ -1,7 +1,16 @@
-# Gravity
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/wordmark-dark.png">
+    <img src="assets/brand/wordmark-light.png" alt="Flotilla" width="300">
+  </picture>
+</h1>
+
+Flotilla was called The Hermes, and Gravity before that; see
+[Upgrading from The Hermes](#upgrading-from-the-hermes) for what the rename
+changes on an existing machine.
 
 Always-on, multi-bot desktop app with Claude Code or Codex CLI as the agent runtime.
-A Rust daemon (`hermesd`) runs on macOS or Windows; the Tauri desktop client attaches
+A Rust daemon (`flotillad`) runs on macOS or Windows; the Tauri desktop client attaches
 from any machine. See the [architecture](docs/architecture.md) for the system
 design and the [control-plane protocol](docs/protocol.md) for client APIs.
 Native Windows x64 builds and local-daemon setup are described in
@@ -19,11 +28,11 @@ Choose each bot's CLI in **Bot info → Bot runtime**. See
 
 ```
 crates/bus/       shared types, SQLite schema, envelope format
-crates/hermesd/      daemon: runtime adapters, durable delivery, scheduler,
+crates/flotillad/      daemon: runtime adapters, durable delivery, scheduler,
                   MCP bridge, WebSocket control plane
 apps/desktop/     Tauri v2 + React + xterm.js client
 docs/             architecture, WS protocol v2, public-build configuration
-ops/              launchd plist + example hermesd.toml
+ops/              launchd plist + example flotillad.toml
 scripts/          repository checks (file-length rule)
 ```
 
@@ -35,7 +44,7 @@ required). See [CONTRIBUTING.md](CONTRIBUTING.md) for setup.
 
 ```sh
 # Daemon
-cargo build --release            # target/release/hermesd
+cargo build --release            # target/release/flotillad
 cargo test --workspace           # unit + integration (uses the runtime double)
 cargo clippy --workspace --all-targets
 cargo fmt --all --check
@@ -44,7 +53,7 @@ cargo fmt --all --check
 cd apps/desktop
 pnpm install
 pnpm typecheck && pnpm build     # frontend
-../../scripts/prepare-sidecar.sh # stage hermesd as the bundled sidecar (once,
+../../scripts/prepare-sidecar.sh # stage flotillad as the bundled sidecar (once,
                                  # and after daemon changes)
 pnpm tauri dev                   # run the app
 ```
@@ -52,7 +61,7 @@ pnpm tauri dev                   # run the app
 ## Code rules & tooling
 
 **No source file may exceed 400 lines.** Split by concern instead of growing a
-file: `crates/hermesd/src/db/`, `crates/hermesd/src/ws/` and `apps/desktop/src/app/`
+file: `crates/flotillad/src/db/`, `crates/flotillad/src/ws/` and `apps/desktop/src/app/`
 are the reference examples.
 
 ```sh
@@ -114,42 +123,42 @@ validation failures before committing.
 
 ## Install (end users)
 
-Open the release DMG and drag **Gravity** to Applications. On Windows, run
+Open the release DMG and drag **Flotilla** to Applications. On Windows, run
 the release `x64-setup.exe` installer. The app bundles
 the daemon as a signed sidecar; on first launch a setup wizard either installs
 it as a launchd user agent on this Mac (one click, no sudo) or attaches to a
 remote daemon with a device token. Headless machines skip the app:
-`./hermesd service install` from the release tarball does the same
+`./flotillad service install` from the release tarball does the same
 install, and `service status` / `service restart` / `service uninstall` manage
 it.
 
-A daemon already answering on `49777` stops the install: Gravity refuses to
+A daemon already answering on `49777` stops the install: Flotilla refuses to
 start rather than run a second one against the same state. If something else —
 not a daemon — holds `49777`, the app-managed service waits a few seconds, then
 serves on a free port instead and the app follows it there. That moves the bot
 bus off the allowlisted `http://127.0.0.1:49777/mcp` URL, which a policy-managed
 Mac silently drops, so Settings → Connection flags it and the daemon restarts
 onto `49777` as soon as it comes free. Set `negotiate_port = false` in
-`hermesd.toml` to get a daemon that refuses to start instead.
+`flotillad.toml` to get a daemon that refuses to start instead.
 
 ## Run the whole stack (development)
 
 `scripts/dev.sh` starts a workspace-private daemon and the client against it —
-nothing touches `~/.thehermes`, so it can run beside the installed production
+nothing touches `~/.flotilla`, so it can run beside the installed production
 daemon and beside other checkouts:
 
 ```sh
-./scripts/dev.sh                     # hermesd + the real Tauri window
-./scripts/dev.sh web                 # hermesd + Vite frontend in the browser
-GRAVITY_RUNTIME=double ./scripts/dev.sh # deterministic echo runtime, no tokens spent
+./scripts/dev.sh                     # flotillad + the real Tauri window
+./scripts/dev.sh web                 # flotillad + Vite frontend in the browser
+FLOTILLA_RUNTIME=double ./scripts/dev.sh # deterministic echo runtime, no tokens spent
 ```
 
-The daemon gets its own home at `.dev/gravityd/` (gitignored) with a generated
-`hermesd.toml`. Ports derive from `CONDUCTOR_PORT` when Conductor sets it —
+The daemon gets its own home at `.dev/flotillad/` (gitignored) with a generated
+`flotillad.toml`. Ports derive from `CONDUCTOR_PORT` when Conductor sets it —
 frontend on `CONDUCTOR_PORT`, daemon on `CONDUCTOR_PORT+1`, defaulting to
 1420/1421 — so parallel workspaces do not collide. In browser mode the script
 prints the `localStorage` snippet that points the page at that daemon; the
-Tauri window picks the daemon up from `GRAVITY_HOME`.
+Tauri window picks the daemon up from `FLOTILLA_HOME`.
 
 Conductor drives the same script from `.conductor/settings.toml`: the **dev**,
 **dev-double**, **app** and **test** run scripts, with `setup` installing the
@@ -158,13 +167,13 @@ frontend dependencies.
 ## Run the daemon (development)
 
 ```sh
-mkdir -p ~/.thehermes
-cp ops/hermesd.example.toml ~/.thehermes/hermesd.toml   # optional; defaults are sane
-cargo run -p hermesd                                   # or: hermesd --config <path>
+mkdir -p ~/.flotilla
+cp ops/flotillad.example.toml ~/.flotilla/flotillad.toml   # optional; defaults are sane
+cargo run -p flotillad                                   # or: flotillad --config <path>
 curl http://127.0.0.1:49777/health
 ```
 
-On first start the daemon generates `~/.thehermes/secrets/client.token`
+On first start the daemon generates `~/.flotilla/secrets/client.token`
 (mode 0600), which the desktop client reads automatically on the same machine.
 
 For a remote client (laptop over Tailscale), do **not** copy the owner token.
@@ -176,10 +185,10 @@ connection settings. Revoking the device immediately prevents reconnection.
 ### Backup & restore
 
 ```sh
-hermesd backup                       # ~/.thehermes/backups/backup-<timestamp>
-hermesd backup --out /path/to/dir
-hermesd restore --from /path/to/dir  # refuses if a db exists
-hermesd restore --from /path/to/dir --overwrite   # moves current db aside first
+flotillad backup                       # ~/.flotilla/backups/backup-<timestamp>
+flotillad backup --out /path/to/dir
+flotillad restore --from /path/to/dir  # refuses if a db exists
+flotillad restore --from /path/to/dir --overwrite   # moves current db aside first
 ```
 
 Backups use SQLite's online backup API and include configuration manifests
@@ -188,45 +197,68 @@ daemon migrates an older database it takes the same backup, into
 `backups/pre-migration-<timestamp>-schema-<from>-to-<to>`, and refuses to
 start if it can't; the newest three of those are kept. Retention
 pruning (messages, deliveries, routine runs; FTS index kept in sync) runs
-daily by default — see `[retention]` in `hermesd.toml`.
+daily by default — see `[retention]` in `flotillad.toml`.
 
 ## Mac mini service
 
 ```sh
 cargo build --release
-./target/release/hermesd service install   # binary → ~/.thehermes/bin, launchd user agent
+./target/release/flotillad service install   # binary → ~/.flotilla/bin, launchd user agent
 sudo pmset -a sleep 0 disablesleep 1    # keep the mini awake
 ```
 
-`service install` copies the invoked binary to `~/.thehermes/bin/hermesd`,
-writes `~/.thehermes/hermesd.toml` if missing, and bootstraps the
-`com.manuelrinaldi.thehermesd` launchd agent — rerun it after a rebuild to upgrade in
+`service install` copies the invoked binary to `~/.flotilla/bin/flotillad`,
+writes `~/.flotilla/flotillad.toml` if missing, and bootstraps the
+`com.manuelrinaldi.flotillad` launchd agent — rerun it after a rebuild to upgrade in
 place. `service restart` bounces that agent without touching the install, which
 kills every running bot session mid-turn; Settings → Connection offers the same
-thing behind a confirmation. `ops/com.manuelrinaldi.thehermesd.plist` remains for
+thing behind a confirmation. `ops/com.manuelrinaldi.flotillad.plist` remains for
 fully manual setups.
 
-### Upgrading from `~/.gravity`
+### Upgrading from The Hermes
 
-Releases before 0.15 kept their state in `~/.gravity` under the launchd label
-`in.mikolajczuk.gravityd` (Windows task `Gravity-…`). `service install` stops
-that service, moves the home with `hermesd migrate-home`, and installs the new
-one; a failed migration is rolled back and the old service restarted. To look
-first, or to undo:
+The Hermes kept its state in `~/.thehermes` under the launchd label
+`com.manuelrinaldi.thehermesd` (Windows task `The Hermes-…`), and releases
+before 0.15 (Gravity) in `~/.gravity` under `in.mikolajczuk.gravityd`
+(Windows task `Gravity-…`). The first `flotillad service install` (the app
+runs it, and so does the Windows installer) stops every older service and its
+bot sessions, moves the newest old home to `~/.flotilla` with
+`flotillad migrate-home`, and installs `com.manuelrinaldi.flotillad`; a failed
+migration is rolled back and the old service restarted. To look first, or to
+undo:
 
 ```sh
-hermesd migrate-home --dry-run    # paths, rows and transcript dirs it would touch
-hermesd migrate-home              # backup, move, rewrite paths, rename transcript dirs
-hermesd migrate-home --rollback   # reverse it from the log in migrate-home.json
+flotillad migrate-home --dry-run    # paths, rows and transcript dirs it would touch
+flotillad migrate-home              # backup, move, rewrite paths, rename transcript dirs
+flotillad migrate-home --rollback   # reverse it from the log in migrate-home.json
 ```
 
-The move keeps every bot's Claude Code transcripts and memory by renaming
-their `~/.claude/projects` directories, and leaves `~/.gravity` as a symlink to
-`~/.thehermes` for one release.
+The move backs up the database first, keeps every bot's Claude Code
+transcripts and memory by renaming their `~/.claude/projects` directories,
+re-keys peer-link tokens kept in the macOS Keychain, and leaves `~/.thehermes`
+as a link to `~/.flotilla` for one release. The earlier move's log is kept as
+`migrate-home.gravity-to-thehermes.json`.
+
+What else changes:
+
+- **macOS app:** `Flotilla.app` (`com.manuelrinaldi.flotilla`) is a new app to
+  macOS. It takes over The Hermes's preferences on its first launch and tells
+  you when `/Applications/The Hermes.app` can go to the Trash. macOS asks again
+  for microphone, speech recognition and accessibility access.
+- **Windows:** the installer takes over `Program Files\The Hermes` (shortcuts,
+  uninstall entry, files once the new service runs).
+- **Old names still accepted:** `THEHERMES_*` and `GRAVITY_*`
+  variables, `hermes/*` JSON-RPC methods, `hermes://item/` card links, the
+  `hermes-bus` tool names in old transcripts, `.gravity-worktree.json` and
+  `gravity/<bot>` branches in bots' repositories, and a repository's
+  `.hermes/` review policy (both `.flotilla/` and `.hermes/` stay
+  owner-reviewed).
+- **Phones:** the iPhone app is a new app too; pair it again from Devices and
+  revoke the old device. The daemon keeps every device record.
 
 ## How it works, briefly
 
-- Each **bot** is a provisioned directory (`~/.thehermes/projects/<p>/bots/<b>`)
+- Each **bot** is a provisioned directory (`~/.flotilla/projects/<p>/bots/<b>`)
   with `system.md`, `mcp.json`, and a workspace containing `CLAUDE.md` and
   cooperative `.claude/settings.json` (permission rules + lifecycle hooks that
   report state to the daemon). The runtime adapter spawns `claude` there in a
@@ -234,7 +266,7 @@ their `~/.claude/projects` directories, and leaves `~/.gravity` as a symlink to
 - **Messages** are durable rows before delivery. A worker leases due
   deliveries, posts rendered envelopes (`[msg #42 from BOB · task] …`)
   to the session's inbox socket, retries with backoff, and surfaces terminal
-  failures. Bots consume and acknowledge via the `gravity-bus` MCP server
+  failures. Bots consume and acknowledge via the `flotilla-bus` MCP server
   (`send_message`, `complete_task`, `check_inbox`, …) with per-bot scoped
   tokens.
 - **Bot-to-bot sends** create one task + one delivery per message, with hop
@@ -252,5 +284,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, validation, and pull requests.
 
 ## License
 
-Gravity is licensed under the [MIT License](LICENSE). Third-party dependencies
+Flotilla is licensed under the [MIT License](LICENSE). Third-party dependencies
 retain their respective licenses.

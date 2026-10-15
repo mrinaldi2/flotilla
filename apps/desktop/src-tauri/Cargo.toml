@@ -1,7 +1,7 @@
 [package]
-name = "hermes-desktop"
+name = "flotilla-desktop"
 version = "0.18.3"
-description = "The Hermes desktop client"
+description = "Flotilla desktop client"
 license = "MIT"
 edition = "2021"
 
@@ -9,7 +9,7 @@ edition = "2021"
 [workspace]
 
 [lib]
-name = "hermes_desktop_lib"
+name = "flotilla_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

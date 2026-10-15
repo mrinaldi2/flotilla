@@ -1,6 +1,6 @@
-# Gravity architecture
+# Flotilla architecture
 
-Gravity runs persistent, named Claude Code bots grouped into projects. A Rust
+Flotilla runs persistent, named Claude Code bots grouped into projects. A Rust
 daemon owns the bot processes, durable messages, routines, and project state.
 The desktop app connects to that daemon to render terminals and manage the
 system. Closing a client leaves the daemon and its bots running.
@@ -19,7 +19,7 @@ private network. It binds to loopback on port `49777` by default.
 ```mermaid
 flowchart LR
     Client["Desktop client: Tauri, React, xterm.js"]
-    subgraph Daemon["hermesd"]
+    subgraph Daemon["flotillad"]
         WS["WebSocket control plane"]
         Supervisor["Supervisor and PTY adapter"]
         Bus["Messaging and delivery worker"]
@@ -45,15 +45,15 @@ flowchart LR
 | Component | Responsibility | Source |
 | --- | --- | --- |
 | Shared bus crate | Entity types, SQLite migrations, message envelopes | [crates/bus/src/lib.rs:1](../crates/bus/src/lib.rs#L1) |
-| Daemon assembly | Shared state, HTTP routes, background workers | [crates/hermesd/src/server.rs:1](../crates/hermesd/src/server.rs#L1) |
-| Supervisor | Session lifecycle, crash recovery, terminal state | [crates/hermesd/src/supervisor.rs:1](../crates/hermesd/src/supervisor.rs#L1) |
-| Runtime adapters | Start, probe, input, resize, and terminate sessions | [crates/hermesd/src/runtime/mod.rs:1](../crates/hermesd/src/runtime/mod.rs#L1) |
-| Delivery worker | Lease queued messages, deliver, retry, report failures | [crates/hermesd/src/delivery.rs:1](../crates/hermesd/src/delivery.rs#L1) |
-| Scheduler | Scheduled occurrences, signals, run completion, retries | [crates/hermesd/src/scheduler.rs:1](../crates/hermesd/src/scheduler.rs#L1) |
-| Kanban | Boards, columns, items, moves and their guards; `kanban::api` is the port other modules change cards through | [crates/hermesd/src/kanban.rs:1](../crates/hermesd/src/kanban.rs#L1) |
-| Releases | Release packages, the owner's ruling, deploys and installs | [crates/hermesd/src/releases.rs:1](../crates/hermesd/src/releases.rs#L1) |
-| PRs | The daemon's PRs, reviews, checks, merge queue and review policy | [crates/hermesd/src/prs.rs:1](../crates/hermesd/src/prs.rs#L1) |
-| Meetings | Meeting series, occurrences, contributions and action items | [crates/hermesd/src/meetings.rs:1](../crates/hermesd/src/meetings.rs#L1) |
+| Daemon assembly | Shared state, HTTP routes, background workers | [crates/flotillad/src/server.rs:1](../crates/flotillad/src/server.rs#L1) |
+| Supervisor | Session lifecycle, crash recovery, terminal state | [crates/flotillad/src/supervisor.rs:1](../crates/flotillad/src/supervisor.rs#L1) |
+| Runtime adapters | Start, probe, input, resize, and terminate sessions | [crates/flotillad/src/runtime/mod.rs:1](../crates/flotillad/src/runtime/mod.rs#L1) |
+| Delivery worker | Lease queued messages, deliver, retry, report failures | [crates/flotillad/src/delivery.rs:1](../crates/flotillad/src/delivery.rs#L1) |
+| Scheduler | Scheduled occurrences, signals, run completion, retries | [crates/flotillad/src/scheduler.rs:1](../crates/flotillad/src/scheduler.rs#L1) |
+| Kanban | Boards, columns, items, moves and their guards; `kanban::api` is the port other modules change cards through | [crates/flotillad/src/kanban.rs:1](../crates/flotillad/src/kanban.rs#L1) |
+| Releases | Release packages, the owner's ruling, deploys and installs | [crates/flotillad/src/releases.rs:1](../crates/flotillad/src/releases.rs#L1) |
+| PRs | The daemon's PRs, reviews, checks, merge queue and review policy | [crates/flotillad/src/prs.rs:1](../crates/flotillad/src/prs.rs#L1) |
+| Meetings | Meeting series, occurrences, contributions and action items | [crates/flotillad/src/meetings.rs:1](../crates/flotillad/src/meetings.rs#L1) |
 | Desktop frontend | Project and bot views, terminal rendering, connection state | [apps/desktop/src/App.tsx:1](../apps/desktop/src/App.tsx#L1) |
 | Native shell | Local daemon installation, native window controls, updates | [apps/desktop/src-tauri/src/lib.rs:1](../apps/desktop/src-tauri/src/lib.rs#L1) |
 
@@ -176,7 +176,7 @@ between the check and the write.
 
 Bots work the board over MCP (`item_create`, `item_move`, `board_get`, …). The
 tool schemas are generated from the request messages in
-`proto/hermes/board/v1/requests.proto`, `tools/list` shows only what a bot's
+`proto/flotilla/board/v1/requests.proto`, `tools/list` shows only what a bot's
 board roles allow, and a refusal lists every unmet guard with its fix.
 `send_message(kind=task)`, `raise_decision` and `complete_task` take an `item`:
 the task or decision is linked to the item, artifacts land on it, and a task's
@@ -252,14 +252,14 @@ as dock badges, global shortcuts, and opening project directories.
 
 ## Filesystem layout
 
-The daemon state root defaults to `~/.thehermes` and can be changed with
-`GRAVITY_HOME` or configuration. A typical installation contains:
+The daemon state root defaults to `~/.flotilla` and can be changed with
+`FLOTILLA_HOME` or configuration. A typical installation contains:
 
 ```text
-~/.thehermes/
-  hermesd.toml
+~/.flotilla/
+  flotillad.toml
   bus.sqlite
-  bin/hermesd
+  bin/flotillad
   secrets/
     client.token
     bot-<id>.token
@@ -287,7 +287,7 @@ development script, allowing multiple checkouts to run independently.
 
 ## Trust boundaries and recovery
 
-Gravity is a single-user system. Bots share the host OS user and its available
+Flotilla is a single-user system. Bots share the host OS user and its available
 credentials. Separate workspaces, scoped bus identities, and Claude Code
 permission rules provide cooperative boundaries rather than OS-level isolation.
 Bots may edit their own identity and manage bots they created, subject to

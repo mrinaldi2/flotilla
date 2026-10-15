@@ -2,7 +2,7 @@ use super::*;
 
 fn daemon_test_home(name: &str) -> PathBuf {
     let home = std::env::temp_dir().join(format!(
-        "hermes-desktop-daemon-{name}-{}",
+        "flotilla-desktop-daemon-{name}-{}",
         std::process::id()
     ));
     let _ = std::fs::remove_dir_all(&home);
@@ -12,11 +12,11 @@ fn daemon_test_home(name: &str) -> PathBuf {
 
 #[test]
 fn discovers_the_renamed_sidecar_next_to_the_app_binary() {
-    let exe = Path::new("/Applications/The Hermes.app/Contents/MacOS/The Hermes");
+    let exe = Path::new("/Applications/Flotilla.app/Contents/MacOS/Flotilla");
     assert_eq!(
         sidecar_path_for_exe(exe).expect("sidecar path"),
         PathBuf::from(format!(
-            "/Applications/The Hermes.app/Contents/MacOS/hermesd{}",
+            "/Applications/Flotilla.app/Contents/MacOS/flotillad{}",
             std::env::consts::EXE_SUFFIX
         ))
     );
@@ -24,14 +24,16 @@ fn discovers_the_renamed_sidecar_next_to_the_app_binary() {
 
 #[test]
 fn recognizes_only_complete_managed_daemon_installs() {
-    let root =
-        std::env::temp_dir().join(format!("hermes-desktop-daemon-test-{}", std::process::id()));
+    let root = std::env::temp_dir().join(format!(
+        "flotilla-desktop-daemon-test-{}",
+        std::process::id()
+    ));
     // A previous run that panicked mid-test leaves the plist behind, and
     // pids are reused.
     let _ = std::fs::remove_dir_all(&root);
     let home = root.join("gravity");
     let user_home = root.join("user");
-    let bin = home.join(format!("bin/hermesd{}", std::env::consts::EXE_SUFFIX));
+    let bin = home.join(format!("bin/flotillad{}", std::env::consts::EXE_SUFFIX));
     let plist = managed_markers(&home, &user_home)[0].clone();
     std::fs::create_dir_all(bin.parent().expect("binary parent")).expect("binary directory");
     std::fs::write(&bin, b"daemon").expect("daemon binary");
@@ -74,8 +76,8 @@ fn rejects_known_daemon_downgrades() {
 #[test]
 fn runtime_port_takes_precedence_over_the_configured_port() {
     let home = daemon_test_home("runtime-port");
-    std::fs::write(home.join("hermesd.toml"), "port = 49777\n").expect("configured port");
-    std::fs::write(home.join("hermesd.port"), "50123\n").expect("runtime port");
+    std::fs::write(home.join("flotillad.toml"), "port = 49777\n").expect("configured port");
+    std::fs::write(home.join("flotillad.port"), "50123\n").expect("runtime port");
 
     assert_eq!(daemon_port_from_home(&home), 50_123);
     std::fs::remove_dir_all(home).expect("test cleanup");
@@ -89,13 +91,13 @@ fn only_the_managed_daemon_on_its_own_port_counts_as_managed() {
     let root = daemon_test_home("is-managed");
     let home = root.join("gravity");
     let user_home = root.join("user");
-    let bin = home.join(format!("bin/hermesd{}", std::env::consts::EXE_SUFFIX));
+    let bin = home.join(format!("bin/flotillad{}", std::env::consts::EXE_SUFFIX));
     let plist = managed_markers(&home, &user_home)[0].clone();
     std::fs::create_dir_all(bin.parent().expect("binary parent")).expect("binary directory");
     std::fs::create_dir_all(plist.parent().expect("plist parent")).expect("plist directory");
     std::fs::write(&bin, b"daemon").expect("daemon binary");
     std::fs::write(&plist, b"plist").expect("launchd plist");
-    std::fs::write(home.join("hermesd.port"), "49777\n").expect("runtime port");
+    std::fs::write(home.join("flotillad.port"), "49777\n").expect("runtime port");
 
     assert!(managed_daemon_is_installed(&home, &user_home));
     assert_eq!(daemon_port_from_home(&home), 49_777);
@@ -143,9 +145,10 @@ fn a_service_without_its_binary_needs_repair() {
 #[test]
 fn an_interrupted_switch_over_after_the_move_needs_repair() {
     let root = daemon_test_home("switch-over");
-    let home = root.join(".thehermes");
+    let home = root.join(".flotilla");
     let user_home = root.join("user");
-    let [current, legacy] = managed_markers(&home, &user_home);
+    let markers = managed_markers(&home, &user_home);
+    let (current, legacy) = (markers[0].clone(), markers[1].clone());
     let state = home.join("migrate-home.json");
     let exe = std::env::consts::EXE_SUFFIX;
     for file in [&current, &legacy, &state] {
@@ -153,7 +156,7 @@ fn an_interrupted_switch_over_after_the_move_needs_repair() {
     }
     std::fs::create_dir_all(home.join("bin")).expect("bin directory");
     // Crashed before the swap: the old binary moved with the home.
-    std::fs::write(home.join(format!("bin/gravityd{exe}")), b"old").expect("old binary");
+    std::fs::write(home.join(format!("bin/hermesd{exe}")), b"old").expect("old binary");
     std::fs::write(&legacy, b"legacy").expect("legacy marker");
     std::fs::write(&state, r#"{"completed_at":null}"#).expect("state");
     assert!(
@@ -167,7 +170,7 @@ fn an_interrupted_switch_over_after_the_move_needs_repair() {
 
     // Crashed after registering the new service: its binary is in place
     // too, but the pre-rename service was never removed.
-    std::fs::write(home.join(format!("bin/hermesd{exe}")), b"new").expect("new binary");
+    std::fs::write(home.join(format!("bin/flotillad{exe}")), b"new").expect("new binary");
     assert!(repair_needed(&home, &user_home, false));
     std::fs::write(&current, b"current").expect("current marker");
     assert!(!repair_needed(&home, &user_home, false), "already switched");
@@ -205,7 +208,7 @@ fn a_daemon_answering_on_the_homes_port_counts_as_running() {
     let home = daemon_test_home("answers");
     let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("listener");
     let port = listener.local_addr().expect("address").port();
-    std::fs::write(home.join("hermesd.port"), format!("{port}\n")).expect("port file");
+    std::fs::write(home.join("flotillad.port"), format!("{port}\n")).expect("port file");
     let server = std::thread::spawn(move || {
         let (mut stream, _) = listener.accept().expect("accept");
         let mut request = [0_u8; 1024];

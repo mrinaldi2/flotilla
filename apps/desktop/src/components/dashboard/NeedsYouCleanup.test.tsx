@@ -60,7 +60,7 @@ function show(daemon: FakeDaemon, addToast = vi.fn<AddToast>()) {
   render(
     <DashboardView
       client={daemon}
-      project={project({ id: "p1", name: "The Hermes" })}
+      project={project({ id: "p1", name: "Flotilla" })}
       bots={DASH_BOTS}
       connected
       canControl

@@ -4,13 +4,17 @@
 
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
-import type { BoardColumn, ItemEvent, Unmet } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import type {
+  BoardColumn,
+  ItemEvent,
+  Unmet,
+} from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import {
   ColumnCategory,
   ColumnKind,
   ItemEventKind,
-} from "../../../protocol/gen/hermes/board/v1/board_pb";
-import type { MoveCheck } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+} from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { MoveCheck } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 
 /** The flow's steps, in order; Cancelled is off the path. */
 const STEPS: readonly { readonly category: ColumnCategory; readonly word: string }[] = [

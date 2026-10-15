@@ -42,7 +42,7 @@ impl PermissionProfile {
 pub enum PermissionExtra {
     /// Run its own `serve/serve.sh` and `serve/publish.sh` (DevOps).
     Publish,
-    /// Restart the Hermes service through launchd (DevOps). Every other
+    /// Restart the Flotilla service through launchd (DevOps). Every other
     /// bot is denied `launchctl` outright.
     DaemonRestart,
     /// Restart its own development app with `scripts/dev.sh`.
@@ -55,10 +55,10 @@ pub enum PermissionExtra {
     /// Pause every project on this computer for an install (H-117). The
     /// daemon also requires DevOps or `install`, and an approved release.
     Quiesce,
-    /// Build the Windows installer with `hermesd release build-installer`,
+    /// Build the Windows installer with `flotillad release build-installer`,
     /// which runs the repo's own script only as committed (H-117 X3, H-104).
     BuildInstallers,
-    /// Fast-forward `main` to a mergeable PR's head with `hermesd pr merge`
+    /// Fast-forward `main` to a mergeable PR's head with `flotillad pr merge`
     /// (H-284), on the daemon's `pr_merge` task. Off for every bot until the
     /// owner grants it; a raw push to `main` stays refused.
     PrMerge,

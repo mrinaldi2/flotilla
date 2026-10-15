@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS review_withdrawn (
 /// - `pr_merge_stuck`: a `handed` merge DevOps hasn't run within 30 min:
 ///   when it was first handed, how often it was handed again. Shown to the
 ///   owner until the PR merges or leaves the queue.
-/// - `pr_merge_check`: the last `hermesd pr merge` gate pass for a PR: the
+/// - `pr_merge_check`: the last `flotillad pr merge` gate pass for a PR: the
 ///   head it passed and main as it was then (ARCH M1). `pr_merged` records
 ///   a merge only against a recent pass for that head.
 /// - `pr_main_moved`: main reached a PR's head with no gate pass for it:

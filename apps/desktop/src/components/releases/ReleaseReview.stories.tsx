@@ -221,7 +221,7 @@ export const Planned: Story = () => (
 
 /** The Releases tab in the project window, with a current package and history. */
 export const Tab: Story = () => {
-  const acme = project({ id: "p1", name: "The Hermes" });
+  const acme = project({ id: "p1", name: "Flotilla" });
   const client = new FakeDaemon().onRequest("list_releases", () => ({
     type: "releases",
     req_id: "1",

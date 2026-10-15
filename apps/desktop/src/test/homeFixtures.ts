@@ -16,7 +16,7 @@ export function overviewJson(): JsonValue {
     rows: [
       {
         project_id: "p1",
-        name: "The Hermes",
+        name: "Flotilla",
         members: [{ daemon_id: "mac", project_id: "p1", computer_name: "mac" }],
         board_home: "mac",
         current_release: {

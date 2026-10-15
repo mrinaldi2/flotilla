@@ -25,7 +25,7 @@ const EXTRAS: readonly {
   },
   {
     id: "daemon_restart",
-    label: "Restart the Hermes service",
+    label: "Restart the Flotilla service",
     help: "Restarts every bot, so it must announce it first.",
   },
   { id: "app_restart", label: "Restart its dev app", help: "Run scripts/dev.sh." },
@@ -48,7 +48,7 @@ const EXTRAS: readonly {
   {
     id: "pr_merge",
     label: "Merge pull requests",
-    help: "Fast-forwards main to a mergeable PR when the daemon asks, with hermesd pr merge. Give it to DevOps only.",
+    help: "Fast-forwards main to a mergeable PR when the daemon asks, with flotillad pr merge. Give it to DevOps only.",
   },
 ];
 

@@ -5,8 +5,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
-import type { LineComment } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { Severity, Side } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { LineComment } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { Severity, Side } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { PrOwnerRequestBody } from "../../protocol/prOwner";
 
 export interface Thread {

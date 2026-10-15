@@ -230,7 +230,7 @@ function p0Row(r: Extract<Shown, { readonly kind: "p0" }>, props: NeedsYouProps)
   };
 }
 
-/** No build can be published until hermesd.toml is fixed (H-100). */
+/** No build can be published until flotillad.toml is fixed (H-100). */
 function servingRow(r: Extract<Shown, { readonly kind: "serving_off" }>): RowViewProps {
   return { glyph: "⚠", tone: "bad", title: r.title, meta: r.reason, verb: "Fix it" };
 }

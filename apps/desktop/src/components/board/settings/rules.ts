@@ -1,9 +1,9 @@
 // A column's movers and entry rules as the board's tokens (`lead`,
 // `roles:dev,tester`, `size_at_most:M`, `fields_filled:Goal;Steps`), in
 // words for the settings panel, and the kinds and facts the panel offers.
-// The Hermes service parses the same tokens and refuses any it doesn't know.
+// Flotilla service parses the same tokens and refuses any it doesn't know.
 
-import { ColumnKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import { ColumnKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 
 /** A kind chip: a glyph and a word, never colour alone. */
 export const KINDS: readonly {

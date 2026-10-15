@@ -1,6 +1,6 @@
 # Bot runtimes
 
-Gravity can run Claude Code and Codex CLI bots in the same project. Install and
+Flotilla can run Claude Code and Codex CLI bots in the same project. Install and
 sign in to the selected CLI on the daemon's computer. In **Bot info → Bot runtime**,
 choose the CLI and click **Change runtime**. This interrupts the active turn and
 restarts the bot. Its workspace, instructions, saved facts, bus messages and routines
@@ -10,7 +10,7 @@ resumes that provider's saved conversation.
 ![Runtime picker verified in the native Windows app](images/bot-runtime-picker.png)
 
 Existing bots and new bots use Claude Code by default. For a Codex-only installation,
-set this in `~/.thehermes/hermesd.toml` and restart the daemon:
+set this in `~/.flotilla/flotillad.toml` and restart the daemon:
 
 ```toml
 default_bot_runtime = "codex_cli"
@@ -38,16 +38,16 @@ over a private authenticated loopback WebSocket, with the native Codex CLI termi
 attached to the same thread. Tested against Codex CLI 0.159.3; the CLI must support
 `--remote` and App Server capability-token authentication. Codex's prompt editor,
 status, slash commands, keyboard shortcuts, approval dialogs and questions appear
-directly in Gravity's terminal. Terminal resize reaches the CLI; inline mode keeps
+directly in Flotilla's terminal. Terminal resize reaches the CLI; inline mode keeps
 scrollback available. Use the native CLI controls to interrupt or leave a session.
-Gravity supervision restarts a bot after its terminal exits.
+Flotilla supervision restarts a bot after its terminal exits.
 
 Bus messages arrive through structured turn requests and never consume a partially
-typed terminal prompt. Gravity observes both native and bus turns for activity and
+typed terminal prompt. Flotilla observes both native and bus turns for activity and
 routine completion. Command, file-change and permission approvals also appear as
 permission cards in the app while it is open with the `control` grant; whichever
 answers first, the card or the native CLI, decides, and the other is withdrawn.
-Gravity never answers an approval by itself: an unanswered card is declined when
+Flotilla never answers an approval by itself: an unanswered card is declined when
 its window closes. Questions and elicitations stay in the native CLI. Each bot
 has a separate App Server with a fresh random
 capability token. The raw token is passed through the terminal environment and RPC
@@ -56,8 +56,8 @@ authorization header; only its SHA-256 verifier appears in server arguments.
 The upstream WebSocket transport and remote terminal are experimental. Keep the
 runtime contribution in draft until live provider validation is complete.
 
-Each bot receives its own Gravity bus token through an environment variable; the
-App Server config enables the local Gravity MCP endpoint. Codex uses workspace-write
+Each bot receives its own Flotilla bus token through an environment variable; the
+App Server config enables the local Flotilla MCP endpoint. Codex uses workspace-write
 sandboxing with the project's shared artifacts directory included. It reads the
 shared system instructions, `CLAUDE.md` and `FACTS.md`. Thread IDs and activity
 observations are saved beside the workspace for restarts and routine correlation.

@@ -44,14 +44,14 @@ describe("AboutSettings", () => {
     const user = userEvent.setup();
     const addToast = renderAbout(LOCAL, "0.6.0");
 
-    await user.click(await screen.findByRole("button", { name: "Update Hermes service" }));
+    await user.click(await screen.findByRole("button", { name: "Update Flotilla service" }));
 
     expect(invoke).toHaveBeenCalledWith("install_local_daemon", { currentVersion: "0.6.0" });
     await waitFor(() => {
       expect(addToast).toHaveBeenCalledWith(
         "info",
-        "Hermes service updated",
-        "The Hermes service on this computer is restarting.",
+        "Flotilla service updated",
+        "Flotilla service on this computer is restarting.",
       );
     });
   });
@@ -66,7 +66,7 @@ describe("AboutSettings", () => {
     renderAbout(LOCAL, "");
 
     expect(await screen.findByText("0.6.0 · not connected")).toBeInTheDocument();
-    await user.click(await screen.findByRole("button", { name: "Update Hermes service" }));
+    await user.click(await screen.findByRole("button", { name: "Update Flotilla service" }));
 
     expect(invoke).toHaveBeenCalledWith("install_local_daemon", { currentVersion: "0.6.0" });
   });
@@ -86,7 +86,9 @@ describe("AboutSettings", () => {
     renderAbout(LOCAL, "");
 
     expect(await screen.findByText("not connected")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Update Hermes service" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Update Flotilla service" }),
+    ).not.toBeInTheDocument();
   });
 
   it("never offers to downgrade a newer local daemon", async () => {
@@ -98,13 +100,17 @@ describe("AboutSettings", () => {
     renderAbout(LOCAL, "");
 
     expect(await screen.findByText("0.9.0 · not connected")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Update Hermes service" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Update Flotilla service" }),
+    ).not.toBeInTheDocument();
   });
 
   it("never offers to replace a remote daemon", async () => {
     renderAbout(REMOTE, "0.6.0");
 
     expect(await screen.findByText("0.7.0")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Update Hermes service" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Update Flotilla service" }),
+    ).not.toBeInTheDocument();
   });
 });

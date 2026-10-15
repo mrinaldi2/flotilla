@@ -1,4 +1,4 @@
-//! The launch-time service check: the bundled `hermesd service status
+//! The launch-time service check: the bundled `flotillad service status
 //! --json`, read into the one state the app offers an action for. Nothing
 //! here installs anything; the app asks the user first.
 
@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use super::run_sidecar;
 
-/// `hermesd`'s `service_report::Report`.
+/// `flotillad`'s `service_report::Report`.
 #[derive(Deserialize)]
 struct Report {
     binary: bool,
@@ -86,7 +86,7 @@ fn parse_status(stdout: &str) -> Result<ServiceStatus, String> {
 /// setup): that daemon is not the app's to install.
 #[tauri::command]
 pub async fn local_service_status() -> Result<Option<ServiceStatus>, String> {
-    if ["THEHERMES_HOME", "GRAVITY_HOME"]
+    if ["FLOTILLA_HOME", "THEHERMES_HOME", "GRAVITY_HOME"]
         .iter()
         .any(|name| std::env::var_os(name).is_some())
     {

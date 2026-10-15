@@ -7,13 +7,13 @@ describe("resolveMacDownloadUrl", () => {
     const manifest = {
       platforms: {
         "darwin-aarch64": {
-          url: "https://downloads.example/desktop/gravity/0.9.0/gravity.app.tar.gz",
+          url: "https://downloads.example/desktop/flotilla/0.9.0/flotilla.app.tar.gz",
         },
       },
     };
 
     expect(resolveMacDownloadUrl(manifest)).toBe(
-      "https://downloads.example/desktop/gravity/0.9.0/gravity.dmg",
+      "https://downloads.example/desktop/flotilla/0.9.0/flotilla.dmg",
     );
   });
 
@@ -22,8 +22,8 @@ describe("resolveMacDownloadUrl", () => {
     {},
     { platforms: null },
     { platforms: { "darwin-aarch64": {} } },
-    { platforms: { "darwin-aarch64": { url: "http://downloads.example/gravity.app.tar.gz" } } },
-    { platforms: { "darwin-aarch64": { url: "https://downloads.example/gravity.zip" } } },
+    { platforms: { "darwin-aarch64": { url: "http://downloads.example/flotilla.app.tar.gz" } } },
+    { platforms: { "darwin-aarch64": { url: "https://downloads.example/flotilla.zip" } } },
   ])("rejects an unsupported manifest", (manifest) => {
     expect(resolveMacDownloadUrl(manifest)).toBeNull();
   });

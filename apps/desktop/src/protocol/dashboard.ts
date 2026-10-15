@@ -60,7 +60,7 @@ type Row =
       /** The served folder is refused, so no build is published (H-100). */
       readonly kind: "serving_off";
       readonly title: string;
-      /** Why, and what to change in hermesd.toml. */
+      /** Why, and what to change in flotillad.toml. */
       readonly reason: string;
     }
   | {

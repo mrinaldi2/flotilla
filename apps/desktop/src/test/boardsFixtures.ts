@@ -1,14 +1,16 @@
 // A project with several boards (0.19.0) for stories and tests: Main, the
-// release-gated board every project had before, and Recipes, a custom board
-// from the Simple preset with a QA column the lead added. Drafts, a draft's
-// attachments and changes, and the lead's proposals. Times are frozen near
-// DRAWER_NOW so ages never drift.
+// release-gated board every project had before, and Recipes, a Simple board
+// with a QA column the lead added. Drafts, a draft's attachments and changes,
+// and the lead's proposals. Times are frozen near DRAWER_NOW, so ages hold.
 
 import { create } from "@bufbuild/protobuf";
 import type { MessageInitShape } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
-import type { Board, BoardColumn, Item, ItemCard } from "../protocol/gen/hermes/board/v1/board_pb";
 import {
+  type Board,
+  type BoardColumn,
+  type Item,
+  type ItemCard,
   BoardColumnSchema,
   BoardSchema,
   BoardSettingsSchema,
@@ -22,19 +24,17 @@ import {
   LinkKind,
   Priority,
   WipScope,
-} from "../protocol/gen/hermes/board/v1/board_pb";
-import type {
-  BoardProposal,
-  BoardSnapshot,
-  DraftChanges,
-  ItemDetail,
-} from "../protocol/gen/hermes/board/v1/requests_pb";
+} from "../protocol/gen/flotilla/board/v1/board_pb";
 import {
+  type BoardProposal,
   BoardProposalSchema,
+  type BoardSnapshot,
   BoardSnapshotSchema,
+  type DraftChanges,
   DraftChangesSchema,
+  type ItemDetail,
   ItemDetailSchema,
-} from "../protocol/gen/hermes/board/v1/requests_pb";
+} from "../protocol/gen/flotilla/board/v1/requests_pb";
 import { card, defaultColumns } from "./boardFixtures";
 
 const at = (iso: string) => timestampFromDate(new Date(iso));

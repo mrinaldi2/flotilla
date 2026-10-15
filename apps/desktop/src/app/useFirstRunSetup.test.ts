@@ -58,12 +58,12 @@ describe("useFirstRunSetup", () => {
       daemon.setStatus("disconnected");
     });
     expect(result.current.showWizard).toBe(false);
-    expect(store.get("hermes.setup-complete")).toBe("true");
+    expect(store.get("flotilla.setup-complete")).toBe("true");
   });
 
   it("stays hidden on later launches once setup completed", () => {
     const store = stubStorage();
-    store.set("hermes.setup-complete", "true");
+    store.set("flotilla.setup-complete", "true");
     inTauri();
     const { result } = setup();
     expect(result.current.showWizard).toBe(false);
@@ -93,13 +93,13 @@ describe("useFirstRunSetup", () => {
         token: "tok-1",
       });
     });
-    expect(store.get("hermes.device-token")).toBe("tok-1");
+    expect(store.get("flotilla.device-token")).toBe("tok-1");
     expect(changeEndpoint).toHaveBeenCalledWith({ host: "mini.ts.net", port: 7788 });
   });
 
   it("leaves an existing device token alone when none is supplied", () => {
     const store = stubStorage();
-    store.set("hermes.device-token", "tok-old");
+    store.set("flotilla.device-token", "tok-old");
     inTauri();
     const { changeEndpoint, result } = setup();
     act(() => {
@@ -108,7 +108,7 @@ describe("useFirstRunSetup", () => {
         endpoint: { host: "mini.ts.net", port: 7788 },
       });
     });
-    expect(store.get("hermes.device-token")).toBe("tok-old");
+    expect(store.get("flotilla.device-token")).toBe("tok-old");
     expect(changeEndpoint).toHaveBeenCalledWith({ host: "mini.ts.net", port: 7788 });
   });
 });

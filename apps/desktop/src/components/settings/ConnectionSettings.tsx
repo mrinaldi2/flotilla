@@ -52,7 +52,7 @@ export default function ConnectionSettings(props: ConnectionSettingsProps): Reac
             {STATUS_LABEL[status]}
             {status === "connected" && !canControl ? " · read-only (no control access)" : ""}
             {status === "connected" && client.serverVersion.length > 0
-              ? ` · Hermes service ${client.serverVersion}`
+              ? ` · Flotilla service ${client.serverVersion}`
               : ""}
           </div>
         </div>
@@ -71,8 +71,8 @@ export default function ConnectionSettings(props: ConnectionSettingsProps): Reac
         <div className="settings-row-text">
           <div className="settings-row-label">Computer address</div>
           <div className="settings-row-help">
-            The computer running the Hermes service. Use a Tailscale hostname to connect to another
-            computer.
+            The computer running the Flotilla service. Use a Tailscale hostname to connect to
+            another computer.
           </div>
           <div className="settings-inline-fields">
             <input
@@ -113,7 +113,7 @@ export default function ConnectionSettings(props: ConnectionSettingsProps): Reac
         </div>
       </div>
 
-      <h3 className="settings-subhead">Hermes service</h3>
+      <h3 className="settings-subhead">Flotilla service</h3>
       <DaemonSettings
         client={client}
         connected={connected}

@@ -1,11 +1,11 @@
 import { create } from "@bufbuild/protobuf";
 import { describe, expect, it } from "vitest";
-import { ItemAttachmentSchema } from "../../../protocol/gen/hermes/board/v1/board_pb";
+import { ItemAttachmentSchema } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import {
   AttachmentChunkSchema,
   UploadProgressSchema,
   ItemDetailSchema,
-} from "../../../protocol/gen/hermes/board/v1/requests_pb";
+} from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { draftDetail, SCREENSHOT_PNG } from "../../../test/boardsFixtures";
 import { FakeDaemon } from "../../../test/fakeDaemon";
 import {
