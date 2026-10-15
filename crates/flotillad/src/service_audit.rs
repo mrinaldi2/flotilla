@@ -5,7 +5,7 @@
 //! arguments, and the process that ran it with what launched that one.
 
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::bus_auth::origin::{exe_path, name_of};
 use crate::bus_auth::os::OsProcessTable;
@@ -30,6 +30,20 @@ pub fn record(log_dir: &Path, args: &[String]) {
             "could not record the install in {}: {error}",
             log_dir.display()
         );
+    }
+}
+
+/// Where this install's line goes. While the home has yet to move
+/// (`moving` is its old and new place), a log directory inside the new home
+/// is taken from the old one instead: writing there first made the new home
+/// non-empty, and the move then refused it as "exists and is not empty".
+/// The old home's log moves with the rest of it.
+pub fn log_dir_for(log_dir: &Path, moving: Option<(&Path, &Path)>) -> PathBuf {
+    match moving {
+        Some((from, to)) => log_dir
+            .strip_prefix(to)
+            .map_or_else(|_| log_dir.to_path_buf(), |rest| from.join(rest)),
+        None => log_dir.to_path_buf(),
     }
 }
 
@@ -58,6 +72,24 @@ fn line(at: &str, args: &[String], caller: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::path::{Path, PathBuf};
+
+    use super::log_dir_for;
+
+    #[test]
+    fn a_pending_move_logs_into_the_old_home() {
+        let (from, to) = (Path::new("/u/.thehermes"), Path::new("/u/.flotilla"));
+        assert_eq!(
+            log_dir_for(&to.join("logs"), Some((from, to))),
+            from.join("logs")
+        );
+        // A log directory elsewhere never blocks the move: kept as is.
+        let elsewhere = PathBuf::from("/var/log/flotilla");
+        assert_eq!(log_dir_for(&elsewhere, Some((from, to))), elsewhere);
+        // Nothing to move: the home's own log directory.
+        assert_eq!(log_dir_for(&to.join("logs"), None), to.join("logs"));
+    }
+
     #[test]
     fn a_line_says_when_what_and_who() {
         let args = ["service", "install", "--no-migrate"].map(String::from);

@@ -212,7 +212,11 @@ async fn main() -> anyhow::Result<()> {
                         }
                     }
                     // Who restarted the service, on record (H-193).
-                    flotillad::service_audit::record(&paths.log_dir(), &args);
+                    let log_dir = flotillad::service_audit::log_dir_for(
+                        &paths.log_dir(),
+                        pending.as_ref().map(|p| (p.from.as_path(), p.to.as_path())),
+                    );
+                    flotillad::service_audit::record(&log_dir, &args);
                     flotillad::service::install_and_start(
                         &source,
                         &paths,
