@@ -118,12 +118,38 @@ fn command(p: &Proposal) -> Command {
     }
     #[cfg(windows)]
     for (key, _) in std::env::vars() {
-        let upper = key.to_ascii_uppercase();
-        if upper.starts_with("FLOTILLA_") || upper.starts_with("GRAVITY_") {
+        if is_daemon_env(&key) {
             cmd.env_remove(key);
         }
     }
     cmd
+}
+
+/// The daemon's own variables, under every name it reads them by
+/// (`FLOTILLA_*`, `THEHERMES_*`, `GRAVITY_*`): a Windows owner action keeps
+/// the rest of the environment, never these.
+#[cfg(any(windows, test))]
+fn is_daemon_env(key: &str) -> bool {
+    let upper = key.to_ascii_uppercase();
+    std::iter::once(crate::brand::ENV_PREFIX)
+        .chain(crate::brand::LEGACY_ENV_PREFIXES)
+        .any(|prefix| upper.starts_with(prefix))
+}
+
+#[cfg(test)]
+#[test]
+fn every_daemon_prefix_is_kept_from_an_owner_action() {
+    for key in [
+        "FLOTILLA_HOME",
+        "TheHermes_Home",
+        "THEHERMES_TOKEN",
+        "gravity_home",
+    ] {
+        assert!(is_daemon_env(key), "{key}");
+    }
+    for key in ["PATH", "HERMES", "USERPROFILE"] {
+        assert!(!is_daemon_env(key), "{key}");
+    }
 }
 
 /// Ends the run and everything it started.
