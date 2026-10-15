@@ -7,12 +7,12 @@ use super::*;
 #[test]
 fn plist_bakes_absolute_paths() {
     let rendered = render_plist(
-        Path::new("/x/bin/hermesd"),
+        Path::new("/x/bin/flotillad"),
         Path::new("/x/logs"),
         Path::new("/Users/x"),
     );
-    assert!(rendered.contains("<string>/x/bin/hermesd</string>"));
-    assert!(rendered.contains("<string>/x/logs/hermesd.out.log</string>"));
+    assert!(rendered.contains("<string>/x/bin/flotillad</string>"));
+    assert!(rendered.contains("<string>/x/logs/flotillad.out.log</string>"));
     assert!(rendered.contains("<string>--negotiate-port</string>"));
     assert!(rendered.contains(LAUNCHD_LABEL));
     assert!(!rendered.contains('~'));
@@ -24,7 +24,7 @@ fn plist_bakes_absolute_paths() {
 #[test]
 fn plist_path_covers_the_claude_code_installer_location() {
     let rendered = render_plist(
-        Path::new("/x/bin/hermesd"),
+        Path::new("/x/bin/flotillad"),
         Path::new("/x/logs"),
         Path::new("/Users/x"),
     );
@@ -39,10 +39,13 @@ fn the_legacy_plist_is_the_pre_rename_label() {
     let p = ServicePaths::new("/x/state".into(), "/x/user".into());
     assert!(p
         .legacy_plist_path()
-        .ends_with("Library/LaunchAgents/in.mikolajczuk.gravityd.plist"));
+        .ends_with("Library/LaunchAgents/com.manuelrinaldi.thehermesd.plist"));
+    let all = p.legacy_plist_paths();
+    assert_eq!(all.len(), 2);
+    assert!(all[1].ends_with("Library/LaunchAgents/in.mikolajczuk.gravityd.plist"));
     assert!(p
         .plist_path()
-        .ends_with("Library/LaunchAgents/com.manuelrinaldi.thehermesd.plist"));
+        .ends_with("Library/LaunchAgents/com.manuelrinaldi.flotillad.plist"));
 }
 
 #[test]
@@ -137,15 +140,19 @@ impl Launchctl for FakeLaunchctl {
     }
     fn wait_healthy(&self, home: &Path, _port: u16, version: &str) -> anyhow::Result<()> {
         self.call("health".into())?;
-        let bin = std::fs::read_to_string(home.join("bin/hermesd"))?;
+        let bin = std::fs::read_to_string(home.join("bin/flotillad"))?;
         anyhow::ensure!(bin == "new" && version == "9.9.9", "wrong daemon: {bin}");
         Ok(())
     }
 }
 
-const LEGACY: &str = "in.mikolajczuk.gravityd.plist";
-const CURRENT: &str = "com.manuelrinaldi.thehermesd.plist";
-const LEGACY_LABEL: &str = "in.mikolajczuk.gravityd";
+/// The Hermes's agent, the one an upgrade normally finds.
+const LEGACY: &str = "com.manuelrinaldi.thehermesd.plist";
+const CURRENT: &str = "com.manuelrinaldi.flotillad.plist";
+const LEGACY_LABEL: &str = "com.manuelrinaldi.thehermesd";
+/// A Gravity agent a machine may still have left over.
+const GRAVITY: &str = "in.mikolajczuk.gravityd.plist";
+const GRAVITY_LABEL: &str = "in.mikolajczuk.gravityd";
 
 fn launchd_with(
     paths: &ServicePaths,

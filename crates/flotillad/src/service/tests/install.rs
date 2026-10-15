@@ -34,6 +34,37 @@ fn a_pre_rename_agent_is_migrated_and_removed_once_the_new_one_is_healthy() {
     moving.assert_moved();
 }
 
+/// A Mac that still has Gravity's agent beside The Hermes's: the install
+/// stops, disables and removes both, and starts only Flotilla's.
+#[test]
+fn every_pre_rename_agent_is_stopped_and_removed() {
+    let moving = Moving::new();
+    let (paths, launchctl) = legacy_agent(&moving);
+    let gravity = paths.launch_agents.join(GRAVITY);
+    std::fs::write(&gravity, "gravity agent").unwrap();
+    launchctl.loaded.borrow_mut().insert(GRAVITY.into());
+    let Outcome {
+        result,
+        loaded,
+        disabled,
+        calls,
+    } = install_moving(&moving, &paths, launchctl);
+    result.unwrap();
+    for wanted in [
+        format!("disable {LEGACY_LABEL}"),
+        format!("disable {GRAVITY_LABEL}"),
+        format!("bootout {LEGACY}"),
+        format!("bootout {GRAVITY}"),
+    ] {
+        assert!(calls.contains(&wanted), "{wanted}: {calls:?}");
+    }
+    assert_eq!(loaded, [CURRENT]);
+    assert_eq!(disabled.len(), 2, "{disabled:?}");
+    assert!(!paths.legacy_plist_path().exists());
+    assert!(!gravity.exists());
+    moving.assert_moved();
+}
+
 /// Each step of the install failing, through launchd's host: the old agent
 /// is enabled and loaded again from its plist, the new one is gone, and the
 /// home and binary are back as they were.
@@ -53,7 +84,7 @@ fn a_failure_at_each_step_reloads_the_pre_rename_agent() {
             "it was left running",
         ),
         ("migrate", None, "injected crash at Database"),
-        ("swap", None, "bin/hermesd.old"),
+        ("swap", None, "bin/flotillad.old"),
         (
             "register",
             Some(format!("bootstrap {CURRENT}")),
@@ -74,7 +105,7 @@ fn a_failure_at_each_step_reloads_the_pre_rename_agent() {
             "migrate" => moving.crash_migration_at("Database"),
             // A directory where the old binary is kept blocks the swap.
             "swap" => {
-                std::fs::create_dir_all(moving.plan().from.join("bin/hermesd.old/stuck")).unwrap()
+                std::fs::create_dir_all(moving.plan().from.join("bin/flotillad.old/stuck")).unwrap()
             }
             _ => {}
         }
@@ -93,7 +124,7 @@ fn a_failure_at_each_step_reloads_the_pre_rename_agent() {
             );
         }
         if step == "swap" {
-            std::fs::remove_dir_all(moving.plan().from.join("bin/hermesd.old")).unwrap();
+            std::fs::remove_dir_all(moving.plan().from.join("bin/flotillad.old")).unwrap();
         }
         moving.assert_rolled_back();
         assert_eq!(loaded, [LEGACY], "{step}: {error}\n{calls:?}");
@@ -150,7 +181,7 @@ fn restart_reinstalls_a_missing_binary_without_migrating() {
     assert_eq!(host.launchctl.loaded(), [CURRENT]);
 }
 
-/// With `THEHERMES_HOME` set, the pre-rename agent runs the user's main
+/// With `FLOTILLA_HOME` set, the pre-rename agent runs the user's main
 /// default home, which nothing migrates: the install leaves it running and
 /// keeps its plist.
 #[test]
@@ -158,7 +189,7 @@ fn an_overridden_home_never_takes_over_the_pre_rename_agent() {
     let tmp = tempfile::tempdir().unwrap();
     let paths = ServicePaths::new(tmp.path().join("chosen"), tmp.path().join("user"))
         .with_home_overridden(true);
-    std::fs::create_dir_all(paths.user_home.join(crate::brand::LEGACY_HOME_DIR_NAME)).unwrap();
+    std::fs::create_dir_all(paths.user_home.join(crate::brand::LEGACY_HOME_DIR_NAMES[0])).unwrap();
     std::fs::create_dir_all(&paths.launch_agents).unwrap();
     std::fs::write(paths.legacy_plist_path(), "legacy agent").unwrap();
     let source = tmp.path().join("bundled");

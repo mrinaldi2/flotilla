@@ -13,7 +13,7 @@ mod upgrade;
 fn stopping_an_absent_or_reused_pid_is_a_no_op() {
     let root = tempfile::tempdir().expect("temporary home");
     let executables = [
-        root.path().join("hermesd.exe"),
+        root.path().join("flotillad.exe"),
         root.path().join("gravityd.exe"),
     ];
     stop_daemon(i32::MAX as u32, &executables).expect("absent process");
@@ -37,7 +37,7 @@ fn stopping_the_daemon_reaps_its_whole_tree_without_wmi() {
         std::thread::sleep(Duration::from_millis(50));
     };
     assert!(!children.is_empty(), "stand-in daemon started no child");
-    let other = PathBuf::from(r"C:\nowhere\hermesd.exe");
+    let other = PathBuf::from(r"C:\nowhere\flotillad.exe");
     stop_daemon(daemon.id(), std::slice::from_ref(&other)).expect("unmatched executable");
     assert!(
         daemon.try_wait().expect("status").is_none(),
@@ -63,7 +63,7 @@ fn stopping_the_daemon_reaps_its_whole_tree_without_wmi() {
 fn reaping_finds_a_daemon_by_its_executable_without_a_pid_file() {
     let root = tempfile::tempdir().unwrap();
     // A copy of cmd.exe stands in for a managed daemon binary.
-    let daemon = root.path().join("hermesd.exe");
+    let daemon = root.path().join("flotillad.exe");
     std::fs::copy(std::env::var("ComSpec").expect("ComSpec"), &daemon).unwrap();
     let mut child = Command::new(&daemon)
         .args(["/d", "/c", "ping -n 120 127.0.0.1 >nul"])
@@ -111,8 +111,8 @@ fn task_is_scoped_to_current_user_and_escapes_paths() {
 /// from the copy the installer renamed aside.
 #[test]
 fn the_task_runs_the_installed_daemon() {
-    let home = PathBuf::from(r"C:\Users\u\.thehermes");
-    let installed = PathBuf::from(r"C:\Program Files\The Hermes\hermesd.exe");
+    let home = PathBuf::from(r"C:\Users\u\.flotilla");
+    let installed = PathBuf::from(r"C:\Program Files\Flotilla\flotillad.exe");
     let paths = ServicePaths::new(home.clone(), PathBuf::new());
     assert!(launcher(&paths).contains(&quote(&paths.bin_path())));
 
@@ -127,7 +127,7 @@ fn the_task_runs_the_installed_daemon() {
 
     // Anything else installs as before: the home's copy.
     let paths = ServicePaths::new(home, PathBuf::new());
-    let elsewhere = paths.running(Path::new(r"C:\Users\u\Downloads\hermesd.exe"));
+    let elsewhere = paths.running(Path::new(r"C:\Users\u\Downloads\flotillad.exe"));
     assert_eq!(elsewhere.run_bin(), paths.bin_path());
 }
 
@@ -143,34 +143,41 @@ fn launcher_quotes_apostrophes() {
 /// not touch the new one.
 #[test]
 fn task_names_carry_the_label_user_and_home() {
-    let new = task_name_for(SERVICE_LABEL, "S-1-5-21-1", r"c:\users\u\.thehermes");
+    let new = task_name_for(SERVICE_LABEL, "S-1-5-21-1", r"c:\users\u\.flotilla");
     let old = task_name_for(
-        crate::brand::LEGACY_WINDOWS_TASK,
+        crate::brand::LEGACY_WINDOWS_TASKS[0],
+        "S-1-5-21-1",
+        r"c:\users\u\.thehermes",
+    );
+    let oldest = task_name_for(
+        crate::brand::LEGACY_WINDOWS_TASKS[1],
         "S-1-5-21-1",
         r"c:\users\u\.gravity",
     );
-    assert!(new.starts_with("The Hermes-S-1-5-21-1-"));
-    assert!(old.starts_with("Gravity-S-1-5-21-1-"));
-    assert_eq!(new.len(), "The Hermes-S-1-5-21-1-".len() + 12);
+    assert!(new.starts_with("Flotilla-S-1-5-21-1-"));
+    assert!(old.starts_with("The Hermes-S-1-5-21-1-"));
+    assert!(oldest.starts_with("Gravity-S-1-5-21-1-"));
+    assert_eq!(new.len(), "Flotilla-S-1-5-21-1-".len() + 12);
 }
 
 #[test]
-fn legacy_homes_cover_an_explicit_home_and_the_default() {
-    let paths = ServicePaths::new(PathBuf::from(r"C:\h"), PathBuf::from(r"C:\Users\u"))
-        .with_home_overridden(false);
+fn legacy_homes_cover_an_explicit_home_and_the_defaults() {
+    let user = PathBuf::from(r"C:\Users\u");
+    let paths = ServicePaths::new(PathBuf::from(r"C:\h"), user.clone()).with_home_overridden(false);
     assert_eq!(
         paths.legacy_homes(),
         vec![
             PathBuf::from(r"C:\h"),
-            PathBuf::from(r"C:\Users\u").join(".gravity")
+            user.join(".thehermes"),
+            user.join(".gravity")
         ]
     );
-    let default = ServicePaths::new(
-        PathBuf::from(r"C:\Users\u").join(".gravity"),
-        PathBuf::from(r"C:\Users\u"),
-    )
-    .with_home_overridden(false);
-    assert_eq!(default.legacy_homes().len(), 1);
+    let default =
+        ServicePaths::new(user.join(".thehermes"), user.clone()).with_home_overridden(false);
+    assert_eq!(
+        default.legacy_homes(),
+        vec![user.join(".thehermes"), user.join(".gravity")]
+    );
 }
 
 /// Schtasks that must never be asked anything.
@@ -188,16 +195,16 @@ impl host::Schtasks for Untouched {
     }
 }
 
-/// With `THEHERMES_HOME` set, the task of the default home is the user's
+/// With `FLOTILLA_HOME` set, the task of the default home is the user's
 /// main daemon, which nothing migrates: an install must not find it, so it
 /// neither stops it nor deletes its task and files.
 #[test]
 fn an_overridden_home_never_takes_over_the_default_homes_task() {
     let root = tempfile::tempdir().expect("temporary root");
     let user = root.path().join("user");
-    let default = user.join(crate::brand::LEGACY_HOME_DIR_NAME);
+    let default = user.join(crate::brand::LEGACY_HOME_DIR_NAMES[0]);
     std::fs::create_dir_all(&default).expect("default home");
-    let marker = default.join(crate::brand::legacy_daemon_file("-task.xml"));
+    let marker = default.join(&crate::brand::legacy_daemon_files("-task.xml")[0]);
     std::fs::write(&marker, b"x").expect("marker");
     let home = root.path().join("chosen");
     let paths = ServicePaths::new(home.clone(), user).with_home_overridden(true);
@@ -232,11 +239,11 @@ fn the_legacy_task_is_disabled_while_stopped_and_enabled_on_restart() {
     let home = root.path().join("legacy");
     std::fs::create_dir_all(&home).expect("home");
     std::fs::write(
-        home.join(crate::brand::legacy_daemon_file("-task.xml")),
+        home.join(&crate::brand::legacy_daemon_files("-task.xml")[0]),
         b"x",
     )
     .expect("marker");
-    let name = task_name_in(crate::brand::LEGACY_WINDOWS_TASK, &home).expect("name");
+    let name = task_name_in(crate::brand::LEGACY_WINDOWS_TASKS[0], &home).expect("name");
     run_task(&[
         "/create",
         "/tn",

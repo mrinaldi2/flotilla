@@ -15,20 +15,22 @@ mod task;
 
 use host::{Schtasks, System, TaskScheduler};
 use sequence::{HomeMigration, Host, Layout, Migration};
-use stage::{default_legacy_home, remove_if_present, same_path, with_suffix};
+use stage::{default_legacy_homes, remove_if_present, same_path, with_suffix};
 
 pub const SERVICE_LABEL: &str = crate::brand::WINDOWS_TASK;
-const DEFAULT_CONFIG: &str = include_str!("../../../../../ops/hermesd.example.toml");
+const DEFAULT_CONFIG: &str = include_str!("../../../../../ops/flotillad.example.toml");
 
 #[derive(Clone)]
 pub struct ServicePaths {
     home: PathBuf,
     user_home: PathBuf,
-    /// Whether `home` was set with `THEHERMES_HOME`.
+    /// Whether `home` was set with `FLOTILLA_HOME`.
     home_overridden: bool,
     /// The daemon the installer put in Program Files, when that is what
     /// installs: the task then runs it rather than the home's copy.
     installed: Option<PathBuf>,
+    /// The Program Files folders of releases before the rename.
+    legacy_app_dirs: Vec<PathBuf>,
 }
 
 impl ServicePaths {
@@ -38,10 +40,11 @@ impl ServicePaths {
             user_home,
             home_overridden: crate::config::home_is_overridden(),
             installed: None,
+            legacy_app_dirs: crate::bus_auth::windows_legacy_app_dirs(),
         }
     }
     /// These paths, with the task running `source` when it is the daemon in
-    /// `Program Files\The Hermes`, which only an administrator can replace,
+    /// `Program Files\Flotilla`, which only an administrator can replace,
     /// instead of the home's copy, which every bot can write (ARCH-R38). The
     /// home copy is still staged: it keeps the upgrade sequence, `status`
     /// and a downgrade to a per-user release working.
@@ -68,12 +71,26 @@ impl ServicePaths {
     /// What a daemon of the task in `home` may run from: the home's copies,
     /// the installed daemon, and the copy the installer renamed aside
     /// because it was running (`installer-hooks.nsh`).
+    ///
+    /// A task from before the rename may run the daemon The Hermes installed
+    /// in `Program Files\The Hermes` (or its copy renamed aside), so those
+    /// count too: the stop must be able to end it.
     fn daemon_executables(&self, home: &Path) -> Vec<PathBuf> {
         let bin = home.join("bin");
-        let mut executables = vec![bin.join("hermesd.exe"), bin.join("gravityd.exe")];
+        let mut executables: Vec<PathBuf> = crate::brand::all_daemon_files(".exe")
+            .into_iter()
+            .map(|name| bin.join(name))
+            .collect();
         if let Some(installed) = &self.installed {
             executables.push(installed.clone());
             executables.push(with_suffix(installed, ".old"));
+        }
+        for dir in &self.legacy_app_dirs {
+            for name in crate::brand::legacy_daemon_files(".exe") {
+                let daemon = dir.join(name);
+                executables.push(with_suffix(&daemon, ".old"));
+                executables.push(daemon);
+            }
         }
         executables
     }
@@ -85,12 +102,16 @@ impl ServicePaths {
         }
     }
     pub fn bin_path(&self) -> PathBuf {
-        self.home.join("bin/hermesd.exe")
+        self.home.join("bin/flotillad.exe")
     }
-    /// Where releases before the rename installed the binary; a task created
-    /// by one of them is still running it during an upgrade.
-    pub fn legacy_bin_path(&self) -> PathBuf {
-        self.home.join("bin/gravityd.exe")
+    /// Where releases before the renames installed the binary
+    /// (`hermesd.exe`, `gravityd.exe`); a task created by one of them is
+    /// still running it during an upgrade.
+    pub fn legacy_bin_paths(&self) -> Vec<PathBuf> {
+        crate::brand::legacy_daemon_files(".exe")
+            .into_iter()
+            .map(|name| self.home.join("bin").join(name))
+            .collect()
     }
     // Kept as the common installation-marker API for the existing CLI.
     pub fn plist_path(&self) -> PathBuf {
@@ -108,13 +129,14 @@ impl ServicePaths {
     fn pid_path(&self) -> PathBuf {
         self.home.join(crate::brand::daemon_file("-task.pid"))
     }
-    /// Homes a task from before the rename may run from: this one, when it
-    /// was set explicitly, and the default pre-rename home unless this one
-    /// is overridden (see [`default_legacy_home`]).
+    /// Homes a task from before the renames may run from: this one, when
+    /// it was set explicitly, and the default pre-rename homes unless this
+    /// one is overridden (see [`default_legacy_homes`]).
     fn legacy_homes(&self) -> Vec<PathBuf> {
         let mut homes = vec![self.home.clone()];
         homes.extend(
-            default_legacy_home(&self.user_home, self.home_overridden)
+            default_legacy_homes(&self.user_home, self.home_overridden)
+                .into_iter()
                 .filter(|default| *default != self.home),
         );
         homes
@@ -124,11 +146,11 @@ impl ServicePaths {
 /// Where an install puts things, with the daemon running from `old_home` now.
 fn layout(paths: &ServicePaths, old_home: &Path) -> Layout {
     Layout {
-        from_bin: old_home.join("bin/hermesd.exe"),
+        from_bin: old_home.join("bin/flotillad.exe"),
         bin: paths.bin_path(),
         // The pre-rename binary a task from before the rename ran; the new
-        // launcher starts `hermesd.exe`.
-        leftovers: vec![paths.legacy_bin_path()],
+        // launcher starts `flotillad.exe`.
+        leftovers: paths.legacy_bin_paths(),
         port_file: crate::home::runtime_port_path(&paths.home),
         dirs: vec![paths.home.join("bin"), paths.log_dir()],
         config: paths.config_path(),
@@ -203,14 +225,16 @@ fn remove_all<S: Schtasks>(
         paths.plist_path(),
         paths.launcher_path(),
         paths.bin_path(),
-        paths.legacy_bin_path(),
         with_suffix(&paths.bin_path(), ".new"),
         with_suffix(&paths.bin_path(), ".old"),
         with_suffix(&paths.launcher_path(), ".old"),
         with_suffix(&paths.plist_path(), ".old"),
         paths.pid_path(),
         crate::home::runtime_port_path(&paths.home),
-    ] {
+    ]
+    .into_iter()
+    .chain(paths.legacy_bin_paths())
+    {
         remove_if_present(&path)?;
     }
     Ok(())
@@ -224,15 +248,16 @@ pub fn report(
     home: crate::service_report::HomeState,
 ) -> crate::service_report::Report {
     let port = crate::home::runtime_port(&paths.home).unwrap_or(configured_port);
-    let legacy_marker = crate::brand::legacy_daemon_file("-task.xml");
+    let legacy_markers = crate::brand::legacy_daemon_files("-task.xml");
     crate::service_report::Report {
-        binary: paths.bin_path().is_file() || paths.legacy_bin_path().is_file(),
+        binary: paths.bin_path().is_file() || paths.legacy_bin_paths().iter().any(|b| b.is_file()),
         service: paths.plist_path().is_file(),
         service_running: None,
-        legacy_service: paths
-            .legacy_homes()
-            .iter()
-            .any(|home| home.join(&legacy_marker).is_file()),
+        legacy_service: paths.legacy_homes().iter().any(|home| {
+            legacy_markers
+                .iter()
+                .any(|marker| home.join(marker).is_file())
+        }),
         legacy_running: None,
         migration_pending: home.migration_pending,
         migrated: home.migrated,

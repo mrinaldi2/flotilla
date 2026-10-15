@@ -20,14 +20,14 @@ impl Moving {
     pub(crate) fn new() -> Self {
         let fixture = migration_tests::fixture();
         let bin_name = if cfg!(windows) {
-            "hermesd.exe"
+            "flotillad.exe"
         } else {
-            "hermesd"
+            "flotillad"
         };
         let bin = fixture.plan.from.join("bin");
         std::fs::create_dir_all(&bin).unwrap();
         std::fs::write(bin.join(bin_name), "old").unwrap();
-        let source = fixture.plan.user_home.join("bundled-hermesd");
+        let source = fixture.plan.user_home.join("bundled-flotillad");
         std::fs::write(&source, "new").unwrap();
         Self {
             fixture,
@@ -183,9 +183,9 @@ pub(super) fn layout(moving: &Moving) -> Layout {
         from_bin: plan.from.join("bin").join(moving.bin_name),
         bin: plan.to.join("bin").join(moving.bin_name),
         leftovers: vec![plan.to.join("bin/gravityd")],
-        port_file: plan.to.join("hermesd.port"),
+        port_file: plan.to.join("flotillad.port"),
         dirs: vec![plan.to.join("bin"), plan.to.join("logs")],
-        config: plan.to.join("hermesd.toml"),
+        config: plan.to.join("flotillad.toml"),
         default_config: "",
     }
 }
@@ -281,7 +281,7 @@ fn a_blocked_migration_stops_nothing() {
 #[test]
 fn a_same_identity_upgrade_restores_its_old_definition() {
     let root = tempfile::tempdir().unwrap();
-    let bin = root.path().join("bin/hermesd");
+    let bin = root.path().join("bin/flotillad");
     std::fs::create_dir_all(bin.parent().unwrap()).unwrap();
     std::fs::write(&bin, "old").unwrap();
     let source = root.path().join("bundled");
@@ -290,9 +290,9 @@ fn a_same_identity_upgrade_restores_its_old_definition() {
         from_bin: bin.clone(),
         bin: bin.clone(),
         leftovers: vec![],
-        port_file: root.path().join("hermesd.port"),
+        port_file: root.path().join("flotillad.port"),
         dirs: vec![],
-        config: root.path().join("hermesd.toml"),
+        config: root.path().join("flotillad.toml"),
         default_config: "",
     };
     let mut host = FakeHost::new(root.path(), &[Identity::Current]);
@@ -317,16 +317,16 @@ fn a_same_identity_upgrade_restores_its_old_definition() {
 #[test]
 fn a_failed_first_install_removes_what_it_registered() {
     let root = tempfile::tempdir().unwrap();
-    let bin = root.path().join("bin/hermesd");
+    let bin = root.path().join("bin/flotillad");
     let source = root.path().join("bundled");
     std::fs::write(&source, "new").unwrap();
     let layout = Layout {
         from_bin: bin.clone(),
         bin: bin.clone(),
         leftovers: vec![],
-        port_file: root.path().join("hermesd.port"),
+        port_file: root.path().join("flotillad.port"),
         dirs: vec![root.path().join("bin")],
-        config: root.path().join("hermesd.toml"),
+        config: root.path().join("flotillad.toml"),
         default_config: "",
     };
     let mut host = FakeHost::new(root.path(), &[]);
@@ -340,16 +340,16 @@ fn a_failed_first_install_removes_what_it_registered() {
 #[test]
 fn restart_reinstalls_a_missing_binary_and_never_migrates() {
     let root = tempfile::tempdir().unwrap();
-    let bin = root.path().join("bin/hermesd");
+    let bin = root.path().join("bin/flotillad");
     let bundled = root.path().join("bundled");
     std::fs::write(&bundled, "bundled").unwrap();
     let layout = Layout {
         from_bin: bin.clone(),
         bin: bin.clone(),
         leftovers: vec![],
-        port_file: root.path().join("hermesd.port"),
+        port_file: root.path().join("flotillad.port"),
         dirs: vec![root.path().join("bin")],
-        config: root.path().join("hermesd.toml"),
+        config: root.path().join("flotillad.toml"),
         default_config: "",
     };
     let host = FakeHost::new(root.path(), &[Identity::Current]);
@@ -379,12 +379,12 @@ fn verification_rejects_a_short_or_altered_copy() {
 #[test]
 fn version_output_is_parsed_and_checked() {
     use super::super::stage::parse_version;
-    assert_eq!(parse_version("hermesd 0.15.0\n").unwrap(), "0.15.0");
+    assert_eq!(parse_version("flotillad 0.15.0\n").unwrap(), "0.15.0");
     // H-114: the identity line after it doesn't count.
     assert_eq!(
-        parse_version("hermesd 0.16.2\nidentity: signed ABCDE12345\n").unwrap(),
+        parse_version("flotillad 0.16.2\nidentity: signed ABCDE12345\n").unwrap(),
         "0.16.2"
     );
     assert!(parse_version("").is_err());
-    assert!(parse_version("usage: hermesd").is_err());
+    assert!(parse_version("usage: flotillad").is_err());
 }

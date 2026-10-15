@@ -137,8 +137,10 @@ pub(super) fn parse_agent_pid(print: &str) -> Option<u32> {
         .and_then(|pid| pid.trim().parse().ok())
 }
 
-/// The agents an install moves between: the pre-rename one, whose daemon
-/// runs from `old_home`, and the current one in `paths`' home.
+/// The agents an install moves between: the pre-rename ones (The Hermes's
+/// and any Gravity one left over), whose daemon runs from `old_home`, and
+/// the current one in `paths`' home. [`Identity::Legacy`] stands for every
+/// pre-rename agent installed.
 pub(super) struct Launchd<'a, L: Launchctl> {
     pub(super) paths: &'a ServicePaths,
     pub(super) old_home: PathBuf,
@@ -147,23 +149,42 @@ pub(super) struct Launchd<'a, L: Launchctl> {
 }
 
 impl<L: Launchctl> Launchd<'_, L> {
-    fn plist(&self, id: Identity) -> PathBuf {
+    /// `(label, plist)` of each agent `id` stands for that is installed.
+    fn agents(&self, id: Identity) -> Vec<(&'static str, PathBuf)> {
         match id {
-            Identity::Legacy => self.paths.legacy_plist_path(),
-            Identity::Current => self.paths.plist_path(),
+            Identity::Legacy => self
+                .paths
+                .installed_legacy_agents()
+                .into_iter()
+                .map(|(label, plist, _)| (label, plist))
+                .collect(),
+            Identity::Current => vec![(LAUNCHD_LABEL, self.paths.plist_path())],
         }
     }
 
     /// The homes `id`'s daemon may hold.
     fn homes(&self, id: Identity) -> Vec<PathBuf> {
-        let mut homes = match id {
+        let mut homes: Vec<PathBuf> = match id {
             Identity::Legacy => std::iter::once(self.old_home.clone())
-                .chain(self.paths.legacy_agent_home())
+                .chain(
+                    self.paths
+                        .installed_legacy_agents()
+                        .into_iter()
+                        .map(|(_, _, home)| home),
+                )
                 .collect(),
             Identity::Current => vec![self.paths.home.clone()],
         };
-        homes.dedup();
-        homes.retain(|home| home.is_dir());
+        // The same home under two spellings (`~/.gravity` links to
+        // `~/.thehermes`) is stopped and waited for once.
+        let mut seen = Vec::new();
+        homes.retain(|home| {
+            let key = home.canonicalize().unwrap_or_else(|_| home.clone());
+            home.is_dir() && !seen.contains(&key) && {
+                seen.push(key);
+                true
+            }
+        });
         homes
     }
 
@@ -190,11 +211,12 @@ impl<L: Launchctl> Host for Launchd<'_, L> {
     fn installed(&self) -> Vec<Identity> {
         // With an overridden home the pre-rename agent is the user's main
         // daemon, which this install neither migrates nor may stop.
-        let legacy_ours = self.paths.legacy_agent_home().is_some();
         [Identity::Legacy, Identity::Current]
             .into_iter()
-            .filter(|id| *id != Identity::Legacy || legacy_ours)
-            .filter(|id| self.plist(*id).is_file())
+            .filter(|id| match id {
+                Identity::Legacy => !self.paths.installed_legacy_agents().is_empty(),
+                Identity::Current => self.paths.plist_path().is_file(),
+            })
             .collect()
     }
 
@@ -205,7 +227,10 @@ impl<L: Launchctl> Host for Launchd<'_, L> {
         // before it is removed, and run against the moved home; disabling
         // its label keeps it down, as Task Scheduler's `/disable` does.
         match id {
-            Identity::Legacy => self.launchctl.disable(label(id)),
+            Identity::Legacy => self
+                .agents(id)
+                .iter()
+                .try_for_each(|(label, _)| self.launchctl.disable(label)),
             Identity::Current => Ok(()),
         }
     }
@@ -217,10 +242,11 @@ impl<L: Launchctl> Host for Launchd<'_, L> {
             // The agent's daemon, and any copy launchd no longer tracks,
             // which `stop` reaps.
             let daemons = self
-                .launchctl
-                .pid(label(*id))
-                .into_iter()
-                .chain(super::reap::running(&managed_binaries(&homes)));
+                .agents(*id)
+                .iter()
+                .filter_map(|(label, _)| self.launchctl.pid(label))
+                .chain(super::reap::running(&managed_binaries(&homes)))
+                .collect::<Vec<_>>();
             for pid in daemons {
                 owned.add_daemon(pid);
             }
@@ -232,14 +258,14 @@ impl<L: Launchctl> Host for Launchd<'_, L> {
     }
 
     fn stop(&self, id: Identity) -> anyhow::Result<()> {
-        let label = label(id);
         let homes = self.homes(id);
-        let groups = self
-            .launchctl
-            .pid(label)
-            .map(crate::holders::descendant_groups)
-            .unwrap_or_default();
-        self.launchctl.bootout(&self.plist(id))?;
+        let mut groups = std::collections::BTreeSet::new();
+        for (label, plist) in self.agents(id) {
+            if let Some(pid) = self.launchctl.pid(label) {
+                groups.extend(crate::holders::descendant_groups(pid));
+            }
+            self.launchctl.bootout(&plist)?;
+        }
         self.stop_sessions(&homes, groups);
         // A daemon launchd no longer tracks (an earlier bootout that timed
         // out, a hand-started copy) still runs the managed binary.
@@ -269,25 +295,29 @@ impl<L: Launchctl> Host for Launchd<'_, L> {
     }
 
     fn start(&self, id: Identity) -> anyhow::Result<()> {
-        // launchd refuses to bootstrap a disabled label; a rollback enables
-        // the pre-rename agent [`Host::disable`] disabled.
-        if id == Identity::Legacy {
-            self.launchctl.enable(label(id))?;
+        for (label, plist) in self.agents(id) {
+            // launchd refuses to bootstrap a disabled label; a rollback
+            // enables the pre-rename agents [`Host::disable`] disabled.
+            if id == Identity::Legacy {
+                self.launchctl.enable(label)?;
+            }
+            // An agent whose bootout failed is still loaded; bootstrapping it
+            // again would fail although it is where a rollback wants it.
+            if !self.launchctl.is_loaded(label) {
+                self.launchctl.bootstrap(&plist)?;
+            }
         }
-        // An agent whose bootout failed is still loaded; bootstrapping it
-        // again would fail although it is where a rollback wants it.
-        if self.launchctl.is_loaded(label(id)) {
-            return Ok(());
-        }
-        self.launchctl.bootstrap(&self.plist(id))
+        Ok(())
     }
 
     fn remove(&self, id: Identity) -> anyhow::Result<()> {
-        let plist = self.plist(id);
-        if plist.is_file() {
-            self.launchctl.bootout(&plist)?;
+        for (_, plist) in self.agents(id) {
+            if plist.is_file() {
+                self.launchctl.bootout(&plist)?;
+            }
+            remove_if_present(&plist)?;
         }
-        remove_if_present(&plist)
+        Ok(())
     }
 
     fn version_of(&self, binary: &Path) -> anyhow::Result<String> {
@@ -300,20 +330,16 @@ impl<L: Launchctl> Host for Launchd<'_, L> {
     }
 }
 
-fn label(id: Identity) -> &'static str {
-    match id {
-        Identity::Legacy => crate::brand::LEGACY_LAUNCHD_LABEL,
-        Identity::Current => LAUNCHD_LABEL,
-    }
-}
-
-/// The daemon binaries a service installed in `homes` runs.
+/// The daemon binaries a service installed in `homes` runs, under the
+/// current name and every earlier one.
 fn managed_binaries(homes: &[PathBuf]) -> Vec<PathBuf> {
     homes
         .iter()
         .flat_map(|home| {
             let bin = home.join("bin");
-            [bin.join("hermesd"), bin.join("gravityd")]
+            crate::brand::all_daemon_files("")
+                .into_iter()
+                .map(move |name| bin.join(name))
         })
         .collect()
 }

@@ -9,12 +9,19 @@ use anyhow::Context;
 
 const VERSION_TIMEOUT: Duration = Duration::from_secs(15);
 
-/// The default pre-rename home (`~/.gravity`) an install may stop, migrate
-/// and clean up after, if any. A home set with `THEHERMES_HOME` is migrated
-/// by hand, so the daemon of the default home is then the user's main
-/// installation, which that install must leave alone.
-pub(crate) fn default_legacy_home(user_home: &Path, home_overridden: bool) -> Option<PathBuf> {
-    (!home_overridden).then(|| user_home.join(crate::brand::LEGACY_HOME_DIR_NAME))
+/// The default pre-rename homes (`~/.thehermes`, `~/.gravity`, newest
+/// first, as [`crate::brand::LEGACY_HOME_DIR_NAMES`]) an install may stop,
+/// migrate and clean up after. A home set with `FLOTILLA_HOME` is migrated
+/// by hand, so the daemons of the default homes are then the user's main
+/// installation, which that install must leave alone: none.
+pub(crate) fn default_legacy_homes(user_home: &Path, home_overridden: bool) -> Vec<PathBuf> {
+    if home_overridden {
+        return Vec::new();
+    }
+    crate::brand::LEGACY_HOME_DIR_NAMES
+        .iter()
+        .map(|name| user_home.join(name))
+        .collect()
 }
 
 pub(crate) fn with_suffix(path: &Path, suffix: &str) -> PathBuf {
@@ -145,7 +152,7 @@ pub(crate) fn version_of(binary: &Path) -> anyhow::Result<String> {
     parse_version(&String::from_utf8_lossy(&out.stdout))
 }
 
-/// The version in `hermesd --version` output (`hermesd 0.15.0`), on its
+/// The version in `flotillad --version` output (`flotillad 0.15.0`), on its
 /// first line: later lines say more about the build (its identity, H-114).
 pub(crate) fn parse_version(output: &str) -> anyhow::Result<String> {
     let version = output
@@ -217,9 +224,9 @@ mod tests {
     fn an_overridden_home_leaves_the_default_legacy_home_alone() {
         let user = Path::new("/u");
         assert_eq!(
-            default_legacy_home(user, false),
-            Some(user.join(crate::brand::LEGACY_HOME_DIR_NAME))
+            default_legacy_homes(user, false),
+            [user.join(".thehermes"), user.join(".gravity")]
         );
-        assert_eq!(default_legacy_home(user, true), None);
+        assert!(default_legacy_homes(user, true).is_empty());
     }
 }

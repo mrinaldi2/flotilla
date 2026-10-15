@@ -1,5 +1,5 @@
 //! The Task Scheduler side of an install: the pre-rename `Gravity-…` task
-//! and the current `The Hermes-…` one, stopping either with its whole
+//! and the current `Flotilla-…` one, stopping either with its whole
 //! process tree, and registering one. `schtasks.exe` sits behind
 //! [`Schtasks`], so tests never create a task.
 use std::io::{BufRead, BufReader};
@@ -107,13 +107,24 @@ pub(super) fn wait_exited(tree: &[process_tree::Process], deadline: Instant) -> 
     Ok(())
 }
 
+/// A task a release before the rename registered.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(super) struct LegacyTask {
+    pub(super) name: String,
+    /// The home it runs from.
+    pub(super) home: PathBuf,
+    /// Its release's file stem (`hermesd`, `gravityd`): the marker is
+    /// `<stem>-task.xml`, the launcher's PID file `<stem>-task.pid`.
+    pub(super) stem: &'static str,
+}
+
 /// The tasks an install moves between.
 pub(super) struct TaskScheduler<'a, S: Schtasks> {
     pub(super) paths: &'a ServicePaths,
-    /// The pre-rename tasks and the homes they run from. Named before the
-    /// migration: they hash the old home's resolved path, which the
-    /// compatibility junction changes afterwards.
-    pub(super) legacy: Vec<(String, PathBuf)>,
+    /// The pre-rename tasks (The Hermes's, and any Gravity one left over).
+    /// Named before the migration: they hash the old home's resolved path,
+    /// which the compatibility junction changes afterwards.
+    pub(super) legacy: Vec<LegacyTask>,
     pub(super) port: u16,
     pub(super) schtasks: S,
 }
@@ -129,12 +140,24 @@ impl<'a, S: Schtasks> TaskScheduler<'a, S> {
     ) -> anyhow::Result<Self> {
         let mut homes = vec![old_home.to_path_buf()];
         homes.extend(paths.legacy_homes());
-        let mut legacy: Vec<(String, PathBuf)> = Vec::new();
+        let mut legacy: Vec<LegacyTask> = Vec::new();
         for home in homes {
-            let marker = home.join(crate::brand::legacy_daemon_file("-task.xml"));
-            if marker.is_file() && !legacy.iter().any(|(_, known)| *known == home) {
-                let name = legacy_name(&schtasks, &home)?;
-                legacy.push((name, home));
+            let generations = crate::brand::LEGACY_DAEMON_FILE_STEMS
+                .iter()
+                .zip(crate::brand::LEGACY_WINDOWS_TASKS);
+            for (stem, label) in generations {
+                let marker = home.join(format!("{stem}-task.xml"));
+                let known = legacy
+                    .iter()
+                    .any(|task| task.home == home && task.stem == *stem);
+                if marker.is_file() && !known {
+                    let name = legacy_name(&schtasks, label, &home)?;
+                    legacy.push(LegacyTask {
+                        name,
+                        home: home.clone(),
+                        stem,
+                    });
+                }
             }
         }
         Ok(Self {
@@ -151,9 +174,9 @@ impl<'a, S: Schtasks> TaskScheduler<'a, S> {
             Identity::Legacy => self
                 .legacy
                 .iter()
-                .map(|(name, home)| {
-                    let pid = home.join(crate::brand::legacy_daemon_file("-task.pid"));
-                    (name.clone(), home.clone(), pid)
+                .map(|task| {
+                    let pid = task.home.join(format!("{}-task.pid", task.stem));
+                    (task.name.clone(), task.home.clone(), pid)
                 })
                 .collect(),
             Identity::Current => vec![(
@@ -197,12 +220,11 @@ impl<'a, S: Schtasks> TaskScheduler<'a, S> {
     }
 }
 
-/// The pre-rename task for `home`, named from its resolved path as 0.14
-/// did. Once the home has moved (an install that died after the migration),
-/// `home` is a junction that resolves to the new home; the task is then
-/// found under the path it had before.
-fn legacy_name(schtasks: &impl Schtasks, home: &Path) -> anyhow::Result<String> {
-    let label = crate::brand::LEGACY_WINDOWS_TASK;
+/// The pre-rename task `label` for `home`, named from its resolved path as
+/// its release did. Once the home has moved (an install that died after the
+/// migration), `home` is a junction that resolves to the new home; the task
+/// is then found under the path it had before.
+fn legacy_name(schtasks: &impl Schtasks, label: &str, home: &Path) -> anyhow::Result<String> {
     let resolved = task_name_in(label, home)?;
     if schtasks.exists(&resolved) {
         return Ok(resolved);
@@ -248,7 +270,7 @@ impl<S: Schtasks> Host for TaskScheduler<'_, S> {
 
     fn explain(&self, error: anyhow::Error) -> anyhow::Error {
         let mut homes = vec![self.paths.home.clone()];
-        homes.extend(self.legacy.iter().map(|(_, home)| home.clone()));
+        homes.extend(self.legacy.iter().map(|task| task.home.clone()));
         crate::holders::explain_held(error, &homes)
     }
 
@@ -296,7 +318,7 @@ impl<S: Schtasks> Host for TaskScheduler<'_, S> {
             // is tried, so one failing never leaves the others down.
             Identity::Legacy => {
                 let mut failed = Vec::new();
-                for (name, _) in &self.legacy {
+                for LegacyTask { name, .. } in &self.legacy {
                     let started = self
                         .schtasks
                         .run(&["/change", "/tn", name, "/enable"])
@@ -326,18 +348,22 @@ impl<S: Schtasks> Host for TaskScheduler<'_, S> {
     }
 
     fn remove(&self, id: Identity) -> anyhow::Result<()> {
-        for (name, home, _) in self.tasks(id)? {
+        let stems: Vec<&str> = match id {
+            Identity::Legacy => self.legacy.iter().map(|task| task.stem).collect(),
+            Identity::Current => Vec::new(),
+        };
+        for (i, (name, home, _)) in self.tasks(id)?.into_iter().enumerate() {
             if self.schtasks.exists(&name) {
                 if let Err(error) = self.schtasks.run(&["/delete", "/tn", &name, "/f"]) {
                     // A task left behind is disabled; its files go below.
                     tracing::warn!(%error, task = %name, "could not delete the task");
                 }
             }
-            if id == Identity::Legacy {
+            if let Some(stem) = stems.get(i) {
                 // Wherever the migration left them.
                 for dir in [&home, &self.paths.home] {
                     for suffix in ["-task.xml", "-task.ps1", "-task.pid"] {
-                        remove_if_present(&dir.join(crate::brand::legacy_daemon_file(suffix)))?;
+                        remove_if_present(&dir.join(format!("{stem}{suffix}")))?;
                     }
                 }
             }

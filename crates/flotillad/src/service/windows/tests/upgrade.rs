@@ -12,7 +12,7 @@ use super::super::*;
 
 /// Task Scheduler as far as an install can tell: each task's name, whether
 /// it is enabled and whether it runs. `fail` names the call that errors:
-/// `<verb> <label>` (`/create The Hermes`, `wait Gravity`), `version` or
+/// `<verb> <label>` (`/create Flotilla`, `wait The Hermes`), `version` or
 /// `health`.
 #[derive(Default)]
 struct FakeSchtasks {
@@ -23,7 +23,7 @@ struct FakeSchtasks {
     on_ended: Option<Box<dyn Fn()>>,
 }
 
-/// `Gravity` or `The Hermes`: the label a task name starts with.
+/// `The Hermes` or `Flotilla`: the label a task name starts with.
 fn label(name: &str) -> &str {
     name.split("-S-").next().unwrap_or(name)
 }
@@ -96,7 +96,7 @@ impl Schtasks for FakeSchtasks {
     }
     fn wait_healthy(&self, home: &Path, _port: u16, version: &str) -> anyhow::Result<()> {
         self.call("health".into())?;
-        let bin = std::fs::read_to_string(home.join("bin/hermesd.exe"))?;
+        let bin = std::fs::read_to_string(home.join("bin/flotillad.exe"))?;
         anyhow::ensure!(bin == "new" && version == "9.9.9", "wrong daemon: {bin}");
         Ok(())
     }
@@ -107,10 +107,12 @@ fn legacy_task(moving: &Moving) -> (ServicePaths, FakeSchtasks) {
     let plan = moving.plan();
     let paths = ServicePaths::new(plan.to.clone(), plan.user_home.clone());
     for suffix in ["-task.xml", "-task.ps1"] {
-        let file = plan.from.join(crate::brand::legacy_daemon_file(suffix));
+        let file = plan
+            .from
+            .join(&crate::brand::legacy_daemon_files(suffix)[0]);
         std::fs::write(file, "legacy task").unwrap();
     }
-    let name = task::task_name_in(crate::brand::LEGACY_WINDOWS_TASK, &plan.from).unwrap();
+    let name = task::task_name_in(crate::brand::LEGACY_WINDOWS_TASKS[0], &plan.from).unwrap();
     let schtasks = FakeSchtasks::default();
     schtasks.tasks.borrow_mut().insert(name, (true, true));
     (paths, schtasks)
@@ -139,21 +141,51 @@ fn a_pre_rename_task_is_migrated_and_deleted_once_the_new_one_is_healthy() {
         calls,
         [
             "version",
-            "/change/disable Gravity",
-            "/end Gravity",
-            "wait Gravity",
-            "/create The Hermes",
-            "/run The Hermes",
+            "/change/disable The Hermes",
+            "/end The Hermes",
+            "wait The Hermes",
+            "/create Flotilla",
+            "/run Flotilla",
             "health",
-            "/delete Gravity",
+            "/delete The Hermes",
         ]
     );
-    assert_eq!(tasks, [("The Hermes".to_string(), true, true)]);
+    assert_eq!(tasks, [("Flotilla".to_string(), true, true)]);
     for suffix in ["-task.xml", "-task.ps1"] {
-        let legacy = crate::brand::legacy_daemon_file(suffix);
-        assert!(!paths.home.join(&legacy).exists(), "{legacy} left");
+        let legacy = &crate::brand::legacy_daemon_files(suffix)[0];
+        assert!(!paths.home.join(legacy).exists(), "{legacy} left");
     }
     assert!(paths.plist_path().is_file() && paths.launcher_path().is_file());
+    moving.assert_moved();
+}
+
+/// A PC that still has Gravity's task beside The Hermes's: the install
+/// disables, stops and deletes both, and only Flotilla's runs.
+#[test]
+fn every_pre_rename_task_is_stopped_and_deleted() {
+    let moving = Moving::new();
+    let (paths, schtasks) = legacy_task(&moving);
+    let plan = moving.plan();
+    for suffix in ["-task.xml", "-task.ps1"] {
+        let file = plan
+            .from
+            .join(&crate::brand::legacy_daemon_files(suffix)[1]);
+        std::fs::write(file, "gravity task").unwrap();
+    }
+    let gravity = task::task_name_in(crate::brand::LEGACY_WINDOWS_TASKS[1], &plan.from).unwrap();
+    schtasks.tasks.borrow_mut().insert(gravity, (true, true));
+    let (result, tasks, calls) = install_moving(&moving, &paths, schtasks);
+    result.unwrap();
+    for label in ["The Hermes", "Gravity"] {
+        for verb in ["/change/disable", "/end", "/delete"] {
+            let call = format!("{verb} {label}");
+            assert!(calls.contains(&call), "{call}: {calls:?}");
+        }
+    }
+    assert_eq!(tasks, [("Flotilla".to_string(), true, true)]);
+    for name in crate::brand::legacy_daemon_files("-task.xml") {
+        assert!(!paths.home.join(&name).exists(), "{name} left");
+    }
     moving.assert_moved();
 }
 
@@ -165,17 +197,17 @@ fn a_failure_at_each_step_restarts_the_pre_rename_task() {
     let steps: [(&str, Option<&str>, &str); 7] = [
         ("stage", None, "copying daemon binary"),
         ("verify", Some("version"), "nothing was stopped"),
-        ("stop", Some("wait Gravity"), "it was left running"),
+        ("stop", Some("wait The Hermes"), "it was left running"),
         ("migrate", None, "injected crash at Database"),
-        ("swap", None, "hermesd.exe.old"),
-        ("register", Some("/create The Hermes"), "at /create"),
+        ("swap", None, "flotillad.exe.old"),
+        ("register", Some("/create Flotilla"), "at /create"),
         ("health", Some("health"), "injected failure at health"),
     ];
     for (step, fail, expected) in steps {
         let mut moving = Moving::new();
         let (paths, mut schtasks) = legacy_task(&moving);
         schtasks.fail = fail.map(str::to_string);
-        let stuck = moving.plan().from.join("bin/hermesd.exe.old");
+        let stuck = moving.plan().from.join("bin/flotillad.exe.old");
         match step {
             "stage" => moving.source = moving.plan().user_home.join("absent"),
             "migrate" => moving.crash_migration_at("Database"),
@@ -192,13 +224,13 @@ fn a_failure_at_each_step_restarts_the_pre_rename_task() {
         moving.assert_rolled_back();
         assert_eq!(
             tasks,
-            [("Gravity".to_string(), true, true)],
+            [("The Hermes".to_string(), true, true)],
             "{step}: {error}\n{calls:?}"
         );
         let task_file = moving
             .plan()
             .from
-            .join(crate::brand::legacy_daemon_file("-task.xml"));
+            .join(&crate::brand::legacy_daemon_files("-task.xml")[0]);
         assert!(task_file.is_file(), "{step}");
         assert!(!paths.home.exists(), "{step}");
     }
@@ -226,14 +258,14 @@ fn a_migration_refused_after_the_stop_restarts_the_pre_rename_task() {
         calls,
         [
             "version",
-            "/change/disable Gravity",
-            "/end Gravity",
-            "wait Gravity",
-            "/change/enable Gravity",
-            "/run Gravity",
+            "/change/disable The Hermes",
+            "/end The Hermes",
+            "wait The Hermes",
+            "/change/enable The Hermes",
+            "/run The Hermes",
         ]
     );
-    assert_eq!(tasks, [("Gravity".to_string(), true, true)]);
+    assert_eq!(tasks, [("The Hermes".to_string(), true, true)]);
     std::fs::remove_dir_all(&moving.plan().to).unwrap();
     moving.assert_rolled_back();
 }
@@ -269,7 +301,7 @@ fn a_failed_same_task_upgrade_restores_the_previous_definition_and_binary() {
     );
     assert_eq!(
         host.schtasks.state(),
-        [("The Hermes".to_string(), true, true)]
+        [("Flotilla".to_string(), true, true)]
     );
 }
 
@@ -286,6 +318,6 @@ fn restart_reinstalls_a_missing_binary_from_the_bundled_copy() {
     assert_eq!(std::fs::read_to_string(paths.bin_path()).unwrap(), "new");
     assert_eq!(
         host.schtasks.state(),
-        [("The Hermes".to_string(), true, true)]
+        [("Flotilla".to_string(), true, true)]
     );
 }

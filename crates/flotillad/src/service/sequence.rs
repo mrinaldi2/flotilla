@@ -36,8 +36,8 @@ pub(crate) enum Identity {
     /// `in.mikolajczuk.gravityd`, or the `Gravity-<sid>-<hash>` task, named
     /// for the home before it moved.
     Legacy,
-    /// This release's: `com.manuelrinaldi.thehermesd`, or the
-    /// `The Hermes-<sid>-<hash>` task, in the home the daemon runs from.
+    /// This release's: `com.manuelrinaldi.flotillad`, or the
+    /// `Flotilla-<sid>-<hash>` task, in the home the daemon runs from.
     Current,
 }
 
@@ -252,7 +252,7 @@ fn install(
 /// Why the legacy service was left stopped after a failed migration rollback.
 pub(crate) const HOME_MID_MIGRATION: &str = "rolling the home migration back failed, \
      so the legacy daemon was not started; home left mid-migration: \
-     run `hermesd migrate-home --rollback`, then `service install`";
+     run `flotillad migrate-home --rollback`, then `service install`";
 
 /// The one way back from a failed install: stop the new identity, restore
 /// the kept files, roll the migration back, start what ran before. Every

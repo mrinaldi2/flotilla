@@ -1,7 +1,7 @@
-//! `hermesd service` — installs the daemon as a launchd user agent.
+//! `flotillad service` — installs the daemon as a launchd user agent.
 //!
 //! Everything is user-domain so no sudo is ever needed: the binary is staged
-//! and swapped into `<home>/bin/hermesd`, the agent plist goes to
+//! and swapped into `<home>/bin/flotillad`, the agent plist goes to
 //! `~/Library/LaunchAgents`, and logs live under `<home>/logs`. The desktop
 //! app drives the same code path by running its bundled sidecar with
 //! `service install`, so GUI and CLI installs are identical. The order of an
@@ -22,15 +22,15 @@ use stage::{remove_if_present, with_suffix};
 
 pub const LAUNCHD_LABEL: &str = crate::brand::LAUNCHD_LABEL;
 pub const SERVICE_LABEL: &str = LAUNCHD_LABEL;
-const DEFAULT_CONFIG: &str = include_str!("../../../ops/hermesd.example.toml");
+const DEFAULT_CONFIG: &str = include_str!("../../../ops/flotillad.example.toml");
 
 /// Where the managed installation lives, derived from the daemon home
-/// (`~/.thehermes`) and the user home (for `~/Library/LaunchAgents`).
+/// (`~/.flotilla`) and the user home (for `~/Library/LaunchAgents`).
 pub struct ServicePaths {
     home: PathBuf,
     user_home: PathBuf,
     launch_agents: PathBuf,
-    /// Whether `home` was set with `THEHERMES_HOME`.
+    /// Whether `home` was set with `FLOTILLA_HOME`.
     home_overridden: bool,
 }
 
@@ -52,33 +52,61 @@ impl ServicePaths {
         }
     }
 
-    /// The pre-rename agent's plist carries no home, so its daemon runs the
-    /// default pre-rename home; `None` when this install must leave that
-    /// home alone (see [`stage::default_legacy_home`]).
-    fn legacy_agent_home(&self) -> Option<PathBuf> {
-        stage::default_legacy_home(&self.user_home, self.home_overridden)
+    /// The pre-rename agents with the homes their daemons run: a pre-rename
+    /// plist carries no home, so its daemon runs that release's default home.
+    /// Empty when this install must leave those homes alone (see
+    /// [`stage::default_legacy_homes`]).
+    fn legacy_agents(&self) -> Vec<(&'static str, PathBuf, PathBuf)> {
+        let homes = stage::default_legacy_homes(&self.user_home, self.home_overridden);
+        crate::brand::LEGACY_LAUNCHD_LABELS
+            .iter()
+            .zip(homes)
+            .map(|(label, home)| (*label, self.agent_plist(label), home))
+            .collect()
+    }
+
+    /// Those of [`Self::legacy_agents`] whose plist is installed.
+    fn installed_legacy_agents(&self) -> Vec<(&'static str, PathBuf, PathBuf)> {
+        let mut agents = self.legacy_agents();
+        agents.retain(|(_, plist, _)| plist.is_file());
+        agents
+    }
+
+    fn agent_plist(&self, label: &str) -> PathBuf {
+        self.launch_agents.join(format!("{label}.plist"))
     }
 
     pub fn bin_path(&self) -> PathBuf {
-        self.home.join("bin").join("hermesd")
+        self.home.join("bin").join("flotillad")
     }
 
-    /// Where releases before the rename installed the binary. `install`
-    /// replaces it and `uninstall` removes it.
-    pub fn legacy_bin_path(&self) -> PathBuf {
-        self.home.join("bin").join("gravityd")
+    /// Where releases before the renames installed the binary (`hermesd`,
+    /// `gravityd`), newest first. `install` replaces them and `uninstall`
+    /// removes them.
+    pub fn legacy_bin_paths(&self) -> Vec<PathBuf> {
+        crate::brand::LEGACY_DAEMON_FILE_STEMS
+            .iter()
+            .map(|stem| self.home.join("bin").join(stem))
+            .collect()
     }
 
     pub fn plist_path(&self) -> PathBuf {
         self.launch_agents.join(format!("{LAUNCHD_LABEL}.plist"))
     }
 
-    /// The agent releases before the rename installed. An install stops it
-    /// before the migration and deletes it once the new agent is healthy,
-    /// so the two never both run.
+    /// The agent The Hermes installed. An install stops it (and Gravity's,
+    /// [`Self::legacy_plist_paths`]) before the migration and deletes it once
+    /// the new agent is healthy, so two never run at once.
     pub fn legacy_plist_path(&self) -> PathBuf {
-        self.launch_agents
-            .join(format!("{}.plist", crate::brand::LEGACY_LAUNCHD_LABEL))
+        self.agent_plist(crate::brand::LEGACY_LAUNCHD_LABELS[0])
+    }
+
+    /// Every pre-rename agent's plist, newest first.
+    pub fn legacy_plist_paths(&self) -> Vec<PathBuf> {
+        crate::brand::LEGACY_LAUNCHD_LABELS
+            .iter()
+            .map(|label| self.agent_plist(label))
+            .collect()
     }
 
     pub fn config_path(&self) -> PathBuf {
@@ -150,11 +178,11 @@ fn render_plist(binary: &Path, log_dir: &Path, user_home: &Path) -> String {
 /// Where an install puts things, with the daemon running from `old_home` now.
 fn layout(paths: &ServicePaths, old_home: &Path) -> Layout {
     Layout {
-        from_bin: old_home.join("bin").join("hermesd"),
+        from_bin: old_home.join("bin").join("flotillad"),
         bin: paths.bin_path(),
         // The plist points launchd at the new name, so the old binary is
         // dead weight once the new daemon answers.
-        leftovers: vec![paths.legacy_bin_path()],
+        leftovers: paths.legacy_bin_paths(),
         port_file: paths.runtime_port_path(),
         dirs: vec![paths.home.join("bin"), paths.log_dir()],
         config: paths.config_path(),
@@ -206,7 +234,7 @@ fn install_with<L: Launchctl>(
         binary = %paths.bin_path().display(),
         plist = %paths.plist_path().display(),
         logs = %paths.log_dir().display(),
-        "hermesd installed and healthy"
+        "flotillad installed and healthy"
     );
     Ok(())
 }
@@ -239,9 +267,11 @@ pub fn uninstall(paths: &ServicePaths) -> anyhow::Result<()> {
         with_suffix(&bin, ".old"),
         with_suffix(&paths.plist_path(), ".old"),
         bin,
-        paths.legacy_bin_path(),
         paths.runtime_port_path(),
-    ] {
+    ]
+    .into_iter()
+    .chain(paths.legacy_bin_paths())
+    {
         remove_if_present(&path)?;
     }
     Ok(())
@@ -265,14 +295,16 @@ fn report_with<L: Launchctl>(
     home: crate::service_report::HomeState,
     launchctl: &L,
 ) -> crate::service_report::Report {
-    let legacy_service = paths.legacy_agent_home().is_some() && paths.legacy_plist_path().is_file();
+    let legacy = paths.installed_legacy_agents();
     crate::service_report::Report {
-        binary: paths.bin_path().is_file() || paths.legacy_bin_path().is_file(),
+        binary: paths.bin_path().is_file() || paths.legacy_bin_paths().iter().any(|b| b.is_file()),
         service: paths.plist_path().is_file(),
         service_running: Some(launchctl.pid(LAUNCHD_LABEL).is_some()),
-        legacy_service,
+        legacy_service: !legacy.is_empty(),
         legacy_running: Some(
-            legacy_service && launchctl.pid(crate::brand::LEGACY_LAUNCHD_LABEL).is_some(),
+            legacy
+                .iter()
+                .any(|(label, _, _)| launchctl.pid(label).is_some()),
         ),
         migration_pending: home.migration_pending,
         migrated: home.migrated,

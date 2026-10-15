@@ -1,5 +1,5 @@
 //! The OS half of recognising the owner's app (H-044 T4, H-110), against
-//! what is compiled into hermesd (`app_identity`). macOS checks the running
+//! what is compiled into flotillad (`app_identity`). macOS checks the running
 //! process's code signature against the owner's team; Windows checks that
 //! its executable is in the app's Program Files folder.
 
@@ -10,7 +10,7 @@ use super::owner::Peer;
 pub use super::owner_macos::{is_owner_app, peer_audit_token};
 
 #[cfg(windows)]
-pub use windows::{app_dir, image_path, is_owner_app};
+pub use windows::{app_dir, image_path, is_owner_app, legacy_app_dirs};
 
 /// Linux has no desktop app: no process is the owner's.
 #[cfg(not(any(target_os = "macos", windows)))]
@@ -23,7 +23,9 @@ mod windows {
     use std::os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle, RawHandle};
     use std::path::PathBuf;
 
-    use crate::bus_auth::app_identity::{is_app_image, WINDOWS_APP_FOLDER};
+    use crate::bus_auth::app_identity::{
+        is_app_image, LEGACY_WINDOWS_APP_FOLDERS, WINDOWS_APP_FOLDER,
+    };
     use crate::bus_auth::owner::Peer;
 
     const PROCESS_QUERY_LIMITED_INFORMATION: u32 = 0x1000;
@@ -85,10 +87,24 @@ mod windows {
         (status == 0).then(|| PathBuf::from(path))
     }
 
-    /// `Program Files\The Hermes`, where the perMachine installer puts the
+    /// `Program Files\Flotilla`, where the perMachine installer puts the
     /// app and its daemon.
     pub fn app_dir() -> Option<PathBuf> {
         program_files().map(|root| root.join(WINDOWS_APP_FOLDER))
+    }
+
+    /// `Program Files\The Hermes`: where the release before the rename put
+    /// the app and the daemon its task runs. An install stops that daemon;
+    /// it is never trusted as the owner's app.
+    pub fn legacy_app_dirs() -> Vec<PathBuf> {
+        program_files()
+            .map(|root| {
+                LEGACY_WINDOWS_APP_FOLDERS
+                    .iter()
+                    .map(|folder| root.join(folder))
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     pub fn image_path(pid: u32) -> Option<PathBuf> {
@@ -108,7 +124,7 @@ mod windows {
         (ok != 0).then(|| PathBuf::from(String::from_utf16_lossy(&buffer[..size as usize])))
     }
 
-    /// The peer runs an executable from `Program Files\The Hermes`, which
+    /// The peer runs an executable from `Program Files\Flotilla`, which
     /// only an administrator can write, other than the daemon itself.
     pub fn is_owner_app(peer: &Peer) -> bool {
         let (Some(dir), Some(image)) = (app_dir(), image_path(peer.pid)) else {

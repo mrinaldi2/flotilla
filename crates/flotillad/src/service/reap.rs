@@ -131,7 +131,7 @@ mod tests {
 
     /// Set in the stand-in's environment; only then does
     /// [`stand_in_daemon`] wait instead of returning.
-    const STAND_IN: &str = "HERMESD_REAP_STAND_IN";
+    const STAND_IN: &str = "FLOTILLAD_REAP_STAND_IN";
 
     /// The body of the stand-in process: a copy of this test binary run with
     /// a filter for this one test. Copying a signed system binary such as
