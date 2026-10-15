@@ -76,6 +76,10 @@ pub struct State {
     /// back.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub previous: Option<String>,
+    /// A rollback has started undoing this run. Until it finishes, the run
+    /// is neither complete nor resumable: its steps are partly undone.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub rolling_back: bool,
 }
 
 impl State {
@@ -91,6 +95,7 @@ impl State {
             actions: Vec::new(),
             warnings: Vec::new(),
             previous: None,
+            rolling_back: false,
         }
     }
 

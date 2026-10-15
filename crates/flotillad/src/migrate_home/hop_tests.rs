@@ -9,13 +9,13 @@ use crate::activity::transcript_dir;
 use crate::config::Config;
 
 /// `~/.thehermes` as The Hermes 0.19 leaves it on the owner's Mac.
-struct Hermes {
+pub(super) struct Hermes {
     _tmp: tempfile::TempDir,
-    user: PathBuf,
-    gravity: PathBuf,
-    plan: Plan,
-    old_ws: PathBuf,
-    new_ws: PathBuf,
+    pub(super) user: PathBuf,
+    pub(super) gravity: PathBuf,
+    pub(super) plan: Plan,
+    pub(super) old_ws: PathBuf,
+    pub(super) new_ws: PathBuf,
 }
 
 fn meta(db: &Path, key: &str) -> Option<String> {
@@ -24,7 +24,7 @@ fn meta(db: &Path, key: &str) -> Option<String> {
         .ok()
 }
 
-fn hermes_home() -> Hermes {
+pub(super) fn hermes_home() -> Hermes {
     let tmp = tempfile::tempdir().expect("tmp");
     let user = tmp.path().join("user");
     let gravity = user.join(".gravity");
@@ -162,7 +162,7 @@ fn assert_moved(h: &Hermes) {
 }
 
 /// Back to `~/.thehermes` exactly as The Hermes left it.
-fn assert_back(h: &Hermes) {
+pub(super) fn assert_back(h: &Hermes) {
     let from = &h.plan.from;
     assert!(from.symlink_metadata().expect("home").is_dir());
     assert!(!h.plan.to.exists());

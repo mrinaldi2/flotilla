@@ -38,6 +38,8 @@ mod preflight;
 pub(crate) mod resume_tests;
 mod rollback;
 #[cfg(test)]
+mod rollback_tests;
+#[cfg(test)]
 mod settings_tests;
 mod sql;
 mod state;
@@ -234,6 +236,12 @@ pub fn run(plan: &Plan, out: &mut dyn Write) -> anyhow::Result<State> {
     if state.is_complete() {
         writeln!(out, "already migrated to {}", plan.to.display())?;
         return Ok(state);
+    }
+    if state.rolling_back {
+        bail!(
+            "a rollback of this move stopped partway; finish it with \
+             `flotillad migrate-home --rollback` before migrating again"
+        );
     }
     let blockers = preflight(plan, Some(&state));
     if !blockers.is_empty() {
