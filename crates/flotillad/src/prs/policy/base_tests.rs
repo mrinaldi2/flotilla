@@ -190,3 +190,27 @@ fn adding_the_other_folder_needs_the_owner() {
         assert!(crate::prs::policy::touches_policy(&changed), "{added}");
     }
 }
+
+/// A directory (or anything not a file) at `.flotilla/reviewers.toml`
+/// beside the owner's `.hermes/reviewers.toml` is a broken policy, which
+/// needs the owner, not an error that stops every PR from opening or
+/// merging.
+#[test]
+fn a_directory_at_a_policy_path_is_a_broken_policy() {
+    let dir = repo();
+    let repo = dir.path();
+    write(repo, ".flotilla/reviewers.toml/README.md", "hi");
+    write(repo, ".flotilla/checks.toml/README.md", "hi");
+    commit(repo, "directories in the way");
+    let base = read(repo, "main").unwrap();
+    assert!(base
+        .reviewers
+        .as_ref()
+        .unwrap_err()
+        .contains(".flotilla/reviewers.toml"));
+    assert!(base.checks.is_err());
+    assert_eq!(
+        base.required_roles(&["README.md".to_string()]),
+        roles(&[Architect, Ce, Owner])
+    );
+}

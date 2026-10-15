@@ -114,7 +114,7 @@ fn repair(
         return Ok(None);
     }
     Ok(base::first_file(cache, head, &CHECKS_PATHS)?
-        .and_then(|(file, text)| Some((file, parse_checks(&text).ok()?))))
+        .and_then(|(file, text)| Some((file, parse_checks(&text.ok()?).ok()?))))
 }
 
 /// Dispatches a queued check to `runner`: the daemon's

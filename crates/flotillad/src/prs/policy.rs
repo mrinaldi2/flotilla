@@ -27,8 +27,14 @@ pub const CHECKS_PATH: &str = ".flotilla/checks.toml";
 pub const REVIEWERS_PATHS: [&str; 2] = [REVIEWERS_PATH, ".hermes/reviewers.toml"];
 pub const CHECKS_PATHS: [&str; 2] = [CHECKS_PATH, ".hermes/checks.toml"];
 
-/// The hard-coded area: the policy files, in both folders.
-const POLICY_PATHS: &[&str] = &[".flotilla/*.toml", ".hermes/*.toml"];
+/// The hard-coded area: the policy files, in both folders, and anything
+/// under a policy file's path (a directory there hides the file).
+const POLICY_PATHS: &[&str] = &[
+    ".flotilla/*.toml",
+    ".flotilla/*.toml/**",
+    ".hermes/*.toml",
+    ".hermes/*.toml/**",
+];
 const POLICY_ROLES: &[ReviewRole] = &[ReviewRole::Architect, ReviewRole::Ce, ReviewRole::Owner];
 
 /// A reviewer role as `reviewers.toml` names it.
@@ -275,7 +281,7 @@ pub fn waive(
     }
     if policy_bound(role, changed) {
         return Err(forbidden(format!(
-            "this PR changes the policy files (.hermes/*.toml), which always need \
+            "this PR changes the policy files (.flotilla/*.toml or .hermes/*.toml), which always need \
              architect, ce and the owner: the {} review can't be waived",
             role.as_str()
         )));

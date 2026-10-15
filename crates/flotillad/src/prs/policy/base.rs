@@ -49,11 +49,13 @@ pub fn read(cache: &Path, base_ref: &str) -> anyhow::Result<BasePolicy> {
         .ok_or_else(|| forbidden(format!("the base {base_ref} isn't in the repository")))?;
     let reviewers = match first_file(cache, &commit, &REVIEWERS_PATHS)? {
         None => Ok(Reviewers::default()),
-        Some((path, text)) => parse_reviewers_at(&text, path).map_err(|e| e.to_string()),
+        Some((_, Err(why))) => Err(why),
+        Some((path, Ok(text))) => parse_reviewers_at(&text, path).map_err(|e| e.to_string()),
     };
     let (checks_file, checks) = match first_file(cache, &commit, &CHECKS_PATHS)? {
         None => (CHECKS_PATHS[0], Ok(Checks::default())),
-        Some((path, text)) => (
+        Some((path, Err(why))) => (path, Err(why)),
+        Some((path, Ok(text))) => (
             path,
             parse_checks_at(&text, path).map_err(|e| e.to_string()),
         ),
@@ -67,12 +69,13 @@ pub fn read(cache: &Path, base_ref: &str) -> anyhow::Result<BasePolicy> {
 }
 
 /// The first of `paths` that `commit` has: `.flotilla/`, then the
-/// pre-rename `.hermes/`.
+/// pre-rename `.hermes/`. Something other than a file there is a broken
+/// policy (`Err`), never a reason to read the next folder or to fail.
 pub(crate) fn first_file(
     cache: &Path,
     commit: &str,
     paths: &[&'static str],
-) -> anyhow::Result<Option<(&'static str, String)>> {
+) -> anyhow::Result<Option<(&'static str, Result<String, String>)>> {
     for path in paths {
         if let Some(text) = git_cache::file_at(cache, commit, path)? {
             return Ok(Some((path, text)));

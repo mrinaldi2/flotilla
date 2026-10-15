@@ -86,6 +86,9 @@ fn a_policy_change_always_needs_architect_ce_and_the_owner() {
         ".flotilla/reviewers.toml",
         ".hermes/reviewers.toml",
         ".flotilla/extra.toml",
+        // A directory where a policy file goes hides it from the reader.
+        ".flotilla/reviewers.toml/README.md",
+        ".hermes/checks.toml/a/b",
     ] {
         assert!(touches_policy(&paths(&[file])), "{file}");
     }

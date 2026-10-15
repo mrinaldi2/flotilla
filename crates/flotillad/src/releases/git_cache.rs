@@ -191,16 +191,34 @@ pub fn patch_id(cache: &Path, base: &str, head: &str) -> anyhow::Result<String> 
 }
 
 /// The text of `path` at `commit`, or `None` when that tree has no such
-/// file. Its blob is fetched on demand, the cache being blob-less.
-pub fn file_at(cache: &Path, commit: &str, path: &str) -> anyhow::Result<Option<String>> {
-    let out = git(cache, &["ls-tree", "--name-only", commit, "--", path])?;
+/// entry. An entry that is not a plain file (a directory, a link, a
+/// submodule) is `Some(Err(why))`. Its blob is fetched on demand, the cache
+/// being blob-less.
+pub fn file_at(
+    cache: &Path,
+    commit: &str,
+    path: &str,
+) -> anyhow::Result<Option<Result<String, String>>> {
+    let out = git(cache, &["ls-tree", "-z", commit, "--", path])?;
     ok(&out, "ls-tree")?;
-    if String::from_utf8_lossy(&out.stdout).trim() != path {
+    let listing = String::from_utf8_lossy(&out.stdout);
+    // `<mode> <type> <object>\t<path>`.
+    let Some((info, name)) = listing.trim_end_matches('\0').split_once('\t') else {
         return Ok(None);
+    };
+    if name != path {
+        return Ok(None);
+    }
+    let mut info = info.split(' ');
+    let (mode, kind) = (info.next().unwrap_or(""), info.next().unwrap_or(""));
+    if kind != "blob" || !matches!(mode, "100644" | "100755") {
+        return Ok(Some(Err(format!(
+            "{path} isn't a file (a {kind}, mode {mode})"
+        ))));
     }
     let out = git(cache, &["cat-file", "blob", &format!("{commit}:{path}")])?;
     ok(&out, "cat-file")?;
-    Ok(Some(String::from_utf8(out.stdout)?))
+    Ok(Some(Ok(String::from_utf8(out.stdout)?)))
 }
 
 /// The paths `head` changes since it left `base` (their merge base). A
