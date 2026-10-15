@@ -151,6 +151,11 @@ pub fn bot_token_vars(token: String) -> Vec<(String, String)> {
         .collect()
 }
 
+/// Scratch mode's switch before the rename (`HERMES_SCRATCH=1`). It never
+/// had the `THEHERMES_` prefix, so [`env_var_os`] does not find it; a
+/// daemon started with it must not come up live (real bots, pushes).
+pub const LEGACY_SCRATCH_MODE_ENV: &str = "HERMES_SCRATCH";
+
 /// Author of the commits a worker saves, and its non-routable address.
 pub const WORKER_GIT_SUFFIX: &str = "(Flotilla worker)";
 pub const WORKER_GIT_EMAIL: &str = "worker@flotilla.invalid";

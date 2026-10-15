@@ -52,7 +52,8 @@ pub struct Config {
     pub negotiate_port: bool,
     /// Scratch mode for repros and rehearsals (H-171): no bot starts, no peer
     /// link, no routines, deliveries or workers, no bot-folder writes, no git
-    /// push. Set by `--scratch` or `FLOTILLA_SCRATCH=1`.
+    /// push. Set by `--scratch` or `FLOTILLA_SCRATCH=1` (`HERMES_SCRATCH=1`
+    /// before the rename).
     pub scratch: bool,
     /// Take the owner acts a linked computer forwards (H-285, H-301). Never
     /// read from a config file: off in every daemon until signed approvals

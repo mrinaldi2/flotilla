@@ -101,7 +101,12 @@ async fn main() -> anyhow::Result<()> {
 
     let mut cfg = Config::load(config_path.as_deref())?;
     cfg.scratch |= args.iter().any(|arg| arg == "--scratch")
-        || flotillad::brand::env_var_os("SCRATCH").is_some_and(|v| v == "1");
+        || [
+            flotillad::brand::env_var_os("SCRATCH"),
+            std::env::var_os(flotillad::brand::LEGACY_SCRATCH_MODE_ENV),
+        ]
+        .iter()
+        .any(|v| v.as_deref().is_some_and(|v| v == "1"));
     if cfg.scratch {
         tracing::warn!(
             home = %cfg.home.display(),
