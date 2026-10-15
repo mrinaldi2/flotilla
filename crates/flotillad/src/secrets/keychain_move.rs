@@ -65,16 +65,23 @@ pub(super) fn legacy_services(secrets_dir: &Path, former_homes: &[PathBuf]) -> V
     services
 }
 
-/// The homes the home holding `secrets_dir` may have been before: the
-/// sibling pre-rename homes (`~/.thehermes`, `~/.gravity`), and the `from`
-/// of every home-move log in it, finished or set aside (`migrate-home*.json`),
-/// which covers a home moved by hand with `migrate-home --from`.
+/// The homes the home holding `secrets_dir` may have been before: for a
+/// home with the default name, the sibling pre-rename homes (`~/.thehermes`,
+/// `~/.gravity`); for any home, the `from` of every home-move log in it,
+/// finished or set aside (`migrate-home*.json`), which covers a home moved
+/// by hand with `migrate-home --from`. A test or dev home elsewhere in the
+/// user's home (`~/.flotilla-dev`) is no sibling's successor: it must not
+/// take the real daemon's links, nor remove them when it unlinks a peer.
 pub(super) fn former_homes(secrets_dir: &Path) -> Vec<PathBuf> {
     let Some(home) = secrets_dir.parent() else {
         return Vec::new();
     };
+    let default_name = home
+        .file_name()
+        .is_some_and(|name| name == crate::brand::HOME_DIR_NAME);
     let mut homes: Vec<PathBuf> = home
         .parent()
+        .filter(|_| default_name)
         .map(|user| {
             crate::brand::LEGACY_HOME_DIR_NAMES
                 .iter()
@@ -230,10 +237,21 @@ mod tests {
         assert_eq!(legacy, [service("The Hermes", secrets)]);
     }
 
+    /// A dev home beside the real one shares its parent, not its links.
+    #[test]
+    fn a_dev_home_takes_no_siblings_links() {
+        let root = tempfile::tempdir().unwrap();
+        for name in [".flotilla-dev", "chosen"] {
+            let home = root.path().join(name);
+            std::fs::create_dir_all(home.join("secrets")).unwrap();
+            assert!(former_homes(&home.join("secrets")).is_empty(), "{name}");
+        }
+    }
+
     #[test]
     fn former_homes_come_from_the_siblings_and_the_move_logs() {
         let root = tempfile::tempdir().unwrap();
-        let home = root.path().join("chosen");
+        let home = root.path().join(".flotilla");
         std::fs::create_dir_all(home.join("secrets")).unwrap();
         let log = serde_json::json!({ "from": "/elsewhere/old", "to": home });
         std::fs::write(home.join("migrate-home.json"), log.to_string()).unwrap();
