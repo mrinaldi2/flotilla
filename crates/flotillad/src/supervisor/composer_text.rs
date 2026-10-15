@@ -5,6 +5,9 @@ use sha2::{Digest, Sha256};
 
 /// What every typed owner message starts with; the nonce follows it.
 pub const PREFIX: &str = "Owner (Flotilla app)";
+/// The prefix before the rename. Owner messages typed then stay in the
+/// transcripts a chat is rebuilt from; only their display reads it.
+const LEGACY_PREFIX: &str = "Owner (Hermes app)";
 /// PENDING S0 (e): Claude Code's paste-collapse threshold. A longer paste
 /// shows as `[Pasted text #1 …]`, which hides the nonce from the echo
 /// check. Conservative until S0 measures it on 2.1.292.
@@ -158,6 +161,7 @@ pub fn typed_text(body: &str, nonce: &str, num: i64) -> String {
 pub fn typed_body(prompt: &str) -> &str {
     prompt
         .strip_prefix(PREFIX)
+        .or_else(|| prompt.strip_prefix(LEGACY_PREFIX))
         .and_then(|rest| rest.strip_prefix(" ·"))
         .and_then(|rest| rest.split_once(": "))
         .map_or(prompt, |(_, body)| body)
@@ -265,4 +269,21 @@ fn to_first_column(params: &[u8], fin: u8) -> bool {
             .is_none_or(|col| col.is_empty() || col == b"1"),
         _ => false,
     }
+}
+
+#[cfg(test)]
+#[test]
+fn a_pre_rename_owner_message_shows_its_words() {
+    assert_eq!(
+        typed_body("Owner (Flotilla app) ·n0nce: hi there"),
+        "hi there"
+    );
+    assert_eq!(
+        typed_body("Owner (Hermes app) ·n0nce: hi there"),
+        "hi there"
+    );
+    assert_eq!(
+        typed_body("Owner (Other app) ·n0nce: hi"),
+        "Owner (Other app) ·n0nce: hi"
+    );
 }
