@@ -47,18 +47,16 @@ run("pnpm", ["--dir", "apps/desktop", "check"]);
 // The wire contract (proto/): buf lint plus generated TypeScript in step.
 // Rust is generated at build time, so the cargo gates above already cover it.
 run("pnpm", ["--dir", "apps/desktop", "proto:check"]);
-// Breaking changes against main, once main carries the protos.
-const mainHasProtos = spawnSync("git", ["cat-file", "-e", "origin/main:buf.yaml"]).status === 0;
-if (mainHasProtos) {
-  run(join("apps", "desktop", "node_modules", ".bin", windows ? "buf.cmd" : "buf"), ["breaking", "--against", ".git#ref=origin/main"]);
-}
+// Breaking changes against main, once main carries the protos; the
+// hermes.* → flotilla.* package rename is the one accepted break.
+run(process.execPath, [join("scripts", "buf-breaking.mjs"), "origin/main"]);
 run("pnpm", ["--dir", "apps/desktop", "build"]);
 run("pnpm", ["--dir", "apps/marketing", "check"]);
 if (windows) {
   run("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/prepare-sidecar.ps1"]);
 } else {
   // A check, not a release: no Team ID needed (H-110, ARCH-R38).
-  run("bash", ["scripts/prepare-sidecar.sh"], { ...process.env, HERMES_DEV_BUILD: "1" });
+  run("bash", ["scripts/prepare-sidecar.sh"], { ...process.env, FLOTILLA_DEV_BUILD: "1" });
 }
 const native = ["--manifest-path", "apps/desktop/src-tauri/Cargo.toml"];
 run("cargo", ["fmt", ...native, "--check"]);

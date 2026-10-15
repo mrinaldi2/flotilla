@@ -31,7 +31,7 @@ pub fn endpoint(cfg: &Config) -> PathBuf {
 }
 
 /// The endpoint as a hook command line names it. A pipe goes without its
-/// `\\.\pipe\` prefix, whose backslashes a shell would eat; `hermesd hook`
+/// `\\.\pipe\` prefix, whose backslashes a shell would eat; `flotillad hook`
 /// puts it back.
 pub fn hook_endpoint(cfg: &Config) -> String {
     let endpoint = endpoint(cfg).to_string_lossy().into_owned();
@@ -133,7 +133,7 @@ pub(super) async fn serve_connection<S>(
         if line.trim().is_empty() {
             continue;
         }
-        let Ok(request) = serde_json::from_str::<Value>(&line) else {
+        let Ok(mut request) = serde_json::from_str::<Value>(&line) else {
             if send(&mut writer, &error(Value::Null, -32700, "parse error"))
                 .await
                 .is_err()
@@ -142,6 +142,7 @@ pub(super) async fn serve_connection<S>(
             }
             continue;
         };
+        legacy_method(&mut request);
         // The owner's app or a CLI owner command asking for a ticket: one
         // answer, then the connection is done.
         if let Some(reply) = owner::handle(&app, peer, resolved.is_some(), &request).await {
@@ -159,13 +160,13 @@ pub(super) async fn serve_connection<S>(
         };
         let reply = match super::hook::serve(&app, bot_id, &request).await {
             Some(reply) => Some(reply),
-            // `hermesd release land` / `build-installer` (H-117 X2, X3).
+            // `flotillad release land` / `build-installer` (H-117 X2, X3).
             None => match crate::releases::gates::serve(&app, bot_id, &request) {
                 Some(reply) => Some(reply),
-                // `hermesd pr merge` (H-284).
+                // `flotillad pr merge` (H-284).
                 None => match crate::prs::merge::serve(&app, bot_id, &request).await {
                     Some(reply) => Some(reply),
-                    // `hermesd release tag` / `leave-out` (H-272).
+                    // `flotillad release tag` / `leave-out` (H-272).
                     None => match crate::releases::tag::serve(&app, bot_id, &request).await {
                         Some(reply) => Some(reply),
                         None => {
@@ -188,6 +189,19 @@ pub(super) async fn serve_connection<S>(
     }
 }
 
+/// A request from before the rename names its method `hermes/<name>`: it is
+/// answered as `flotilla/<name>`, so an older CLI, hook or proxy still works.
+fn legacy_method(request: &mut Value) {
+    let renamed = request
+        .get("method")
+        .and_then(Value::as_str)
+        .and_then(crate::brand::rpc_name)
+        .map(crate::brand::rpc_method);
+    if let Some(method) = renamed {
+        request["method"] = Value::String(method);
+    }
+}
+
 pub(super) fn error(id: Value, code: i64, message: &str) -> Value {
     json!({ "jsonrpc": "2.0", "id": id, "error": { "code": code, "message": message } })
 }
@@ -201,3 +215,21 @@ async fn send<W: AsyncWrite + Unpin>(writer: &mut W, reply: &Value) -> std::io::
 
 #[cfg(windows)]
 mod windows;
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    #[test]
+    fn a_pre_rename_method_is_answered_under_its_new_name() {
+        for (sent, answered) in [
+            ("hermes/owner_ticket", "flotilla/owner_ticket"),
+            ("flotilla/pr_merge", "flotilla/pr_merge"),
+            ("tools/call", "tools/call"),
+        ] {
+            let mut request = json!({ "jsonrpc": "2.0", "id": 1, "method": sent });
+            super::legacy_method(&mut request);
+            assert_eq!(request["method"], answered, "{sent}");
+        }
+    }
+}

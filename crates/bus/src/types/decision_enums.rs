@@ -115,7 +115,7 @@ impl Priority {
 pub enum CommentAuthorKind {
     Bot,
     User,
-    /// Hermes itself: what the daemon notes on a thread, such as the grants
+    /// Flotilla itself: what the daemon notes on a thread, such as the grants
     /// a ruling applied (H-173). Never shown as the owner's words.
     System,
 }

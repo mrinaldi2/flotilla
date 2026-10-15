@@ -1,18 +1,18 @@
 // The binary surfaces on the control socket: protobuf `Envelope`s in WS
-// binary frames (ADR-001 §1, B4). The board (`hermes.board.v1`) and pull
-// requests (`hermes.pr.v1`, H-273) share one request-id space: a request goes
+// binary frames (ADR-001 §1, B4). The board (`flotilla.board.v1`) and pull
+// requests (`flotilla.pr.v1`, H-273) share one request-id space: a request goes
 // out under the client's `req_id`, its response or `Envelope.error` comes back
 // under the same id, and pushes carry `req_id` 0.
 
 import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
 import type { BoardCall, BoardReply } from "./board";
 import { DaemonError } from "./connection";
-import type { BoardEvent } from "./gen/hermes/board/v1/requests_pb";
-import { BoardRequestSchema } from "./gen/hermes/board/v1/requests_pb";
-import type { PrPush } from "./gen/hermes/pr/v1/pr_pb";
-import { PrRequestSchema } from "./gen/hermes/pr/v1/pr_pb";
-import type { Envelope } from "./gen/hermes/wire/v1/envelope_pb";
-import { EnvelopeSchema } from "./gen/hermes/wire/v1/envelope_pb";
+import type { BoardEvent } from "./gen/flotilla/board/v1/requests_pb";
+import { BoardRequestSchema } from "./gen/flotilla/board/v1/requests_pb";
+import type { PrPush } from "./gen/flotilla/pr/v1/pr_pb";
+import { PrRequestSchema } from "./gen/flotilla/pr/v1/pr_pb";
+import type { Envelope } from "./gen/flotilla/wire/v1/envelope_pb";
+import { EnvelopeSchema } from "./gen/flotilla/wire/v1/envelope_pb";
 import type { PrCall, PrReply } from "./prs";
 
 type Body = Envelope["body"];

@@ -13,7 +13,7 @@
     "bot_id": "b-dev",
     "name": "Desktop Dev"
   },
-  "title": "PR-0: hermes.pr.v1 contract",
+  "title": "PR-0: flotilla.pr.v1 contract",
   "reviews": [
     {
       "role": "architect",
@@ -67,7 +67,7 @@
     "architect",
     "owner"
   ],
-  "item_title": "PR-0: hermes.pr.v1 contract",
+  "item_title": "PR-0: flotilla.pr.v1 contract",
   "merge_at": "2026-10-09T12:05:10Z",
   "repo": "mrinaldi2/gravity"
 }

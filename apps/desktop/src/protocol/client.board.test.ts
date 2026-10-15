@@ -5,9 +5,9 @@ import { installFakeWebSocket } from "../test/fakeWebSocket";
 import type { FakeSocket, SocketHarness } from "../test/fakeWebSocket";
 import { DaemonClient } from "./client";
 import { DaemonError } from "./connection";
-import { BoardEventKind } from "./gen/hermes/board/v1/requests_pb";
-import type { Envelope } from "./gen/hermes/wire/v1/envelope_pb";
-import { EnvelopeSchema } from "./gen/hermes/wire/v1/envelope_pb";
+import { BoardEventKind } from "./gen/flotilla/board/v1/requests_pb";
+import type { Envelope } from "./gen/flotilla/wire/v1/envelope_pb";
+import { EnvelopeSchema } from "./gen/flotilla/wire/v1/envelope_pb";
 import type { MessageInitShape } from "@bufbuild/protobuf";
 
 /** Opens a socket and completes a handshake that advertises `encodings`. */

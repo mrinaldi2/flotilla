@@ -8,8 +8,8 @@
 
 import type { JsonValue } from "@bufbuild/protobuf";
 import { fromJson } from "@bufbuild/protobuf";
-import { ReviewSettingsSchema } from "./gen/hermes/pr/v1/pr_pb";
-import type { ReviewSettings } from "./gen/hermes/pr/v1/pr_pb";
+import { ReviewSettingsSchema } from "./gen/flotilla/pr/v1/pr_pb";
+import type { ReviewSettings } from "./gen/flotilla/pr/v1/pr_pb";
 
 /** The Owner review setting's words on the wire. */
 export type OwnerReviewMode = "all" | "areas" | "flagged" | "none";

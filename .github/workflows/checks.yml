@@ -116,11 +116,8 @@ jobs:
         working-directory: apps/desktop
         run: pnpm proto:check
 
-      # A breaking change needs a contract version bump (ADR-001 §1).
+      # A breaking change needs a contract version bump (ADR-001 §1). The
+      # script allows one break, the wire-compatible rename of the packages
+      # from hermes.*.v1 to flotilla.*.v1 (docs/protocol.md, "Renames").
       - name: Breaking changes against main
-        run: |
-          if git cat-file -e origin/main:buf.yaml 2>/dev/null; then
-            apps/desktop/node_modules/.bin/buf breaking --against ".git#ref=origin/main"
-          else
-            echo "main has no protos yet; nothing to compare"
-          fi
+        run: node scripts/buf-breaking.mjs origin/main

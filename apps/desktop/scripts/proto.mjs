@@ -29,7 +29,7 @@ if (!check) {
   process.exit(0);
 }
 
-const scratch = mkdtempSync(join(tmpdir(), "hermes-proto-"));
+const scratch = mkdtempSync(join(tmpdir(), "flotilla-proto-"));
 try {
   execFileSync(buf, ["generate", "--output", scratch], { cwd: root, stdio: "inherit" });
   const fresh = join(scratch, relative(root, committed));

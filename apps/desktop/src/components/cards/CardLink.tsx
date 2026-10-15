@@ -9,6 +9,7 @@ import type { Preview } from "./cardText";
 import { linkName, noAnswerNote, oldServiceNote, preview } from "./cardText";
 import type { CardLinksValue } from "./CardLinks";
 import { useCardLinks } from "./CardLinks";
+import { SCHEME } from "./cardScheme";
 
 /** How long a hover waits before the preview, and the pointer may leave. */
 export const HOVER_MS = 400;
@@ -137,7 +138,7 @@ export default function CardLink({ id }: { readonly id: string }): ReactElement 
   return (
     <span className="card-link-wrap">
       <a
-        href={`hermes://item/${id}`}
+        href={`${SCHEME}${id}`}
         className={p.kind === "note" ? "card-link card-link--dim" : "card-link"}
         aria-label={linkName(id, p)}
         aria-describedby={tip.shown ? tipId : undefined}

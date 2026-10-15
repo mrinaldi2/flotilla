@@ -8,7 +8,7 @@ import {
   BoardColumnSchema,
   BoardSettingsSchema,
   DraftRevisionSchema,
-  file_hermes_board_v1_board,
+  file_flotilla_board_v1_board,
   ItemAttachmentSchema,
   ItemCardSchema,
   ItemCommentSchema,
@@ -18,21 +18,21 @@ import {
   ProjectRoleSchema,
   TemplateSchema,
   UnmetSchema,
-} from "./gen/hermes/board/v1/board_pb";
+} from "./gen/flotilla/board/v1/board_pb";
 import {
   BoardPushSchema,
   BoardRequestSchema,
   BoardResponseSchema,
-  file_hermes_board_v1_requests,
+  file_flotilla_board_v1_requests,
   MoveResultSchema,
-} from "./gen/hermes/board/v1/requests_pb";
+} from "./gen/flotilla/board/v1/requests_pb";
 import {
   AttentionRowsSchema,
   HomeRequestSchema,
   HomeResponseSchema,
   ProjectAttentionSchema,
   ProjectsOverviewSchema,
-} from "./gen/hermes/home/v1/home_pb";
+} from "./gen/flotilla/home/v1/home_pb";
 import {
   DiskReportSchema,
   PrCommentsSchema,
@@ -44,9 +44,9 @@ import {
   PullRequestSchema,
   ReleaseFromMainSchema,
   ReviewSettingsSchema,
-} from "./gen/hermes/pr/v1/pr_pb";
-import { EnvelopeSchema } from "./gen/hermes/wire/v1/envelope_pb";
-import type { Envelope } from "./gen/hermes/wire/v1/envelope_pb";
+} from "./gen/flotilla/pr/v1/pr_pb";
+import { EnvelopeSchema } from "./gen/flotilla/wire/v1/envelope_pb";
+import type { Envelope } from "./gen/flotilla/wire/v1/envelope_pb";
 
 // The repo root, from apps/desktop where vitest runs.
 const FIXTURES = join(process.cwd(), "..", "..", "crates", "bus", "fixtures", "board");
@@ -105,7 +105,7 @@ describe("board contract", () => {
 
   it("lists every value of every enum", () => {
     const fromProto = Object.fromEntries(
-      [...file_hermes_board_v1_board.enums, ...file_hermes_board_v1_requests.enums].map((e) => [
+      [...file_flotilla_board_v1_board.enums, ...file_flotilla_board_v1_requests.enums].map((e) => [
         e.name,
         e.values.filter((v) => v.number !== 0).map((v) => v.name),
       ]),

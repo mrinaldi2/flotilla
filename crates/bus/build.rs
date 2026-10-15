@@ -11,14 +11,14 @@ use prost::Message;
 mod schema;
 
 const FILES: &[&str] = &[
-    "hermes/board/v1/board.proto",
-    "hermes/board/v1/requests.proto",
-    "hermes/board/v1/releases.proto",
-    "hermes/board/v1/meetings.proto",
-    "hermes/home/v1/home.proto",
-    "hermes/pr/v1/pr.proto",
-    "hermes/pr/v1/tools.proto",
-    "hermes/wire/v1/envelope.proto",
+    "flotilla/board/v1/board.proto",
+    "flotilla/board/v1/requests.proto",
+    "flotilla/board/v1/releases.proto",
+    "flotilla/board/v1/meetings.proto",
+    "flotilla/home/v1/home.proto",
+    "flotilla/pr/v1/pr.proto",
+    "flotilla/pr/v1/tools.proto",
+    "flotilla/wire/v1/envelope.proto",
 ];
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -49,13 +49,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     pbjson_build::Builder::new()
         .register_descriptors(&descriptor_bytes)?
         .btree_map(["."])
-        .build(&[".hermes.board", ".hermes.wire"])?;
+        .build(&[".flotilla.board", ".flotilla.wire"])?;
     // The home and PR surfaces' JSON keeps the proto field names (snake_case), as
     // the JSON WS frames around it do (H-128 rev 2, iOS N4).
     pbjson_build::Builder::new()
         .register_descriptors(&descriptor_bytes)?
         .btree_map(["."])
         .preserve_proto_field_names()
-        .build(&[".hermes.home", ".hermes.pr"])?;
+        .build(&[".flotilla.home", ".flotilla.pr"])?;
     Ok(())
 }
