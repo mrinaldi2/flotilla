@@ -6,6 +6,7 @@ use serde_json::{json, Value};
 use crate::app::{DAEMON_VERSION, PROTOCOL_VERSION};
 use crate::config::{AUTO_COMPACT_WINDOW_MAX, AUTO_COMPACT_WINDOW_MIN};
 use crate::events::Push;
+use crate::releases::machines;
 
 use super::Conn;
 
@@ -103,6 +104,10 @@ impl Conn {
             "configured_port": self.app.cfg.configured_port,
             "runtime": self.app.cfg.runtime,
             "auto_compact_window": self.app.auto_compact.effective(&self.app.cfg),
+            // What a phone's pairing link names this computer: its name as
+            // releases know it, and its OS (`macos`, `windows`, `linux`).
+            "computer_name": self.app.db.board_read(machines::this_computer).ok(),
+            "os": std::env::consts::OS,
         })
     }
 

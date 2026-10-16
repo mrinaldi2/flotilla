@@ -19,6 +19,26 @@ async fn get_config_reports_the_launch_config() {
     assert_eq!(config["port"], json!(d.addr.port()));
     assert_eq!(config["runtime"], json!("double"));
     assert_eq!(config["auto_compact_window"], json!(250_000));
+    assert_eq!(config["os"], json!(std::env::consts::OS));
+    assert!(config["computer_name"].is_string(), "{config}");
+}
+
+/// A phone's pairing link names the computer as releases do (H-010).
+#[tokio::test]
+async fn get_config_names_the_computer_for_pairing() {
+    let d = spawn_daemon().await;
+    d.app
+        .db
+        .board_tx(|t| t.set_daemon_name("Studio Mac"))
+        .expect("name");
+    let mut c = WsClient::connect(&d).await;
+
+    let reply = c.request(json!({"type": "get_config"})).await;
+    assert_eq!(
+        reply["config"]["computer_name"],
+        json!("Studio Mac"),
+        "{reply}"
+    );
 }
 
 #[tokio::test]
