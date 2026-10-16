@@ -54,14 +54,35 @@ pub fn ensure_artifacts_dirs(app: &Arc<AppState>) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Create a project and lay out its directory.
-pub fn create_project(app: &Arc<AppState>, raw_name: &str) -> anyhow::Result<Project> {
+/// The longest project description, in bytes (0.20.0).
+pub const DESCRIPTION_MAX: usize = 2048;
+
+/// A project description as stored: trimmed, at most 2 KB.
+pub fn description(raw: &str) -> anyhow::Result<String> {
+    let description = raw.trim();
+    if description.len() > DESCRIPTION_MAX {
+        bail!("a project description is at most 2 KB");
+    }
+    Ok(description.to_string())
+}
+
+/// Create a project and lay out its directory, with what it is for when
+/// the owner says (0.20.0).
+pub fn create_project(
+    app: &Arc<AppState>,
+    raw_name: &str,
+    raw_description: Option<&str>,
+) -> anyhow::Result<Project> {
     let name = bus::names::validate_project(raw_name).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let description = raw_description.map(description).transpose()?;
     if app.db.project_name_taken(&name, "")? {
         bail!("a project named '{name}' already exists");
     }
     let dir_name = unique_dir_name(app, &name)?;
     let project = app.db.create_project(&name, &dir_name)?;
+    if let Some(description) = description.filter(|d| !d.is_empty()) {
+        app.db.set_project_description(&project.id, &description)?;
+    }
     paths::provision_project(&app.cfg, &project.id, &project.dir_name, &project.name)?;
     app.events.push(Push::ProjectUpdated {
         project: project.clone(),
@@ -105,6 +126,52 @@ pub fn rename_project(
     });
     tracing::info!(project_id = %renamed.id, from = %project.name, to = %name, "project renamed");
     Ok(renamed)
+}
+
+/// Change what the project is for (`""` clears it). Its bots' prompts say
+/// it, so they are rewritten for their next start.
+pub fn describe_project(
+    app: &Arc<AppState>,
+    project: &Project,
+    raw_description: &str,
+) -> anyhow::Result<Project> {
+    let description = description(raw_description)?;
+    if description == app.db.project_description(&project.id)? {
+        return Ok(project.clone());
+    }
+    app.db.set_project_description(&project.id, &description)?;
+    for bot in app.db.list_bots(Some(&project.id))? {
+        if bot.is_linked() {
+            continue;
+        }
+        if let Err(error) = botmgmt::reprovision(app, &bot) {
+            tracing::warn!(bot_id = %bot.id, %error, "system.md not rewritten for the description");
+        }
+    }
+    app.events.push(Push::ProjectUpdated {
+        project: project.clone(),
+    });
+    Ok(project.clone())
+}
+
+/// Make the bot the project's lead, as `set_project_lead` and the owner's
+/// `role_set` of Lead would (0.20.0, `create_bot {lead: true}`).
+pub fn make_lead(app: &Arc<AppState>, project_id: &str, bot_id: &str) -> anyhow::Result<()> {
+    let board = app.db.make_lead(project_id, bot_id)?;
+    if board {
+        // Open boards refetch the roles.
+        app.board.writer().publish(crate::kanban::feed::Change {
+            project_id,
+            kind: crate::kanban::feed::ChangeKind::SettingsChanged,
+            item_id: "",
+            card: None,
+            from_column: None,
+        });
+    }
+    if let Some(project) = app.db.get_project(project_id)? {
+        app.events.push(Push::ProjectUpdated { project });
+    }
+    Ok(())
 }
 
 /// Delete a project: tell its linked computers (before the links go),

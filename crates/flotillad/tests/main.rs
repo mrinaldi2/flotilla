@@ -149,6 +149,7 @@ mod pr_read_peer;
 mod pr_reviews;
 mod pr_reviews_duties;
 mod premigration_backup;
+mod project_setup;
 mod project_trash;
 mod project_trash_peer;
 mod project_trash_scope;

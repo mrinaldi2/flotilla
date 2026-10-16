@@ -86,6 +86,7 @@ impl Conn {
         req_id: &Value,
         req: &Value,
         peer_id: &str,
+        lead: bool,
     ) -> anyhow::Result<()> {
         let project_id = Self::str_field(req, "project_id")?.to_string();
         let mut identity = remote_bots::fields(req, true);
@@ -97,6 +98,10 @@ impl Conn {
         let (app, peer_id) = (self.app.clone(), peer_id.to_string());
         self.answer_later(req_id, async move {
             let bot = remote_bots::create(&app, &project_id, &peer_id, identity, None).await?;
+            // The lead is the stand-in here (0.20.0).
+            if lead {
+                crate::projectmgmt::make_lead(&app, &project_id, &bot.id)?;
+            }
             Ok(json!({ "type": "bot", "bot": super::bot_view(&app, &bot) }))
         });
         Ok(())

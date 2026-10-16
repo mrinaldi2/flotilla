@@ -40,6 +40,8 @@ pub(crate) fn project_view(app: &AppState, project: &bus::Project) -> Value {
         "links": links,
         "repo": app.db.project_repo(&project.id).ok().flatten(),
         "permission_profile": app.db.project_permission_profile(&project.id).unwrap_or_default(),
+        // What it is for (0.20.0, `project_description`); "" when unset.
+        "description": app.db.project_description(&project.id).unwrap_or_default(),
         "deleted_at": project.deleted_at.map(|t| t.to_rfc3339()),
         "created_at": project.created_at.to_rfc3339()
     })

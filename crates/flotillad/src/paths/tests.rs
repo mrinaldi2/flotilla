@@ -22,6 +22,7 @@ fn spec<'a>(name: &'a str, instructions: &'a str) -> BotProvision<'a> {
         max_workers_per_project: 4,
         temporary: false,
         repo: None,
+        project_description: String::new(),
         artifacts_dir: "/tmp/proj/artifacts".to_string(),
         linked_machines: Vec::new(),
         own_browser: false,

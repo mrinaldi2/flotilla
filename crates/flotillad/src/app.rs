@@ -62,6 +62,8 @@ pub const CAPABILITIES: &[&str] = &[
     bus::contract::capability::BOARDS_0_19,
     // The 0.20 Board glance and project setup.
     bus::contract::capability::BOARD_PRESETS,
+    bus::contract::capability::PROJECT_DESCRIPTION,
+    bus::contract::capability::CREATE_BOT_LEAD,
 ];
 
 pub struct AppState {

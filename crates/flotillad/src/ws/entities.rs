@@ -59,7 +59,11 @@ impl Conn {
 
     pub(super) fn create_project(&self, req_id: &Value, req: &Value) -> anyhow::Result<()> {
         let name = Self::str_field(req, "name")?;
-        match projectmgmt::create_project(&self.app, name) {
+        let Ok(description) = Self::opt_str(req, "description") else {
+            self.reply_err(req_id, "invalid_request", "'description' must be a string");
+            return Ok(());
+        };
+        match projectmgmt::create_project(&self.app, name, description) {
             Ok(project) => {
                 self.send(json!({
                     "type": "project", "req_id": req_id,
@@ -77,17 +81,57 @@ impl Conn {
             self.reply_err(req_id, "not_found", "project not found or already deleted");
             return Ok(());
         };
-        let name = Self::str_field(req, "name")?;
-        match projectmgmt::rename_project(&self.app, &project, name) {
-            Ok(renamed) => {
-                self.send(json!({
-                    "type": "project", "req_id": req_id,
-                    "project": super::project_view(&self.app, &renamed)
-                }));
-            }
-            Err(e) => self.reply_err(req_id, "invalid_request", &e.to_string()),
+        // Either or both (0.20.0, `project_description`); the name first,
+        // so a refused name changes nothing.
+        let (Ok(name), Ok(description)) = (
+            Self::opt_str(req, "name"),
+            Self::opt_str(req, "description"),
+        ) else {
+            self.reply_err(
+                req_id,
+                "invalid_request",
+                "'name' and 'description' are strings",
+            );
+            return Ok(());
+        };
+        if name.is_none() && description.is_none() {
+            self.reply_err(req_id, "invalid_request", "give a name or a description");
+            return Ok(());
         }
+        if let Some(description) = description {
+            if let Err(e) = projectmgmt::description(description) {
+                self.reply_err(req_id, "invalid_request", &e.to_string());
+                return Ok(());
+            }
+        }
+        let mut project = project;
+        if let Some(name) = name {
+            match projectmgmt::rename_project(&self.app, &project, name) {
+                Ok(renamed) => project = renamed,
+                Err(e) => {
+                    self.reply_err(req_id, "invalid_request", &e.to_string());
+                    return Ok(());
+                }
+            }
+        }
+        if let Some(description) = description {
+            project = projectmgmt::describe_project(&self.app, &project, description)?;
+        }
+        self.send(json!({
+            "type": "project", "req_id": req_id,
+            "project": super::project_view(&self.app, &project)
+        }));
         Ok(())
+    }
+
+    /// A string field that may be left out; `Err` when it is not a string.
+    /// An explicit `null` reads as left out.
+    fn opt_str<'a>(req: &'a Value, field: &str) -> Result<Option<&'a str>, ()> {
+        match req.get(field) {
+            None | Some(Value::Null) => Ok(None),
+            Some(Value::String(s)) => Ok(Some(s)),
+            Some(_) => Err(()),
+        }
     }
 
     /// Delete a project: its rows archived, what it left on disk moved to
@@ -153,10 +197,23 @@ impl Conn {
     }
 
     pub(super) fn create_bot(&self, req_id: &Value, req: &Value) -> anyhow::Result<()> {
+        // The project's lead from the start (0.20.0, `create_bot_lead`).
+        let lead = match req.get("lead") {
+            None | Some(Value::Null) => false,
+            Some(Value::Bool(lead)) => *lead,
+            Some(_) => {
+                self.reply_err(req_id, "invalid_request", "'lead' must be true or false");
+                return Ok(());
+            }
+        };
         if let Some(peer_id) = req.get("peer_id").and_then(Value::as_str) {
-            return self.create_bot_on_peer(req_id, req, peer_id);
+            return self.create_bot_on_peer(req_id, req, peer_id, lead);
         }
         let project_id = Self::str_field(req, "project_id")?;
+        if lead && self.app.db.get_live_project(project_id)?.is_none() {
+            self.reply_err(req_id, "not_found", "project not found or already deleted");
+            return Ok(());
+        }
         let runtime = botmgmt::requested_runtime(req)?.unwrap_or(self.app.cfg.default_bot_runtime);
         // An explicit `null` is how a client with no name to give says so, so
         // it takes the placeholder path rather than failing as a bad string.
@@ -199,6 +256,9 @@ impl Conn {
                 runtime,
             ) {
                 Ok(created) => {
+                    if lead {
+                        projectmgmt::make_lead(&self.app, project_id, &created.bot.id)?;
+                    }
                     self.send(json!({
                         "type": "bot", "req_id": req_id,
                         "bot": self.bot_json(&created.bot)

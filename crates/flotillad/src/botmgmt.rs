@@ -110,6 +110,7 @@ pub(super) fn provision_spec<'a>(
         max_workers_per_project: app.cfg.max_workers_per_project,
         temporary: bot.temporary,
         repo: app.db.project_repo(&project.id).ok().flatten(),
+        project_description: app.db.project_description(&project.id).unwrap_or_default(),
         artifacts_dir: paths::artifacts_dir(&app.cfg, &project.dir_name)
             .display()
             .to_string(),
