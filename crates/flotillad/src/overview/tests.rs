@@ -123,3 +123,16 @@ fn an_older_peer_is_old_not_failed() {
     let silent = PeerError::Rejected("peer did not answer".into());
     assert_eq!(super::peers::failure(&silent), State::Timeout);
 }
+
+/// A bot made after the daemon started isn't down since the daemon's
+/// start: until its first session it hasn't stopped (0.20.0).
+#[test]
+fn a_new_bot_is_down_only_since_it_was_made() {
+    let overview = super::Overview::default();
+    let made = overview.started_at() + chrono::Duration::minutes(5);
+    let down = overview
+        .down("b", bus::BotState::Stopped, made)
+        .expect("down");
+    assert_eq!(down.since, made);
+    assert!(overview.down("b", bus::BotState::Ready, made).is_none());
+}

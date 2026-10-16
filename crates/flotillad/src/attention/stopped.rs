@@ -28,7 +28,7 @@ pub(super) fn stopped_bots(app: &AppState, b: &mut Builder<'_>) -> anyhow::Resul
     bots.sort_by(|x, y| x.name.cmp(&y.name));
     for bot in bots.iter().filter(|bot| !bot.is_linked()) {
         let (state, reason) = app.supervisor.state(&bot.id);
-        let Some(down) = app.overview.down(&bot.id, state) else {
+        let Some(down) = app.overview.down(&bot.id, state, bot.created_at) else {
             continue;
         };
         if now - down.since < grace {

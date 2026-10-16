@@ -147,13 +147,15 @@ impl Overview {
     }
 
     /// Since when the bot, in `state` now, hasn't been running. A bot not
-    /// seen running since this daemon started has been down since then.
-    pub fn down(&self, bot_id: &str, state: BotState) -> Option<Down> {
+    /// seen running yet has been down since this daemon started, or since
+    /// it was made (`created_at`) if that was later: a bot about to start
+    /// for the first time isn't one that stopped.
+    pub fn down(&self, bot_id: &str, state: BotState, created_at: DateTime<Utc>) -> Option<Down> {
         if bots::running(state) {
             return None;
         }
         Some(lock(&self.down).get(bot_id).copied().unwrap_or(Down {
-            since: self.started_at,
+            since: self.started_at.max(created_at),
             state: bots::down_state(state).unwrap_or(BotState::Stopped),
         }))
     }
