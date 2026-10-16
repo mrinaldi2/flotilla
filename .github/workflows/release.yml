@@ -339,6 +339,8 @@ jobs:
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The job has no checkout, so gh can't infer the repository.
+          GH_REPO: ${{ github.repository }}
         run: |
           cat > notes.md <<'EOF'
           ## Install

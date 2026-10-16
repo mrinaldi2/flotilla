@@ -21,7 +21,7 @@
     "apps/marketing/src/updater-proxy.ts": "dab85e2ee80a41a86eac315372627fcc5d49c844c3ea6b2d93e4127d6dd6f949",
     "apps/marketing/src/updater-bridge.ts": "9e2cd3920e4fba8444561f2f7393fe6bca641bba528fca3051ac152d28e9e72a",
     "apps/marketing/wrangler.updater-bridge.jsonc": "2b90b7148d5720e1c1a650e7f70203a0c674b38673763c90243f521da9d051cf",
-    ".github/workflows/release.yml": "5bae4db14eb63dc46269e0315d1d887a3cb5767e9c089e4460a48d06b80a946a",
+    ".github/workflows/release.yml": "7982409ef003e1774aca35f012f291fad6f3c75494314bdfa50531b62f3cb513",
     "scripts/prepare-sidecar.sh": "2415d99b55301934267fea87d970c07d4d654728d83c3d63c350086acbd905fb",
     "scripts/notices.py": "804b931aae62ba9e3727c07b30f23e55d3e0cf63991a0f01545a4ec9f4af0f2b",
     "third-party/README.md": "4febbecad423b44ca75cebaa1ad6afea2ba1a26031c2353c98b9efcd985a81a2",
