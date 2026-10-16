@@ -192,3 +192,21 @@ async fn a_lead_before_the_board_leads_the_board_it_starts() {
         .await;
     assert_eq!(refused["code"], "invalid_request", "{refused}");
 }
+
+/// `lead: true` on a linked computer's bot makes its stand-in here the lead.
+#[tokio::test]
+async fn a_peers_bot_made_lead_leads_through_its_stand_in() {
+    let mut b = common::peer_board::board().await;
+    let created =
+        b.p.mac_client
+            .request(json!({
+                "type": "create_bot", "project_id": b.mac_app, "peer_id": b.p.mac_peer_id,
+                "name": "winlead", "lead": true
+            }))
+            .await;
+    assert_eq!(created["type"], "bot", "{created}");
+    let stand_in = created["bot"]["id"].as_str().expect("id").to_string();
+    let project = b.p.mac.app.db.get_project(&b.mac_app).unwrap().unwrap();
+    assert_eq!(project.lead_bot_id.as_deref(), Some(stand_in.as_str()));
+    assert_eq!(leads(&b.p.mac, &b.mac_app), [stand_in]);
+}

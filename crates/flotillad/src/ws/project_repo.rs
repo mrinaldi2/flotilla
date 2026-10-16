@@ -5,7 +5,27 @@ use serde_json::{json, Value};
 use super::Conn;
 use crate::botmgmt;
 
+/// The requests on a project's repositories.
+pub(super) const KINDS: &[&str] = &[
+    "set_project_repo",
+    "set_project_extra_repos",
+    "clone_project_repo",
+];
+
 impl Conn {
+    pub(super) fn repo_request(
+        &self,
+        kind: &str,
+        req_id: &Value,
+        req: &Value,
+    ) -> anyhow::Result<()> {
+        match kind {
+            "set_project_repo" => self.set_project_repo(req_id, req),
+            "set_project_extra_repos" => self.set_project_extra_repos(req_id, req),
+            _ => self.clone_project_repo(req_id, req),
+        }
+    }
+
     /// Set the repository with `url` (and `branch`, default `main`), or clear
     /// it with `url: null`. Bots' system prompts are rewritten to match, for
     /// their next start.

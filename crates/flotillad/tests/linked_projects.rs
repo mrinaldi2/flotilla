@@ -323,23 +323,6 @@ async fn create_bot_with_a_peer_creates_it_on_that_machine() {
     assert_eq!(refused["code"], "not_linked", "{refused}");
 }
 
-/// `lead: true` on a peer's bot makes its stand-in here the lead (0.20.0).
-#[tokio::test]
-async fn a_peers_bot_made_lead_leads_through_its_stand_in() {
-    let mut t = linked().await;
-    let created =
-        t.p.mac_client
-            .request(json!({
-                "type": "create_bot", "project_id": t.mac_app, "peer_id": t.p.mac_peer_id,
-                "name": "winlead", "lead": true
-            }))
-            .await;
-    assert_eq!(created["type"], "bot", "{created}");
-    let stand_in = created["bot"]["id"].as_str().expect("id").to_string();
-    let project = t.p.mac.app.db.get_project(&t.mac_app).unwrap().unwrap();
-    assert_eq!(project.lead_bot_id.as_deref(), Some(stand_in.as_str()));
-}
-
 #[tokio::test]
 async fn a_bot_creates_and_manages_a_bot_on_the_linked_machine() {
     let mut t = linked().await;
