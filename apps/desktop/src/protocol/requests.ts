@@ -12,6 +12,7 @@ import type { HomeRequestBody } from "./home";
 import type { ItemCardsRequestBody } from "./itemCards";
 import type { MetricsRequestBody } from "./metrics";
 import type { PrOwnerRequestBody } from "./prOwner";
+import type { ProjectTrashRequestBody } from "./projectTrash";
 import type { ReleaseRequestBody } from "./releases";
 import type {
   BotRuntime,
@@ -35,6 +36,7 @@ export type ClientRequestBody =
   | HomeRequestBody
   | PrOwnerRequestBody
   | CleanupRequestBody
+  | ProjectTrashRequestBody
   | {
       readonly type: "hello";
       readonly protocol_version: number;

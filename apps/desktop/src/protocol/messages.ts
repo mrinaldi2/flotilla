@@ -27,6 +27,7 @@ import type { OwnerAction, OwnerActionReply } from "./ownerActions";
 import type { Quiesce, QuiesceReply } from "./quiesce";
 import type { MetricsReply } from "./metrics";
 import type { PrOwnerReply } from "./prOwner";
+import type { ProjectTrashReply } from "./projectTrash";
 import type { ReleaseReply } from "./releases";
 import type { BotTask } from "./tasks";
 import type { WorkerView } from "./workers";
@@ -76,6 +77,7 @@ export type ServerReply =
   | (ReplyBase & HomeReply)
   | (ReplyBase & PrOwnerReply)
   | (ReplyBase & CleanupReply)
+  | (ReplyBase & ProjectTrashReply)
   | (ReplyBase & {
       readonly type: "hello_ok";
       readonly protocol_version: number;

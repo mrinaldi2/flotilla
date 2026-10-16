@@ -3,9 +3,9 @@ import type { ReactElement } from "react";
 import type { DaemonApi } from "../protocol/api";
 import type { Bot, NotifyLevel, Project, ProjectRepo } from "../protocol/entities";
 import { fmtTimestamp } from "../util";
-import ConfirmDialog from "./overlay/ConfirmDialog";
 import ProjectPermissionsForm from "./ProjectPermissionsForm";
 import ProjectRepoForm from "./ProjectRepoForm";
+import DeleteProjectDialog, { botsSentence } from "./project/DeleteProjectDialog";
 import OwnerReviewSettings from "./prs/OwnerReviewSettings";
 import WorkersPanel from "./WorkersPanel";
 
@@ -27,12 +27,8 @@ interface ProjectViewProps {
 }
 
 /** How deleting this project is described before it happens. */
-function deletionBody(project: Project, botCount: number): string {
-  const bots =
-    botCount === 0
-      ? "It holds no bots"
-      : `Its ${botCount === 1 ? "bot is" : `${botCount} bots are`} stopped and archived`;
-  return `Delete “${project.name}”? ${bots} along with their conversations. Workspaces on disk are kept.`;
+function deletionBody(botCount: number): string {
+  return `${botsSentence(botCount)} What it left on disk moves to the trash, never erased.`;
 }
 
 /** The project window's Settings tab: the name, what it holds, and deletion. */
@@ -163,7 +159,7 @@ export default function ProjectView(props: ProjectViewProps): ReactElement {
       {canControl ? (
         <div className="panel">
           <h3 className="panel-title">Danger zone</h3>
-          <p className="field-hint">{deletionBody(project, bots.length)}</p>
+          <p className="field-hint">{deletionBody(bots.length)}</p>
           <div className="panel-actions">
             <button
               type="button"
@@ -180,10 +176,10 @@ export default function ProjectView(props: ProjectViewProps): ReactElement {
       ) : null}
 
       {confirming ? (
-        <ConfirmDialog
-          title={`Delete ${project.name}?`}
-          body={deletionBody(project, bots.length)}
-          confirmLabel="Delete project"
+        <DeleteProjectDialog
+          client={client}
+          project={project}
+          botCount={bots.length}
           onConfirm={() => {
             setConfirming(false);
             void onDelete(project.id);
