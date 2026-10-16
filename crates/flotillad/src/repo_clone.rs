@@ -323,10 +323,13 @@ mod tests {
 
     #[test]
     fn only_https_and_local_urls_clone() {
+        // A local path is absolute in this platform's terms: `C:\…` on
+        // Windows, `/…` elsewhere.
+        let local = std::env::temp_dir().join("app.git").display().to_string();
         for good in [
             "https://github.com/me/app.git",
             "file:///srv/app.git",
-            "/srv/app.git",
+            local.as_str(),
         ] {
             assert!(check_url(good).is_ok(), "{good}");
         }
