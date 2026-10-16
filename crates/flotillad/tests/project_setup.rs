@@ -151,13 +151,13 @@ async fn a_bot_made_lead_leads_the_project_and_its_board() {
         .await,
     );
     // The first bot leads by default (0.19.0).
-    assert_eq!(leads(&d, &id), [first.clone()]);
+    assert_eq!(leads(&d, &id), std::slice::from_ref(&first));
 
     let lead = bot(&mut owner, &id, "Lead", Some(true)).await;
     let lead = lead["id"].as_str().unwrap().to_string();
     let project = d.app.db.get_project(&id).unwrap().unwrap();
     assert_eq!(project.lead_bot_id.as_deref(), Some(lead.as_str()));
-    assert_eq!(leads(&d, &id), [lead.clone()]);
+    assert_eq!(leads(&d, &id), std::slice::from_ref(&lead));
 
     // `lead: false` changes nothing.
     bot(&mut owner, &id, "Other", Some(false)).await;

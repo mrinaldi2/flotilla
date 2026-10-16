@@ -127,8 +127,8 @@ fn custom_lists_are_checked() {
         |specs: &[c::ColumnSpec]| Start::parse(Some("simple"), specs).expect_err("refused");
     let open = spec(None, "To do", c::ColumnKind::Open);
     let done = spec(None, "Done", c::ColumnKind::Done);
-    assert!(refused(&[open.clone()]).contains("done column"));
-    assert!(refused(&[done.clone()]).contains("open column"));
+    assert!(refused(std::slice::from_ref(&open)).contains("done column"));
+    assert!(refused(std::slice::from_ref(&done)).contains("open column"));
     assert!(refused(&[
         open.clone(),
         spec(None, "done", c::ColumnKind::Done),
