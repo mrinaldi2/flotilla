@@ -15,7 +15,7 @@ function Window({ tab }: { readonly tab: ProjectTab }): ReactElement {
   return (
     <div className="main" style={{ height: 300 }}>
       <ProjectWindow
-        project={project({ name: "The Hermes" })}
+        project={project({ name: "Flotilla" })}
         botCount={8}
         tab={tab}
         row={row}
@@ -49,7 +49,7 @@ export const TeamClicks: Story = () => {
   return (
     <div className="main" style={{ height: 600 }}>
       <ProjectWindow
-        project={project({ name: "The Hermes" })}
+        project={project({ name: "Flotilla" })}
         botCount={TEAM.length}
         tab={tab}
         row={row}

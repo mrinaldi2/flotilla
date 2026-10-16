@@ -3,8 +3,8 @@ import type { MessageInitShape } from "@bufbuild/protobuf";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { PrPush } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { PrPushSchema, PullRequestSchema, Verdict } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PrPush } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { PrPushSchema, PullRequestSchema, Verdict } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { Release } from "../../protocol/releases";
 import type { FakeDaemon } from "../../test/fakeDaemon";
 import * as fx from "../../test/fixtures";
@@ -30,7 +30,7 @@ function renderTab(client: FakeDaemon, onOpenPr?: (n: number) => void): void {
   render(
     <ReleasesView
       client={client}
-      project={fx.project({ id: "p1", name: "The Hermes" })}
+      project={fx.project({ id: "p1", name: "Flotilla" })}
       bots={[fx.bot({ id: "ops", name: "DevOps", project_id: "p1" })]}
       connected
       canControl

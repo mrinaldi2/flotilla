@@ -1,5 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
+  // Worker name kept on purpose: renaming it deploys a new Cloudflare Worker.
+  // Change it only when the owner moves the deployment to a Flotilla name.
   "name": "gravity-marketing",
   "main": "src/worker.ts",
   "compatibility_date": "2026-09-02",

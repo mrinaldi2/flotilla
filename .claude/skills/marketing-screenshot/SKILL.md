@@ -1,6 +1,6 @@
 ---
 name: marketing-screenshot
-description: Capture the real Gravity desktop app for the marketing site using a disposable daemon and staged example data. Real Claude Code sessions are billed and require explicit consent.
+description: Capture the real Flotilla desktop app for the marketing site using a disposable daemon and staged example data. Real Claude Code sessions are billed and require explicit consent.
 ---
 
 # Marketing screenshot
@@ -27,14 +27,14 @@ Keep shell tracing off when loading credentials.
 umask 077
 SHOT_DIR=$(mktemp -d "${TMPDIR:-/tmp}/gravity-shot.XXXXXX")
 SHOT_DIR=$(cd "$SHOT_DIR" && pwd -P)  # canonical paths also avoid transcript aliases
-export GRAVITY_HOME="$SHOT_DIR/daemon"
-export GRAVITY_WS=ws://127.0.0.1:49888/ws
-mkdir -p "$GRAVITY_HOME" "$SHOT_DIR/shots"
+export FLOTILLA_HOME="$SHOT_DIR/daemon"
+export FLOTILLA_WS=ws://127.0.0.1:49888/ws
+mkdir -p "$FLOTILLA_HOME" "$SHOT_DIR/shots"
 CLAUDE_BIN=$(command -v claude)
-cargo build -p hermesd
+cargo build -p flotillad
 ./scripts/prepare-sidecar.sh
-cat > "$GRAVITY_HOME/hermesd.toml" <<EOF
-home = "$GRAVITY_HOME"
+cat > "$FLOTILLA_HOME/flotillad.toml" <<EOF
+home = "$FLOTILLA_HOME"
 bind = ["127.0.0.1"]
 port = 49888
 negotiate_port = false
@@ -42,11 +42,11 @@ runtime = "pty"
 claude_bin = "$CLAUDE_BIN"
 supervision_interval_ms = 1000
 EOF
-./target/debug/hermesd --config "$GRAVITY_HOME/hermesd.toml" > "$SHOT_DIR/hermesd.log" 2>&1 &
+./target/debug/flotillad --config "$FLOTILLA_HOME/flotillad.toml" > "$SHOT_DIR/flotillad.log" 2>&1 &
 SHOT_DAEMON_PID=$!
 ```
 
-Wait for `$GRAVITY_HOME/hermesd.port` and a successful
+Wait for `$FLOTILLA_HOME/flotillad.port` and a successful
 `curl --fail http://127.0.0.1:49888/health`. Confirm the recorded daemon PID
 is still running and the published port is 49888. Do not continue on a startup
 failure. Leave `$HOME` unchanged so Claude Code can use its existing login.
@@ -55,8 +55,8 @@ Start the app in the same terminal; the dev token stays in the local process
 environment, not a command argument or a pasted browser-tool call:
 
 ```bash
-export VITE_GRAVITY_DEV_PORT=49888
-export VITE_GRAVITY_DEV_TOKEN="$(cat "$GRAVITY_HOME/secrets/client.token")"
+export VITE_FLOTILLA_DEV_PORT=49888
+export VITE_FLOTILLA_DEV_TOKEN="$(cat "$FLOTILLA_HOME/secrets/client.token")"
 (cd apps/desktop && env -u CONDUCTOR_PORT pnpm tauri dev \
   --config '{"identifier":"build.getgravity.screenshot","build":{"devUrl":"http://localhost:1420"}}')
 ```
@@ -71,8 +71,8 @@ local test token.
 
 ## Staging the scene
 
-In another terminal, set `GRAVITY_HOME` to the exact disposable daemon home
-from setup and `GRAVITY_WS` to its loopback URL. The bundled driver validates
+In another terminal, set `FLOTILLA_HOME` to the exact disposable daemon home
+from setup and `FLOTILLA_WS` to its loopback URL. The bundled driver validates
 that the endpoint matches the home's published port before reading credentials.
 
 ```bash

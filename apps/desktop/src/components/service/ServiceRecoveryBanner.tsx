@@ -36,7 +36,7 @@ export default function ServiceRecoveryBanner({
             <pre className="service-recovery-error">{error}</pre>
             {error.includes("held open") ? (
               <div className="service-recovery-body">
-                These programs still have the Hermes folder open. Quit them, then try again.
+                These programs still have the Flotilla folder open. Quit them, then try again.
               </div>
             ) : null}
           </>

@@ -131,10 +131,10 @@ CREATE TRIGGER decision_au AFTER UPDATE ON decision BEGIN
 END;
 "#;
 
-/// Hermes writes on decision threads too (H-173): the grants a ruling
+/// Flotilla writes on decision threads too (H-173): the grants a ruling
 /// applied, and what a linked computer said about them. Those were stored as
 /// the owner's and read "you". SQLite cannot alter a CHECK, so the table is
-/// rebuilt with a `system` author, keeping every row, and the notes Hermes
+/// rebuilt with a `system` author, keeping every row, and the notes Flotilla
 /// already wrote move to it. Safe to run again, as the extras rebuilds are.
 pub(super) const MIGRATION_COMMENT_SYSTEM_AUTHOR: &str = r#"
 DROP TABLE IF EXISTS decision_comment_new;

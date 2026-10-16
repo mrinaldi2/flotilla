@@ -19,8 +19,8 @@ import type { ClientRequestBody, FireBody, RequestBody } from "./requests";
 import { isReply, parseServerMessage, replyIs } from "./wire";
 import { CONTRACTS } from "./contracts";
 import { OWNER_ACTIONS_FEATURE } from "./ownerActions";
-import type { BoardEvent } from "./gen/hermes/board/v1/requests_pb";
-import type { PrPush } from "./gen/hermes/pr/v1/pr_pb";
+import type { BoardEvent } from "./gen/flotilla/board/v1/requests_pb";
+import type { PrPush } from "./gen/flotilla/pr/v1/pr_pb";
 import type { PrCall, PrReply } from "./prs";
 
 interface PendingRequest {
@@ -46,7 +46,7 @@ function isHandshakeVerdict(status: ConnectionStatus): boolean {
 }
 
 /**
- * WebSocket client for the hermesd control plane.
+ * WebSocket client for the flotillad control plane.
  *
  * - `hello` handshake with token + protocol version
  * - request/response correlation by `req_id`
@@ -322,7 +322,7 @@ export class DaemonClient implements DaemonApi {
     }
     if (!this.encodings.includes(PROTO_ENCODING)) {
       return Promise.reject(
-        new DaemonError("unsupported", "the board needs a newer Hermes service"),
+        new DaemonError("unsupported", "the board needs a newer Flotilla service"),
       );
     }
     return send(ws, BigInt(this.newReqId()));

@@ -3,8 +3,8 @@
 // write reads the PR and its comments again.
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { PrState } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { PrState } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { DiffComments } from "./FileDiff";
 import type { CommentWrite, Thread } from "./LineComments";
 import { lineKey, threadsOf } from "./LineComments";

@@ -9,7 +9,7 @@ import {
   type ProjectRow,
   type ReleaseBrief,
   type Source,
-} from "../../protocol/gen/hermes/home/v1/home_pb";
+} from "../../protocol/gen/flotilla/home/v1/home_pb";
 import type { ReleaseStatus } from "../../protocol/releases";
 import { age } from "../control/decisions";
 import { statusLabel } from "../releases/labels";
@@ -22,6 +22,7 @@ const KIND_WORDS: readonly (readonly [string, string, string])[] = [
   ["p0_item", "P0 item", "P0 items"],
   ["permission_prompt", "approval", "approvals"],
   ["owner_question", "question for you", "questions for you"],
+  ["card_waiting", "card waiting for you", "cards waiting for you"],
   ["relayed_rulings", "ruling to confirm", "rulings to confirm"],
   ["bot_waiting", "bot waiting for you", "bots waiting for you"],
   ["off_board", "task off the board", "tasks off the board"],

@@ -6,7 +6,7 @@ import type { ReactElement } from "react";
 import type { InstallDevice, Release } from "../../protocol/releases";
 import { errText } from "../../util";
 import { deviceLine, installLine, installStage } from "./install";
-import InstallQr from "./InstallQr";
+import QrCode from "../QrCode";
 import { releaseTitle } from "./labels";
 import type { ReleaseInstallState } from "./useReleaseInstall";
 
@@ -109,7 +109,7 @@ function useSend(install: ReleaseInstallState): {
       const offer = await install.send(device.device_id);
       const text = offer.delivered
         ? `✓ Sent to ${name}. Tap the notification there to install.`
-        : `Sent to ${name}. It shows next time The Hermes opens there, under Releases.`;
+        : `Sent to ${name}. It shows next time Flotilla opens there, under Releases.`;
       setSent({ kind: "ok", text });
     } catch (e) {
       setSent({ kind: "failed", device, text: `Couldn't send it to ${name}: ${errText(e)}` });
@@ -177,7 +177,7 @@ function QrTile(props: {
 }): ReactElement {
   return (
     <div className={props.ready ? "install-qr" : "install-qr off"}>
-      <InstallQr text={props.page} label={props.label} />
+      <QrCode text={props.page} label={props.label} />
       {props.ready ? (
         <p className="release-hint">
           Scan with the iPhone camera, then tap Install. The phone must be on your tailnet.
@@ -199,7 +199,7 @@ function InstallActions(props: {
   const ready = info !== null && !off;
   const page = info?.page_url ?? "";
   const version = info?.version ?? releaseTitle(props.release);
-  const qrLabel = `QR code for the install page of ${info?.app_title ?? "The Hermes"} ${version}`;
+  const qrLabel = `QR code for the install page of ${info?.app_title ?? "Flotilla"} ${version}`;
   return (
     <>
       {error ? <p className="release-hint">Couldn&apos;t read the install link: {error}</p> : null}

@@ -14,7 +14,18 @@ use serde::Serialize;
 use serde_json::Value;
 
 const ENTITIES: &[&str] = &[
-    "card", "column", "comment", "event", "item", "link", "role", "settings", "template", "unmet",
+    "attachment",
+    "card",
+    "column",
+    "comment",
+    "event",
+    "item",
+    "link",
+    "revision",
+    "role",
+    "settings",
+    "template",
+    "unmet",
 ];
 
 fn fixture_dir() -> PathBuf {
@@ -49,12 +60,14 @@ where
 fn every_board_fixture_round_trips() {
     for name in ENTITIES {
         match *name {
+            "attachment" => round_trip::<ItemAttachment>(name),
             "card" => round_trip::<ItemCard>(name),
             "column" => round_trip::<BoardColumn>(name),
             "comment" => round_trip::<ItemComment>(name),
             "event" => round_trip::<ItemEvent>(name),
             "item" => round_trip::<Item>(name),
             "link" => round_trip::<ItemLink>(name),
+            "revision" => round_trip::<DraftRevision>(name),
             "role" => round_trip::<ProjectRole>(name),
             "settings" => round_trip::<BoardSettings>(name),
             "template" => round_trip::<Template>(name),
@@ -101,11 +114,12 @@ fn the_enum_fixture_lists_every_value() {
         serde_json::from_value(fixture[enum_name].clone())
             .unwrap_or_else(|e| panic!("enums.json {enum_name}: {e}"))
     };
-    let checks: [(&str, Vec<String>); 13] = [
+    let checks: [(&str, Vec<String>); 14] = [
         (
             "ColumnCategory",
             defined::<ColumnCategory>(|e| e.as_str_name()),
         ),
+        ("ColumnKind", defined::<ColumnKind>(|e| e.as_str_name())),
         ("WipScope", defined::<WipScope>(|e| e.as_str_name())),
         ("Role", defined::<Role>(|e| e.as_str_name())),
         ("ItemType", defined::<ItemType>(|e| e.as_str_name())),
@@ -176,6 +190,23 @@ fn arm_of(envelope: &bus::contract::wire::Envelope) -> String {
                 board_request::Request::ColumnSetLimit(_) => "column_set_limit",
                 board_request::Request::RoleSet(_) => "role_set",
                 board_request::Request::ItemFlagAc(_) => "item_flag_ac",
+                board_request::Request::BoardList(_) => "board_list",
+                board_request::Request::BoardCreate(_) => "board_create",
+                board_request::Request::BoardUpdate(_) => "board_update",
+                board_request::Request::ColumnAdd(_) => "column_add",
+                board_request::Request::ColumnUpdate(_) => "column_update",
+                board_request::Request::ColumnRemove(_) => "column_remove",
+                board_request::Request::AutomationSet(_) => "automation_set",
+                board_request::Request::BoardProposalRule(_) => "board_proposal_rule",
+                board_request::Request::ItemAttach(_) => "item_attach",
+                board_request::Request::ItemDetach(_) => "item_detach",
+                board_request::Request::AttachmentUpload(_) => "attachment_upload",
+                board_request::Request::AttachmentRead(_) => "attachment_read",
+                board_request::Request::ItemInvite(_) => "item_invite",
+                board_request::Request::ItemFinalize(_) => "item_finalize",
+                board_request::Request::ItemDiscard(_) => "item_discard",
+                board_request::Request::ItemDraftChanges(_) => "item_draft_changes",
+                board_request::Request::ItemDraftUndo(_) => "item_draft_undo",
             }
         ),
         Body::BoardResponse(r) => format!(
@@ -194,6 +225,10 @@ fn arm_of(envelope: &bus::contract::wire::Envelope) -> String {
                 },
                 board_response::Response::Unwatched(_) => "unwatched",
                 board_response::Response::Edited(_) => "edited",
+                board_response::Response::Structure(_) => "structure",
+                board_response::Response::Upload(_) => "upload",
+                board_response::Response::Attachment(_) => "attachment",
+                board_response::Response::DraftChanges(_) => "draft_changes",
             }
         ),
         Body::BoardPush(p) => format!(
@@ -271,82 +306,9 @@ fn arm_of(envelope: &bus::contract::wire::Envelope) -> String {
     }
 }
 
-const ARMS: &[&str] = &[
-    "request.board_get",
-    "request.item_get",
-    "request.item_history",
-    "request.item_query",
-    "request.item_move_check",
-    "request.item_move",
-    "request.board_watch",
-    "request.board_unwatch",
-    "request.item_create",
-    "request.item_update",
-    "request.item_comment",
-    "request.item_link",
-    "request.item_unlink",
-    "request.item_block",
-    "request.item_unblock",
-    "request.item_assign",
-    "request.item_rank",
-    "request.item_check_ac",
-    "request.board_enable",
-    "request.column_set_limit",
-    "request.role_set",
-    "request.item_flag_ac",
-    "response.board",
-    "response.item",
-    "response.history",
-    "response.items",
-    "response.move_check",
-    "response.moved.done",
-    "response.moved.refused",
-    "response.moved.conflict",
-    "response.unwatched",
-    "response.edited",
-    "push.board_event",
-    "request.projects_overview",
-    "request.attention_rows",
-    "request.attention_dismiss",
-    "response.projects_overview",
-    "response.attention_rows",
-    "response.attention_dismissed",
-    "request.project_pin",
-    "request.owner_threads",
-    "request.owner_thread_get",
-    "request.owner_thread_read",
-    "response.project_pinned",
-    "response.owner_threads",
-    "response.owner_thread",
-    "response.owner_thread_marked",
-    "request.pr_list",
-    "request.pr_get",
-    "request.pr_diff",
-    "request.pr_comments",
-    "request.pr_review_submit",
-    "request.pr_comment_add",
-    "request.pr_merge_undo",
-    "request.pr_flag",
-    "request.review_settings_get",
-    "request.review_settings_set",
-    "request.check_rerun",
-    "request.cleanup_resolve",
-    "request.disk_report",
-    "response.pr_list",
-    "response.pr",
-    "response.pr_diff",
-    "response.pr_comments",
-    "response.comment",
-    "response.review_settings",
-    "response.check",
-    "response.cleanup_item",
-    "response.disk_report",
-    "push.pr_updated",
-    "push.check_updated",
-    "push.merge_queue_changed",
-    "push.cleanup_updated",
-    "error",
-];
+#[path = "contract_fixtures/arms.rs"]
+mod arms;
+use arms::ARMS;
 
 /// Every message fixture is an envelope that round-trips, its name starts
 /// with the arm it carries, and every arm has one.

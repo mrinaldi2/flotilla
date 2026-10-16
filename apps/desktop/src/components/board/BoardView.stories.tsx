@@ -2,9 +2,9 @@ import type { Story } from "@ladle/react";
 import { create } from "@bufbuild/protobuf";
 import type { ReactElement } from "react";
 import type { ProjectTab } from "../../app/selection";
-import type { ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { MoveCheckSchema } from "../../protocol/gen/hermes/board/v1/requests_pb";
-import type { MoveCheck } from "../../protocol/gen/hermes/board/v1/requests_pb";
+import type { ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { MoveCheckSchema } from "../../protocol/gen/flotilla/board/v1/requests_pb";
+import type { MoveCheck } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import {
   card,
   column,
@@ -17,6 +17,7 @@ import { FakeDaemon } from "../../test/fakeDaemon";
 import { bot, project } from "../../test/fixtures";
 import ProjectWindow from "../project/ProjectWindow";
 import BoardView from "./BoardView";
+import { columnChecks } from "./moves";
 import { MoveDialog, MoveMenu, RefusalPopover } from "./MovePopovers";
 
 const noop = (): void => {};
@@ -34,7 +35,12 @@ function checkFor(id: string): MoveCheck {
       columnKey: c.key,
       unmet:
         c.key === "verify" || c.key === "deploying"
-          ? [unmet("move.daemon_only", `${c.name} is entered by the Hermes service, not by hand.`)]
+          ? [
+              unmet(
+                "move.daemon_only",
+                `${c.name} is entered by the Flotilla service, not by hand.`,
+              ),
+            ]
           : c.key === "review"
             ? [
                 unmet("review.branch", "Link a branch first.", "Link the item's branch."),
@@ -61,7 +67,7 @@ function Window({
   readonly cards: readonly ItemCard[];
   readonly canRule?: boolean;
 }): ReactElement {
-  const acme = project({ id: "story-board", name: "The Hermes" });
+  const acme = project({ id: "story-board", name: "Flotilla" });
   return (
     <div className="main" style={{ height: 640 }}>
       <ProjectWindow project={acme} botCount={BOTS.length} tab="board" onSelectTab={noTab}>
@@ -93,20 +99,80 @@ export const MoveToMenu: Story = () => (
       card={h024}
       anchor={at}
       columns={columns}
-      checks={
-        new Map([
-          [
-            "ready",
-            [
-              unmet("dor.acceptance_criteria", "Needs at least one acceptance criterion."),
-              unmet("dor.size", "Size is L: split it first."),
-            ],
+      checks={columnChecks(
+        create(MoveCheckSchema, {
+          itemId: "H-024",
+          columns: [
+            {
+              columnKey: "ready",
+              unmet: [
+                unmet("dor.acceptance_criteria", "Needs at least one acceptance criterion."),
+                unmet("dor.size", "Size is L: split it first."),
+              ],
+            },
+            {
+              columnKey: "deploying",
+              unmet: [unmet("move.daemon_only", "Moves after the release ruling.")],
+            },
           ],
-          ["deploying", [unmet("move.daemon_only", "Moves after the release ruling.")]],
-        ])
-      }
+        }),
+      )}
       onChoose={noop}
       onClose={noop}
+    />
+  </div>
+);
+
+/**
+ * A release-gated board's unlisted move (Inbox → Doing): the owner's
+ * override, with a reason, rather than a plain ✓.
+ */
+export const MoveToMenuOverride: Story = () => (
+  <div className="main" style={{ height: 480 }}>
+    <MoveMenu
+      card={h024}
+      anchor={at}
+      columns={columns}
+      checks={columnChecks(
+        create(MoveCheckSchema, {
+          itemId: "H-024",
+          columns: [
+            { columnKey: "ready", unmet: [unmet("dor.size", "Size it.")] },
+            {
+              columnKey: "doing",
+              unmet: [unmet("reason.required", "This isn't a usual move; say why.")],
+              ownerOverride: true,
+            },
+            {
+              columnKey: "review",
+              unmet: [unmet("reason.required", "This isn't a usual move; say why.")],
+              ownerOverride: true,
+            },
+            {
+              columnKey: "deploying",
+              unmet: [unmet("move.daemon_only", "Moves after the release ruling.")],
+            },
+          ],
+        }),
+      )}
+      onChoose={noop}
+      onClose={noop}
+    />
+  </div>
+);
+
+/** The override's reason dialog. */
+export const OverrideDialog: Story = () => (
+  <div className="main" style={{ height: 480 }}>
+    <MoveDialog
+      card={h024}
+      to={column("doing")}
+      needsReason
+      needsOverride={false}
+      override
+      unmet={[unmet("reason.required", "This isn't a usual move; say why.")]}
+      onConfirm={noop}
+      onCancel={noop}
     />
   </div>
 );

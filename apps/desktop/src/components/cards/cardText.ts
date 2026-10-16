@@ -1,10 +1,10 @@
 // What a card link's preview says (UX-035 §3, §6, §8): the card in four
 // lines, or where it lives and why it can't be shown. Never "not found" or
-// "error" on their own; "computer" and "Hermes service", not "home".
+// "error" on their own; "computer" and "Flotilla service", not "home".
 
 import { fromJson } from "@bufbuild/protobuf";
 import type { JsonValue } from "@bufbuild/protobuf";
-import { ItemCardSchema, ItemType, Priority } from "../../protocol/gen/hermes/board/v1/board_pb";
+import { ItemCardSchema, ItemType, Priority } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import type { ItemCardEntry } from "../../protocol/itemCards";
 
 export type Preview =
@@ -115,7 +115,7 @@ function cardPreview(id: string, entry: ItemCardEntry, ctx: PreviewContext): Pre
 export function oldServiceNote(computer: string): Preview {
   return {
     kind: "note",
-    text: `Update the Hermes service on ${computer} to see cards from here.`,
+    text: `Update the Flotilla service on ${computer} to see cards from here.`,
     lastSeen: null,
   };
 }
@@ -124,7 +124,7 @@ export function oldServiceNote(computer: string): Preview {
 export function noAnswerNote(id: string): Preview {
   return {
     kind: "note",
-    text: `${id} can't be looked up right now: the Hermes service didn't answer.`,
+    text: `${id} can't be looked up right now: the Flotilla service didn't answer.`,
     lastSeen: null,
   };
 }

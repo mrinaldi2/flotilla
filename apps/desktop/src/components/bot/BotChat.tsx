@@ -7,7 +7,7 @@ import type { ReactElement, ReactNode } from "react";
 import { nativeDictation } from "../../dictation";
 import type { DaemonApi } from "../../protocol/api";
 import type { Bot } from "../../protocol/entities";
-import type { ThreadMessage } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { ThreadMessage } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import ChatComposer from "../chat/ChatComposer";
 import { uploadAttachment } from "../chat/upload";
 import { useNow } from "../control/useNow";

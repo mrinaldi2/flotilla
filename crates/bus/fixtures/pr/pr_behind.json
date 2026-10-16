@@ -60,7 +60,7 @@
         "text": "Has conflicts: waiting for Desktop Dev to resolve",
         "paths": [
           "apps/desktop/src/styles/base.css",
-          "crates/hermesd/src/app.rs"
+          "crates/flotillad/src/app.rs"
         ]
       },
       {

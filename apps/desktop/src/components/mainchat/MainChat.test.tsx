@@ -56,7 +56,7 @@ function Harness(props: {
       connected
       canControl
       bots={BOTS}
-      projects={[fx.project({ id: "p1", name: "The Hermes", lead_bot_id: "b1" })]}
+      projects={[fx.project({ id: "p1", name: "Flotilla", lead_bot_id: "b1" })]}
       threads={decodeOwnerThreads(ownerThreadsJson()).threads}
       chat={chat}
       addToast={vi.fn<AddToast>()}

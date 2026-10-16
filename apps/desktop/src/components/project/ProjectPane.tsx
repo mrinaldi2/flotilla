@@ -11,7 +11,7 @@ import type { DaemonState } from "../../app/useDaemonState";
 import type { AddToast } from "../../app/useToasts";
 import type { DaemonApi } from "../../protocol/api";
 import type { Bot, Project, ProjectRepo } from "../../protocol/entities";
-import type { OwnerThread, ProjectRow } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { OwnerThread, ProjectRow } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import BoardView from "../board/BoardView";
 import { useNow } from "../control/useNow";
 import ConversationsView from "../conversations/ConversationsView";
@@ -62,7 +62,7 @@ function NeedsNewer({ what }: { readonly what: string }): ReactElement {
   return (
     <div className="empty-pane">
       <div className="empty-state">
-        <p>{what} need a newer Hermes service.</p>
+        <p>{what} need a newer Flotilla service.</p>
       </div>
     </div>
   );
@@ -225,6 +225,12 @@ function TabView({ ctx }: { readonly ctx: TabContext }): ReactElement {
           canControl={canControl}
           addToast={ctx.addToast}
           openItem={daemon.selection.kind === "project" ? daemon.selection.item : undefined}
+          openBoard={daemon.selection.kind === "project" ? daemon.selection.board : undefined}
+          initial={
+            daemon.selection.kind === "project" && daemon.selection.boardSettings === true
+              ? { settings: "columns" }
+              : undefined
+          }
         />
       );
     case "prs":

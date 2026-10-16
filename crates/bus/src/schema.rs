@@ -11,19 +11,25 @@
 
 mod base;
 mod board;
+mod board_flow;
 mod board_links;
+mod board_proposals;
+mod boards;
 mod checks;
 mod cleanup;
 mod decisions;
 mod grants;
 mod history;
 mod home;
+mod item_drafts;
+mod keeper;
 mod meetings;
 mod merge_queue;
 mod owner_actions;
 mod owner_messages;
 mod peers;
 mod permissions;
+mod platform_labels;
 mod prs;
 mod quiesce;
 mod release_pr;
@@ -31,14 +37,18 @@ mod releases;
 mod review_settings;
 mod reviews;
 mod roles;
+mod trash;
 mod workers;
 
 use base::MIGRATION_1;
 use board::MIGRATION_BOARD_CORE;
+use board_flow::MIGRATION_BOARD_FLOW;
 use board_links::{
     MIGRATION_AC_POST_INSTALL, MIGRATION_BOARD_LINKS, MIGRATION_BOARD_WORKFLOW,
     MIGRATION_GUARDRAILS_2, MIGRATION_TASK_CARDS, MIGRATION_TASK_RELEASE, MIGRATION_TASK_TARGET,
 };
+use board_proposals::MIGRATION_BOARD_PROPOSALS;
+use boards::MIGRATION_BOARDS;
 use checks::{
     MIGRATION_CHECKS, MIGRATION_CHECK_HEAVY, MIGRATION_CHECK_JOBS, MIGRATION_CHECK_UNROUTABLE,
 };
@@ -52,6 +62,8 @@ use history::{
 use home::{
     MIGRATION_CARD_QUESTIONS, MIGRATION_OWNER_ANSWER, MIGRATION_OWNER_READ, MIGRATION_PROJECT_PIN,
 };
+use item_drafts::MIGRATION_ITEM_DRAFTS;
+use keeper::MIGRATION_BOARD_KEEPER;
 use meetings::MIGRATION_MEETINGS;
 use merge_queue::{MIGRATION_MERGE_QUEUE, MIGRATION_PR_MERGE};
 use owner_actions::MIGRATION_OWNER_ACTIONS;
@@ -61,6 +73,7 @@ use permissions::{
     MIGRATION_PERMISSIONS, MIGRATION_PERMISSION_EXTRAS_PR_MERGE,
     MIGRATION_PERMISSION_EXTRAS_QUIESCE, MIGRATION_PERMISSION_EXTRAS_RELEASE_MAIN,
 };
+use platform_labels::MIGRATION_PLATFORM_LABELS;
 use prs::MIGRATION_PR_CORE;
 use quiesce::MIGRATION_QUIESCE;
 use release_pr::MIGRATION_RELEASE_PR;
@@ -72,6 +85,7 @@ use releases::{
 use review_settings::{MIGRATION_PR_SHAPE_POLICY, MIGRATION_REVIEW_SETTINGS};
 use reviews::MIGRATION_REVIEWS;
 use roles::MIGRATION_ROLES;
+use trash::MIGRATION_PROJECT_TRASH;
 use workers::{MIGRATION_18, MIGRATION_19};
 
 pub const MIGRATIONS: &[&str] = &[
@@ -139,6 +153,13 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_PR_SHAPE_POLICY,
     MIGRATION_CHECK_UNROUTABLE,
     MIGRATION_CHECK_HEAVY,
+    MIGRATION_BOARDS,
+    MIGRATION_BOARD_FLOW,
+    MIGRATION_BOARD_PROPOSALS,
+    MIGRATION_ITEM_DRAFTS,
+    MIGRATION_PLATFORM_LABELS,
+    MIGRATION_BOARD_KEEPER,
+    MIGRATION_PROJECT_TRASH,
 ];
 
 #[cfg(test)]

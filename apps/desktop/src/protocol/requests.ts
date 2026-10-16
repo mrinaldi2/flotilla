@@ -12,6 +12,7 @@ import type { HomeRequestBody } from "./home";
 import type { ItemCardsRequestBody } from "./itemCards";
 import type { MetricsRequestBody } from "./metrics";
 import type { PrOwnerRequestBody } from "./prOwner";
+import type { ProjectTrashRequestBody } from "./projectTrash";
 import type { ReleaseRequestBody } from "./releases";
 import type {
   BotRuntime,
@@ -35,6 +36,7 @@ export type ClientRequestBody =
   | HomeRequestBody
   | PrOwnerRequestBody
   | CleanupRequestBody
+  | ProjectTrashRequestBody
   | {
       readonly type: "hello";
       readonly protocol_version: number;
@@ -117,6 +119,8 @@ export type ClientRequestBody =
       readonly type: "send_user_message";
       readonly to_bot_id: string;
       readonly body: string;
+      /** The card it is about: a draft's discussion, or the owner's word on a card. */
+      readonly item_id?: string;
     }
   | {
       readonly type: "list_messages";

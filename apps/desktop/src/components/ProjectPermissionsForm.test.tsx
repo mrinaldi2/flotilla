@@ -108,7 +108,7 @@ describe("BotPermissionExtras", () => {
       />,
     );
     expect(screen.getByRole("checkbox", { name: /Publish builds/ })).toBeChecked();
-    await user.click(screen.getByRole("checkbox", { name: /Restart the Hermes service/ }));
+    await user.click(screen.getByRole("checkbox", { name: /Restart the Flotilla service/ }));
     expect(daemon.requests.map((r) => r.body)).toContainEqual({
       type: "set_bot_permission_extras",
       bot_id: "b1",

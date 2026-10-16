@@ -2,14 +2,13 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { AddToast } from "../../app/useToasts";
-import { Platform } from "../../protocol/gen/hermes/board/v1/board_pb";
 import { card, snapshot } from "../../test/boardFixtures";
 import { FakeDaemon } from "../../test/fakeDaemon";
 import { bot, project } from "../../test/fixtures";
 import BoardView from "./BoardView";
 
-const desktop = card({ id: "H-024", columnKey: "ready", platforms: [Platform.DESKTOP] });
-const ios = card({ id: "H-030", columnKey: "ready", rank: "a5", platforms: [Platform.IOS] });
+const desktop = card({ id: "H-024", columnKey: "ready", labels: ["platform:desktop"] });
+const ios = card({ id: "H-030", columnKey: "ready", rank: "a5", labels: ["platform:ios"] });
 
 function renderBoard() {
   const fake = new FakeDaemon();
@@ -34,7 +33,7 @@ describe("BoardView saved filters", () => {
     const { unmount } = renderBoard();
     await screen.findByRole("article", { name: /^H-024/ });
     await user.click(screen.getByRole("button", { name: "ios" }));
-    expect(localStorage.getItem("hermes.board.p1")).not.toBeNull();
+    expect(localStorage.getItem("flotilla.board.p1")).not.toBeNull();
     unmount();
 
     renderBoard();

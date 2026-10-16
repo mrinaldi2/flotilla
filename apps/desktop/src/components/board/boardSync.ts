@@ -6,13 +6,18 @@ import type { BoardApi } from "../../protocol/board";
 import { boardCall } from "../../protocol/board";
 import { DaemonError } from "../../protocol/connection";
 import type {
+  Board,
   BoardColumn,
   BoardSettings,
   ItemCard,
   ProjectRole,
-} from "../../protocol/gen/hermes/board/v1/board_pb";
-import { BoardEventKind } from "../../protocol/gen/hermes/board/v1/requests_pb";
-import type { BoardEvent, BoardSnapshot } from "../../protocol/gen/hermes/board/v1/requests_pb";
+} from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { BoardEventKind } from "../../protocol/gen/flotilla/board/v1/requests_pb";
+import type {
+  BoardEvent,
+  BoardProposal,
+  BoardSnapshot,
+} from "../../protocol/gen/flotilla/board/v1/requests_pb";
 
 export interface BoardModel {
   readonly settings: BoardSettings | undefined;
@@ -20,6 +25,12 @@ export interface BoardModel {
   readonly columns: readonly BoardColumn[];
   readonly cards: ReadonlyMap<string, ItemCard>;
   readonly roles: readonly ProjectRole[];
+  /** Every board of the project, archived ones included; none from a home before 0.19. */
+  readonly boards: readonly Board[];
+  /** The owner's open drafts, for the tray (0.19.0). */
+  readonly drafts: ReadonlyMap<string, ItemCard>;
+  /** The lead's open proposals and latest applied changes (0.19.0). */
+  readonly proposals: readonly BoardProposal[];
   /** The last change this model includes. */
   readonly seq: bigint;
   /** This connection may make the owner's calls on the board (its home). */
@@ -40,6 +51,9 @@ export function fromSnapshot(snapshot: BoardSnapshot): BoardModel {
     columns: byOrd(snapshot.columns),
     cards: new Map(snapshot.cards.map((card) => [card.id, card])),
     roles: snapshot.roles,
+    boards: snapshot.boards,
+    drafts: new Map(snapshot.drafts.map((card) => [card.id, card])),
+    proposals: snapshot.proposals,
     seq: snapshot.seq,
     canRule: snapshot.canRule,
   };
@@ -49,6 +63,20 @@ export type EventOutcome =
   | { readonly kind: "applied"; readonly model: BoardModel }
   | { readonly kind: "ignored" }
   | { readonly kind: "resync" };
+
+function withDraft(
+  drafts: ReadonlyMap<string, ItemCard>,
+  id: string,
+  card: ItemCard | undefined,
+): ReadonlyMap<string, ItemCard> {
+  const next = new Map(drafts);
+  if (card === undefined) {
+    next.delete(id);
+  } else {
+    next.set(id, card);
+  }
+  return next;
+}
 
 const IGNORED: EventOutcome = { kind: "ignored" };
 const RESYNC: EventOutcome = { kind: "resync" };
@@ -62,6 +90,7 @@ export function applyEvent(model: BoardModel, event: BoardEvent): EventOutcome {
     return RESYNC;
   }
   const cards = new Map(model.cards);
+  let drafts = model.drafts;
   switch (event.kind) {
     case BoardEventKind.ITEM_UPSERTED:
     case BoardEventKind.ITEM_MOVED:
@@ -73,6 +102,10 @@ export function applyEvent(model: BoardModel, event: BoardEvent): EventOutcome {
     case BoardEventKind.ITEM_REMOVED:
       cards.delete(event.itemId);
       break;
+    case BoardEventKind.DRAFT_CHANGED:
+      // Its card while it is a draft; none once finalized or discarded.
+      drafts = withDraft(model.drafts, event.itemId, event.card);
+      break;
     case BoardEventKind.COLUMNS_CHANGED:
     case BoardEventKind.SETTINGS_CHANGED:
     case BoardEventKind.RESYNC:
@@ -82,7 +115,7 @@ export function applyEvent(model: BoardModel, event: BoardEvent): EventOutcome {
       // sequence, so the next push isn't read as a gap.
       break;
   }
-  return { kind: "applied", model: { ...model, cards, seq: event.seq } };
+  return { kind: "applied", model: { ...model, cards, drafts, seq: event.seq } };
 }
 
 export type BoardStatus =
@@ -140,6 +173,18 @@ export class BoardSync {
       );
       void this.load(this.model === null ? "boardWatch" : "boardGet");
     }
+  }
+
+  /**
+   * Takes a snapshot a request answered with (a structure change), unless
+   * a push already carried the board past it.
+   */
+  adopt(snapshot: BoardSnapshot): void {
+    if (this.stopped || this.loading || (this.model !== null && snapshot.seq < this.model.seq)) {
+      return;
+    }
+    this.model = fromSnapshot(snapshot);
+    this.onChange({ kind: "ready", model: this.model });
   }
 
   private async load(arm: "boardWatch" | "boardGet"): Promise<void> {

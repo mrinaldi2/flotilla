@@ -35,6 +35,57 @@ describe("attentionRow", () => {
     expect(a.onReply).toHaveBeenCalledWith("b2", "Should Resume also restart services?");
   });
 
+  it("opens a draft a bot changed since the owner looked", () => {
+    const a = actions();
+    const view = attentionRow(
+      {
+        kind: "draft_updated",
+        id: "d1",
+        title: "Team Lead updated draft RB-20: Units",
+        item_id: "RB-20",
+      },
+      a,
+    );
+    expect(view).toMatchObject({ glyph: "✎", action: "Review", label: "Review the draft RB-20" });
+    view?.onAction?.(click);
+    expect(a.onItem).toHaveBeenCalledWith("RB-20", expect.anything());
+    expect(
+      attentionRow({ kind: "draft_updated", id: "d2", title: "x" }, a)?.action,
+    ).toBeUndefined();
+  });
+
+  it("opens a card the board keeper says waits on the owner", () => {
+    const a = actions();
+    const review = attentionRow(
+      {
+        kind: "card_waiting",
+        id: "card_waiting:mac:RB-12:review",
+        title: "RB-12 waits for your review: Buttons",
+        item_id: "RB-12",
+      },
+      a,
+    );
+    expect(review).toMatchObject({
+      glyph: "◎",
+      meta: "Waiting for your review",
+      action: "Open",
+      label: "Open RB-12",
+    });
+    review?.onAction?.(click);
+    expect(a.onItem).toHaveBeenCalledWith("RB-12", expect.anything());
+    const quiet = attentionRow(
+      { kind: "card_waiting", id: "card_waiting:mac:RB-3:quiet", title: "x", item_id: "RB-3" },
+      a,
+    );
+    expect(quiet?.meta).toBe("Nothing has happened on it · checked automatically");
+    const blocked = attentionRow(
+      { kind: "card_waiting", id: "card_waiting:mac:RB-4:blocked", title: "x" },
+      a,
+    );
+    expect(blocked?.meta).toBe("Its next move is refused · checked automatically");
+    expect(blocked?.action).toBeUndefined();
+  });
+
   it("opens the card a question was asked on", () => {
     const a = actions();
     const view = attentionRow(

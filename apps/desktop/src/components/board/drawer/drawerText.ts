@@ -4,12 +4,20 @@
 
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
-import type { BoardColumn, ItemEvent, Unmet } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { ColumnCategory, ItemEventKind } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import type { MoveCheck } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import type {
+  BoardColumn,
+  ItemEvent,
+  Unmet,
+} from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import {
+  ColumnCategory,
+  ColumnKind,
+  ItemEventKind,
+} from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { MoveCheck } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 
 /** The flow's steps, in order; Cancelled is off the path. */
-export const STEPS: readonly { readonly category: ColumnCategory; readonly word: string }[] = [
+const STEPS: readonly { readonly category: ColumnCategory; readonly word: string }[] = [
   { category: ColumnCategory.INBOX, word: "Inbox" },
   { category: ColumnCategory.READY, word: "Ready" },
   { category: ColumnCategory.DOING, word: "Doing" },
@@ -48,15 +56,54 @@ export interface NextStep {
   readonly unmet: readonly Unmet[];
 }
 
+interface Flow {
+  /** The steps in order, each a word. */
+  readonly steps: readonly { readonly key: string; readonly word: string }[];
+  /** Where the item is among them; -1 off the path. */
+  readonly reached: number;
+  /** The column the next forward move goes to. */
+  readonly next: BoardColumn | undefined;
+}
+
+/**
+ * The item's path (0.19.0). A release-gated board (or one from a home
+ * before 0.19) has the canonical steps; a custom board's path is its own
+ * visible columns in order, Cancelled aside. Only release-gated columns
+ * have a Ready category.
+ */
+export function flowOf(columns: readonly BoardColumn[], current: BoardColumn | undefined): Flow {
+  const board = columns.filter((c) => current !== undefined && c.boardId === current.boardId);
+  const custom =
+    current !== undefined &&
+    current.boardId !== "" &&
+    !board.some((c) => c.category === ColumnCategory.READY);
+  if (custom) {
+    const path = board.filter((c) => c.visible && c.kind !== ColumnKind.CANCELLED);
+    // oxlint-disable-next-line unicorn/no-array-sort
+    path.sort((a, b) => a.ord - b.ord);
+    const reached = path.findIndex((c) => c.key === current.key);
+    return {
+      steps: path.map((c) => ({ key: c.key, word: c.name })),
+      reached,
+      next: reached < 0 ? undefined : path[reached + 1],
+    };
+  }
+  const reached = STEPS.findIndex((s) => s.category === current?.category);
+  const following = reached < 0 ? undefined : STEPS[reached + 1];
+  return {
+    steps: STEPS.map((s) => ({ key: s.word, word: s.word })),
+    reached,
+    next: following ? columns.find((c) => c.category === following.category) : undefined,
+  };
+}
+
 /** The next forward move and its unmet guards (`item_move_check`). */
 export function nextStep(
   columns: readonly BoardColumn[],
   current: BoardColumn | undefined,
   check: MoveCheck | null,
 ): NextStep {
-  const at = STEPS.findIndex((s) => s.category === current?.category);
-  const following = at < 0 ? undefined : STEPS[at + 1];
-  const to = following ? columns.find((c) => c.category === following.category) : undefined;
+  const to = flowOf(columns, current).next;
   const unmet = to ? (check?.columns.find((c) => c.columnKey === to.key)?.unmet ?? []) : [];
   return { to, unmet };
 }

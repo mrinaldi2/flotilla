@@ -3,8 +3,8 @@
 // keys H-272 adds, and the PRs' own records for their review chips.
 
 import { create } from "@bufbuild/protobuf";
-import type { PullRequest } from "../protocol/gen/hermes/pr/v1/pr_pb";
-import { PrState, PullRequestSchema, Verdict } from "../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../protocol/gen/flotilla/pr/v1/pr_pb";
+import { PrState, PullRequestSchema, Verdict } from "../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { Release } from "../protocol/releases";
 import { release } from "./releaseFixtures";
 

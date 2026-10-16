@@ -7,7 +7,7 @@ import { useLatestRef } from "../../app/useLatestRef";
 import type { Selection } from "../../app/selection";
 import type { DaemonApi } from "../../protocol/api";
 import type { Project } from "../../protocol/entities";
-import type { OwnerThread } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { OwnerThread } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { useOwnerThreads } from "../home/useOwnerThreads";
 import { useMainChat } from "./useMainChat";
 import type { MainChatApi } from "./useMainChat";

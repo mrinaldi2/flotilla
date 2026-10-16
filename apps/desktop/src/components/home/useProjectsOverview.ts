@@ -14,7 +14,7 @@ import {
   ProjectRowSchema,
   type ProjectRow,
   type Source,
-} from "../../protocol/gen/hermes/home/v1/home_pb";
+} from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { decodeOverview } from "../../protocol/home";
 import { errText } from "../../util";
 

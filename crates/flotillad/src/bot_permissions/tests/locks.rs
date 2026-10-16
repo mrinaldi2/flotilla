@@ -1,0 +1,184 @@
+//! The locks on sensitive locations, worktrees and the config, and how they
+//! follow a moved home.
+
+use super::*;
+
+/// CE-003 M1: one Read call must not hand a bot the owner's private key.
+#[test]
+fn reading_sensitive_locations_is_denied_by_rule_and_by_the_guard() {
+    for profile in PermissionProfile::ALL {
+        let settings = input(profile, &[]);
+        let deny = rules(&settings, "deny");
+        for rule in ["Read(~/.ssh/**)", "Read(~/.claude.json)"] {
+            assert!(deny.contains(&rule.to_string()), "{profile:?} lacks {rule}");
+        }
+        let matcher = settings["hooks"]["PreToolUse"][0]["matcher"]
+            .as_str()
+            .expect("matcher");
+        assert!(matcher.split('|').any(|tool| tool == "Read"), "{matcher}");
+    }
+    let call = |tool: &str, input: Value| {
+        decide(
+            &json!({ "tool_name": tool, "tool_input": input, "cwd": "/Users/me" }),
+            &guard_cases::ctx(),
+        )
+    };
+    assert!(call("Read", json!({ "file_path": "/Users/me/.ssh/id_rsa" })).is_some());
+    assert!(call("Read", json!({ "file_path": ".ssh/id_ed25519" })).is_some());
+    assert!(call("Read", json!({ "file_path": "/Users/me//.claude.json" })).is_some());
+    assert!(call(
+        "Grep",
+        json!({ "pattern": "PRIVATE", "path": "/Users/me/.ssh" })
+    )
+    .is_some());
+    assert!(call("Glob", json!({ "pattern": "/Users/me/.gravity/secrets/*" })).is_some());
+    assert_eq!(
+        call(
+            "Read",
+            json!({ "file_path": "/Users/me/Developer/x/README.md" })
+        ),
+        None
+    );
+    assert_eq!(
+        call(
+            "Grep",
+            json!({ "pattern": ".ssh", "path": "/Users/me/Developer" })
+        ),
+        None
+    );
+}
+
+/// CE-003 M4: the guard may delete only in the bot's own folders and the
+/// trusted paths' worktrees, never in the trusted paths themselves.
+#[test]
+fn the_guard_is_told_worktrees_not_trusted_paths_are_writable() {
+    let cfg = crate::config::Config {
+        home: PathBuf::from("/Users/me/.gravity"),
+        user_home: PathBuf::from("/Users/me"),
+        ..crate::config::Config::default()
+    };
+    let start = |profile, extras| BotStart {
+        cfg: &cfg,
+        profile,
+        extras,
+        project_name: "Flotilla",
+        bot_name: "Desktop Dev",
+        bot_root: Path::new("/Users/me/.gravity/projects/p/bots/dev"),
+        workspace: Path::new("/Users/me/.gravity/projects/p/bots/dev/workspace"),
+        artifacts: Some(Path::new("/Users/me/.gravity/projects/p/artifacts")),
+        repo: None,
+        devops: false,
+    };
+    let trusted = start(PermissionProfile::Trusted, &[]).guard_command();
+    // The trusted path as the platform joins and quotes it.
+    let developer = super::super::quote(&cfg.user_home.join("Developer").display().to_string());
+    assert!(
+        trusted.contains(&format!("--worktrees {developer}")),
+        "{trusted}"
+    );
+    assert!(
+        !trusted.contains(&format!("--writable {developer}")),
+        "{trusted}"
+    );
+    assert!(!trusted.contains("--full") && !trusted.contains("--allow-main"));
+    let bot = super::super::quote("Desktop Dev");
+    assert!(trusted.contains(&format!("--bot {bot}")), "{trusted}");
+    assert!(!trusted.contains("--releases"), "{trusted}");
+    // Every bot's guard knows the served builds (CE-010 M3).
+    for dir in [
+        cfg.home.join("releases"),
+        cfg.home.join(".releases-staging"),
+    ] {
+        let dir = super::super::quote(&dir.display().to_string());
+        assert!(trusted.contains(&format!("--served {dir}")), "{trusted}");
+    }
+    let publishers: [&[PermissionExtra]; 2] =
+        [&[PermissionExtra::Publish], &[PermissionExtra::ReleaseMain]];
+    for extras in publishers {
+        let publisher = start(PermissionProfile::Trusted, extras).guard_command();
+        assert!(publisher.contains("--releases"), "{publisher}");
+    }
+    let devops = start(PermissionProfile::Full, &[PermissionExtra::ReleaseMain]).guard_command();
+    // CE S1 on H-284 (H-272): `release_main` no longer lets DevOps push or
+    // merge to main itself; main moves through the daemon-checked commands.
+    assert!(
+        devops.contains("--full") && !devops.contains("--allow-main"),
+        "{devops}"
+    );
+    // H-284: `pr_merge` runs only `flotillad pr merge`; a raw push to main
+    // stays refused.
+    let merger = start(PermissionProfile::Full, &[PermissionExtra::PrMerge]).guard_command();
+    assert!(!merger.contains("--allow-main"), "{merger}");
+    let tester = start(PermissionProfile::Trusted, &[PermissionExtra::Install]).guard_command();
+    assert_eq!(
+        tester.contains("--writable '/Applications'"),
+        cfg!(target_os = "macos"),
+        "installing replaces the app: {tester}"
+    );
+}
+
+/// R2 rehearsal: after `migrate-home` the home is `~/.flotilla` and the
+/// config `flotillad.toml`. The profile follows the configured home, and the
+/// config lock covers both names, in the settings and in the guard.
+#[test]
+fn a_moved_home_keeps_its_locks_on_the_renamed_config() {
+    let settings = generate(&SettingsInput {
+        profile: PermissionProfile::Standard,
+        extras: &[],
+        project_name: "Flotilla",
+        home: Path::new("/Users/me/.flotilla"),
+        user_home: Path::new("/Users/me"),
+        workspace: Path::new("/Users/me/.flotilla/projects/p/bots/dev/workspace"),
+        flotillad: Path::new("/bin/flotillad"),
+        artifacts: None,
+        trusted_paths: &[],
+        served: &[],
+        repo_url: None,
+        protected_branch: None,
+        devops: false,
+        port: 49777,
+        guard_command: "'/bin/flotillad' guard".to_string(),
+        extra_environment: &[],
+        interim: None,
+    });
+    let deny = rules(&settings, "deny");
+    for rule in [
+        "Read(//Users/me/.flotilla/secrets/**)",
+        "Bash(*.flotilla/secrets*)",
+        "Edit(//Users/me/.flotilla/flotillad.toml)",
+        "Edit(//Users/me/.flotilla/hermesd.toml)",
+        "Edit(//Users/me/.flotilla/gravityd.toml)",
+    ] {
+        assert!(
+            deny.contains(&rule.to_string()),
+            "{rule} missing: {deny:#?}"
+        );
+    }
+    assert!(!deny.iter().any(|r| r.contains(".gravity/")), "{deny:#?}");
+
+    let mut ctx = guard_cases::ctx();
+    ctx.home = PathBuf::from("/Users/me/.flotilla");
+    for name in CONFIG_FILES {
+        let input = json!({
+            "tool_name": "Edit",
+            "tool_input": { "file_path": format!("/Users/me/.flotilla/{name}") },
+            "cwd": "/Users/me",
+        });
+        assert!(decide(&input, &ctx).is_some(), "{name} is not guarded");
+    }
+}
+
+/// Every name the daemon's home or config ever had is guarded: a name left
+/// out would let a bot write an old-named config an older daemon still
+/// reads, or reach the home through its old link.
+#[test]
+fn the_guarded_names_cover_every_rename() {
+    for name in crate::brand::all_daemon_files(".toml") {
+        assert!(CONFIG_FILES.contains(&name.as_str()), "{name}");
+    }
+    for name in
+        std::iter::once(crate::brand::HOME_DIR_NAME).chain(crate::brand::LEGACY_HOME_DIR_NAMES)
+    {
+        assert!(crate::bot_permissions::HOME_NAMES.contains(&name), "{name}");
+    }
+}

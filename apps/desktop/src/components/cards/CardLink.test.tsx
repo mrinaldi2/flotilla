@@ -82,9 +82,14 @@ describe("card links", () => {
   });
 
   it("keeps a written link that isn't a card id inert", () => {
-    render(<Harness fake={fakeDaemon()} markdown text="[click me](hermes://item/evil)" />);
+    render(<Harness fake={fakeDaemon()} markdown text="[click me](flotilla://item/evil)" />);
     expect(screen.queryByRole("link")).toBeNull();
     expect(screen.getByText("click me")).toBeTruthy();
+  });
+
+  it("reads a card link written before the rename", () => {
+    render(<Harness fake={fakeDaemon()} markdown text="[the bug](hermes://item/H-293)" />);
+    expect(screen.getByRole("link", { name: /^H-293/ })).toBeTruthy();
   });
 
   it("previews a card after a 400 ms hover and closes after leaving (test 2, 9)", async () => {
@@ -120,7 +125,7 @@ describe("card links", () => {
     render(<Harness fake={fakeDaemon()} text="See H-999" />);
     const link = await hover(/^H-999/);
     expect(screen.getByRole("tooltip").textContent).toBe(
-      "H-999 isn't on The Hermes's board. It may have been deleted or mistyped.",
+      "H-999 isn't on Flotilla's board. It may have been deleted or mistyped.",
     );
     fireEvent.click(link);
     await settle();
@@ -133,7 +138,7 @@ describe("card links", () => {
     await hover(/^H-500/);
     const text = screen.getByRole("tooltip").textContent ?? "";
     expect(text).toMatch(
-      /^H-500 is on The Hermes's board, kept on win-pc\. win-pc is offline · last seen .+\./,
+      /^H-500 is on Flotilla's board, kept on win-pc\. win-pc is offline · last seen .+\./,
     );
     expect(text).toContain("Last seen as: Kept elsewhere");
   });
@@ -144,7 +149,7 @@ describe("card links", () => {
     render(<Harness fake={fake} text="H-293" />);
     await hover(/^H-293/);
     expect(screen.getByRole("tooltip").textContent).toBe(
-      "Update the Hermes service on this computer to see cards from here.",
+      "Update the Flotilla service on this computer to see cards from here.",
     );
     expect(fake.requests).toHaveLength(0);
   });
@@ -159,7 +164,7 @@ describe("card links", () => {
     expect(screen.getByRole("tooltip").textContent).toBe("Loading H-293…");
     await settle(SLOW_MS);
     expect(screen.getByRole("tooltip").textContent).toBe(
-      "H-293 can't be looked up right now: the Hermes service didn't answer.",
+      "H-293 can't be looked up right now: the Flotilla service didn't answer.",
     );
   });
 

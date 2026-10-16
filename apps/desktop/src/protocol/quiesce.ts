@@ -2,7 +2,7 @@
 // held still while the daemon is replaced. The app shows it as a banner,
 // and the owner can end it early.
 
-/** A program still holding the Hermes folder, which the pause couldn't stop. */
+/** A program still holding the Flotilla folder, which the pause couldn't stop. */
 export interface QuiesceHolder {
   readonly pid: number;
   readonly command: string;

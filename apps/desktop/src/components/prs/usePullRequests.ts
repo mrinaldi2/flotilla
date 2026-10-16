@@ -13,8 +13,8 @@ import type {
   PrDiff,
   PrPush,
   PullRequest,
-} from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { PrState } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+} from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { PrState } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 
 export interface Loaded<T> {
   readonly data: T | null;

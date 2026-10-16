@@ -3,7 +3,7 @@
   "app": {
     "windows": [
       {
-        "title": "The Hermes",
+        "title": "Flotilla",
         "create": false,
         "width": 1280,
         "height": 800,

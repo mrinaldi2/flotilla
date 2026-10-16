@@ -27,6 +27,7 @@ import type { OwnerAction, OwnerActionReply } from "./ownerActions";
 import type { Quiesce, QuiesceReply } from "./quiesce";
 import type { MetricsReply } from "./metrics";
 import type { PrOwnerReply } from "./prOwner";
+import type { ProjectTrashReply } from "./projectTrash";
 import type { ReleaseReply } from "./releases";
 import type { BotTask } from "./tasks";
 import type { WorkerView } from "./workers";
@@ -76,6 +77,7 @@ export type ServerReply =
   | (ReplyBase & HomeReply)
   | (ReplyBase & PrOwnerReply)
   | (ReplyBase & CleanupReply)
+  | (ReplyBase & ProjectTrashReply)
   | (ReplyBase & {
       readonly type: "hello_ok";
       readonly protocol_version: number;
@@ -274,6 +276,9 @@ export type ServerPush =
       readonly state: BotState;
       readonly reason: string;
       readonly at: string;
+      /** The card the turn starting or ending is about, when known (0.19.0). */
+      readonly item_id?: string;
+      readonly item_title?: string;
     }
   | { readonly type: "message_new"; readonly message: BusMessage }
   | { readonly type: "bot_updated"; readonly bot: Bot }

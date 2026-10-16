@@ -1,0 +1,388 @@
+/* Items in 0.19.0: the drawer's draft parts, attachments, the docked chat,
+   the owner's edit form, the column foot's "+ New item", and a lead's
+   proposal in Decisions. */
+
+.board-column-new {
+  width: 100%;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  color: var(--text-dim);
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.board-column-new:hover,
+.board-column-new:focus-visible {
+  color: var(--text);
+  background: var(--bg-hover);
+  outline: none;
+  border-color: var(--accent);
+}
+
+.drawer-head .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.drawer-draft-head {
+  color: var(--amber);
+}
+
+.item-drawer-draft {
+  border-left-style: dashed;
+}
+
+/* A draft's changes since the owner looked, and its review. */
+.draft-changes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-raised);
+}
+
+.draft-changes .btn {
+  margin-left: auto;
+}
+
+.draft-error {
+  margin: 0;
+  padding: 6px 16px;
+}
+
+.draft-review {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.draft-review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.draft-review-head h4 {
+  margin: 0;
+  font-size: 12px;
+}
+
+.draft-review-list {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.draft-review-list li {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  align-items: start;
+  gap: 6px;
+  padding: 6px 0;
+  font-size: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.draft-mark {
+  font-family: var(--mono);
+  color: var(--text-dim);
+}
+
+.draft-change {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.draft-summary {
+  overflow-wrap: anywhere;
+}
+
+.draft-diff {
+  display: grid;
+  gap: 2px;
+  font-family: var(--mono);
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+
+.draft-before {
+  color: var(--text-faint);
+  text-decoration: line-through;
+}
+
+.draft-undone {
+  opacity: 0.6;
+}
+
+.draft-undone-word {
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.draft-foot {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.draft-foot-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.draft-column {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.draft-column select {
+  padding: 3px 6px;
+}
+
+.draft-refused p {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.discuss-button {
+  margin: 10px 0;
+}
+
+/* The bots discussing a draft, each with Remove. */
+.discussed-with {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: -4px 0 10px;
+  font-size: 12px;
+}
+
+.discussed-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.discussed-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 2px 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+/* The bot's chat docked beside the drawer, pinned to the draft. */
+.discuss-panel {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(360px, 40vw);
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 24px rgb(0 0 0 / 25%);
+}
+
+.discuss-thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 12px;
+}
+
+.discuss-updated {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
+}
+
+/* Attachments. */
+.drawer-attachments {
+  margin-top: 12px;
+}
+
+.attachment-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attachment-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+
+.attachment-refused .attachment-meta {
+  color: var(--red);
+}
+
+.attachment-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 36px;
+  color: var(--text-dim);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.attachment-thumb,
+.attachment-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: zoom-in;
+}
+
+.attachment-thumb {
+  width: 48px;
+  height: 36px;
+}
+
+.attachment-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attachment-inline {
+  max-width: 100%;
+  min-height: 36px;
+}
+
+.attachment-inline img {
+  display: block;
+  max-width: 100%;
+  max-height: 240px;
+}
+
+.attachment-thumb:focus-visible,
+.attachment-inline:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.attachment-thumb-note {
+  padding: 2px 4px;
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.attachment-missing {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+}
+
+.attachment-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.attachment-name {
+  overflow: hidden;
+  font-size: 13px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.attachment-meta progress {
+  width: 120px;
+}
+
+.attachment-detached {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.attachment-actions,
+.attachment-link-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.attachment-link-form input {
+  flex: 1;
+}
+
+.attachment-details {
+  max-width: 520px;
+  padding: 16px;
+  background: var(--bg-raised);
+  border-radius: 8px;
+}
+
+/* The owner's edit form. */
+.item-edit {
+  margin-top: 8px;
+}
+
+.item-edit textarea {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.new-item-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0 0 12px;
+  padding: 0;
+  border: none;
+}

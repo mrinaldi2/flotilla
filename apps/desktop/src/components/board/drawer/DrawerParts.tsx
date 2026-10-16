@@ -1,19 +1,23 @@
-// The item drawer's fixed parts (H-018 §3.6): the header with Move to…, the
+// The item drawer's fixed parts: the header with Move to…, the
 // state stepper, the meta line and the next step.
 
-import { X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import type { ReactElement } from "react";
-import type { BoardColumn, Item } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { Priority, Size } from "../../../protocol/gen/hermes/board/v1/board_pb";
-import { platformWord, typeLabel } from "../labels";
+import type { BoardColumn, Item } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { Priority, Size } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { typeLabel } from "../labels";
 import type { Anchor } from "../useBoardMoves";
 import type { NextStep } from "./drawerText";
-import { STEPS, age } from "./drawerText";
+import { age, flowOf } from "./drawerText";
 
 export function DrawerHeader(props: {
   readonly itemId: string;
   readonly item: Item | undefined;
+  /** A draft: "Draft · RB-20 · not on the board yet". */
+  readonly draft?: boolean;
   readonly onMove?: (anchor: Anchor) => void;
+  /** The owner's edit form; absent where the item can't be edited. */
+  readonly onEdit?: () => void;
   readonly onClose: () => void;
   /** The card shown before this one, when the drawer has one (UX-035 §4). */
   readonly back?: { readonly id: string; readonly onBack: () => void };
@@ -33,9 +37,21 @@ export function DrawerHeader(props: {
           ‹ Back
         </button>
       ) : null}
-      <span className="drawer-type">
-        {type ? `${type.glyph} ${type.word}` : ""} · <span className="mono">{props.itemId}</span>
-      </span>
+      {props.draft === true ? (
+        <span className="drawer-type drawer-draft-head">
+          <span aria-hidden="true">✎ </span>
+          <b>Draft</b> · <span className="mono">{props.itemId}</span> · not on the board yet
+        </span>
+      ) : (
+        <span className="drawer-type">
+          {type ? `${type.glyph} ${type.word}` : ""} · <span className="mono">{props.itemId}</span>
+        </span>
+      )}
+      {props.onEdit ? (
+        <button type="button" className="btn btn-small" onClick={props.onEdit}>
+          <Pencil size={12} aria-hidden="true" /> Edit
+        </button>
+      ) : null}
       {move ? (
         <button
           type="button"
@@ -67,14 +83,17 @@ function stepGlyph(index: number, reached: number): string {
   return index < reached ? "●" : "○";
 }
 
-/** The canonical steps, the current one filled; words, not colour. */
-export function Stepper({ column }: { readonly column: BoardColumn | undefined }): ReactElement {
-  const reached = STEPS.findIndex((s) => s.category === column?.category);
+/** The item's path, the current step filled; words, not colour. */
+export function Stepper(props: {
+  readonly columns: readonly BoardColumn[];
+  readonly column: BoardColumn | undefined;
+}): ReactElement {
+  const { steps, reached } = flowOf(props.columns, props.column);
   return (
     <ol className="drawer-stepper" aria-label="Where it stands">
-      {STEPS.map((s, index) => (
+      {steps.map((s, index) => (
         <li
-          key={s.word}
+          key={s.key}
           className={index === reached ? "now" : index < reached ? "past" : ""}
           aria-current={index === reached ? "step" : undefined}
         >
@@ -85,7 +104,7 @@ export function Stepper({ column }: { readonly column: BoardColumn | undefined }
   );
 }
 
-/** "Doing for 31h · Desktop Dev · P1 · M · desktop daemon". */
+/** "Doing for 31h · Lead · P1 · M · area:web, urgent". */
 export function MetaLine(props: {
   readonly item: Item;
   readonly column: BoardColumn | undefined;
@@ -98,7 +117,7 @@ export function MetaLine(props: {
     item.assignee ? props.who(`bot:${item.assignee}`) : "Unassigned",
     Priority[item.priority],
     item.size === undefined ? "" : Size[item.size],
-    item.platforms.map(platformWord).join(" "),
+    item.labels.join(", "),
   ];
   return (
     <p className="drawer-meta">

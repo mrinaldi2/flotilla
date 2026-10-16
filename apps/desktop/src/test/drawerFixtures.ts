@@ -10,13 +10,12 @@ import {
   ItemType,
   LinkKind,
   PersonRole,
-  Platform,
   Priority,
   Size,
   VerificationResult,
-} from "../protocol/gen/hermes/board/v1/board_pb";
-import { ItemDetailSchema, MoveCheckSchema } from "../protocol/gen/hermes/board/v1/requests_pb";
-import type { ItemDetail, MoveCheck } from "../protocol/gen/hermes/board/v1/requests_pb";
+} from "../protocol/gen/flotilla/board/v1/board_pb";
+import { ItemDetailSchema, MoveCheckSchema } from "../protocol/gen/flotilla/board/v1/requests_pb";
+import type { ItemDetail, MoveCheck } from "../protocol/gen/flotilla/board/v1/requests_pb";
 import { defaultColumns, unmet } from "./boardFixtures";
 
 const at = (iso: string) => timestampFromDate(new Date(iso));
@@ -32,7 +31,7 @@ export function itemDetail(): ItemDetail {
       type: ItemType.FEATURE,
       title: "Backlog and meetings data model in the DB",
       description: "## Why\n\nThe board needs a home.\n\n## Done when\n\nItems survive a restart.",
-      platforms: [Platform.DESKTOP, Platform.DAEMON],
+      labels: ["platform:desktop", "platform:daemon"],
       size: Size.M,
       priority: Priority.P1,
       columnKey: "doing",

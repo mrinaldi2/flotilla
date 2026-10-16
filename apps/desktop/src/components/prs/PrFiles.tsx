@@ -5,8 +5,8 @@
 
 import { useState } from "react";
 import type { ReactElement } from "react";
-import type { DiffFile, PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { FileStatus, Verdict } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { DiffFile, PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { FileStatus, Verdict } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import { parseDiff } from "./diffParse";
 import type { DiffComments } from "./FileDiff";
 import FileDiff from "./FileDiff";

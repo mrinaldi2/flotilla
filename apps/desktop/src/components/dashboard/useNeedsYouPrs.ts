@@ -2,7 +2,7 @@
 // one, so its row can say who approved and whether it is a Re-check.
 
 import { useMemo } from "react";
-import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { PrApi } from "../../protocol/prs";
 import { usePrList } from "../prs/usePullRequests";
 

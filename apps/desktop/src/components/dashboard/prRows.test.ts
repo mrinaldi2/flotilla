@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AttentionRowJson } from "../../protocol/dashboard";
-import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import { botsPendingPr, recheckPr } from "../../test/ownerReviewFixtures";
 import { readyForYouPr } from "../../test/prFixtures";
 import { attentionRow } from "./attentionRows";

@@ -42,7 +42,7 @@ pub fn daemon_health(host: String, port: u16) -> Option<DaemonHealth> {
     })
 }
 
-/// The bundled `hermesd` sidecar, which Tauri places next to the app
+/// The bundled `flotillad` sidecar, which Tauri places next to the app
 /// binary inside `Contents/MacOS`.
 fn sidecar_path() -> Result<PathBuf, String> {
     let exe = std::env::current_exe().map_err(|err| format!("cannot locate the app: {err}"))?;
@@ -57,7 +57,7 @@ fn sidecar_path_for_exe(exe: &Path) -> Result<PathBuf, String> {
     let dir = exe
         .parent()
         .ok_or_else(|| "the app path has no parent".to_string())?;
-    Ok(dir.join(format!("hermesd{}", std::env::consts::EXE_SUFFIX)))
+    Ok(dir.join(format!("flotillad{}", std::env::consts::EXE_SUFFIX)))
 }
 
 mod home;
@@ -147,7 +147,7 @@ fn reject_daemon_downgrade(current_version: Option<&str>) -> Result<(), String> 
         .map_err(|err| format!("refusing to replace daemon with unknown version: {err}"))?;
     if current > bundled {
         return Err(format!(
-            "refusing to downgrade the Hermes service from {current} to {bundled}; update The Hermes instead"
+            "refusing to downgrade the Flotilla service from {current} to {bundled}; update Flotilla instead"
         ));
     }
     Ok(())
@@ -155,7 +155,7 @@ fn reject_daemon_downgrade(current_version: Option<&str>) -> Result<(), String> 
 
 /// A migrating install moves the home and restarts every bot, so it runs
 /// only once the user confirmed the summary from [`home_migration_summary`].
-/// A headless `hermesd service install` asks nothing.
+/// A headless `flotillad service install` asks nothing.
 #[tauri::command]
 pub fn install_local_daemon(
     current_version: Option<String>,
@@ -164,7 +164,7 @@ pub fn install_local_daemon(
     reject_daemon_downgrade(current_version.as_deref())?;
     if confirmed_migration != Some(true) && migration_pending(&user_home()?) {
         return Err(
-            "updating the Hermes service moves your data to its new home; confirm it in the app first"
+            "updating the Flotilla service moves your data to its new home; confirm it in the app first"
                 .to_string(),
         );
     }
@@ -204,7 +204,7 @@ pub(crate) fn update_local_daemon_if_installed() -> Result<(), String> {
 /// A daemon that answers on its port is never replaced here, whatever the
 /// files on disk suggest (H-193): opening a newer app once swapped a healthy
 /// 0.17.2 service for the bundled 0.17.3 and restarted every bot. Updating a
-/// running service is the owner's choice (the "Update Hermes service" toast)
+/// running service is the owner's choice (the "Update Flotilla service" toast)
 /// or a release install with its quiesce.
 pub(crate) fn repair_local_daemon_if_broken() -> Result<(), String> {
     let user_home = user_home()?;
@@ -237,7 +237,7 @@ fn should_repair(needed: bool, answers: impl FnOnce() -> bool) -> bool {
         return false;
     }
     if answers() {
-        eprintln!("hermes: the service answers, so the launch repair leaves it running (H-193)");
+        eprintln!("flotilla: the service answers, so the launch repair leaves it running (H-193)");
         return false;
     }
     true
@@ -248,17 +248,17 @@ fn daemon_answers(home: &Path) -> bool {
     daemon_health("127.0.0.1".to_string(), daemon_port_from_home(home)).is_some()
 }
 
-/// Must match `hermesd`'s own config default and `DEFAULT_ENDPOINT` in the
+/// Must match `flotillad`'s own config default and `DEFAULT_ENDPOINT` in the
 /// client.
 const DEFAULT_PORT: u16 = 49777;
 
 /// The port the daemon installed on this machine actually serves on.
 ///
-/// A managed daemon publishes its selected port in `hermesd.port`, including
+/// A managed daemon publishes its selected port in `flotillad.port`, including
 /// any fallback negotiated because the configured port was occupied.
 ///
 /// An install predating the 49777 default still has `port = 7777` in its
-/// `hermesd.toml`, and `service install` deliberately keeps an existing config,
+/// `flotillad.toml`, and `service install` deliberately keeps an existing config,
 /// so the daemon keeps serving on the old port after an upgrade. The wizard
 /// has to ask the config rather than assume the current default, or it polls
 /// a port nothing will ever answer on.
@@ -295,7 +295,7 @@ fn daemon_port_from_home(home: &Path) -> u16 {
 /// How many distinct trailing log lines to show when an install fails.
 ///
 /// Four covered a bare panic, but the daemon now logs its startup sequence
-/// (`hermesd starting`, `listening`, `hermesd stopping`), and a restart loop
+/// (`flotillad starting`, `listening`, `flotillad stopping`), and a restart loop
 /// only reads as one across several lines.
 const LOG_TAIL_LINES: usize = 12;
 
@@ -317,7 +317,7 @@ fn tail_of(path: &Path) -> Option<String> {
 }
 
 /// The daemon's most recent log, so a failed install can say *why* it never
-/// came up. The daemon logs to stderr, so `hermesd.err.log` normally holds
+/// came up. The daemon logs to stderr, so `flotillad.err.log` normally holds
 /// everything; the stdout log is a fallback for a build that logged there.
 /// `None` means there is nothing to show.
 #[tauri::command]

@@ -10,7 +10,7 @@ import { stubLocalStorage } from "./test/spies";
 let daemon: FakeDaemon;
 let storage: Map<string, string>;
 
-const UNREAD_KEY = "hermes.unread";
+const UNREAD_KEY = "flotilla.unread";
 const AT = "2024-05-01T09:00:00.000Z";
 
 vi.mock("./components/TerminalPane", () => ({
@@ -191,10 +191,10 @@ describe("App state", () => {
     expect(screen.queryByText(/Connected to/)).not.toBeInTheDocument();
   });
 
-  it("says where the Hermes service is from the rail", async () => {
+  it("says where the Flotilla service is from the rail", async () => {
     await renderHome();
     expect(
-      screen.getByRole("button", { name: /^Hermes service: Connected \(/ }),
+      screen.getByRole("button", { name: /^Flotilla service: Connected \(/ }),
     ).toBeInTheDocument();
   });
 

@@ -1,9 +1,10 @@
 import { create } from "@bufbuild/protobuf";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ItemType, Platform } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { MoveCheckSchema } from "../../protocol/gen/hermes/board/v1/requests_pb";
+import { ItemType } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { MoveCheckSchema } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import { card, column, unmet } from "../../test/boardFixtures";
 import { loadBoardPrefs, saveBoardPrefs } from "./boardPrefs";
+import type { BoardFilters } from "./filters";
 import { isFiltering, matchesFilters, NO_FILTERS, parseFilters, toggled } from "./filters";
 import { CHECK_TTL_MS, columnChecks, MoveCheckCache, planMove, reasonChip } from "./moves";
 import { countText, wipDescription, wipSummary } from "./wip";
@@ -54,11 +55,13 @@ describe("wipSummary", () => {
   });
 });
 
+const labels = (...wanted: string[]): BoardFilters => ({ ...NO_FILTERS, labels: wanted });
+
 describe("filters", () => {
   const item = card({
     assignee: "b1",
     type: ItemType.BUG,
-    platforms: [Platform.IOS, Platform.DAEMON],
+    labels: ["platform:ios", "area:daemon", "urgent"],
   });
 
   it("passes everything with no filters", () => {
@@ -66,15 +69,16 @@ describe("filters", () => {
     expect(matchesFilters(item, NO_FILTERS)).toBe(true);
   });
 
-  it("requires every set filter, with platforms matching on any overlap", () => {
+  it("requires every set filter, with labels matching on any overlap within a group", () => {
     expect(matchesFilters(item, { ...NO_FILTERS, bots: ["b1"] })).toBe(true);
     expect(matchesFilters(item, { ...NO_FILTERS, bots: ["b2"] })).toBe(false);
     expect(matchesFilters(card(), { ...NO_FILTERS, bots: ["b1"] })).toBe(false);
-    expect(
-      matchesFilters(item, { ...NO_FILTERS, platforms: [Platform.DESKTOP, Platform.IOS] }),
-    ).toBe(true);
-    expect(matchesFilters(item, { ...NO_FILTERS, platforms: [Platform.DESKTOP] })).toBe(false);
-    expect(matchesFilters(item, { bots: ["b1"], platforms: [], types: [ItemType.FEATURE] })).toBe(
+    expect(matchesFilters(item, labels("platform:desktop", "platform:ios"))).toBe(true);
+    expect(matchesFilters(item, labels("platform:desktop"))).toBe(false);
+    expect(matchesFilters(item, labels("platform:ios", "area:daemon"))).toBe(true);
+    expect(matchesFilters(item, labels("platform:ios", "area:web"))).toBe(false);
+    expect(matchesFilters(item, labels("urgent"))).toBe(true);
+    expect(matchesFilters(item, { bots: ["b1"], labels: [], types: [ItemType.FEATURE] })).toBe(
       false,
     );
   });
@@ -85,9 +89,11 @@ describe("filters", () => {
   });
 
   it("drops anything unknown when reading stored filters back", () => {
-    expect(parseFilters({ bots: ["b1", 3], platforms: [1, 0, 42, "x"], types: [3, 99] })).toEqual({
+    expect(
+      parseFilters({ bots: ["b1", 3], labels: ["area:web", 4], platforms: [1], types: [3, 99] }),
+    ).toEqual({
       bots: ["b1"],
-      platforms: [Platform.DESKTOP],
+      labels: ["area:web"],
       types: [ItemType.BUG],
     });
     expect(parseFilters("nonsense")).toEqual(NO_FILTERS);
@@ -131,7 +137,7 @@ describe("board prefs", () => {
   });
 
   it("falls back to defaults for unreadable storage", () => {
-    store.set("hermes.board.p1", "{nope");
+    store.set("flotilla.board.p1", "{nope");
     expect(loadBoardPrefs("p1").inboxOpen).toBe(false);
   });
 });

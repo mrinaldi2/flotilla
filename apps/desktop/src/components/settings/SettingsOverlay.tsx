@@ -10,6 +10,7 @@ import type { SettingsCategory } from "./categories";
 import ConnectionSettings from "./ConnectionSettings";
 import DiagnosticsSettings from "./DiagnosticsSettings";
 import GeneralSettings from "./GeneralSettings";
+import StorageSettings from "./StorageSettings";
 
 interface CategoryPaneProps {
   readonly client: DaemonApi;
@@ -45,6 +46,16 @@ function CategoryPane(props: CategoryPaneProps): ReactElement {
     case "devices": {
       return (
         <DevicesPanel
+          client={client}
+          connected={daemon.connected}
+          canControl={daemon.canControl}
+          onToast={addToast}
+        />
+      );
+    }
+    case "storage": {
+      return (
+        <StorageSettings
           client={client}
           connected={daemon.connected}
           canControl={daemon.canControl}

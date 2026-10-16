@@ -1,0 +1,358 @@
+//! Implementations of the bus's MCP tools (`brand::ACTIVE_MCP_SERVER`).
+
+use std::sync::Arc;
+
+use bus::{
+    MessageKind, DEFAULT_TASK_DEADLINE_HOURS, MAX_MESSAGE_BYTES, MAX_NOTE_BYTES, MAX_TASK_FANOUT,
+    MAX_TASK_HOPS, MAX_TASK_REPLIES,
+};
+use serde_json::{json, Value};
+
+use crate::app::AppState;
+use crate::messaging;
+use crate::messaging::Dm;
+
+use super::task_card;
+use super::tasks::describe_tasks;
+use super::{bot_sender, caller};
+
+pub(super) fn send_message(
+    app: &Arc<AppState>,
+    bot_id: &str,
+    args: &Value,
+) -> anyhow::Result<Value> {
+    send(app, bot_id, args, None)
+}
+
+/// `send_message`, with `checked_item` set when the card was already checked
+/// at a board home on a peer (`task_card::intercept`).
+pub(super) fn send(
+    app: &Arc<AppState>,
+    bot_id: &str,
+    args: &Value,
+    checked_item: Option<String>,
+) -> anyhow::Result<Value> {
+    let me = caller(app, bot_id)?;
+    let to = args
+        .get("to")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| anyhow::anyhow!("'to' is required"))?;
+    let body = args
+        .get("body")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| anyhow::anyhow!("'body' is required"))?;
+    if body.len() > MAX_MESSAGE_BYTES {
+        anyhow::bail!("body exceeds {MAX_MESSAGE_BYTES} bytes");
+    }
+    let kind = match args.get("kind").and_then(|v| v.as_str()) {
+        Some(k) => MessageKind::parse(k)
+            .ok_or_else(|| anyhow::anyhow!("unknown kind '{k}' — use 'task', 'reply' or 'note'"))?,
+        None => MessageKind::Note,
+    };
+    match kind {
+        MessageKind::Chat => anyhow::bail!(
+            "refusing send: kind 'chat' is reserved for user conversations — use \
+             'task' (work order), 'reply' (on an open task) or 'note' (FYI)"
+        ),
+        MessageKind::Done => anyhow::bail!(
+            "refusing send: kind 'done' is produced by complete_task — call \
+             complete_task with the task_id to report a result"
+        ),
+        MessageKind::Task | MessageKind::Reply | MessageKind::Note => {}
+    }
+    let ref_id = args.get("ref").and_then(|v| v.as_str());
+    let named = args
+        .get("item")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty());
+    if named.is_some() && kind != MessageKind::Task {
+        anyhow::bail!("'item' links a delegated task to a board item; send kind 'task'");
+    }
+    let item = match (checked_item, named) {
+        (Some(checked), _) => Some(checked),
+        (None, Some(id)) => Some(task_card::local_item(app, &me, id)?),
+        (None, None) => None,
+    };
+
+    // Hop/origin tracking: extend the chain from the task this send is for
+    // (`parent_task`, else the caller's newest open one).
+    let open_task = task_card::parent_task(app, &me, args)?;
+    let (hop, chain) = open_task
+        .as_ref()
+        .map(|t| (t.hop_count, t.origin_chain.clone()))
+        .unwrap_or((0, String::new()));
+
+    // Addressed by bot name, resolved within the caller's project.
+    let target = app
+        .db
+        .get_bot_by_name(&me.project_id, to)?
+        .ok_or_else(|| anyhow::anyhow!("no bot named '{to}' in this project"))?;
+    if target.id == me.id {
+        anyhow::bail!("cannot send a message to yourself");
+    }
+
+    match kind {
+        // A reply belongs to the open task between the pair — the one the
+        // target delegated to me, or failing that the one I delegated to the
+        // target. No open task means there is nothing to reply on: results
+        // arrive as `done`, and `done` closes the conversation.
+        MessageKind::Reply => {
+            if let Some(ref_id) = ref_id {
+                let referenced = app
+                    .db
+                    .get_message(ref_id)?
+                    .ok_or_else(|| anyhow::anyhow!("no message with id '{ref_id}'"))?;
+                if referenced.kind == MessageKind::Done {
+                    anyhow::bail!(
+                        "refusing send: message {ref_id} is a task result (kind 'done') \
+                         and needs no answer — open a new task if it calls for more work"
+                    );
+                }
+            }
+            let requested_by_target = open_task
+                .as_ref()
+                .filter(|t| t.from_bot_id.as_deref() == Some(target.id.as_str()));
+            let task = match requested_by_target {
+                Some(t) => t.clone(),
+                None => app
+                    .db
+                    .newest_open_task_from(&me.id, &target.id)?
+                    .ok_or_else(|| {
+                        anyhow::anyhow!(
+                            "refusing send: no open task between you and {to} to reply \
+                             on — send kind 'task' to ask for work, or 'note' for an \
+                             FYI that needs no answer"
+                        )
+                    })?,
+            };
+            if !app.db.try_count_task_reply(&task.id, MAX_TASK_REPLIES)? {
+                anyhow::bail!(
+                    "refusing send: reply limit reached for task {} ({MAX_TASK_REPLIES} \
+                     replies) — if the task is assigned to you, finish it with \
+                     complete_task; if you delegated it, wait for the result",
+                    task.id
+                );
+            }
+            // A reply defaults to referencing the message that opened the
+            // task, so the reader sees what it answers.
+            let ref_id = ref_id.unwrap_or(task.origin_message_id.as_str());
+            let sender = bot_sender(&me);
+            let msg = messaging::send_dm(
+                &app.db,
+                &app.events,
+                Dm::new(&target.id, &sender, kind, body).re(ref_id),
+            )?;
+            Ok(json!({ "message_id": msg.id, "num": msg.num }))
+        }
+        // A note is an FYI: it opens no task, expects no answer, and budgets
+        // nothing. So it carries no work (H-135 G3): a long one is a brief
+        // in disguise. Only bots' sends come through here; the daemon's
+        // notices, the owner's messages and peer deliveries don't.
+        MessageKind::Note => {
+            if body.len() > MAX_NOTE_BYTES {
+                anyhow::bail!(
+                    "refusing send: a note is a short FYI of at most {MAX_NOTE_BYTES} bytes \
+                     (this one is {}) — if this is work, send kind 'task' with \
+                     `item`; put long content in an artifact and send its path",
+                    body.len()
+                );
+            }
+            let sender = bot_sender(&me);
+            let mut dm = Dm::new(&target.id, &sender, kind, body);
+            dm.ref_message_id = ref_id;
+            let msg = messaging::send_dm(&app.db, &app.events, dm)?;
+            Ok(json!({ "message_id": msg.id, "num": msg.num }))
+        }
+        // A task is a delegation: it extends the chain and opens a task row,
+        // so every budget — loop, depth, fan-out — is checked before the
+        // message leaves.
+        MessageKind::Task => {
+            if chain.split(',').any(|hop_id| hop_id == target.id) {
+                let requested_by_target = open_task
+                    .as_ref()
+                    .filter(|t| t.from_bot_id.as_deref() == Some(target.id.as_str()));
+                let hint = match requested_by_target {
+                    Some(t) => format!(
+                        " — {to} delegated task {} to you: report the result with \
+                         complete_task, or send kind 'reply' to ask a question",
+                        t.id
+                    ),
+                    None => String::new(),
+                };
+                anyhow::bail!(
+                    "refusing send: {to} is already in this task's origin chain (loop){hint}"
+                );
+            }
+            if hop + 1 > MAX_TASK_HOPS {
+                anyhow::bail!(
+                    "refusing send: this delegation chain is {hop} hops deep (limit \
+                     {MAX_TASK_HOPS}) — do the work yourself, or report what you have \
+                     with complete_task"
+                );
+            }
+            let new_chain = if chain.is_empty() {
+                me.id.clone()
+            } else {
+                format!("{chain},{}", me.id)
+            };
+            // Every task names a card (H-125): the one given, else the
+            // parent's. A root task is budgeted per card and per sender; a
+            // nested one per incoming task, as before.
+            let card = task_card::card_for(app, &me, item, open_task.as_ref())?;
+            match (&open_task, &card) {
+                (None, Some(card)) => task_card::check_root(app, &me, card)?,
+                _ => {
+                    let open = app.db.open_tasks_delegated_by(&me.id, Some(&new_chain))?;
+                    if open.len() as i64 >= MAX_TASK_FANOUT {
+                        // Naming the tasks is what makes the advice actionable:
+                        // the ids came back from sends that may be far behind.
+                        anyhow::bail!(
+                            "refusing send: you already have {MAX_TASK_FANOUT} open tasks \
+                             delegated from this one — wait for a result, ask a delegate \
+                             for status with kind 'reply', or close one with cancel_task \
+                             before opening another. Open now: {}",
+                            describe_tasks(app, &open)?
+                        );
+                    }
+                }
+            }
+            let deadline_hours = args
+                .get("deadline_hours")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(DEFAULT_TASK_DEADLINE_HOURS)
+                .clamp(1, 168);
+            let deadline_at = chrono::Utc::now() + chrono::Duration::hours(deadline_hours);
+            let sender = bot_sender(&me);
+            // The task carries its card's attachments (0.19.0 K4b).
+            let body = match &card {
+                Some(card) => task_card::with_attachments(app, &me.project_id, card, body, &target),
+                None => body.to_string(),
+            };
+            let mut dm = Dm::new(&target.id, &sender, kind, &body);
+            dm.ref_message_id = ref_id;
+            let msg = messaging::send_dm(&app.db, &app.events, dm)?;
+            let task = app.db.create_task(
+                &msg.id,
+                Some(&me.id),
+                &target.id,
+                Some(deadline_at),
+                hop + 1,
+                &new_chain,
+            )?;
+            if let Some(card) = &card {
+                task_card::attach(app, &me, &task.id, card)?;
+            }
+            Ok(json!({ "message_id": msg.id, "num": msg.num, "task_id": task.id }))
+        }
+        MessageKind::Chat | MessageKind::Done => unreachable!("refused above"),
+    }
+}
+
+pub(super) fn list_bots(app: &Arc<AppState>, bot_id: &str) -> anyhow::Result<Value> {
+    let me = caller(app, bot_id)?;
+    let bots: Vec<Value> = app
+        .db
+        .list_bots(Some(&me.project_id))?
+        .into_iter()
+        .map(|b| {
+            let (state, _) = app.supervisor.state(&b.id);
+            let mut item = json!({
+                "id": b.id,
+                "name": b.name,
+                "avatar": b.avatar,
+                "description": b.description,
+                "runtime": b.runtime,
+                "status": state.as_str(),
+                "created_by_me": b.created_by_bot_id.as_deref() == Some(bot_id)
+            });
+            // A worker exists for one task and is gone once it closes.
+            if b.temporary {
+                item["worker"] = json!(true);
+            }
+            // A linked bot runs on another of the owner's machines: it can be
+            // messaged like anyone here, but its files are not on this disk.
+            if let Some(peer_id) = &b.peer_id {
+                let peer = app.db.get_peer(peer_id).ok().flatten();
+                let online = app.peers.is_online(peer_id);
+                item["machine"] = json!(peer.map(|p| p.name));
+                item["online"] = json!(online);
+                item["status"] = json!(if online { "ready" } else { "offline" });
+            }
+            item
+        })
+        .collect();
+    Ok(json!({ "bots": bots }))
+}
+
+pub(super) fn check_inbox(app: &Arc<AppState>, bot_id: &str) -> anyhow::Result<Value> {
+    let msgs = app.db.consume_inbox(bot_id)?;
+    // The task ids `complete_task` needs; without them a delegated task is a
+    // message the assignee can read but never answer. One query for the whole
+    // batch; newest-first order means the first id seen per message wins.
+    let mut task_by_msg = std::collections::HashMap::new();
+    for task in app.db.open_tasks_for(bot_id)? {
+        task_by_msg
+            .entry(task.origin_message_id.clone())
+            .or_insert(task.id);
+    }
+    let mut rendered: Vec<Value> = Vec::with_capacity(msgs.len());
+    for m in &msgs {
+        let from = crate::messaging::unverified_owner_name(&app.db, m)?;
+        let mut item = json!({
+            "message_id": m.id,
+            "num": m.num,
+            "from": from.as_deref().unwrap_or(&m.sender.name),
+            "kind": m.kind.as_str(),
+            "body": m.body,
+            "created_at": m.created_at.to_rfc3339()
+        });
+        if let Some(task_id) = task_by_msg.get(m.id.as_str()) {
+            item["task_id"] = json!(task_id);
+        }
+        rendered.push(item);
+    }
+    // The other half of the ledger: tasks this bot is waiting on. Without it
+    // the only source of a delegated task's id is the send that opened it,
+    // which is gone once the session's context has moved on — and with it any
+    // way to chase or cancel the task.
+    let mut delegated: Vec<Value> = Vec::new();
+    for task in app.db.open_tasks_delegated_by(bot_id, None)? {
+        let to = app
+            .db
+            .get_bot(&task.to_bot_id)?
+            .map(|b| b.name)
+            .unwrap_or_else(|| task.to_bot_id.clone());
+        delegated.push(json!({
+            "task_id": task.id,
+            "to": to,
+            "opened_at": task.created_at.to_rfc3339()
+        }));
+    }
+    // The third part of the ledger: what this bot has asked the owner and not
+    // yet heard back on. A session that lost its context would otherwise have
+    // no way to find what it is waiting on, and would ask again.
+    let open_decisions: Vec<Value> = app
+        .db
+        .open_decisions_for(bot_id)?
+        .into_iter()
+        .map(|d| {
+            let mut item = json!({
+                "id": d.id,
+                "title": d.title,
+                "state": d.state.as_str()
+            });
+            if let Some(deadline) = d.deadline_at {
+                item["deadline_at"] = json!(deadline.to_rfc3339());
+            }
+            item
+        })
+        .collect();
+    let mut out = json!({ "messages": rendered });
+    if !delegated.is_empty() {
+        out["delegated_tasks"] = json!(delegated);
+    }
+    if !open_decisions.is_empty() {
+        out["open_decisions"] = json!(open_decisions);
+    }
+    Ok(out)
+}

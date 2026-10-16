@@ -180,7 +180,7 @@ export interface Release {
   /** What it waits on from the owner (H-247); absent from older services. */
   readonly owner_blockers?: readonly OwnerBlocker[];
   /**
-   * A release cut from main (H-261 §6.1; `hermes.pr.v1.ReleaseFromMain`),
+   * A release cut from main (H-261 §6.1; `flotilla.pr.v1.ReleaseFromMain`),
    * absent from older services: its tag, its commit on main, the pull
    * requests merged since the last release, and those not planned for it.
    */
@@ -196,7 +196,7 @@ export interface Release {
   readonly not_merged?: readonly string[];
 }
 
-/** A merged pull request as a release lists it (`hermes.pr.v1.PrRef`). */
+/** A merged pull request as a release lists it (`flotilla.pr.v1.PrRef`). */
 export interface PrRef {
   readonly number: number;
   readonly item_id: string;
@@ -304,7 +304,7 @@ export interface ReleaseMachines {
 }
 
 // Installing an iOS package on a paired iPhone or iPad (H-229, UX-043), as
-// `hermes.home.v1` ReleaseInstall and InstallOffer in proto3 JSON with the
+// `flotilla.home.v1` ReleaseInstall and InstallOffer in proto3 JSON with the
 // proto field names: a field at its default (false, "", none) is left out.
 
 /** A paired device the install link can go to. */

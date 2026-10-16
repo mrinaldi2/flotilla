@@ -6,17 +6,17 @@ import PermissionCards from "./PermissionCards";
 import { originLine, permissionDetail, permissionTitle } from "./permissionTitle";
 import type { Permissions } from "./usePermissions";
 
-const COMMAND = "hermesd board import --dry-run";
+const COMMAND = "flotillad board import --dry-run";
 const BODY =
   "If you allow it, this one command runs with your owner rights: it can do anything you can " +
-  "do in The Hermes, including approving releases and deleting bots. Bots can run terminal " +
+  "do in Flotilla, including approving releases and deleting bots. Bots can run terminal " +
   "commands too. Allow it only if you just ran it yourself.";
 
 function terminal(over: Partial<TerminalOrigin> = {}): PermissionRequest {
   const origin: TerminalOrigin = {
     command: COMMAND,
     pid: 4242,
-    process: "hermesd",
+    process: "flotillad",
     launched_from: "Terminal",
     cwd: "/Users/me/Developer/gravity",
     ...over,
@@ -67,7 +67,7 @@ describe("TerminalCard (UX-014)", () => {
     const inCard = within(card);
     expect(inCard.getByText(COMMAND)).toHaveClass("permission-summary");
     expect(
-      inCard.getByText("From hermesd in Terminal · in ~/Developer/gravity · process 4242"),
+      inCard.getByText("From flotillad in Terminal · in ~/Developer/gravity · process 4242"),
     ).toBeInTheDocument();
     expect(inCard.getByText(BODY)).toBeInTheDocument();
     expect(inCard.getByText(/^Denied automatically at .+ if you don't answer\.$/)).toBeVisible();
@@ -132,21 +132,21 @@ describe("TerminalCard (UX-014)", () => {
 
   it("falls back on the origin line when the OS told less", () => {
     const base = { command: COMMAND, pid: 4242 };
-    expect(originLine({ ...base, process: "hermesd" })).toBe("From hermesd · process 4242");
+    expect(originLine({ ...base, process: "flotillad" })).toBe("From flotillad · process 4242");
     expect(originLine(base)).toBe(
-      "From process 4242. The Hermes couldn't tell which app started it.",
+      "From process 4242. Flotilla couldn't tell which app started it.",
     );
-    expect(originLine({ ...base, process: "hermesd", cwd: "C:\\Users\\me\\src" })).toBe(
-      "From hermesd · in ~\\src · process 4242",
+    expect(originLine({ ...base, process: "flotillad", cwd: "C:\\Users\\me\\src" })).toBe(
+      "From flotillad · in ~\\src · process 4242",
     );
   });
 
   it("titles the toast and names the bot's workspace in its body", () => {
     const request = terminal({ bot: "Desktop Dev" });
     expect(permissionTitle(request, undefined)).toBe("A terminal command wants to act as you");
-    expect(permissionDetail(terminal())).toBe(`${COMMAND} · open The Hermes to allow or deny it.`);
+    expect(permissionDetail(terminal())).toBe(`${COMMAND} · open Flotilla to allow or deny it.`);
     expect(permissionDetail(request)).toBe(
-      `Started in Desktop Dev's workspace. ${COMMAND} · open The Hermes to allow or deny it.`,
+      `Started in Desktop Dev's workspace. ${COMMAND} · open Flotilla to allow or deny it.`,
     );
     expect(permissionDetail(bash)).toBe("Bash: rm -rf build");
   });

@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
-import type { ReviewSettings } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { ReviewSettings } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { OwnerReviewMode } from "../../protocol/prOwner";
 import { areaLabel, MODE_CHOICES, modeOf } from "./ownerText";
 import type { PrClient } from "./usePrOwner";

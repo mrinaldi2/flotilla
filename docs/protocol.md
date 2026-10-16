@@ -1,4 +1,4 @@
-# hermesd control plane protocol (v2)
+# flotillad control plane protocol (v2)
 
 Transport: WebSocket at `ws://<host>:49777/ws`. All frames are JSON text frames.
 Every client→server message has a `req_id` (string, client-chosen, unique per connection).
@@ -41,7 +41,7 @@ see [workers](workers.md)), and `permission_profiles` when projects carry a perm
 
 `hello_ok.contracts` maps each typed surface to its contract version, e.g.
 `{"board": 1}`. Those surfaces are defined once in protobuf under
-`proto/hermes/<surface>/v1/` (ADR-001): Rust is generated at build time by
+`proto/flotilla/<surface>/v1/` (ADR-001): Rust is generated at build time by
 `crates/bus/build.rs`, TypeScript by `pnpm --dir apps/desktop proto:gen` into
 `apps/desktop/src/protocol/gen/`, and Swift in the iOS repo from vendored copies.
 Golden proto-JSON fixtures live in `crates/bus/fixtures/<surface>/`. A client may
@@ -50,7 +50,7 @@ protobuf's compatibility rules; when `buf breaking` fails, the version is bumped
 
 `hello_ok.encodings` lists the binary encodings the daemon accepts, today
 `["proto"]`. Text frames stay this JSON protocol. A binary frame carries one
-`hermes.wire.v1.Envelope` (`req_id` plus a `body` oneof per typed surface) and
+`flotilla.wire.v1.Envelope` (`req_id` plus a `body` oneof per typed surface) and
 is answered with an `Envelope` under the same `req_id`; pushes carry `req_id` 0.
 A request refused before its service answers (no grant, unknown item or
 project, bad arguments, an envelope a client may not send) is answered with an
@@ -63,7 +63,7 @@ at once or later; the connection goes on serving. A connection the daemon can
 no longer serve is closed, never left open and silent, so a client reconnects
 (H-170). Requests from a linked computer get the same `internal` answer.
 
-The board (`proto/hermes/board/v1/requests.proto`, H-020 §1.5) is the first
+The board (`proto/flotilla/board/v1/requests.proto`, H-020 §1.5) is the first
 typed surface:
 
 | Request | Grant | Response |
@@ -72,7 +72,7 @@ typed surface:
 | `board_watch {project_id}` / `board_unwatch` | read | `board` (as `board_get`) / `unwatched` |
 | `item_get {id}` | read | `item`: the item, links, comments, the first 100 history events and `history_next` |
 | `item_history {id, after?, limit}` | read | `history`: events oldest first, `next` cursor |
-| `item_query {project_id, text?, column_keys, assignee?, types, priorities, platforms, blocked?}` | read | `items`: matching cards |
+| `item_query {project_id, text?, column_keys, assignee?, types, priorities, labels, blocked?}` | read | `items`: matching cards; `labels` matches any (0.18's `platforms` are read as `platform:` labels) |
 | `item_move_check {id}` | read | `move_check`: every other column with its unmet guards |
 | `item_move {id, to, expected_version, reason?, override_reason?}` | control | `moved`: `done` (the item), `refused` (unmet guards) or `conflict` (the current item) |
 | `item_comment {id, body, reply_to?}` | control | `edited`: `done` (the item) and `told`, the bots told. The owner's comment is delivered, once each, to every bot whose card question it answers (see owner threads), the card's assignee and the project's lead, as a **note** from the owner: `[card <id>] Owner replied to your question on the card: <body>` (it replies to the bot's question), `… Owner commented on the card you asked about: …`, or `… Owner commented on the card: …`, each followed by how to answer on the card (`item_comment` with `reply_to` the comment's id). A note, not a chat, so the bot answers on the card and its turn isn't posted to the owner's thread (H-201 S2, H-211). One recipient failing doesn't stop the others. A bot's comment (MCP) tells no one. |
@@ -88,18 +88,22 @@ the owner on any client, else the bot's name (H-201).
 `board_watch` answers with the snapshot the pushes continue from, and no push
 for that project is sent before it. Each committed board change is then pushed
 to the connections watching its project as `board_event {project_id, seq, kind,
-item_id, card?, from_column?}`, where `seq` rises by one per change in that
+item_id, card?, from_column?, actor?, note?}`, where `seq` rises by one per change in that
 project. A client applies pushes with `seq` above its snapshot's and refetches
 `board_get` when a push's `seq` is not the last one plus one (a lower number
 means the daemon restarted) or its kind is `columns_changed`,
 `settings_changed` or `resync` (sent when the connection fell behind).
+`actor` (0.19.0) is who made the change, in the stored form, or `daemon` for a
+fact's move (a PR merged, a release shipped); `note` is a move's note. Both are
+read from the history the change recorded, and a linked computer relays them
+with the bot ids rewritten like the card's.
 
 `contracts: {surface: N}` is the **highest** version each side speaks, and it
 stays an integer forever. A side that still serves older versions adds
 `contracts_min: {surface: M}` (absent means M = N). The effective version per
 surface is `min(client N, daemon N)`, and it must be at least both sides' M.
 If no version fits, that surface is unavailable (its UI is hidden with "update
-the app" or "update Hermes"); the connection itself is not refused. Only
+the app" or "update Flotilla"); the connection itself is not refused. Only
 `protocol_version` refuses a connection.
 
 or `{ "type": "error", "req_id": "1", "code": "auth_failed" | "unsupported_version", "message": "..." }`
@@ -125,7 +129,7 @@ open.
 
 Two credential kinds are accepted as `token`:
 
-- **Owner token** (`~/.thehermes/secrets/client.token`) — full grants, same machine.
+- **Owner token** (`~/.flotilla/secrets/client.token`) — full grants, same machine.
 - **Device token** — issued via `create_device`, carries scoped `grants`
   (any of `read`, `control`, `approve`) and can be revoked. A revoked device
   cannot reconnect.
@@ -166,7 +170,10 @@ Codes: `auth_failed`, `unsupported_version`, `not_found`, `invalid_request`,
 | `set_project_repo` | `project_id, url \| null, branch?` (default `main`) | `project`: the shared git repository workers check out and push to; `url: null` clears it. Bots' prompts are rewritten for their next start |
 | `set_project_permission_profile` | `project_id, profile` (`standard` \| `trusted` \| `full`) | `project` (`permission_profile`). **approve** grant. What the project's bots may do without asking (H-031); its local bots restart to pick it up |
 | `set_bot_permission_extras` | `bot_id, extras: [publish \| daemon_restart \| app_restart \| install \| release_main]` | `bot` (`permission_extras`). **approve** grant. Replaces the bot's extras, which apply in Trusted and Full (`release_main`, pushing and merging to `main`, in every profile); the bot restarts |
-| `delete_project` | `project_id` | `ok` — archives the project and every bot in it; see Semantics |
+| `delete_project` | `project_id` | `ok` — archives the project and every bot in it, then moves what it left on disk to the trash; see Semantics. Owner only (the app's ticket or a paired device) |
+| `project_delete_preview` | `project_id` | `project_delete_preview`: `{ preview: { project_id, project_name, groups: [{ group, label, bytes, count, items: [{ path, bytes }] }], total_bytes, refused: [{ path, reason }], bin, peers: [{ peer_id, name, online }] } }` — what `delete_project` would move to the trash, by kind (`project_files`, `session_history`, `git_cache`, `worktrees`, `saved_work`). Moves nothing. Owner only |
+| `deleted_projects_preview` | – | `deleted_projects_preview`: `{ preview: { projects: [leftovers as above, with deleted_at], total_bytes, bin, linked: [{ project_name, peer_name, state }] } }` — what projects deleted before left on this computer, and the linked computers that haven't confirmed their half. Owner only |
+| `deleted_projects_cleanup` | – | `deleted_projects_cleaned`: `{ moved: [{ group, path, bytes, bin }], moved_bytes, skipped: [{ path, reason }], bin, summary }` — moves what `deleted_projects_preview` lists to the trash. Owner only |
 | `list_bots` | `project_id?` | `bots` |
 | `list_bot_activity` | `project_id?` | `bot_activity` — one preview line per bot; see Semantics |
 | `create_bot` | `project_id, name?, description?, instructions?, avatar?, runtime?, peer_id?` | `bot` (starts running immediately). With `peer_id`, the peer creates the bot in the project linked with this one (`runtime` defaults to the peer's `default_bot_runtime`), and the reply is its stand-in here, with `peer` set; `not_linked` when the project is not linked through that peer, `unavailable` when it is offline |
@@ -299,8 +306,11 @@ breaking wire-shape change; v1 clients must upgrade before connecting.
 - `config`: the daemon configuration under `config` (shape below). Replied to both
   `get_config` and `set_config`; the latter echoes the state after the write.
   `port` is what the daemon serves and points bots at; `configured_port` is what
-  `hermesd.toml` asked for. They differ when the configured port was occupied
+  `flotillad.toml` asked for. They differ when the configured port was occupied
   and a fallback was negotiated, which also moves the bus `/mcp` URL.
+  `computer_name` (this computer's name as releases know it, or `null`) and `os`
+  (`macos`, `windows` or `linux`) let the desktop build a phone's pairing link
+  from the non-loopback `bind` addresses.
 
 ## Server pushes (no `req_id`)
 
@@ -309,7 +319,16 @@ breaking wire-shape change; v1 clients must upgrade before connecting.
   `seq` is then the newest read included, and it is the cursor to resume from. A replay
   arrives the same way, so a full ring is a handful of pushes rather than one per read, and
   `attached.seq` still marks where it ends.
-- `bot_state`: `{ "bot_id", "state", "reason", "at" }` — state ∈ `starting|ready|working|waiting_for_user|waiting_for_approval|rate_limited|auth_failed|crashed|stopping|stopped`.
+- `bot_state`: `{ "bot_id", "state", "reason", "at", "item_id"?, "item_title"? }` — state ∈ `starting|ready|working|waiting_for_user|waiting_for_approval|rate_limited|auth_failed|crashed|stopping|stopped`.
+  `item_id` (0.19.0) is the card the turn starting, going on or ending is about, when
+  known: the card a delivery that started it named (`[card …]`, or a task delegated for
+  an item), else the last card the bot changed during it. A chat turn names none.
+- `board_activity`: `{ "activity": BoardActivity }` (0.19.0, `flotilla.home.v1` as proto3
+  JSON with the proto field names) — someone moved or assigned a card, a bot edited a
+  draft, or the guards refused a move. Sent to every connection, whatever it watches; a
+  refusal is sent only here, never as a `board_event`, so it takes no place in a board's
+  `seq`. `from_this_client` is true on the connection that asked for the change, which
+  already showed its own action. `title` and `body` are a notice ready to show.
 - `message_new`: `{ "message": {...} }` — any new bus message visible to the user.
 - `bot_updated`: `{ "bot": {...} }` — a bot was created, edited, or archived. Bots edit themselves unprompted, so clients must not cache identity across this push.
 - `project_updated`: `{ "project": {...} }` — a project was created, renamed, archived, or linked or unlinked through a peer. As with `bot_updated`, archival is signalled by `deleted_at` being set rather than by a separate frame.
@@ -373,7 +392,8 @@ Signal   { "id", "name", "source": "bot"|"manual", "project_id", "from_bot_id?",
 Diagnostics { "daemon_version", "protocol_version", "db_healthy", "runtime": {"kind","available","version?"},
               "delivery_backlog", "active_bots", "uptime_seconds" }
 Config   { "bind": ["127.0.0.1"], "port": 49777, "configured_port": 49777,
-           "runtime": "pty"|"double", "auto_compact_window": 250000|null }
+           "runtime": "pty"|"double", "auto_compact_window": 250000|null,
+           "computer_name": "Studio Mac"|null, "os": "macos"|"windows"|"linux" }
 Worker   { "id", "project_id", "name", "state": "queued"|"running"|"done"|"cancelled"|"expired"|"failed",
            "queue_position"?, "machine"?, "parent_bot_id", "parent_name"?, "brief", "task_id"?,
            "note"?, "bot_id"?, "created_at", "started_at"?, "finished_at"? }
@@ -448,7 +468,7 @@ Timestamps are RFC 3339 UTC strings. IDs are UUIDv4 strings.
   conversation was cleared and points at `FACTS.md`. It is read from the
   transcript just before the session starts; a note still waiting to be
   delivered is not sent twice. `resume_after_restart = false` in
-  `hermesd.toml` turns it off.
+  `flotillad.toml` turns it off.
 - Multiple clients may `attach` to the same bot; all receive `term` pushes. Any
   connection with the `control` grant may `input`/`resize` — there is no input
   lease. Bus deliveries are posted to the bot session's inbox socket
@@ -473,17 +493,17 @@ Timestamps are RFC 3339 UTC strings. IDs are UUIDv4 strings.
 - `set_config` (advertised as the `config` capability, requires the `control`
   grant) writes only `auto_compact_window`: a number in 100000–1000000, or
   `null` for the model default. The value is persisted in the daemon's database
-  — layered over `hermesd.toml`, which stays untouched — and takes effect the
+  — layered over `flotillad.toml`, which stays untouched — and takes effect the
   next time each bot's session starts. `bind`, `port` and `runtime` in the
   `config` reply are read-only: they describe how the daemon was launched and
-  change only via `hermesd.toml` plus a restart.
+  change only via `flotillad.toml` plus a restart.
 
 ## Bot identity on the bus (H-044)
 
 Bots run as the owner's user, so any secret a bot holds can be read by every other bot. A bot is therefore known by its process, not by a token:
 
-- **Endpoint:** the daemon listens on a local endpoint. On macOS and Linux it's `<home>/run/bus.sock` (its directory is 0700). On Windows it's the named pipe `\\.\pipe\thehermes-<user SID>-<home hash>-bus`, which only that user may open. The path carries no authority.
-- **Session config:** each session's `mcp.json` (and Codex's `mcp_servers`) declares the bus as a stdio server, `hermesd bus-proxy --endpoint <endpoint>`. The session starts the proxy as its own child, and the proxy relays newline-delimited JSON-RPC both ways.
+- **Endpoint:** the daemon listens on a local endpoint. On macOS and Linux it's `<home>/run/bus.sock` (its directory is 0700). On Windows it's the named pipe `\\.\pipe\flotilla-<user SID>-<home hash>-bus`, which only that user may open. The path carries no authority.
+- **Session config:** each session's `mcp.json` (and Codex's `mcp_servers`) declares the bus as a stdio server, `flotillad bus-proxy --endpoint <endpoint>`. The session starts the proxy as its own child, and the proxy relays newline-delimited JSON-RPC both ways.
 - **Who is calling:** the daemon asks the OS for the process on the other end, then walks its parents, at most eight levels and each parent no younger than its child, to a session root. The supervisor records a session root at every start: the terminal CLI, or the Codex app server.
   - The caller is that root's bot, served by the same dispatcher as `POST /mcp`.
   - A caller under no root (a terminal, a process that detached) gets JSON-RPC error `-32001 not a bot session` and is disconnected.
@@ -495,22 +515,22 @@ Bots run as the owner's user, so any secret a bot holds can be read by every oth
 
 The owner is known by their app's code identity or by an OK from them in the app, not by `client.token`, which any bot can read.
 
-- **The app's identity (H-110)** is compiled into hermesd; nothing is pinned in a file a bot could rewrite. A T4 `secrets/owner-app.json` is deleted at start.
-  - macOS: the code requirement `anchor apple generic and identifier "com.manuelrinaldi.thehermes" and certificate leaf[subject.OU] = "<Team ID>"`. The Team ID comes from `HERMES_TEAM_ID` at build time; without it a placeholder no app matches, so the app falls back to `client.token` in phase 1. A macOS hermesd with the placeholder ignores `bot_bearer = "refuse"`, logs an error and stays in phase 1, and the release build (`prepare-sidecar.sh`, `release.yml`) refuses the placeholder unless `HERMES_DEV_BUILD` is set (ARCH-R38).
-  - Windows: an executable directly in `<Program Files>\The Hermes` (from `SHGetKnownFolderPath`, not the environment), other than `hermesd`. The setup installs per machine, so only an administrator can change that folder, and asks before installing anywhere else. The logon task runs `hermesd.exe` from that folder too, not the home's copy; the app clears every `WEBVIEW2_*` variable, limits DLL loading to System32 and its own folder, and has no devtools in a release build, all before its first webview (ARCH-R38).
-  - A build with `HERMES_DEV_BUILD=1` (`scripts/dev.sh`) never enforces phase 2 storage, so an unsigned dev app keeps its `client.token`.
+- **The app's identity (H-110)** is compiled into flotillad; nothing is pinned in a file a bot could rewrite. A T4 `secrets/owner-app.json` is deleted at start.
+  - macOS: the code requirement `anchor apple generic and identifier "com.manuelrinaldi.flotilla" and certificate leaf[subject.OU] = "<Team ID>"`. The Team ID comes from `FLOTILLA_TEAM_ID` at build time; without it a placeholder no app matches, so the app falls back to `client.token` in phase 1. A macOS flotillad with the placeholder ignores `bot_bearer = "refuse"`, logs an error and stays in phase 1, and the release build (`prepare-sidecar.sh`, `release.yml`) refuses the placeholder unless `FLOTILLA_DEV_BUILD` is set (ARCH-R38).
+  - Windows: an executable directly in `<Program Files>\Flotilla` (from `SHGetKnownFolderPath`, not the environment), other than `flotillad`. The setup installs per machine, so only an administrator can change that folder, and asks before installing anywhere else. The logon task runs `flotillad.exe` from that folder too, not the home's copy; the app clears every `WEBVIEW2_*` variable, limits DLL loading to System32 and its own folder, and has no devtools in a release build, all before its first webview (ARCH-R38).
+  - A build with `FLOTILLA_DEV_BUILD=1` (`scripts/dev.sh`) never enforces phase 2 storage, so an unsigned dev app keeps its `client.token`.
 - **Where to connect:** the daemon writes its endpoint address to `<home>/run/endpoint`.
 - **Methods.** A client sends one JSON-RPC request on the endpoint, before any bot traffic, and the connection closes after the answer.
-  - `hermes/owner_ticket`: the daemon checks the caller against the app's identity: on macOS the peer's audit token against the requirement, on Windows the peer's executable path. A caller that passes gets `{"ticket": "…"}`.
-  - `hermes/owner_request {"command": "…", "cwd": "…"}`: the daemon raises a permission card filed under bot id `terminal` (tool `Terminal command`) and waits for the owner's answer. If the owner allows it, the caller gets a ticket.
+  - `flotilla/owner_ticket`: the daemon checks the caller against the app's identity: on macOS the peer's audit token against the requirement, on Windows the peer's executable path. A caller that passes gets `{"ticket": "…"}`.
+  - `flotilla/owner_request {"command": "…", "cwd": "…"}`: the daemon raises a permission card filed under bot id `terminal` (tool `Terminal command`) and waits for the owner's answer. If the owner allows it, the caller gets a ticket.
   - The card's `origin` (also its `input`) carries separate fields (UX-014): `command` (no pid), `pid`, `process` (the pid's executable name), `launched_from` (the nearest ancestor that is an app or terminal: Terminal, iTerm2, Code, claude…), `cwd` (read from the OS; the client's `cwd` only where the OS can't tell, i.e. Windows) and `bot` (the name of the bot whose workspace holds `cwd`). A field that can't be read is left out. The client composes every line and never shows `summary`.
   - The app answers these cards with `allow_once` ("Allow this command") or `deny` (no reason); it offers no "Allow for session" and no single-key shortcuts for a terminal command.
 - **Tickets:** single use, valid for 60 s. A ticket is passed as the `token` in WS `hello` and grants the same capabilities as the client token.
 - **Observability (H-165):** the daemon logs `owner ticket granted` and `owner ticket redeemed` at info, with `via` (`app`, `cli`), the grantee's `pid` and `exe` path, and the compiled `team` on a grant; a hello on `client.token` logs `owner connected with client.token, not a ticket`. No line carries a ticket or a token. `/health` counts, since the daemon started, `owner_tickets_granted`, `owner_tickets_redeemed` and `client_token_fallbacks` (owner hellos on `client.token`).
 - **Refusals:** error `-32002`.
   - A caller inside a bot session is always refused: "a bot can't act as the owner" for `owner_ticket`, "Commands that act as the owner can't run from a bot's session." for `owner_request`.
-  - Other refusals: "not the owner's app"; for `owner_request`, which the CLI prints as is, "You denied this command in The Hermes. It did not run.", "No answer in The Hermes, so the command did not run." and "Open The Hermes on this computer to allow this command, then run it again." (no app is connected to show the card).
-- **Clients:** the desktop app asks for a ticket on every connect. `hermesd` CLI owner commands ask the owner to allow them, printing "Asking for your OK in The Hermes app…". Both fall back to `client.token` only when the daemon has no endpoint (a daemon older than T4). The daemon accepts `client.token` until T6.
+  - Other refusals: "not the owner's app"; for `owner_request`, which the CLI prints as is, "You denied this command in Flotilla. It did not run.", "No answer in Flotilla, so the command did not run." and "Open Flotilla on this computer to allow this command, then run it again." (no app is connected to show the card).
+- **Clients:** the desktop app asks for a ticket on every connect. `flotillad` CLI owner commands ask the owner to allow them, printing "Asking for your OK in Flotilla app…". Both fall back to `client.token` only when the daemon has no endpoint (a daemon older than T4). The daemon accepts `client.token` until T6.
 - **Approve:** only a connection with the `approve` grant can answer a `terminal` card. Other connections get `forbidden`. Bot cards still need only `control`.
 
 ### Secrets at rest (T5)
@@ -522,10 +542,10 @@ The owner is known by their app's code identity or by an OK from them in the app
   - never writes those files again.
 
   The owner then connects only with a ticket (T4).
-- **Rolling back from phase 2:** the owner has to re-pair phones and run `hermesd service install` again, which writes a new `client.token`.
+- **Rolling back from phase 2:** the owner has to re-pair phones and run `flotillad service install` again, which writes a new `client.token`.
 - **Peer tokens:** `[auth] peer_tokens = "file"` (the default) or `"keychain"`.
-  - With `keychain` on macOS, `peer-*.token` files move into the login Keychain at start. The Keychain item's ACL trusts only the hermesd binary that created it.
-  - hermesd is ad-hoc signed, so after each update macOS asks once per link before the daemon may read it. Turn `keychain` on once hermesd is code-signed.
+  - With `keychain` on macOS, `peer-*.token` files move into the login Keychain at start. The Keychain item's ACL trusts only the flotillad binary that created it.
+  - flotillad is ad-hoc signed, so after each update macOS asks once per link before the daemon may read it. Turn `keychain` on once flotillad is code-signed.
   - On Windows and Linux the setting falls back to files. This is a known residual.
 
 ## Bot self-management
@@ -569,7 +589,7 @@ avatar is dealt one of the icons at random.
 
 ### A project's directory never moves
 
-A project owns `~/.thehermes/projects/<dir_name>/`, and every bot's
+A project owns `~/.flotilla/projects/<dir_name>/`, and every bot's
 `workspace_path` points inside it. `dir_name` is derived from the name at
 creation and then frozen, so `update_project` changes only what the project is
 called: nothing on disk moves and no running bot loses its workspace. The name
@@ -585,9 +605,39 @@ valid credentials for a project the user believes is gone.
 
 Like a bot, a project is archived rather than deleted (`bot.project_id` and
 `conversation.project_id` are foreign keys into `project`) and its name is
-tombstoned so it can be reused immediately. Its directory is kept; the
-workspaces inside it are reclaimed by retention on the usual
-`archived_bot_days` schedule.
+tombstoned so it can be reused immediately.
+
+What the project left on disk is then moved to the trash (0.19.0), never
+erased: its folder `~/.flotilla/projects/<dir_name>/` with every bot folder;
+each bot's Claude Code session history `~/.claude/projects/<key>` (the
+workspace path with every character but an ASCII letter or digit replaced by
+`-`; a longer key only when its transcripts say they started inside the
+workspace) and a Codex bot's session file for its thread; the git cache
+`~/.flotilla/cache/repos/<project-id>.git`; saved work
+`~/.flotilla/salvage/<project-id>`; and its bots' `<repo>-wt-<bot>` worktrees
+under the trusted paths, pruned from their main clone, unless a live bot of
+another project could own the same tree.
+
+- The trash is the OS one: the macOS Trash (`NSFileManager`), the Windows
+  Recycle Bin (local fixed drives only), the freedesktop trash on a Linux
+  desktop. A headless box, an item the OS trash refuses, or
+  `trash.os_trash = false` uses `~/.flotilla/trash/<date>-<dir_name>/<kind>/`
+  instead, which the daily retention empties after `trash.fallback_days`
+  (default 30).
+- Each item must lie in its known root, spelled from that root down with no
+  `..` and no link or junction in any part, and resolve inside it: a crafted
+  `workspace_path` or a planted link is refused and reported, never
+  followed. A bot whose workspace isn't `projects/<dir>/bots/<bot>/workspace`
+  in this home has nothing trashed for it.
+- The delete stops the bots first; anything a process still holds after
+  `trash.held_wait_seconds` (a working folder or an open file) is left and
+  reported. A notice says what moved and what was left.
+- Linked computers are asked to do the same with their half; see "Linked
+  projects" in [peer-bots.md](peer-bots.md).
+- What projects deleted before 0.19 left is found the same way and moved only
+  on the owner's word: `flotillad cleanup deleted-projects [--yes]` (asked of
+  the running daemon, allowed in the app like every owner command) or
+  Settings → Storage → Clean up deleted projects.
 
 ### Deletion is archival
 
@@ -762,7 +812,7 @@ runs through the tester the same way.
     - A linked tester tests on its peer's computer, whatever its role says (ARCH-R55 S2).
     - A tester here tests on the machine its role names, unless that is a linked computer's name.
     - Otherwise it tests on this computer, which is called by its `machine_name`. That defaults to the host's name (the Mac's LocalHostName); the lead sets it with `machine_name_set {name}`, the owner with `release_machines_set {machine_name}`. It can't be a linked computer's name.
-  - Each computer's own tester records a result against one of the builds' sha256 with `release_test`. `machine` may be left out (or "") by a tester on one computer; naming another computer is refused. The build must be for that machine's platform: one whose board `required_machines` lists it, or with none configured for it, the items' platforms (a build platform `desktop-mac` is a `desktop` build).
+  - Each computer's own tester records a result against one of the builds' sha256 with `release_test`. `machine` may be left out (or "") by a tester on one computer; naming another computer is refused. The build must be for that machine's platform: one whose `platform:` label the board's `required_machines` lists it under, or with none configured for it, the items' `platform:` labels (a build platform `desktop-mac` is a `desktop` build).
   - `release_submit` is refused until every required computer has passed the current builds. Required computers are the list the owner or lead set, or with none set, every tester's computer. With neither, submit is refused: an empty set is never a pass.
   - A package counts as deployed only once every tester's computer reports a good deploy, unless the **owner** narrowed the list. A lead's list narrows testing only, so no release is "deployed" while a computer runs the old version (ARCH-R55 M1).
   - Both sets are frozen into the package at submit and covered by its frozen hash. The release JSON shows them as `tested_on`, `tested_set_by`, `deploys_to` and `deploys_set_by`. Later edits apply to the next package.
@@ -780,27 +830,27 @@ runs through the tester the same way.
 - **Hold:** `release_hold` keeps the decision open and holds it (`remind_at` becomes its `held_until`). When the reminder comes due, the decision sweep resumes it and the package goes back to `awaiting_owner`. `release_unhold` does the same on request.
 - **Pause:** `release_pause` (owner, or DevOps over MCP) pauses a rollout in progress. Deploys and installs are refused with the reason, and every tester holding an open deploy task gets a note. `release_resume` returns it to `deploying`.
 - **Who may rule:** `can_rule` says whether this connection may rule (the approve grant, on the board's home). When it can't, `rule_on` names the home computer. `BoardSnapshot.can_rule` carries the same flag.
-- **Installing a release (B8, H-020 §2.6, ARCH-R43):** a tester runs `hermesd release install <release> [--dry-run | --status]` from their own session.
+- **Installing a release (B8, H-020 §2.6, ARCH-R43):** a tester runs `flotillad release install <release> [--dry-run | --status]` from their own session.
   - **Gate.** It calls `install_release` over the local endpoint, so the daemon knows the bot by its process and checks the gate: the owner's settled approval, an open deploy task for this tester, and the frozen hash. Off the board's home, the call is forwarded there.
   - **Builds.** It takes this computer's builds: `desktop` on macOS and Windows, else `daemon`. For iOS it only prints the `install_url`.
-  - **Stage.** Each build is copied from the home's own file, or downloaded from its HTTPS `url` with `curl`, into a fresh private folder (`hermes-install-<release>-<random>` under the system temp dir, mode 0700, never reused). Its sha256 is checked there; a mismatch stops the install.
-  - **Signature.** Before anything is swapped in, the unpacked build is checked against the identity compiled into hermesd (H-110):
-    - **macOS:** `codesign --verify --strict --deep` against the app's code requirement, or against the owner's team for a bare hermesd. The copy staged in `/Applications` is checked again before the rename.
-    - **Windows:** Authenticode (`Get-AuthenticodeSignature`, which is WinVerifyTrust) must be valid and signed by the `HERMES_WINDOWS_SIGNER` compiled in.
+  - **Stage.** Each build is copied from the home's own file, or downloaded from its HTTPS `url` with `curl`, into a fresh private folder (`flotilla-install-<release>-<random>` under the system temp dir, mode 0700, never reused). Its sha256 is checked there; a mismatch stops the install.
+  - **Signature.** Before anything is swapped in, the unpacked build is checked against the identity compiled into flotillad (H-110):
+    - **macOS:** `codesign --verify --strict --deep` against the app's code requirement, or against the owner's team for a bare flotillad. The copy staged in `/Applications` is checked again before the rename.
+    - **Windows:** Authenticode (`Get-AuthenticodeSignature`, which is WinVerifyTrust) must be valid and signed by the `FLOTILLA_WINDOWS_SIGNER` compiled in.
     - **When it can't check:** a dev build, a build without a Team ID, or Windows releases while they're unsigned. It prints `signature check skipped: <why>` and never skips silently. A failed check stops the install.
-  - **Install (H-117 X1).** For an app, the swap is the system job's, never the bot's session. The job runs a copy of this hermesd as `hermesd release apply-app <release> --app <staged bundle> --version <v>`, which:
+  - **Install (H-117 X1).** For an app, the swap is the system job's, never the bot's session. The job runs a copy of this flotillad as `flotillad release apply-app <release> --app <staged bundle> --version <v>`, which:
     1. copies the bundle beside `/Applications/<app>` and checks its signature there again;
     2. keeps the app it replaces as `<home>/backups/app/<app>`, the one previous app, and remembers that app's bundle hash in its own memory (ARCH-R52 M2);
     3. swaps the new one in and runs its `service install`;
     4. applies the boot gate: it waits up to 120 s for `/health` to answer with the new binary's `binary_sha256`. The version isn't enough, because an old daemon at the same version would pass (ARCH-R52 M3). If the gate fails, the backup goes back, but only if its bundle hash matches what was kept and its signature checks out. Then its `service install` runs and the job exits non-zero. The daemon's boot check records the install as rolled back.
-    5. If putting the backup back fails too, `service install` runs from `<home>/bin/hermesd` (else from the app in place), and `<home>/run/rollback-failed.json` is left. At boot, the daemon pushes an error notice to the owner and files a Run card that runs `service install` from `/Applications/<app>` (ARCH-R52 S3).
+    5. If putting the backup back fails too, `service install` runs from `<home>/bin/flotillad` (else from the app in place), and `<home>/run/rollback-failed.json` is left. At boot, the daemon pushes an error notice to the owner and files a Run card that runs `service install` from `/Applications/<app>` (ARCH-R52 S3).
   - **`/health`** reports `binary_sha256`, the sha256 of the daemon's own binary.
-  - **Allowed.** The `install` extra allows `hermesd release install` with no owner prompt (H-166).
-    - The rule names this daemon's own binary by its exact path, in each way a bot quotes it, for example `Bash("/Applications/The Hermes.app/Contents/MacOS/hermesd" release install *)`. Bots have no `hermesd` on their PATH, so a rule for a bare `hermesd` never matched, and the classifier refused the install. A bare name would also allow whatever `hermesd` comes first on the bot's PATH.
+  - **Allowed.** The `install` extra allows `flotillad release install` with no owner prompt (H-166).
+    - The rule names this daemon's own binary by its exact path, in each way a bot quotes it, for example `Bash("/Applications/Flotilla.app/Contents/MacOS/flotillad" release install *)`. Bots have no `flotillad` on their PATH, so a rule for a bare `flotillad` never matched, and the classifier refused the install. A bare name would also allow whatever `flotillad` comes first on the bot's PATH.
     - Only the arguments after the subcommand are a wildcard. A path holding `*`, a parenthesis or a quote gets no rule.
     - `install_release` answers with `command`: the exact line to run on the caller's own computer. Off-home, the command uses that computer's binary, not the home's.
   - **Hand-off.** `service install` restarts the daemon and every bot, this session included, so it's handed to the system:
-    - a one-shot launchd job on macOS (`com.thehermes.release-install.<release>`, `RunAtLoad`, not kept alive);
+    - a one-shot launchd job on macOS (`com.flotilla.release-install.<release>`, `RunAtLoad`, not kept alive);
     - a one-time scheduled task on Windows, which runs the setup with `/S`; the setup's own hook installs the service;
     - a detached process group elsewhere.
 
@@ -808,40 +858,40 @@ runs through the tester the same way.
   - **After the restart.** From the next session, `--status` prints how it ended and the end of the log. The open deploy task in the session's resume note is the reminder. The tester smoke-tests and reports with `deploy_confirm`. `--dry-run` stops after the checksum and signature checks.
   - **Who may replace a running service (H-193).** Opening the app never replaces a daemon that answers on its port:
     - Its launch repair (`service install --no-migrate`) runs only when the files say the service is broken (binary missing, or an interrupted switch-over) and nothing answers `/health`.
-    - A newer bundled daemon is offered as the "Update Hermes service" toast, a click.
+    - A newer bundled daemon is offered as the "Update Flotilla service" toast, a click.
     - Otherwise the service is replaced only by a release install, with its quiesce.
 
     Runbook: to find out what restarted the service, read `<home>/logs/service-install.log`. Each `service install` appends a line with the time, version, arguments, the executable that ran it (with its pid), and what launched that executable.
-  - **Deny rules, advisory only.** Every bot but the project's DevOps gets deny rules in its generated Claude Code settings for direct installer and service commands: `hermesd service install/uninstall`, `installer -pkg`, `msiexec`, `xcrun devicectl device install`, `ios-deploy`, and a silent `*-setup.exe /S`.
+  - **Deny rules, advisory only.** Every bot but the project's DevOps gets deny rules in its generated Claude Code settings for direct installer and service commands: `flotillad service install/uninstall`, `installer -pkg`, `msiexec`, `xcrun devicectl device install`, `ios-deploy`, and a silent `*-setup.exe /S`.
     - They are **advisory, not a boundary**. They match command text, so a script, an alias, a renamed binary or a Codex-runtime bot gets past them.
     - What enforces the gate is the daemon: `install_release`, the approval, the frozen hash and the signature check. Every deploy carries its task and decision ids for the audit trail.
-- **Landing on main (H-117 X2):** DevOps runs `hermesd release land <release> [--commit <sha>] [--branch <b>] [--tag <t>] [--dry-run]` from its checkout. The `release_main` extra allows exactly this command.
-  - **Daemon gate.** The command asks the daemon over the local endpoint (`hermes/release_land`). It needs the `release_main` extra, the project's DevOps role, and a release the owner approved (`approved`, `deploying`, `partially_deployed` or `deployed`).
+- **Landing on main (H-117 X2):** DevOps runs `flotillad release land <release> [--commit <sha>] [--branch <b>] [--tag <t>] [--dry-run]` from its checkout. The `release_main` extra allows exactly this command.
+  - **Daemon gate.** The command asks the daemon over the local endpoint (`flotilla/release_land`). It needs the `release_main` extra, the project's DevOps role, and a release the owner approved (`approved`, `deploying`, `partially_deployed` or `deployed`).
   - **Commit (ARCH-R52 M1).** Only the commit the release's builds record (`source_commit`) lands, and the gate returns it. A release whose builds don't all name it, or that come from different commits, is refused. `--commit` may only restate it. The release branch (`release/desktop-<version>` unless named) must still be at that commit, so code pushed after the builds never lands.
   - **Push.** `main` must fast-forward to it; nothing is ever forced, and a diverged main is refused before anything is pushed. Then `main` and the annotated tag (`desktop-v<version>` unless named) are pushed. Git runs with hooks off (`core.hooksPath=/dev/null`).
   - **Transport.** Over the remote as configured. When SSH has no key, it goes to GitHub over HTTPS with gh's credential, for that one command; no git config changes.
   - **Check.** After the push, `git ls-remote` of the project's configured repo (the checkout's origin if none is configured), run outside the checkout without its git config or the user's, must show main and the peeled tag at the commit (ARCH-R52 S1).
-  - **Record.** `hermes/release_landed` records a `landed` event, with the commit and tag, on the release. Any other commit is refused.
+  - **Record.** `flotilla/release_landed` records a `landed` event, with the commit and tag, on the release. Any other commit is refused.
   - A raw `git push … main` still goes through the guard, unchanged.
-- **Building the Windows installer (H-117 X3, H-104):** Tester Win runs `hermesd release build-installer <release> [--commit <sha>] [--script <path>] [--output <file>] [--timeout <minutes>]` in its release worktree. The `build_installers` extra allows exactly this command, never the script, which the bot could edit.
-  - **Daemon gate.** `hermes/release_build_installer` needs the extra and a package still open for builds (assembling or built), and returns the commit its builds record, if any yet.
+- **Building the Windows installer (H-117 X3, H-104):** Tester Win runs `flotillad release build-installer <release> [--commit <sha>] [--script <path>] [--output <file>] [--timeout <minutes>]` in its release worktree. The `build_installers` extra allows exactly this command, never the script, which the bot could edit.
+  - **Daemon gate.** `flotilla/release_build_installer` needs the extra and a package still open for builds (assembling or built), and returns the commit its builds record, if any yet.
   - **Commit.** It builds that commit (`--commit` may only restate it), else the release branch's tip.
   - **Fresh worktree (ARCH-R52 S2).** It builds in a fresh `git worktree add --detach` of that commit in a private temp folder, with hooks off. There the tree must be clean, with untracked files and any file marked assume-unchanged or skip-worktree refused, and the script (`scripts/build-nsis.ps1` unless named) must match its blob.
   - **Run.** It runs `powershell -NoProfile -ExecutionPolicy Bypass -File <script>` with a time limit (45 minutes by default). The newest `*-setup.exe` it makes (or `--output`) is copied to `<checkout>/target/release-installers/`, and the temp worktree is removed.
-  - **Record.** The installer is hashed, and `hermes/release_installer_built` records an `installer_built` event `{commit, file, sha256}` for `release publish`. Any commit but the recorded one is refused.
-- **Source commits (ARCH-R52 M1):** `release_attach_build` and `release_publish` take `source_commit` (40 lowercase hex). `hermesd release publish` sends `--source-commit`, or the checkout's HEAD when the tree is clean.
+  - **Record.** The installer is hashed, and `flotilla/release_installer_built` records an `installer_built` event `{commit, file, sha256}` for `release publish`. Any commit but the recorded one is refused.
+- **Source commits (ARCH-R52 M1):** `release_attach_build` and `release_publish` take `source_commit` (40 lowercase hex). `flotillad release publish` sends `--source-commit`, or the checkout's HEAD when the tree is clean.
   - The commit is stored with the build (migration 031), shown in the release JSON, and folded into the frozen hash when present.
   - Every build of a release must come from one commit; a build from another is refused.
 - **Grants from linked computers (ARCH-R51):** `bot_grants {bot_id}` (read) answers `{type: "bot_grants", grants: [{at, from, extras, decision}]}`. These are the extras rulings on a linked computer granted the bot here, newest first, and the app lists them under the bot's extras.
-- **Serving builds (H-020 §6.6):** `release_publish {release_id, file, platform?, version?, bundle_id?}` (DevOps with the Publish extra; `hermesd release publish <release> <file>` calls it with the bot's token) copies a build into the served directory, `[releases] dir` (default `<home>/releases`), at `<release_id>/<platform>/<file>`.
+- **Serving builds (H-020 §6.6):** `release_publish {release_id, file, platform?, version?, bundle_id?}` (DevOps with the Publish extra; `flotillad release publish <release> <file>` calls it with the bot's token) copies a build into the served directory, `[releases] dir` (default `<home>/releases`), at `<release_id>/<platform>/<file>`.
   - The file must be an `.ipa`, `.zip`, `.dmg`, `.exe` or `.msi`, and must resolve, symlinks and all, inside `[releases] source_roots` (default: the `<repo>-rel-*` release worktrees in the trusted paths) or the project's artifacts. It is opened once, without following a link at the end of its path (`O_NOFOLLOW`; on Windows the reparse point itself), and the handle must be a regular file with one name (no hard link). The handle's own real path (`F_GETPATH`, `/proc/self/fd`, `GetFinalPathNameByHandleW`) must still be the checked path, inside a source root, so a directory swapped for a link after the checks is refused (H-100). It is hashed and copied from that handle. Inside the served directory, symlinks are refused; copies are staged beside it, never in it.
   - The served directory must be a real folder of its own: a symlink, a folder that is or contains the daemon home, its secrets or `bus.sqlite`, or any folder inside a home other than the dedicated `<home>/releases` (e.g. `<home>/projects`), is refused at config load and at every publish. The owner sees it in Needs you (`serving_off`), and a refused publish also pushes them a notice (H-100). Only the daemon writes there: every bot's guard and settings deny writes to it (CE-010).
   - A published file is never replaced by a different one.
   - It attaches the build with its sha256, its `url` under `[releases] base_url`, and its `install_url`. For an `.ipa`, that is the `itms-services://` link to a generated `manifest.plist`, and an `index.html` install page with one Install button is written beside it (H-229); for other builds, it is the `url`.
   - `install_release` re-hashes every served build against the frozen sha256 and returns `verified` per build. On a mismatch, it refuses the install, pauses a rollout in progress and tells DevOps.
-- **Installing on an iPhone or iPad (H-229, UX-043):** the messages are `hermes.home.v1` `ReleaseInstall*` and `InstallOffer*`, as proto3 JSON with the proto field names; a field at its default is left out. All four need the board's home.
+- **Installing on an iPhone or iPad (H-229, UX-043):** the messages are `flotilla.home.v1` `ReleaseInstall*` and `InstallOffer*`, as proto3 JSON with the proto field names; a field at its default is left out. All four need the board's home.
   - `release_install {release_id, check_site?}` (read) answers `{type: "release_install", install}`: the package's version, its iOS `build`, `state`, `installable` (awaiting_owner, approved, deploying or deployed), `for_testing`, the HTTPS `page_url` (the build's `index.html`, written on demand for builds published before it existed), the `install_url`. Both are derived by the daemon from `[releases] base_url` and the build's served folder, never taken from the build's `url` or `install_url`: the build's file must lie at `<served dir>/<release>/ios/<file>` beside its `manifest.plist` and still match its sha256, else both are empty and nothing is written, probed or sent (CE review of H-229, M1). It also answers `computer`, `approved_at` and the paired `devices` (not revoked, last seen first, `connected` when one holds a live connection, and `app_version` "0.6.1 (12)" with `app_version_seen_at` as the device last reported it). With `check_site`, the daemon first asks for the page over HTTPS (curl, 4 s) and sets `site {serving, problem, checked_at}`.
-  - `release_send_to_device {release_id, device_id}` (control, from the app's ticket or a paired device only, never the owner token; M2) answers `{type: "install_offer", offer}`: `title` ("The Hermes 0.6.1 (12) is ready to install"), `body` ("Approved on 8 Oct 2026. Tap to install." or "Ready to test. Tap to install."), `install_url`, `page_url` and `delivered` (the device was connected). It is kept as that device's one waiting offer and pushed as `{type: "install_offer", device_id, offer}` to that device's connections only. Refused (`conflict`) when the package isn't installable or has no published iOS build, and `not_found` for an unknown or revoked device.
+  - `release_send_to_device {release_id, device_id}` (control, from the app's ticket or a paired device only, never the owner token; M2) answers `{type: "install_offer", offer}`: `title` ("Flotilla 0.6.1 (12) is ready to install"), `body` ("Approved on 8 Oct 2026. Tap to install." or "Ready to test. Tap to install."), `install_url`, `page_url` and `delivered` (the device was connected). It is kept as that device's one waiting offer and pushed as `{type: "install_offer", device_id, offer}` to that device's connections only. Refused (`conflict`) when the package isn't installable or has no published iOS build, and `not_found` for an unknown or revoked device.
   - `install_offers {}` (read) answers `{type: "install_offers", offers}`: the asking device's waiting offer, at most one; none on a connection that isn't a device. `install_offer_dismiss {release_id}` (control, a device only) drops it (Not now) and answers the same.
 
 ## Pausing every project for an install (H-117)
@@ -869,7 +919,7 @@ If the pause stays open past `deadline_at` (30 minutes by default), the daemon r
 - `outcome` is one of `resumed`, `install_ok`, `rolled_back` or `deadline`.
 
 **Reaping (Q3).** `quiesce start` pauses, then reaps what bot sessions left running.
-- **What is signalled:** only processes the lineage ledger, a `THEHERMES_SESSION` environment tag or a session's Job Object ties to a session. The installing bot's processes are spared.
+- **What is signalled:** only processes the lineage ledger, a `FLOTILLA_SESSION` environment tag or a session's Job Object ties to a session. The installing bot's processes are spared.
 - **How:**
   - each process is re-checked by `(pid, start)` just before every signal;
   - a group is signalled whole only when every member is the sessions' own;
@@ -880,7 +930,7 @@ If the pause stays open past `deadline_at` (30 minutes by default), the daemon r
   - The defaults are colima (`brew services stop colima`) and lima (`limactl stop default`).
   - VM processes are never signalled.
   - Resume starts again only what the pause stopped.
-  - The list is read once at daemon start. If `hermesd.toml`'s list changes after that, the change isn't used, and the report and the app's banner say so (`services_changed`).
+  - The list is read once at daemon start. If `flotillad.toml`'s list changes after that, the change isn't used, and the report and the app's banner say so (`services_changed`).
 - **What still holds the home** goes into `report.unresolved` as `{pid, command, cwd, path, project_id?, bot_id?}` and is never signalled. The install goes ahead only when the list is empty (phase `ready`, else `blocked`). A later `start` for the same release takes up the open pause again.
 
 ```toml
@@ -897,7 +947,7 @@ stop = "brew services stop colima"
 start = "brew services start colima"
 ```
 
-**Installing (Q4).** The pause is the installing bot's to ask for, on its own computer only. It is the MCP tool `install_quiesce {release_id, action: start|status|resume, version?}`, also run as `hermesd quiesce start|status|resume <release>` over the local endpoint, which knows the bot by its process. The daemon allows it only when all of these hold:
+**Installing (Q4).** The pause is the installing bot's to ask for, on its own computer only. It is the MCP tool `install_quiesce {release_id, action: start|status|resume, version?}`, also run as `flotillad quiesce start|status|resume <release>` over the local endpoint, which knows the bot by its process. The daemon allows it only when all of these hold:
 - the bot holds the `quiesce` extra, granted once by the owner ("Pause all projects for an install"; it allows this binary's `quiesce` by its exact path, as for `release install`);
 - it is the project's DevOps, or holds the `install` extra;
 - it holds an open deploy task for an approved release, the same gate as `install_release`, or (H-166) it is the project's DevOps and the release has a deployment or rollback under way on this computer (by its machine name).
@@ -918,7 +968,7 @@ A refusal says which of these is missing.
 - A file older than 2 minutes means the daemon stopped refreshing it, and is ignored.
 - Bots learn this from the shared-computer section of their prompt. `start` pauses with the caller as `exempt_bot`, reaps and answers `{quiesce, report, proceed}`. Its report is recorded on the release as a `quiesce` event, and each lead gets a note.
 
-`hermesd release install <release>` runs `start` itself before it stages anything:
+`flotillad release install <release>` runs `start` itself before it stages anything:
 - **Something still holds the home** (`proceed` false): it prints the holders and stops.
 - **Before each build it stages, and again at `install_started`,** it calls `extend`, which moves `deadline_at` a full window on, so the dead-man switch can't resume projects mid-install (ARCH-R50 S2).
 - **The install fails before the handoff:** it resumes the pause (`aborted`).
@@ -1011,7 +1061,7 @@ A bot proposes an exact command for the owner to run; only the owner runs it.
 
 ### The projects home (H-128)
 
-The typed surface `hermes.home.v1` (`proto/hermes/home/v1/home.proto`, contract `home` 1, capability `projects_overview`). Each request travels as a binary `HomeRequest` envelope, or as JSON `{type, req_id, ...fields}` answered with the message in proto3 JSON under the proto field names (snake_case; enums by name, timestamps RFC 3339).
+The typed surface `flotilla.home.v1` (`proto/flotilla/home/v1/home.proto`, contract `home` 1, capability `projects_overview`). Each request travels as a binary `HomeRequest` envelope, or as JSON `{type, req_id, ...fields}` answered with the message in proto3 JSON under the proto field names (snake_case; enums by name, timestamps RFC 3339).
 
 - **`projects_overview {project_ids?}`** (read) answers `{type: "projects_overview", overview}`: one `ProjectRow` per live project (all when `project_ids` is empty), ranked pinned first, then `attention.score` desc, `attention.oldest_at` asc, `last_activity_at` desc, name; `rank` numbers that order. It answers at once from local data and each linked peer's last good part: it never asks a peer. `sources` lists each linked computer with its `state` (`OK`, `OFFLINE`, `TIMEOUT`, `OLD_VERSION`; `STATE_UNSPECIFIED` until first asked) and the `as_of` of the data in use; a row whose peer isn't `OK` is `partial` and names it in `stale_sources`. A row is `pinned` when any member computer has pinned it.
   - **Card fields (H-144, additive):** `columns` lists every board column in board order as `{key, name, category, count}` (`category` the lowercase `ColumnCategory` name), and `doing_total` counts the cards in Doing columns while `doing` lists at most 3; both come from the board here, or its mirror off-home, as `doing` does, and are empty without a board. `bots_waiting` counts bots waiting for the owner, summed from each computer's part (`Part.bots_waiting`) like `bots_working`, last good for a peer that isn't `OK`. `current_release.items_ready` counts the release's items in Verify or later (H-137's `ready`), the progress of a planned release.
@@ -1057,13 +1107,13 @@ Without a board, `metrics` is null. Off the board's home, the daemon asks the ho
 
 ## Pull requests and checks (H-261)
 
-The typed surface `hermes.pr.v1` (`proto/hermes/pr/v1/pr.proto`, contract `pr` 1, capabilities `pull_requests` and `checks`). It's the same shape as the projects home:
+The typed surface `flotilla.pr.v1` (`proto/flotilla/pr/v1/pr.proto`, contract `pr` 1, capabilities `pull_requests` and `checks`). It's the same shape as the projects home:
 - **Transport:** binary `PrRequest`/`PrResponse`/`PrPush` envelopes (arms 7–9), or JSON `{type, req_id, ...fields}` with the proto field names.
 - **Requests:** `pr_list`, `pr_get`, `pr_diff`, `pr_comments` and `review_settings_get` (read). `pr_flag` and `check_rerun` (control). `pr_review_submit`, `pr_comment_add`, `pr_merge_undo`, `review_settings_set` and `cleanup_resolve` (approve; the owner's device or ticket only, never the owner token or a bot). `disk_report` (read).
 - **Pushes:** `pr_updated`, `check_updated`, `merge_queue_changed` and `cleanup_updated`.
 - **Repositories:** a PR names its `repo` ("owner/name"), because a project's board can span several repositories (gravity and gravity_os). PR numbers stay per project. `pr_list` filters on `states`, a list; an empty list means open and merging.
 - **Gate on the capability:** clients show the PR tab only when `hello_ok.capabilities` has `pull_requests`.
-- **Bots' MCP tools:** `pr_open`, `pr_push`, `pr_close`, `pr_review`, `pr_comment`, `pr_get`, `pr_list` and `check_report`, defined in `proto/hermes/pr/v1/tools.proto`.
+- **Bots' MCP tools:** `pr_open`, `pr_push`, `pr_close`, `pr_review`, `pr_comment`, `pr_get`, `pr_list` and `check_report`, defined in `proto/flotilla/pr/v1/tools.proto`.
 - **Releases cut from main:** they gain `tag`, `commit`, `prs` and `also_included` (`ReleaseFromMain`) at the top level of the release payload. These are new keys, so a client reading today's release is unaffected.
 - **Fixtures:** golden fixtures are in `crates/bus/fixtures/pr/`.
 
@@ -1084,14 +1134,14 @@ The typed surface `hermes.pr.v1` (`proto/hermes/pr/v1/pr.proto`, contract `pr` 1
   - `pr_open` with the worktree; `pr_push` after every push;
   - `pr_get` and `pr_comments` for what blocks a merge; `pr_close` to abandon;
   - no review of your own PR; no manual move to Review or Verify;
-  - merges only through DevOps' `hermesd pr merge`;
+  - merges only through DevOps' `flotillad pr merge`;
   - owner acts only on the board's home or the owner's phone (rulings 6df14f7a, 1cb9b4df).
 - **Rollback:** take the name out of `pr_flow_projects`; the section is gone at the next start.
 - **The prompt test** fails on any `pr_…`/`check_…` name in the section that isn't a PR tool the daemon serves.
 
 **Cleanup, the sweep and disk (CL-2, H-275; H-261 §15.4–15.6).**
 - **Closed PRs:** `pr_close` queues the PR's cleanup jobs, due 7 days after it closed. They run like a merged PR's: a clean, pushed tree goes, unsaved work is salvaged and the tree held. Rule 1 for a closed PR is that no PR is open on its branch again. Opening a PR on the branch within the window deletes those queued jobs and marks the old branch `kept` ("opened again as PR #n").
-- **Closed branches:** the `hermes/pr_merge` gate answers `stale_branches` (closed PRs of the same repository closed 14+ days ago, no live PR on the branch). `hermesd pr merge` deletes each one under a lease on the head it closed at, and sends the results as `stale_branches` in `hermes/pr_merged`. The daemon records only due PRs (`pr_branch_cleanup`). A merged PR's own branch outcome is recorded there too.
+- **Closed branches:** the `flotilla/pr_merge` gate answers `stale_branches` (closed PRs of the same repository closed 14+ days ago, no live PR on the branch). `flotillad pr merge` deletes each one under a lease on the head it closed at, and sends the results as `stale_branches` in `flotilla/pr_merged`. The daemon records only due PRs (`pr_branch_cleanup`). A merged PR's own branch outcome is recorded there too.
 - **Daily sweep:** each computer checks hourly and sweeps once a day. It covers the projects that have PRs. Each linked worktree of the project's repositories in the allowed roots is a candidate if its branch has no live PR and it is merged into `origin/main` (and untouched for a day) or idle for 14 days. Candidates go through the same rules (`run::attempt`). A tree in use is skipped until the next day. Orphans are only reported, and `<repo>-rel-*` trees are never touched. A linked computer asks the board's home with the peer request `cleanup_sweep_plan {project_id}` (live branches, trees already held, bots with a live PR), then sends the peer event `cleanup_swept {project_id, found[]}`. The home keeps every row as a `cleanup_job` with no `pr_id`. Salvage older than 30 days is pruned.
 - **`cleanup_resolve {project_id, job_id, action: remove|keep}`** (approve; device or ticket on the board's home only). A linked computer answers `forbidden` with "Do it on <home> or your phone.", and the home refuses it inside `pr_owner`.
   - `keep` records the owner's word.
@@ -1154,7 +1204,7 @@ The typed surface `hermes.pr.v1` (`proto/hermes/pr/v1/pr.proto`, contract `pr` 1
 
 **Reviews (PR-3a, H-268).** These use migration `REVIEWS`, which adds the tables `review`, `review_comment`, `pr_need` and `pr_review_task`.
 - **Required roles:**
-  - After every head, the daemon reads `.hermes/reviewers.toml` at the PR's base, from its own cache.
+  - After every head, the daemon reads `.flotilla/reviewers.toml` at the PR's base, from its own cache.
   - The changed paths of `merge-base..head` give the required roles. They are listed as `required_roles` on `pr_get`.
   - Each role is filled by a board role: `architect` → reviewer.arch, `ux` → reviewer.ux, `ce` → reviewer.ce (new, `ROLE_REVIEWER_CE`), `devops` → devops, `qa` → tester.
 - **`pr_review {number, sha, role, verdict, summary?, findings[], artifact?}`:**
@@ -1186,7 +1236,7 @@ The typed surface `hermes.pr.v1` (`proto/hermes/pr/v1/pr.proto`, contract `pr` 1
   - `review_settings_set {project_id, owner_review: all|areas|flagged|none, owner_review_areas?}` (approve) is accepted only from a paired device or the app's ticket. The owner token is refused and nothing is stored.
   - No row means `all`.
 - **`owner_review_required`, shown on `pr_get`:**
-  - A PR on the policy files (`.hermes/*.toml`): always, whatever the setting, `none` included (H-313). Migration `PR_SHAPE_POLICY` adds the table `pr_shape_policy`; the merge gate reads it again.
+  - A PR on the policy files (`.flotilla/*.toml`, or the pre-rename `.hermes/*.toml`): always, whatever the setting, `none` included (H-313). Migration `PR_SHAPE_POLICY` adds the table `pr_shape_policy`; the merge gate reads it again.
   - `none`: otherwise never.
   - Otherwise, always for security work: a matched area whose roles include `ce`, or the policy files.
   - Then by setting: `all` → yes; `areas` → when an area the PR matches is listed; `flagged` → when the PR is `owner_flagged`.
@@ -1237,7 +1287,7 @@ The typed surface `hermes.pr.v1` (`proto/hermes/pr/v1/pr.proto`, contract `pr` 1
 - **The queue (nobody presses merge):**
   - every 2 s the daemon puts each newly mergeable PR at the back of its project's queue, and takes out any that stopped being mergeable;
   - the head of the queue gets a 10 s `merging` window (`pr.state = merging`, `merge.merge_at`) in which nothing is pushed;
-  - once the window ends, DevOps gets a `pr_merge` daemon task, linked to the card, naming `hermesd pr merge <n>` (`merge.state = handed`; H-284 runs it);
+  - once the window ends, DevOps gets a `pr_merge` daemon task, linked to the card, naming `flotillad pr merge <n>` (`merge.state = handed`; H-284 runs it);
   - one PR at a time per project: after a merge, main moved, so the next one shows `behind_main` until its author updates it, and is out of the queue meanwhile. Updated without conflict, its approvals carry (same patch-id) and its checks are queued again on the new head.
 - **Undo:**
   - `pr_merge_undo {project_id, number}` (approve; from a device or the app's ticket only) works only in the window.
@@ -1245,11 +1295,11 @@ The typed surface `hermes.pr.v1` (`proto/hermes/pr/v1/pr.proto`, contract `pr` 1
   - The PR stays out of the queue until its change or the owner's approval changes. After the hand-off it is refused.
 
 **The merge executor (PR-6b, H-284; §5.2, §5.3, §6.5, §15.2).** Migrations `PERMISSION_EXTRAS_PR_MERGE` (the `pr_merge` extra) and `PR_MERGE` (one live PR per card **per repo**; the `pr_merge_stuck` table).
-- **`hermesd pr merge <n> [--dry-run]`**, run by DevOps in its own checkout of the PR's repo on its `pr_merge` task. It asks the daemon over the local endpoint, like `release land`:
-  - **`hermes/pr_merge {number}`:** the bot holds the `pr_merge` extra (off for every bot until the owner grants it), is the project's DevOps and holds the PR's open `pr_merge` task. The daemon fetches the repo; the branch must still be at the PR's head. It recomputes the roles and shape the change needs **at the merge** (main's tip to the head; the base's `reviewers.toml` at main's tip), then every §5.1 condition. A PR that no longer holds leaves the queue, its task is cancelled, and the reason comes back. Otherwise it answers `{number, head_sha, branch, main_sha, repo, repo_url}`.
+- **`flotillad pr merge <n> [--dry-run]`**, run by DevOps in its own checkout of the PR's repo on its `pr_merge` task. It asks the daemon over the local endpoint, like `release land`:
+  - **`flotilla/pr_merge {number}`:** the bot holds the `pr_merge` extra (off for every bot until the owner grants it), is the project's DevOps and holds the PR's open `pr_merge` task. The daemon fetches the repo; the branch must still be at the PR's head. It recomputes the roles and shape the change needs **at the merge** (main's tip to the head; the base's `reviewers.toml` at main's tip), then every §5.1 condition. A PR that no longer holds leaves the queue, its task is cancelled, and the reason comes back. Otherwise it answers `{number, head_sha, branch, main_sha, repo, repo_url}`.
   - **In the checkout** (git hooks off): origin must be that repo; the branch on origin must be at the head and main an ancestor of it. Then `git push origin <head>:refs/heads/main`, never forced, and `ls-remote` of the repo must show main at the head.
   - **The branch** is deleted with `--force-with-lease=refs/heads/<branch>:<head>`, so it goes only while its tip is still the merged commit; a branch that moved is kept and reported.
-  - **`hermes/pr_merged {number, sha, branch: {deleted, note}}`:** the daemon's own fetch must show main at `sha`, the PR's head, and the gate must have passed this head (`pr_merge_check`: same head, the main it saw an ancestor of it, under 15 min old). Otherwise main moved outside the gate: nothing is recorded, the card stays, and the owner's Needs you shows a `MAIN_MOVED_OUTSIDE` row (weight 3). The PR becomes `merged` (`merged_sha`, `merged_at`, `merged_by`), leaves the queue, and its task is done. A kept branch is said on the card. Answers `{number, sha, card, moved, waiting_for[], branch_kept}`.
+  - **`flotilla/pr_merged {number, sha, branch: {deleted, note}}`:** the daemon's own fetch must show main at `sha`, the PR's head, and the gate must have passed this head (`pr_merge_check`: same head, the main it saw an ancestor of it, under 15 min old). Otherwise main moved outside the gate: nothing is recorded, the card stays, and the owner's Needs you shows a `MAIN_MOVED_OUTSIDE` row (weight 3). The PR becomes `merged` (`merged_sha`, `merged_at`, `merged_by`), leaves the queue, and its task is done. A kept branch is said on the card. Answers `{number, sha, card, moved, waiting_for[], branch_kept}`.
 - **Board:** once every PR of the card, in every repo, is merged, the daemon moves the card Review → Verify ("PR #n merged"). A manual Review → Verify on a card with a PR link is refused (`review.merged_by_pr`); spikes and chores without a PR keep the H-154 path.
 - **Guard:** the `pr_merge` extra pre-approves exactly `<this daemon's binary> pr merge`, run as given (no `--config` or home override). It doesn't lift the main denies: a raw `git push … main` stays refused.
 - **Stuck merges:** a merge `handed` for 30 min goes to DevOps again (the old task expires) and is recorded in `pr_merge_stuck`. Until it merges or leaves the queue, the owner's Needs you shows a `PR_MERGE_STUCK` row (weight 2): "PR #n (card) is waiting for DevOps to merge it; asked N times".
@@ -1262,46 +1312,46 @@ The typed surface `hermes.pr.v1` (`proto/hermes/pr/v1/pr.proto`, contract `pr` 1
   - **From a planned package** (`release_id`): planned cards with no merged PR show in `not_merged`, and merged PRs whose cards nobody planned are in `also_included`.
   - The package is then `assembling`, and the gate is unchanged. Every build must name the cut commit as its `source_commit`.
 - **The release JSON gains** `tag` (empty until pushed), `tag_name` (`desktop-v<version>`), `commit`, `previous_commit`, `repo`, `prs`, `also_included` (`PrRef`s, plus `reverted` and `revert`) and `not_merged`. `pr_get` gains `reverted_by`.
-- **`hermesd release tag <release> [--dry-run]`** (DevOps, the `release_main` extra, run in its checkout):
-  - **The gate, `hermes/release_tag`:** the release was cut from main, the owner approved it, and its builds come from the cut commit.
+- **`flotillad release tag <release> [--dry-run]`** (DevOps, the `release_main` extra, run in its checkout):
+  - **The gate, `flotilla/release_tag`:** the release was cut from main, the owner approved it, and its builds come from the cut commit.
   - **In the checkout:** the commit must be on origin's main. The annotated `desktop-v<version>` is pushed, and nothing else; an existing tag must already be on that commit. `ls-remote` checks the result.
-  - **The record, `hermes/release_tagged`:** the daemon asks the repository itself before recording it.
+  - **The record, `flotilla/release_tagged`:** the daemon asks the repository itself before recording it.
   - `release land` refuses a release cut from main.
 - **Leave out, `release_leave_out {project_id, release_id, prs}`** (WS approve; the owner's device or ticket only). It's possible before the tag, while the release is assembling, built, awaiting the owner or held.
   - **The package starts over:** its items go back to Verify, the builds and tests are dropped, and the ruling is withdrawn.
   - **Left-out PRs that merged after every kept one:** the release is cut again at the last kept merge (mode `recut`). Their cards stay in Verify, with a comment that they ship later.
   - **Otherwise** (mode `revert`):
     - A later kept PR that changed the same files is refused by name: "PR #n (card) changed <files> after #m".
-    - Otherwise DevOps gets a task to run **`hermesd release leave-out <id>`**. In a fresh worktree of origin's main it runs `git revert --no-edit <base>..<merged>` for each PR, newest first, pushes `leave-out/<version>-<id>`, and asks `hermes/leave_out_pushed`.
-    - **The daemon checks the branch first:** `hermes/leave_out` records `main_at`, main as it was then, and the command reverts from exactly that commit. At `hermes/leave_out_pushed`, the daemon computes the expected tree itself, chaining `git merge-tree --write-tree --merge-base=<merged> <tree> <base>` over the ranges on `main_at`'s tree. The head must descend from `main_at` and hold exactly that tree; otherwise nothing is opened.
-    - **Then** it opens the branch as the owner's PR (author `owner:<device or ticket>`): no bot review, no owner review, checks required, the normal queue and `hermesd pr merge`.
-    - **`hermesd pr merge` checks it again:** for an owner-authored PR, the head and tree must still be the ones recorded.
+    - Otherwise DevOps gets a task to run **`flotillad release leave-out <id>`**. In a fresh worktree of origin's main it runs `git revert --no-edit <base>..<merged>` for each PR, newest first, pushes `leave-out/<version>-<id>`, and asks `flotilla/leave_out_pushed`.
+    - **The daemon checks the branch first:** `flotilla/leave_out` records `main_at`, main as it was then, and the command reverts from exactly that commit. At `flotilla/leave_out_pushed`, the daemon computes the expected tree itself, chaining `git merge-tree --write-tree --merge-base=<merged> <tree> <base>` over the ranges on `main_at`'s tree. The head must descend from `main_at` and hold exactly that tree; otherwise nothing is opened.
+    - **Then** it opens the branch as the owner's PR (author `owner:<device or ticket>`): no bot review, no owner review, checks required, the normal queue and `flotillad pr merge`.
+    - **`flotillad pr merge` checks it again:** for an owner-authored PR, the head and tree must still be the ones recorded.
     - **A later `pr_push`** to it makes the pusher its author, so the usual reviews apply.
     - **When it merges:** the left-out PRs get `reverted_by`, the release is cut again at the new main, and their cards go back to Doing ("left out of <version>").
   - **Re-adding** a left-out change later is a new PR that reverts the revert.
-- The `release_main` extra pre-approves `release land`, `release tag` and `release leave-out`, run as given. It **no longer lifts the main denies** (CE S1 on H-284): no bot, DevOps included, pushes or merges to main itself. Main moves only through `hermesd pr merge` and `release land`, which push from their own process.
+- The `release_main` extra pre-approves `release land`, `release tag` and `release leave-out`, run as given. It **no longer lifts the main denies** (CE S1 on H-284): no bot, DevOps included, pushes or merges to main itself. Main moves only through `flotillad pr merge` and `release land`, which push from their own process.
 - **Process rule (not code):** DevOps proposes at most one release a day.
 
 **Checks (PR-5a, H-270).**
-- **Which checks:** each reported head queues the required checks of the base's `.hermes/checks.toml`, filtered by the paths the PR changes. A head's own `checks.toml` changes nothing, except as below.
+- **Which checks:** each reported head queues the required checks of the base's `.flotilla/checks.toml`, filtered by the paths the PR changes. A head's own `checks.toml` changes nothing, except as below.
 - **A PR that changes `checks.toml`** (H-311): when the head's file parses, "what the PR changes" is the head's file against the file at the merge-base, never against today's main, so main's own later edits aren't the PR's.
   - A check the PR changes (name, run, needs, machine, paths, required or heavy) or adds runs the head's definition.
   - A check it removes doesn't run.
   - A check it leaves alone runs main's current definition.
-  - A passing `.hermes/checks.toml` row names each kind plainly: `<name> runs its own definition`, `<name> added`, `<name> skipped: no longer required`, `<name> skipped: paths no longer match` (main's definition would run on this PR, the head's doesn't), `<name> removed`.
+  - A passing `.flotilla/checks.toml` row names each kind plainly: `<name> runs its own definition`, `<name> added`, `<name> skipped: no longer required`, `<name> skipped: paths no longer match` (main's definition would run on this PR, the head's doesn't), `<name> removed`.
   - This keeps a check that can never pass from blocking its own fix. Like any policy change, the PR needs architect, ce and the owner.
-- **A broken base file:** if the base's `checks.toml` doesn't parse, a single `.hermes/checks.toml` check is recorded as `error`, so nothing counts as checked.
-- **Repairing it:** a PR that changes `checks.toml` to a file that parses gets the head's checks plus a passing `.hermes/checks.toml` check, so the repair can merge. Like any policy change, it still needs architect, ce and the owner.
+- **A broken base file:** if the base's `checks.toml` doesn't parse, a single `.flotilla/checks.toml` check is recorded as `error`, so nothing counts as checked.
+- **Repairing it:** a PR that changes `checks.toml` to a file that parses gets the head's checks plus a passing `.flotilla/checks.toml` check, so the repair can merge. Like any policy change, it still needs architect, ce and the owner.
 
 **Running checks (PR-5b, H-283).**
 - **Tools:** each daemon probes `node`, `pnpm`, `cargo`, `xcodebuild`, `python3`, `mkdocs` and `docker` at boot and hourly (`checks.probe_interval_secs`), plus `os` and `disk_free_gb`. It keeps them in `machine_tool` under its own name and sends them to each linked computer as the peer event `machine_tools {tools}`, also when a link comes up. Tools are found and run on one derived PATH (`tool_path`, H-318): the daemon's own PATH, then each per-user tool folder that exists and isn't a symlink (`$CARGO_HOME/bin` or `~/.cargo/bin`, Homebrew's keg-only rustup proxies, the rustup default toolchain's `bin`, `$PNPM_HOME`, `~/Library/pnpm`, `~/.local/share/pnpm`, `~/.volta/bin`, `~/.local/bin`, `/opt/homebrew/bin`, `/usr/local/bin`; on Windows the `.cargo\bin`, pnpm, npm and nodejs folders). The check runner gets the same PATH, so a check routed by a tool finds it.
 - **Routing:** the board's home routes each queued check to an online computer whose tools cover its `needs` and the program its `run` starts with, matching `machine` by name or OS (`windows`, `mac`). The least busy wins, this computer first on a tie. A check whose computer is offline, full or short of disk waits, with the reason in its `note`. A check no reported computer could run, online or not, is unroutable (H-318): it stays queued with `note` "no computer can run this: needs …; <computer> has …" and `unroutable_since` (kept from the first time, cleared once it routes); `CheckRun.unroutable` is set and the app shows "No computer can run this". Each probe nudges routing, so it routes once a computer reports the tool. A required one unroutable for an hour on an open PR's head is a `CHECK_UNROUTABLE` (16) Needs-you row (weight 2, target `pr_number`, one per check name) built by the board's home, and a note to the project's DevOps once per check name. An unroutable required check isn't a pass, so it still blocks the merge.
-- **The runner:** no bot and no AI worker. The daemon of the chosen computer runs the check itself, as the identity `daemon:check-runner` (not a bot: no inbox, no parent, never a PR's author or pusher). It clones the repository at the exact sha into `<home>/run/checks/<job>/check` (built under `<home>/run/git`, then moved in), then starts `hermesd check run <job folder>` with a clean environment (tool paths and locale only, no tokens). That runs the job's `run` from the base's `checks.toml` in the checkout, all output to `check.log`, and exits 0 when it exited 0, 1 when it didn't, 2 when it couldn't start. The result is that exit status: `pass`, `fail` or `error`. The checkout is removed once it has run; the log is published under the project's artifacts, or, run on a linked computer, stays there as `<computer>:<path>`.
+- **The runner:** no bot and no AI worker. The daemon of the chosen computer runs the check itself, as the identity `daemon:check-runner` (not a bot: no inbox, no parent, never a PR's author or pusher). It clones the repository at the exact sha into `<home>/run/checks/<job>/check` (built under `<home>/run/git`, then moved in), then starts `flotillad check run <job folder>` with a clean environment (tool paths and locale only, no tokens). That runs the job's `run` from the base's `checks.toml` in the checkout, all output to `check.log`, and exits 0 when it exited 0, 1 when it didn't, 2 when it couldn't start. The result is that exit status: `pass`, `fail` or `error`. The checkout is removed once it has run; the log is published under the project's artifacts, or, run on a linked computer, stays there as `<computer>:<path>`.
 - **Linked computers:** the home asks with the peer request `check_run {project_id, job, url, sha, run}`. The computer clones from its own URL for that repository (it refuses one the linked project doesn't have, and refuses `at_capacity` under its disk floor, so the check waits) and answers at once. When the run ends it sends the event `check_result {job, result, note, log}`; the home accepts it only from the computer the job was routed to.
 - **`check_report` (MCP):** a bot a check was dispatched to may report `running` or `error` only. A `pass` or a `fail` over MCP is refused: they come only from the exit status.
 - **Load:** at most `checks.jobs_per_machine` (default 2) open check jobs per computer, every project's. No job starts on a computer with less than `checks.disk_floor_gb` (default 20) GB free; it waits instead.
 - **Heavy checks (H-334):** a check is heavy when it needs `cargo` (in `needs`, or `run` starts with it) or its `checks.toml` entry says `heavy = true`; `heavy = false` opts a cargo check out. A computer runs at most `checks.heavy_per_machine` (default 1) heavy check jobs at once, every project's, inside its overall cap. A heavy check whose computers all have the slot taken waits with `note` "queued: another heavy check (a Rust build) is running on <computer>". That is an ordinary wait, never unroutable, so it starts no Needs-you clock. A daemon older than H-334 refuses a `checks.toml` with `heavy` (unknown fields are refused), so the key is used only once every computer runs H-334. A job on a linked computer holds that computer's slot until its result comes back. So each time a link comes up, the board's home asks that computer, with the peer request `check_jobs_running {jobs}` → `{running}`, which of the jobs it sent before that link the computer still runs. The computer counts a job as running until it has sent the result. Every other job is an `error`, with note "<computer> restarted while it ran", retried once. A computer too old to answer keeps the 7-hour deadline.
-- **Re-runs:** `check_rerun {sha, name}` (MCP) for the lead or the PR's author, and for the owner over the `hermes.pr.v1` `check_rerun` request (H-273). An `error` is retried once automatically, including a job that ended without a result (the daemon restarted while it ran, or a linked computer sent nothing within 7 hours); a `fail` never is.
+- **Re-runs:** `check_rerun {sha, name}` (MCP) for the lead or the PR's author, and for the owner over the `flotilla.pr.v1` `check_rerun` request (H-273). An `error` is retried once automatically, including a job that ended without a result (the daemon restarted while it ran, or a linked computer sent nothing within 7 hours); a `fail` never is.
 
 ## Meetings
 
@@ -1321,3 +1371,52 @@ Meetings live with the board, on its home (H-017 §1.5, H-020 §4, H-102). A **s
 - control: `meeting_series_upsert` → `{type: "meeting_series", series}`; `meeting_contribute` (the owner as an attendee) → `{type: "meeting", meeting}`; `action_update` and `action_promote` → `{type: "meeting_action", action}`.
 - Off the board's home they're refused with the computer to use.
 - Every change pushes `{type: "meeting_event", project_id, meeting_id?}`; clients reread.
+
+## Renames (Gravity → The Hermes → Flotilla)
+
+The product was Gravity, then The Hermes, and is now Flotilla. Each name below
+is the current one; the older ones keep working where a running older peer,
+proxy, phone, transcript or repository may still use them.
+
+- **Wire contract:** the proto packages are `flotilla.{board,home,pr,wire}.v1`
+  (were `hermes.*.v1`). Binary frames carry field numbers only and the JSON
+  forms carry field and enum names, never a package or type URL (no
+  `google.protobuf.Any`, no `@type`), so 0.18 and pre-rename 0.19 apps, phones
+  and peers talk to a renamed daemon unchanged. `buf breaking` against a base
+  that still has `proto/hermes/` compares with that base's files moved to
+  `proto/flotilla/` and their packages renamed (`scripts/buf-breaking.mjs`):
+  the rename itself is the one accepted break.
+- **JSON-RPC on the local endpoint:** methods are `flotilla/<name>`
+  (`flotilla/owner_ticket`, `flotilla/pr_merge`, …). A request naming
+  `hermes/<name>` is answered as `flotilla/<name>`.
+- **Bus MCP server:** `flotilla-bus`. Transcripts with `mcp__hermes-bus__*` or
+  `mcp__gravity-bus__*` calls are read as bus calls.
+- **Environment:** `FLOTILLA_*` first, then `THEHERMES_*`, then `GRAVITY_*`.
+  Bots get the token under all three names. Build time: `FLOTILLA_TEAM_ID`,
+  `FLOTILLA_DEV_BUILD`, `FLOTILLA_RELEASE_BUILD`, `FLOTILLA_WINDOWS_SIGNER`,
+  each falling back to its `HERMES_*` name.
+- **Home and service:** `~/.flotilla`, `flotillad.*` files, launchd label
+  `com.manuelrinaldi.flotillad`, Windows task `Flotilla-<sid>-<hash>`.
+  `service install` stops and removes every older service
+  (`com.manuelrinaldi.thehermesd`, `in.mikolajczuk.gravityd`, the
+  `The Hermes-…` and `Gravity-…` tasks) and moves the newest older home with
+  `migrate-home`. Each move's log names its `from` and `to`; a log of an
+  earlier move found in the home is set aside as
+  `migrate-home.<from>-to-<to>.json` and put back by a rollback. The database
+  records `meta.home_migrated_to` and the `home_migrations` history; a
+  rollback restores the rows the move replaced.
+- **Keychain** (`[auth] peer_tokens = "keychain"`): links are kept under
+  `Flotilla peer link <hash of the secrets dir>`. On open, links under
+  `The Hermes peer link <hash>` (this dir, or a home this one moved from) are
+  copied over; the old items stay for a rollback, and unlinking removes both.
+- **App identity:** macOS `com.manuelrinaldi.flotilla`; Windows
+  `Program Files\Flotilla`. The daemon trusts only the Flotilla app, which
+  installs this daemon before it asks it for a ticket.
+- **Repository policy:** `.flotilla/reviewers.toml` and `.flotilla/checks.toml`,
+  read before `.hermes/` when both exist. A change under either folder needs
+  architect, ce and the owner.
+- **In bots' repositories:** new worktrees get `.flotilla-worktree.json` and
+  `flotilla/<bot>` branches; `.gravity-worktree.json` worktrees are still read.
+- **Card links:** written as `flotilla://item/<id>`; `hermes://item/<id>` and
+  `thehermes://item/<id>` are read too.
+

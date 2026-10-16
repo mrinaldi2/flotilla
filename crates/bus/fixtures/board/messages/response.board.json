@@ -37,7 +37,9 @@
           "category": "COLUMN_CATEGORY_REVIEW",
           "wipLimit": 2,
           "wipScope": "WIP_SCOPE_COLUMN",
-          "visible": true
+          "visible": true,
+          "boardId": "p1/main",
+          "kind": "COLUMN_KIND_ACTIVE"
         },
         {
           "projectId": "p1",
@@ -46,7 +48,9 @@
           "ord": 7,
           "category": "COLUMN_CATEGORY_DONE",
           "wipScope": "WIP_SCOPE_COLUMN",
-          "visible": true
+          "visible": true,
+          "boardId": "p1/main",
+          "kind": "COLUMN_KIND_DONE"
         }
       ],
       "cards": [
@@ -80,7 +84,43 @@
           "botId": "b-architect"
         }
       ],
-      "seq": "12"
+      "seq": "12",
+      "drafts": [
+        {
+          "id": "RB-020",
+          "type": "ITEM_TYPE_FEATURE",
+          "title": "Unit conversion (cups ↔ grams)",
+          "priority": "PRIORITY_P2",
+          "rank": "a0",
+          "columnKey": "todo",
+          "acChecked": 0,
+          "acTotal": 2,
+          "version": "5",
+          "boardId": "p1/main",
+          "draft": true
+        }
+      ],
+      "proposals": [
+        {
+          "id": "bp-1",
+          "boardId": "p1/main",
+          "summary": "add column “QA” with rules assignee_set",
+          "proposedBy": "bot:b-lead",
+          "decisionId": "dec-9",
+          "state": "open",
+          "at": "2026-10-13T08:00:00Z",
+          "columnAdd": {
+            "boardId": "p1/main",
+            "version": "3",
+            "name": "QA",
+            "kind": "COLUMN_KIND_ACTIVE",
+            "after": "doing",
+            "rules": [
+              "assignee_set"
+            ]
+          }
+        }
+      ]
     }
   }
 }

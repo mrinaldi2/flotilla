@@ -1,0 +1,65 @@
+[package]
+name = "flotillad"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+# One integration-test program (tests/main.rs) instead of one per file.
+autotests = false
+
+[dependencies]
+bus = { path = "../bus" }
+prost = "0.14"
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+rusqlite = { workspace = true }
+axum = { workspace = true }
+tower-http = { workspace = true }
+cron = { workspace = true }
+chrono = { workspace = true }
+chrono-tz = { workspace = true }
+uuid = { workspace = true }
+toml = { workspace = true }
+portable-pty = { workspace = true }
+libc = { workspace = true }
+rand = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+futures = { workspace = true }
+bytes = { workspace = true }
+tokio-tungstenite = "0.24"
+base64 = "0.22"
+# Moving a deleted project's leftovers to the OS trash (macOS Trash,
+# Windows Recycle Bin, freedesktop trash).
+trash = "5.2"
+
+[features]
+# Test-only switches the integration tests turn on through the dev-dependency
+# on this crate below; never part of a release build.
+test-support = []
+
+[dev-dependencies]
+flotillad = { path = ".", features = ["test-support"] }
+tempfile = "3"
+tokio = { workspace = true, features = ["test-util"] }
+reqwest = { version = "0.12", features = ["json"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+security-framework = "3"
+
+[[test]]
+name = "integration"
+path = "tests/main.rs"
+
+# Per-process state of their own; see tests/main.rs.
+[[test]]
+name = "owner_ticket_obs"
+path = "tests/owner_ticket_obs.rs"
+
+[[test]]
+name = "quiesce_reap"
+path = "tests/quiesce_reap.rs"

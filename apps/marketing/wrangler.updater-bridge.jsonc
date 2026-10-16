@@ -1,10 +1,12 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
+  // Worker name kept on purpose: renaming it deploys a new Cloudflare Worker.
+  // Change it only when the owner moves the deployment to a Flotilla name.
   "name": "gravity-updater-bridge",
   "main": "src/updater-bridge.ts",
   "compatibility_date": "2026-09-02",
   "workers_dev": true,
-  // Configure the upstream and the exact legacy manifest route when deploying.
+  // Configure the upstream and the exact manifest routes when deploying.
   // No route by default: verify the Worker before attaching production traffic.
   "vars": {
     "RELEASE_MANIFEST_URL": "",

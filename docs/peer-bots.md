@@ -2,11 +2,11 @@
 
 Status: the daemon side (pairing, linking, forwarding, task mirroring,
 artifact transfer and linked projects) is implemented and covered by
-`crates/hermesd/tests/peer_bots.rs` and `crates/hermesd/tests/linked_projects.rs`.
-The desktop UI is not built yet; pair and link with `hermesd peer …` until
+`crates/flotillad/tests/peer_bots.rs` and `crates/flotillad/tests/linked_projects.rs`.
+The desktop UI is not built yet; pair and link with `flotillad peer …` until
 it is. Requests are listed in [protocol.md](protocol.md).
 
-A team can span two Gravity daemons. The motivating case is an app built for
+A team can span two Flotilla daemons. The motivating case is an app built for
 macOS and Windows: a lead and a Mac developer run on the Mac, a Windows
 developer runs on a Windows PC, and the lead hands the Windows side its work
 without the user switching the desktop app between daemons to relay messages
@@ -18,22 +18,22 @@ artifacts those results attach.
 
 ## Setting it up
 
-On the Windows PC, add its Tailscale address to `bind` in `hermesd.toml`
+On the Windows PC, add its Tailscale address to `bind` in `flotillad.toml`
 (next to `127.0.0.1`) and restart the daemon. Then create an invite for the
 Mac:
 
 ```sh
-hermesd peer invite mac
+flotillad peer invite mac
 ```
 
 On the Mac, add the PC with that invite, check that the link is up, and link
 the Windows bot into the project the lead works in:
 
 ```sh
-hermesd peer add win-pc "ws://100.x.y.z:49777/peer#…"
-hermesd peer list
-hermesd peer bots win-pc
-hermesd peer link win-pc windev --project my-app
+flotillad peer add win-pc "ws://100.x.y.z:49777/peer#…"
+flotillad peer list
+flotillad peer bots win-pc
+flotillad peer link win-pc windev --project my-app
 ```
 
 The lead can now `send_message(to: "windev", kind: "task", …)`. The first
@@ -155,6 +155,25 @@ and stays that way as the team changes.
     last seen (`board_get`, `item_query`, the card of `item_get`), and every
     change is refused: "The board lives on mac, which is unreachable." The
     mirror is not kept across a restart of that daemon.
+  - A project's boards all live on its home (0.19). `board_snapshot` may
+    name one `board_id`, and each `board_event` names its board, so a
+    structure change refetches that board alone.
+  - An item's files stay on the home. `item_get` there fetches each image
+    and file once (`attachment_fetch`) into the project's artifacts under
+    `.cache/attachments/<sha256>.<ext>`, kept only while it hashes to its
+    record, and points the bot at that copy. A bot attaching a file of its
+    own has its daemon send the bytes (`attachment_push`); the home never
+    reads a path on the other computer. A draft's files never leave the
+    home, nor does a detached one. What a computer has staged and not yet
+    attached counts toward the item's cap on the home, and an upload left
+    for ten minutes is swept when its bot starts another. A link holds at
+    most four file chunks waiting to be sent.
+- **Mixed versions.** Each side says in its `peer_hello` which kanban
+  contract it speaks (`kanban: 2` from 0.19; 0.18 says none), and the link
+  speaks the older one. A 0.18 computer is served the home's default board
+  as its one board. A 0.19 computer with a 0.18 home keeps that one board
+  and refuses the board structure tools and attachments before asking.
+  A home that is down is the read-only board, never taken for a 0.18 one.
 - **Stand-ins do not count** towards `max_bots_per_project`; only bots that
   run on a daemon count there.
 - **Unlinking**, from either side, archives the stand-ins on both sides
@@ -163,6 +182,19 @@ and stays that way as the team changes.
   History is kept. If the peer is offline, it drops its half when the link
   next comes up. Revoking a peer unlinks every project linked through it.
   Archiving a linked project unlinks it.
+- **Deleting** a linked project (0.19.0) asks every computer it is linked
+  with to trash that computer's half, with the `project_trash` event. The
+  ask is written to the database before the links go, sent at once, and
+  again first thing each time the link comes back, so a computer offline at
+  the delete still hears it. The receiver deletes the bots the deleted
+  project's bots created there, and when what is left is only a mirror (no
+  bot of its own, no board there, no other link) deletes its project too;
+  everything that removes goes to its trash, found and confined there as
+  for a local delete (see "Deleting a project" in `protocol.md`). It answers
+  `project_trash_done`. A computer before 0.19 ignores the event: after
+  `trash.peer_attempts` asks on a live link (every `trash.peer_resend_minutes`)
+  the ask ends unconfirmed and the owner is told how many computers didn't
+  confirm.
 
 Linking: the owner calls `link_project` on one daemon. It sends the peer a
 `link_project` frame with its project's id, name and roster. The peer checks
@@ -207,6 +239,8 @@ Peer frames (ids are the sender's own, except `bot_id` on `update_bot` and
 | `delete_bot` | `bot_id, reason?, as_bot_id?` | `{}` |
 | `project_roster` (event) | `project: { project_id, project_name, bots }` | – |
 | `project_links` (event) | `links: [{ project_id, remote_project_id }]` | – |
+| `project_trash` (event) | `order_id, project_id` (the receiver's), `from_project_id, project_name` | – |
+| `project_trash_done` (event) | `order_id, outcome` (`trashed` \| `kept` \| `not_linked`), `moved_bytes, skipped, summary` | – |
 
 A peer acts only on projects linked through it, except `list_projects` and
 `link_project`. A refusal carries a `code` (`conflict`, `not_linked`,
@@ -402,7 +436,7 @@ their `daemon_id`, so they can pair again.
 ## Delivery plan
 
 1. **Peers and forwarding (daemon).** The schema, `daemon_id`, pairing and
-   revocation as control-plane requests (plus `hermesd peer …` commands that
+   revocation as control-plane requests (plus `flotillad peer …` commands that
    drive the local daemon, so this is usable before the UI lands), the `/peer`
    route and dialer, linking, and forwarding of every message kind with task
    mirroring. Tested with two in-process daemons on the double runtime.

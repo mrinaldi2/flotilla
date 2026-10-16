@@ -127,7 +127,7 @@ function RestartRow({ onToast }: RestartRowProps): ReactElement {
     setBusy("Restarting…");
     try {
       await restartLocalDaemon();
-      onToast("info", "Hermes service restarting", "The app reconnects once it is back up.");
+      onToast("info", "Flotilla service restarting", "The app reconnects once it is back up.");
     } catch (error) {
       const status = await localServiceStatus();
       const offer = status === null ? null : recoveryFor(status);
@@ -135,7 +135,7 @@ function RestartRow({ onToast }: RestartRowProps): ReactElement {
         setRecovery({ status, offer });
       } else {
         captureException(error, "daemon_restart");
-        onToast("error", "Couldn't restart the Hermes service", errText(error));
+        onToast("error", "Couldn't restart the Flotilla service", errText(error));
       }
     } finally {
       setBusy(null);
@@ -148,9 +148,9 @@ function RestartRow({ onToast }: RestartRowProps): ReactElement {
     const outcome = await installForRecovery(status);
     setBusy(null);
     if (outcome === "installed") {
-      onToast("info", "Hermes service running", "The app reconnects on its own.");
+      onToast("info", "Flotilla service running", "The app reconnects on its own.");
     } else if (outcome !== "cancelled") {
-      onToast("error", "Couldn't install the Hermes service", outcome.error);
+      onToast("error", "Couldn't install the Flotilla service", outcome.error);
     }
   };
 
@@ -158,9 +158,9 @@ function RestartRow({ onToast }: RestartRowProps): ReactElement {
     <>
       <div className="settings-row">
         <div className="settings-row-text">
-          <div className="settings-row-label">Restart Hermes service</div>
+          <div className="settings-row-label">Restart Flotilla service</div>
           <div className="settings-row-help">
-            Restarts the Hermes service on this computer. Every bot session running right now is
+            Restarts the Flotilla service on this computer. Every bot session running right now is
             killed mid-turn.
           </div>
         </div>
@@ -172,7 +172,7 @@ function RestartRow({ onToast }: RestartRowProps): ReactElement {
             setConfirming(true);
           }}
         >
-          {busy ?? "Restart Hermes service"}
+          {busy ?? "Restart Flotilla service"}
         </button>
       </div>
       {recovery === null ? null : (
@@ -190,9 +190,9 @@ function RestartRow({ onToast }: RestartRowProps): ReactElement {
       )}
       {confirming ? (
         <ConfirmDialog
-          title="Restart the Hermes service?"
+          title="Restart the Flotilla service?"
           body="Every bot session running right now is killed mid-turn and loses whatever work it had not written to disk. The service comes back within a few seconds and resumes the bots, but any in-flight turn is gone."
-          confirmLabel="Restart Hermes service"
+          confirmLabel="Restart Flotilla service"
           onConfirm={() => {
             void restart();
           }}
@@ -213,7 +213,7 @@ function DaemonLaunchConfig({ config }: { readonly config: DaemonConfig }): Reac
         <div className="settings-row-text">
           <div className="settings-row-label">Bind addresses</div>
           <div className="settings-row-help">
-            Change in hermesd.toml and restart the Hermes service.
+            Change in flotillad.toml and restart the Flotilla service.
           </div>
         </div>
         <span className="settings-value">{config.bind.join(", ")}</span>
@@ -225,10 +225,10 @@ function DaemonLaunchConfig({ config }: { readonly config: DaemonConfig }): Reac
           <div className="settings-row-help">Also serves the bot bus at /mcp.</div>
           {negotiated ? (
             <div className="settings-row-error">
-              Port {config.configured_port} was unavailable at startup. Hermes is using{" "}
+              Port {config.configured_port} was unavailable at startup. Flotilla is using{" "}
               {config.port} for the app and bot bus. Another process or an operating-system
               reservation can block a port. To use a fixed port, choose an available port in
-              hermesd.toml and restart the Hermes service. Remote clients and MCP URL allowlists
+              flotillad.toml and restart the Flotilla service. Remote clients and MCP URL allowlists
               must use the active port.
             </div>
           ) : null}
@@ -244,7 +244,7 @@ function DaemonLaunchConfig({ config }: { readonly config: DaemonConfig }): Reac
         <div className="settings-row-text">
           <div className="settings-row-label">Session runner</div>
           <div className="settings-row-help">
-            How the Hermes service starts bot sessions. Set in hermesd.toml.
+            How the Flotilla service starts bot sessions. Set in flotillad.toml.
           </div>
         </div>
         <span className="settings-value">{config.runtime}</span>
@@ -256,7 +256,7 @@ function DaemonLaunchConfig({ config }: { readonly config: DaemonConfig }): Reac
 /**
  * Daemon configuration over the control plane, rendered as rows inside the
  * connection pane. Only the auto-compact window is writable; bind/port/runtime
- * describe how the daemon was launched and change only via `hermesd.toml`
+ * describe how the daemon was launched and change only via `flotillad.toml`
  * plus a restart.
  */
 export default function DaemonSettings(props: DaemonSettingsProps): ReactElement {

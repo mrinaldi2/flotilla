@@ -141,7 +141,7 @@ export default function ShortcutSettings(): ReactElement {
       <div className="settings-row">
         <div className="settings-row-text">
           <div className="settings-row-label" id={SHORTCUT_PURPOSE_ID}>
-            Show or hide Hermes
+            Show or hide Flotilla
           </div>
           <div className="settings-row-help">
             Works from any app. Click the field, then press a combination of two or more modifiers

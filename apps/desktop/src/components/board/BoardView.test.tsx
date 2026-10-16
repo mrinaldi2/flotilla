@@ -5,10 +5,10 @@ import { describe, expect, it, vi } from "vitest";
 import type { AddToast } from "../../app/useToasts";
 import type { BoardCall } from "../../protocol/board";
 import { DaemonError } from "../../protocol/connection";
-import type { ItemCard, Unmet } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { ItemSchema, Platform } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { MoveCheckSchema } from "../../protocol/gen/hermes/board/v1/requests_pb";
-import type { MoveCheck } from "../../protocol/gen/hermes/board/v1/requests_pb";
+import type { ItemCard, Unmet } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { ItemSchema } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { MoveCheckSchema } from "../../protocol/gen/flotilla/board/v1/requests_pb";
+import type { MoveCheck } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import { card, defaultColumns, moved, snapshot, unmet } from "../../test/boardFixtures";
 import { FakeDaemon } from "../../test/fakeDaemon";
 import { bot, project } from "../../test/fixtures";
@@ -18,7 +18,7 @@ const h24 = card({
   id: "H-024",
   title: "Releases tab",
   columnKey: "ready",
-  platforms: [Platform.DESKTOP],
+  labels: ["platform:desktop"],
   version: 4n,
 });
 const h17 = card({
@@ -110,7 +110,7 @@ describe("BoardView", () => {
     setup([
       h24,
       h17,
-      card({ id: "H-030", columnKey: "ready", rank: "a5", platforms: [Platform.IOS] }),
+      card({ id: "H-030", columnKey: "ready", rank: "a5", labels: ["platform:ios"] }),
     ]);
     await screen.findByRole("article", { name: /^H-024/ });
 
@@ -196,7 +196,7 @@ describe("BoardView", () => {
     const fake = new FakeDaemon().onBoard("itemMoveCheck", checks({})).onBoard("itemMove", () => ({
       case: "moved",
       value: {
-        $typeName: "hermes.board.v1.MoveResult",
+        $typeName: "flotilla.board.v1.MoveResult",
         outcome: { case: "done", value: create(ItemSchema, { id: "H-024" }) },
       },
     }));
@@ -228,7 +228,7 @@ describe("BoardView", () => {
       .onBoard("itemMove", () => ({
         case: "moved",
         value: {
-          $typeName: "hermes.board.v1.MoveResult",
+          $typeName: "flotilla.board.v1.MoveResult",
           outcome: { case: "done", value: create(ItemSchema, { id: "H-024" }) },
         },
       }));
@@ -262,7 +262,7 @@ describe("BoardView", () => {
       .onBoard("itemMove", () => ({
         case: "moved",
         value: {
-          $typeName: "hermes.board.v1.MoveResult",
+          $typeName: "flotilla.board.v1.MoveResult",
           outcome: { case: "done", value: create(ItemSchema, { id: "H-058" }) },
         },
       }));
@@ -292,7 +292,7 @@ describe("BoardView", () => {
       .onBoard("itemMove", () => ({
         case: "moved",
         value: {
-          $typeName: "hermes.board.v1.MoveResult",
+          $typeName: "flotilla.board.v1.MoveResult",
           outcome: { case: "conflict", value: create(ItemSchema, { id: "H-024" }) },
         },
       }));
@@ -338,7 +338,7 @@ describe("BoardView", () => {
     expect(article).toHaveAttribute("draggable", "false");
   });
 
-  it("explains a board that isn't set up yet, and an older Hermes service", async () => {
+  it("explains a board that isn't set up yet, and an older Flotilla service", async () => {
     const fake = new FakeDaemon().onBoard("boardWatch", () => {
       throw new DaemonError("no_board", "no board");
     });
@@ -352,9 +352,7 @@ describe("BoardView", () => {
         addToast={vi.fn<AddToast>()}
       />,
     );
-    expect(
-      await screen.findByRole("heading", { name: "This board isn't set up yet" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "No board yet" })).toBeInTheDocument();
 
     const old = new FakeDaemon();
     old.encodings = [];
@@ -369,7 +367,7 @@ describe("BoardView", () => {
       />,
     );
     expect(
-      screen.getByRole("heading", { name: "The board needs a newer Hermes service" }),
+      screen.getByRole("heading", { name: "The board needs a newer Flotilla service" }),
     ).toBeInTheDocument();
   });
 

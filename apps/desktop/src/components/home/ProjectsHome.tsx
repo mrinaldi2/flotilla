@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 import type { AddToast } from "../../app/useToasts";
 import type { DaemonApi } from "../../protocol/api";
 import type { Bot, Project } from "../../protocol/entities";
-import type { ProjectRow } from "../../protocol/gen/hermes/home/v1/home_pb";
+import type { ProjectRow } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { errText } from "../../util";
 import { useNow } from "../control/useNow";
 import NewProjectForm from "../sidebar/NewProjectForm";
@@ -138,7 +138,7 @@ export default function ProjectsHome(props: ProjectsHomeProps): ReactElement {
         ) : null}
         {overview.legacy && !overview.failed && overview.rows.length > 0 ? (
           <p className="home-legacy">
-            This computer runs an older Hermes service, so projects show without their counts.
+            This computer runs an older Flotilla service, so projects show without their counts.
             Update it to see what needs you.
           </p>
         ) : null}

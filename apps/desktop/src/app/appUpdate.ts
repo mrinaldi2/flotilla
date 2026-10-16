@@ -18,8 +18,8 @@ async function install(updateLocalDaemon: boolean, addToast: AddToast): Promise<
   captureException(new Error(daemonError), "daemon_update");
   addToast(
     "error",
-    "Couldn't update the Hermes service",
-    `The app updated but the Hermes service on this computer did not: ${daemonError}`,
+    "Couldn't update the Flotilla service",
+    `The app updated but the Flotilla service on this computer did not: ${daemonError}`,
     {
       sticky: true,
       action: {

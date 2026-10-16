@@ -26,6 +26,10 @@
 @import "./styles/project-window.css";
 @import "./styles/board.css";
 @import "./styles/board-cards.css";
+@import "./styles/board-boards.css";
+@import "./styles/board-settings.css";
+@import "./styles/board-items.css";
+@import "./styles/board-proposals.css";
 @import "./styles/releases.css";
 @import "./styles/release-install.css";
 @import "./styles/dashboard.css";
@@ -38,6 +42,7 @@
 @import "./styles/settings.css";
 @import "./styles/devices.css";
 @import "./styles/toasts.css";
+@import "./styles/activity-toasts.css";
 @import "./styles/service-recovery.css";
 @import "./styles/setup.css";
 @import "./styles/owner-actions.css";

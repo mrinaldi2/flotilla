@@ -63,7 +63,7 @@ describe("ConnectionSettings", () => {
   it("offers the restart for the app-managed daemon on this machine", async () => {
     renderPane(LOCAL);
     expect(
-      await screen.findByRole("button", { name: "Restart Hermes service" }),
+      await screen.findByRole("button", { name: "Restart Flotilla service" }),
     ).toBeInTheDocument();
   });
 

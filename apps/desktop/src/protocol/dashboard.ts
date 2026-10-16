@@ -60,7 +60,7 @@ type Row =
       /** The served folder is refused, so no build is published (H-100). */
       readonly kind: "serving_off";
       readonly title: string;
-      /** Why, and what to change in hermesd.toml. */
+      /** Why, and what to change in flotillad.toml. */
       readonly reason: string;
     }
   | {
@@ -112,7 +112,15 @@ export interface AttentionRowJson {
     | "main_moved_outside"
     | "check_unroutable"
     | "cleanup_held"
-    | "disk_low";
+    | "disk_low"
+    /** A bot changed a draft since the owner last looked (0.19.0). */
+    | "draft_updated"
+    /**
+     * The board keeper (0.19.0): a card waits for the owner's review, nothing
+     * happened on it for hours, or its move is refused. The id ends with
+     * `:review`, `:quiet` or `:blocked`.
+     */
+    | "card_waiting";
   readonly id: string;
   /** One line, set by the daemon. */
   readonly title: string;

@@ -47,7 +47,7 @@ function setup(data: Dashboard | (() => Dashboard), grants?: readonly Grant[]) {
   render(
     <DashboardView
       client={fake}
-      project={project({ name: "The Hermes" })}
+      project={project({ name: "Flotilla" })}
       bots={DASH_BOTS}
       connected
       canControl
@@ -140,7 +140,7 @@ describe("DashboardView", () => {
 
   it("says first when release builds aren't being served, and why", async () => {
     const reason =
-      "the served directory /u/.thehermes/projects is inside the daemon's home; set [releases] dir";
+      "the served directory /u/.flotilla/projects is inside the daemon's home; set [releases] dir";
     const serving: NeedsYouRow = {
       kind: "serving_off",
       title: "Release builds aren't being served",
@@ -331,7 +331,7 @@ describe("DashboardView", () => {
 
   it("gives every widget an empty state", async () => {
     setup(quietDashboard());
-    expect(await screen.findByText("Nothing needs you in The Hermes.")).toBeInTheDocument();
+    expect(await screen.findByText("Nothing needs you in Flotilla.")).toBeInTheDocument();
     // No "· 0": the sentence already says nothing needs you.
     expect(screen.getByRole("heading", { name: "Needs you" })).toBeInTheDocument();
     expect(screen.getByText("No board yet. Start it from the Board tab.")).toBeInTheDocument();
@@ -369,7 +369,7 @@ describe("DashboardView", () => {
         reads += 1;
         return reads === 1 ? quietDashboard() : dashboard();
       });
-      await screen.findByText("Nothing needs you in The Hermes.");
+      await screen.findByText("Nothing needs you in Flotilla.");
       await act(async () => vi.advanceTimersByTimeAsync(REFRESH_MS));
       expect(await screen.findByRole("region", { name: "Needs you · 4" })).toBeInTheDocument();
     } finally {

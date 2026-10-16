@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BoardApi } from "../../protocol/board";
+import type { BoardSnapshot } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import type { BoardStatus } from "./boardSync";
 import { BoardSync } from "./boardSync";
 
@@ -7,6 +8,8 @@ interface UseBoard {
   readonly status: BoardStatus;
   /** Refetches the snapshot, or retries the watch after a failure. */
   readonly refresh: () => void;
+  /** Takes the board a structure change answered with. */
+  readonly adopt: (snapshot: BoardSnapshot) => void;
 }
 
 /**
@@ -34,5 +37,9 @@ export function useBoard(api: BoardApi, projectId: string, live: boolean): UseBo
     sync.current?.refresh();
   }, []);
 
-  return { status, refresh };
+  const adopt = useCallback((snapshot: BoardSnapshot): void => {
+    sync.current?.adopt(snapshot);
+  }, []);
+
+  return { status, refresh, adopt };
 }

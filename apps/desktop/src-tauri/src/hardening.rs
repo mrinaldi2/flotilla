@@ -1,5 +1,5 @@
 //! What runs before any webview exists, so another process of the owner's
-//! user can't borrow the app's identity (ARCH-R38). hermesd trusts the app
+//! user can't borrow the app's identity (ARCH-R38). flotillad trusts the app
 //! by where it is installed (H-110), so a bot could start the real app with
 //! an environment that turns its WebView2 into a remote-controlled browser:
 //! `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=…`, or
@@ -91,7 +91,7 @@ mod tests {
         for (name, value) in forged {
             std::env::set_var(name, value);
         }
-        std::env::set_var("HERMES_HARDENING_TEST_KEEP", "1");
+        std::env::set_var("FLOTILLA_HARDENING_TEST_KEEP", "1");
 
         let cleared = clear_webview2_env();
 
@@ -104,9 +104,9 @@ mod tests {
         }
         assert!(std::env::vars_os().all(|(name, _)| !is_webview2_var(&name)));
         assert_eq!(
-            std::env::var("HERMES_HARDENING_TEST_KEEP").as_deref(),
+            std::env::var("FLOTILLA_HARDENING_TEST_KEEP").as_deref(),
             Ok("1")
         );
-        std::env::remove_var("HERMES_HARDENING_TEST_KEEP");
+        std::env::remove_var("FLOTILLA_HARDENING_TEST_KEEP");
     }
 }

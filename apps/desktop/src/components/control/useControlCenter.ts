@@ -37,6 +37,8 @@ export interface ControlCenterOptions {
   /** Every bot's permission prompts, shown above the decisions. */
   readonly permissions?: Permissions;
   readonly onOpenBot?: (botId: string) => void;
+  /** Opens a board's settings, for "Change it…" on a lead's proposal (0.19.0). */
+  readonly onOpenBoard?: (projectId: string, boardId: string) => void;
 }
 
 export interface ControlCenter extends BotLookups, RegistryFilterState {

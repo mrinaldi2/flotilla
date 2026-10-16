@@ -17,7 +17,7 @@ async function latestDownload(manifestUrl: string | undefined): Promise<Response
   });
 
   if (!manifestResponse.ok) {
-    return new Response("The latest Gravity download is temporarily unavailable.", {
+    return new Response("The latest Flotilla download is temporarily unavailable.", {
       status: 502,
       headers: { "content-type": "text/plain; charset=utf-8" },
     });
@@ -25,7 +25,7 @@ async function latestDownload(manifestUrl: string | undefined): Promise<Response
 
   const downloadUrl = resolveMacDownloadUrl(await manifestResponse.json());
   if (downloadUrl === null) {
-    return new Response("The latest Gravity release does not include a macOS download.", {
+    return new Response("The latest Flotilla release does not include a macOS download.", {
       status: 502,
       headers: { "content-type": "text/plain; charset=utf-8" },
     });

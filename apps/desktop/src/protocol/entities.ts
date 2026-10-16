@@ -1,4 +1,4 @@
-// Domain entities exchanged over the hermesd control plane (protocol v2).
+// Domain entities exchanged over the flotillad control plane (protocol v2).
 // See docs/protocol.md.
 
 /** How much a project's bots may do without asking (H-031). */
@@ -271,11 +271,15 @@ export interface DaemonConfig {
   readonly bind: readonly string[];
   /** The port being served, and the one bots reach the bus at. */
   readonly port: number;
-  /** What `hermesd.toml` asked for; differs when a fallback was negotiated. */
+  /** What `flotillad.toml` asked for; differs when a fallback was negotiated. */
   readonly configured_port: number;
   readonly runtime: string;
   /** Null when unset: Claude Code uses the model default. */
   readonly auto_compact_window: number | null;
+  /** This computer's name for a phone's pairing link; absent from older daemons. */
+  readonly computer_name?: string | null;
+  /** `macos`, `windows` or `linux`; absent from older daemons. */
+  readonly os?: string;
 }
 
 /** Permission grants attached to a connection (from `hello_ok`) or a device. */

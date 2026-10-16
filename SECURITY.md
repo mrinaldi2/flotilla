@@ -17,7 +17,7 @@ there is no separate long-term support branch or guaranteed response time.
 
 ## Security model
 
-Gravity launches Claude Code processes with the operating-system permissions of
+Flotilla launches Claude Code processes with the operating-system permissions of
 the account running the daemon. Bot directories and permission settings are
 cooperative boundaries, not an operating-system sandbox. Run only trusted code
 and review tool permissions before allowing agents access to sensitive resources.

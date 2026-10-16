@@ -1,11 +1,11 @@
-// Pull requests (H-261 §9, H-273): `hermes.pr.v1` requests and pushes in
+// Pull requests (H-261 §9, H-273): `flotilla.pr.v1` requests and pushes in
 // binary frames, on the socket the board uses. A connection's first PR request
 // for a project subscribes it to that project's `pr_updated`,
 // `check_updated` and `merge_queue_changed` pushes.
 
 import type { MessageInitShape } from "@bufbuild/protobuf";
 import { DaemonError } from "./connection";
-import type { PrPush, PrRequestSchema, PrResponse } from "./gen/hermes/pr/v1/pr_pb";
+import type { PrPush, PrRequestSchema, PrResponse } from "./gen/flotilla/pr/v1/pr_pb";
 
 /** The capability a daemon lists in `hello_ok.capabilities` when it serves pull requests. */
 export const PULL_REQUESTS = "pull_requests";

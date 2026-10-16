@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import type { ReactElement } from "react";
-import { Side } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import { Side } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { DiffFileText } from "./diffParse";
 import type { CommentWrite, Thread } from "./LineComments";
 import { CommentThread, Composer, lineKey } from "./LineComments";

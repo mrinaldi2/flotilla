@@ -7,7 +7,7 @@ import type { ReactElement, ReactNode } from "react";
 import type { BoardApi } from "../../protocol/board";
 import { boardCall } from "../../protocol/board";
 import type { Bot } from "../../protocol/entities";
-import type { BoardColumn } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import ItemDrawer from "../board/drawer/ItemDrawer";
 import type { ItemDrawerProps } from "../board/drawer/ItemDrawer";
 

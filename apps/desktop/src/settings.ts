@@ -22,11 +22,11 @@ function envString(key: string): string | undefined {
  * the installed one; anything stored in localStorage still wins.
  */
 function devEndpoint(): Endpoint | undefined {
-  const port = Number(envString("VITE_GRAVITY_DEV_PORT"));
+  const port = Number(envString("VITE_FLOTILLA_DEV_PORT"));
   if (!Number.isInteger(port) || port <= 0) {
     return undefined;
   }
-  return { host: envString("VITE_GRAVITY_DEV_HOST") ?? "127.0.0.1", port };
+  return { host: envString("VITE_FLOTILLA_DEV_HOST") ?? "127.0.0.1", port };
 }
 
 /** Loads the daemon endpoint from localStorage (a laptop can point at a Tailscale host). */
@@ -67,7 +67,7 @@ const DEVICE_TOKEN_KEY = "device-token";
  * token file, which only exists on the machine running the daemon.
  */
 export function loadDeviceToken(): string {
-  const fallback = envString("VITE_GRAVITY_DEV_TOKEN") ?? "";
+  const fallback = envString("VITE_FLOTILLA_DEV_TOKEN") ?? "";
   try {
     return readStored(DEVICE_TOKEN_KEY) ?? fallback;
   } catch {

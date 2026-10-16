@@ -6,8 +6,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
-import type { PullRequest, ReviewSettings } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { BlockerKind, PrState } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest, ReviewSettings } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { BlockerKind, PrState } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import CardLink from "../cards/CardLink";
 import { checksSummary, splitChecks } from "./checkText";
 import MergeBar from "./MergeBar";

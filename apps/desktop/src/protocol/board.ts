@@ -6,7 +6,7 @@ import type {
   BoardEvent,
   BoardRequestSchema,
   BoardResponse,
-} from "./gen/hermes/board/v1/requests_pb";
+} from "./gen/flotilla/board/v1/requests_pb";
 import { DaemonError } from "./connection";
 
 /** The encoding a daemon must list in `hello_ok.encodings` to serve the board. */

@@ -7,8 +7,8 @@
 
 import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
-import type { PullRequest } from "../../protocol/gen/hermes/pr/v1/pr_pb";
-import { PrState } from "../../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
+import { PrState } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { MergeWindow } from "./ownerText";
 import { mergeWindow, youApproved } from "./ownerText";
 import type { OwnerAct } from "./usePrOwner";

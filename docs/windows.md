@@ -25,26 +25,26 @@ and uninstall after manual daemon removal, using an isolated test home with no
 real bots.
 
 The Windows installer installs and starts the bundled daemon under
-`%USERPROFILE%\.thehermes\bin\hermesd.exe` and registers a Task Scheduler task
+`%USERPROFILE%\.flotilla\bin\flotillad.exe` and registers a Task Scheduler task
 for the current user. No separate daemon download or command is needed. Running
 the installer again refreshes the managed daemon even when the app version has
 not changed, restarting bot sessions while preserving projects and configuration.
 It runs immediately and at user sign-in, without elevation,
 and leaves bots running when the desktop closes. The task requires an interactive
 user session; it does not run while that user is signed out. Logs, configuration,
-and state live under `%USERPROFILE%\.thehermes`; `GRAVITY_HOME` overrides this root.
+and state live under `%USERPROFILE%\.flotilla`; `FLOTILLA_HOME` overrides this root.
 The configured port defaults to 49777. If Windows reserves it (for example for
 Hyper-V), the local managed daemon chooses an available port and the desktop
-follows it. To use a fixed port, choose an available `port` in `hermesd.toml`
+follows it. To use a fixed port, choose an available `port` in `flotillad.toml`
 and restart the daemon. Remote clients and MCP URL allowlists must use the active
 port. Direct
 launches and remotely reachable daemons require an available configured port.
 
 ```powershell
 # After installation:
-& "$env:USERPROFILE/.thehermes/bin/hermesd.exe" service status
-& "$env:USERPROFILE/.thehermes/bin/hermesd.exe" service restart
-& "$env:USERPROFILE/.thehermes/bin/hermesd.exe" service uninstall
+& "$env:USERPROFILE/.flotilla/bin/flotillad.exe" service status
+& "$env:USERPROFILE/.flotilla/bin/flotillad.exe" service restart
+& "$env:USERPROFILE/.flotilla/bin/flotillad.exe" service uninstall
 ```
 
 The desktop uninstaller also stops and removes its managed daemon task.
@@ -52,7 +52,7 @@ The desktop uninstaller also stops and removes its managed daemon task.
 Each bot session runs in its own Job Object with kill-on-close. Stopping a
 bot, its session ending, or the daemon exiting (including `service stop`)
 ends everything the bot started: `node`, `cargo`, servers it left running.
-None of them is left holding `%USERPROFILE%\.thehermes`. `service install`,
+None of them is left holding `%USERPROFILE%\.flotilla`. `service install`,
 `restart` and `uninstall`, and `migrate-home`, may still fail with "Access
 is denied" (os error 5) because some other program holds a file under the
 home. The error then names each holder by executable and PID, for example
@@ -61,21 +61,21 @@ through the Restart Manager, without WMI. Close them and retry. A program
 whose only tie to the home is its working directory holds no file, so it
 isn't named. Close terminals and Explorer windows open there.
 Uninstalling keeps the database, configuration and workspaces; deleting
-`%USERPROFILE%\.thehermes` after uninstall gives a completely fresh setup.
+`%USERPROFILE%\.flotilla` after uninstall gives a completely fresh setup.
 The first-run wizard can still install a missing bundled daemon as a recovery step.
 The desktop can also connect to a remote daemon using a device token.
 
 Local Claude Code bots require an installed and authenticated native Claude Code
 CLI. Cross-session messaging requires version 2.1.234 or later on native Windows
-(2.1.248 or later for all providers). Gravity connects to the authenticated named
+(2.1.248 or later for all providers). Flotilla connects to the authenticated named
 pipe reported by its SessionStart hook. PowerShell hooks serialize the pipe path
 as JSON and report lifecycle events to the local daemon. A native Windows daemon
 cannot use a Claude inbox inside WSL; install the native CLI for native bots.
 
 For Codex bots, install and sign in to Codex CLI on the daemon host, then choose
-**Bot info → Bot runtime → Codex CLI**. Gravity searches PATH, the usual npm/pnpm
+**Bot info → Bot runtime → Codex CLI**. Flotilla searches PATH, the usual npm/pnpm
 and native Windows CLI locations, then the Codex desktop bundle. An explicit
-`codex_bin` path in `hermesd.toml` overrides discovery. The Windows task can
+`codex_bin` path in `flotillad.toml` overrides discovery. The Windows task can
 have an older PATH than a newly opened terminal, so custom installation paths
 should be configured explicitly. Missing CLIs are rejected before the current
 bot session is stopped; later startup failures appear in the bot state and
@@ -83,14 +83,14 @@ terminal. Switching providers clears the previous provider's terminal screen.
 
 The chat composer's microphone dictates with Windows' built-in SAPI desktop
 recognizer, which runs entirely on the PC; audio is not sent to Microsoft or
-Gravity. It uses the recognizer selected in Control Panel › Speech Recognition,
+Flotilla. It uses the recognizer selected in Control Panel › Speech Recognition,
 and the button stays hidden when none is installed. Desktop apps must be
 allowed to use the microphone in Settings › Privacy & security › Microphone.
 Windows' newer online dictation is not used, so the setting for Online speech
 recognition does not matter.
 
 For development without model credentials, set `runtime = "double"` in a private
-`hermesd.toml` and run `cargo run -p hermesd -- --config <path>`. The double uses
+`flotillad.toml` and run `cargo run -p flotillad -- --config <path>`. The double uses
 an authenticated named pipe and exercises the same message-delivery path.
 
 Run `pnpm run verify` before proposing a change. The visual suite uses the pinned

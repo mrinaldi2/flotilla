@@ -3,7 +3,7 @@
 
 import { toJson } from "@bufbuild/protobuf";
 import type { Bot, Project } from "../protocol/entities";
-import { ItemCardSchema, ItemType, Priority } from "../protocol/gen/hermes/board/v1/board_pb";
+import { ItemCardSchema, ItemType, Priority } from "../protocol/gen/flotilla/board/v1/board_pb";
 import type { ItemCardEntry } from "../protocol/itemCards";
 import { card } from "./boardFixtures";
 import { itemDetail } from "./drawerFixtures";
@@ -11,7 +11,7 @@ import { FakeDaemon } from "./fakeDaemon";
 import { bot, project } from "./fixtures";
 
 export const CARD_BOTS: readonly Bot[] = [bot({ id: "dd", name: "Desktop Dev" })];
-export const CARD_PROJECT: Project = project({ id: "p1", name: "The Hermes", item_prefix: "H" });
+export const CARD_PROJECT: Project = project({ id: "p1", name: "Flotilla", item_prefix: "H" });
 
 function entry(id: string, title: string): ItemCardEntry {
   const json = toJson(
@@ -28,7 +28,7 @@ function entry(id: string, title: string): ItemCardEntry {
   return {
     id,
     project_id: "p1",
-    project_name: "The Hermes",
+    project_name: "Flotilla",
     computer: "mac",
     card: json as ItemCardEntry["card"],
     column_name: "Doing",
@@ -38,7 +38,7 @@ function entry(id: string, title: string): ItemCardEntry {
 const ENTRIES: Readonly<Record<string, ItemCardEntry>> = {
   "H-293": entry("H-293", "Clicks open the wrong bot"),
   "H-292": entry("H-292", "Card ids as links"),
-  "H-999": { id: "H-999", project_id: "p1", project_name: "The Hermes", missing: true },
+  "H-999": { id: "H-999", project_id: "p1", project_name: "Flotilla", missing: true },
   "H-500": {
     ...entry("H-500", "Kept elsewhere"),
     unreachable: { computer: "win-pc", last_seen: "2026-10-08T13:30:00Z" },

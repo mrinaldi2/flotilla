@@ -39,7 +39,7 @@ interface BotPanesProps {
 /** Why the owner cannot write to a bot right now, or null when they can. */
 function writeBlockedReason(connected: boolean, canControl: boolean, bot: Bot): string | null {
   if (!connected) {
-    return "Not connected to the Hermes service";
+    return "Not connected to the Flotilla service";
   }
   if (!canControl) {
     return "Read-only connection";
@@ -131,7 +131,7 @@ function OldServiceNote(props: {
   }
   return (
     <div className="chat-note bot-old-service">
-      This computer's Hermes service shows Chat and Activity together. Update it to keep your
+      This computer's Flotilla service shows Chat and Activity together. Update it to keep your
       conversation separate.
     </div>
   );

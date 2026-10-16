@@ -51,7 +51,7 @@ interface DecisionRaisedBy {
   readonly avatar: string;
 }
 
-/** `system` is Hermes itself, e.g. the grants a ruling applied (H-173). */
+/** `system` is Flotilla itself, e.g. the grants a ruling applied (H-173). */
 type CommentAuthorKind = "bot" | "user" | "system";
 
 export interface DecisionComment {

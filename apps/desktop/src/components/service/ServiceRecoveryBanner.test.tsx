@@ -47,7 +47,7 @@ describe("ServiceRecoveryBanner", () => {
     const output = container.querySelector("pre");
     expect(output?.textContent).toBe(error);
     expect(output).not.toHaveAttribute("aria-label");
-    expect(screen.queryByText(/still have the Hermes folder open/)).toBeNull();
+    expect(screen.queryByText(/still have the Flotilla folder open/)).toBeNull();
   });
 
   it("explains a held-open home in plain words", () => {
@@ -62,7 +62,7 @@ describe("ServiceRecoveryBanner", () => {
     );
     expect(
       screen.getByText(
-        "These programs still have the Hermes folder open. Quit them, then try again.",
+        "These programs still have the Flotilla folder open. Quit them, then try again.",
       ),
     ).toBeInTheDocument();
   });

@@ -1,23 +1,33 @@
-// The board's filter bar (H-018 §3.5): bot, platform and type. Filtered-out
-// cards are hidden, but column counts still read "2 of 5".
+// The board's filter bar: bot, type and the board's label groups.
+// Filtered-out cards are hidden, but column counts still read "2 of 5".
 
-import type { ItemCard } from "../../protocol/gen/hermes/board/v1/board_pb";
-import { ItemType, Platform } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { ItemType } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { labelGroupOf } from "./labelGroups";
 
 export interface BoardFilters {
   /** Assignee bot ids. */
   readonly bots: readonly string[];
-  readonly platforms: readonly Platform[];
+  /** Whole labels (`platform:ios`). */
+  readonly labels: readonly string[];
   readonly types: readonly ItemType[];
 }
 
-export const NO_FILTERS: BoardFilters = { bots: [], platforms: [], types: [] };
+export const NO_FILTERS: BoardFilters = { bots: [], labels: [], types: [] };
 
 export function isFiltering(filters: BoardFilters): boolean {
-  return filters.bots.length + filters.platforms.length + filters.types.length > 0;
+  return filters.bots.length + filters.labels.length + filters.types.length > 0;
 }
 
-/** Every set filter must match; platforms match on any overlap. */
+/** Each label group filtered on needs one of its labels picked on the card. */
+function matchesLabels(labels: readonly string[], wanted: readonly string[]): boolean {
+  const groups = new Set(wanted.map(labelGroupOf));
+  return [...groups].every((group) =>
+    wanted.some((label) => labelGroupOf(label) === group && labels.includes(label)),
+  );
+}
+
+/** Every set filter must match; labels match on any overlap within a group. */
 export function matchesFilters(card: ItemCard, filters: BoardFilters): boolean {
   if (
     filters.bots.length > 0 &&
@@ -25,10 +35,7 @@ export function matchesFilters(card: ItemCard, filters: BoardFilters): boolean {
   ) {
     return false;
   }
-  if (
-    filters.platforms.length > 0 &&
-    !card.platforms.some((platform) => filters.platforms.includes(platform))
-  ) {
+  if (!matchesLabels(card.labels, filters.labels)) {
     return false;
   }
   return filters.types.length === 0 || filters.types.includes(card.type);
@@ -43,24 +50,25 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+function stringsIn(value: unknown): readonly string[] {
+  return Array.isArray(value) ? value.filter((s): s is string => typeof s === "string") : [];
+}
+
 function numbersIn<T extends number>(value: unknown, known: (n: number) => n is T): readonly T[] {
   return Array.isArray(value) ? value.filter((n): n is T => typeof n === "number" && known(n)) : [];
 }
 
-const isPlatform = (n: number): n is Platform => n in Platform && n !== Platform.UNSPECIFIED;
 const isItemType = (n: number): n is ItemType => n in ItemType && n !== ItemType.UNSPECIFIED;
 
-/** Narrows stored JSON back to filters, dropping anything unknown. */
+/** Narrows stored JSON back to filters, dropping anything unknown (such as
+ * the platform numbers saved before 0.19). */
 export function parseFilters(value: unknown): BoardFilters {
   if (!isRecord(value)) {
     return NO_FILTERS;
   }
-  const bots = Array.isArray(value["bots"])
-    ? value["bots"].filter((id): id is string => typeof id === "string")
-    : [];
   return {
-    bots,
-    platforms: numbersIn(value["platforms"], isPlatform),
+    bots: stringsIn(value["bots"]),
+    labels: stringsIn(value["labels"]),
     types: numbersIn(value["types"], isItemType),
   };
 }

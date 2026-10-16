@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { DaemonError } from "../../../protocol/connection";
-import { EditResultSchema } from "../../../protocol/gen/hermes/board/v1/requests_pb";
+import { EditResultSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { defaultColumns, unmet } from "../../../test/boardFixtures";
 import { DASH_BOTS } from "../../../test/dashboardFixtures";
 import { DRAWER_NOW, drawerCheck, itemDetail } from "../../../test/drawerFixtures";
@@ -56,7 +56,9 @@ describe("ItemDrawer", () => {
     ).toBeInTheDocument();
     const stepper = within(drawer).getByRole("list", { name: "Where it stands" });
     expect(within(stepper).getByText(/Doing/)).toHaveAttribute("aria-current", "step");
-    expect(drawer).toHaveTextContent("Doing for 31h · Desktop Dev · P1 · M · desktop daemon");
+    expect(drawer).toHaveTextContent(
+      "Doing for 31h · Desktop Dev · P1 · M · platform:desktop, platform:daemon",
+    );
     const next = await within(drawer).findByRole("region", { name: "Next step" });
     expect(next).toHaveTextContent("To reach Review:");
     expect(next).toHaveTextContent("✗ No change note is linked. Link the change-note artifact.");

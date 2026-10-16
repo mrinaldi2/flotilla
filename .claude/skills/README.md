@@ -1,6 +1,6 @@
 # Contributor agent skills
 
-These optional workflows help coding agents work on Gravity. They are not
+These optional workflows help coding agents work on Flotilla. They are not
 required to build or run the app. Start with `CONTRIBUTING.md` for dependencies
 and verification; use whatever terminal, browser or native-window tools your
 agent environment provides.

@@ -4,7 +4,7 @@
 import { create } from "@bufbuild/protobuf";
 import type { MessageInitShape } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
-import type { PrDiff, PullRequest } from "../protocol/gen/hermes/pr/v1/pr_pb";
+import type { PrDiff, PullRequest } from "../protocol/gen/flotilla/pr/v1/pr_pb";
 import {
   BlockerKind,
   CheckResult,
@@ -18,7 +18,7 @@ import {
   PullRequestSchema,
   Severity,
   Verdict,
-} from "../protocol/gen/hermes/pr/v1/pr_pb";
+} from "../protocol/gen/flotilla/pr/v1/pr_pb";
 import { PULL_REQUESTS } from "../protocol/prs";
 import { cardsDaemon } from "./cardFixtures";
 import type { FakeDaemon } from "./fakeDaemon";

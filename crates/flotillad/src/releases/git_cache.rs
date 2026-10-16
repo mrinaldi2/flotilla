@@ -1,0 +1,347 @@
+//! The daemon's own copy of a project's history (H-121), to tell whether one
+//! commit contains another without trusting any bot's checkout: a bare,
+//! blob-less clone under `<home>/cache/repos/<project>.git`, cloned and
+//! fetched with hooks off and no git config of the user's (ARCH-R52 S1).
+//! Bots fill it by pushing, so every git here goes through the daemon's
+//! hardened runner (H-289).
+
+use std::path::{Path, PathBuf};
+
+use super::git::github_https;
+use crate::safe_git::SafeGit;
+
+mod hunks;
+pub use hunks::{hunks, line_count, Hunk};
+
+/// The cache for a project.
+pub fn dir(home: &Path, project_id: &str) -> PathBuf {
+    home.join("cache")
+        .join("repos")
+        .join(format!("{project_id}.git"))
+}
+
+/// git in the cache. A blob-less cache may fetch what it lacks from the
+/// repository it was cloned from, so this may fetch from there too.
+fn git(cache: &Path, args: &[&str]) -> anyhow::Result<std::process::Output> {
+    let origin = SafeGit::local(cache)?
+        .args(&["config", "--get", "remote.origin.url"])
+        .run()
+        .unwrap_or_default();
+    fetch(cache, &origin, args)
+}
+
+/// git in `cwd`, allowed to fetch from `url`, the project's repository.
+fn fetch(cwd: &Path, url: &str, args: &[&str]) -> anyhow::Result<std::process::Output> {
+    SafeGit::fetching(cwd, url)?.args(args).output()
+}
+
+fn ok(out: &std::process::Output, what: &str) -> anyhow::Result<()> {
+    anyhow::ensure!(
+        out.status.success(),
+        "git {what}: {}",
+        String::from_utf8_lossy(&out.stderr).trim()
+    );
+    Ok(())
+}
+
+/// Clones the project's repository into the cache, or fetches every branch
+/// and tag into it.
+pub fn refresh(home: &Path, project_id: &str, url: &str) -> anyhow::Result<PathBuf> {
+    let url = github_https(url).unwrap_or_else(|| url.to_string());
+    let cache = dir(home, project_id);
+    if cache.join("HEAD").exists() {
+        let out = fetch(
+            &cache,
+            &url,
+            &[
+                "fetch",
+                "--quiet",
+                "--prune",
+                "--filter=blob:none",
+                &url,
+                "+refs/heads/*:refs/heads/*",
+                "+refs/tags/*:refs/tags/*",
+            ],
+        )?;
+        ok(&out, "fetch")?;
+    } else {
+        let parent = cache.parent().expect("cache has a parent");
+        std::fs::create_dir_all(parent)?;
+        let target = cache.display().to_string();
+        let out = fetch(
+            parent,
+            &url,
+            &[
+                "clone",
+                "--quiet",
+                "--bare",
+                "--filter=blob:none",
+                &url,
+                &target,
+            ],
+        )?;
+        ok(&out, "clone")?;
+    }
+    Ok(cache)
+}
+
+/// Whether the cache has `commit`.
+pub fn has(cache: &Path, commit: &str) -> bool {
+    git(cache, &["cat-file", "-e", &format!("{commit}^{{commit}}")])
+        .is_ok_and(|o| o.status.success())
+}
+
+/// Whether `ancestor` is `descendant` or in its history.
+pub fn contains(cache: &Path, descendant: &str, ancestor: &str) -> anyhow::Result<bool> {
+    let out = git(
+        cache,
+        &["merge-base", "--is-ancestor", ancestor, descendant],
+    )?;
+    match out.status.code() {
+        Some(0) => Ok(true),
+        Some(1) => Ok(false),
+        _ => {
+            ok(&out, "merge-base")?;
+            Ok(false)
+        }
+    }
+}
+
+/// The commit a ref names in the cache, if it names one.
+pub fn resolve(cache: &Path, reference: &str) -> Option<String> {
+    resolve_kind(cache, reference, "commit")
+}
+
+fn resolve_kind(cache: &Path, reference: &str, kind: &str) -> Option<String> {
+    let out = git(
+        cache,
+        &[
+            "rev-parse",
+            "--verify",
+            "--quiet",
+            &format!("{reference}^{{{kind}}}"),
+        ],
+    )
+    .ok()?;
+    out.status
+        .success()
+        .then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
+        .filter(|c| !c.is_empty())
+}
+
+/// The tree `commit` records, if the cache has it: two commits with the
+/// same tree hold the same files (H-261 §1.5).
+pub fn tree_of(cache: &Path, commit: &str) -> Option<String> {
+    resolve_kind(cache, commit, "tree")
+}
+
+/// When `commit` was committed (its committer date), if the cache has it.
+pub fn commit_time(cache: &Path, commit: &str) -> Option<chrono::DateTime<chrono::Utc>> {
+    let out = git(
+        cache,
+        &[
+            "show",
+            "-s",
+            "--format=%ct",
+            &format!("{commit}^{{commit}}"),
+        ],
+    )
+    .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let secs = String::from_utf8_lossy(&out.stdout).trim().parse().ok()?;
+    chrono::DateTime::from_timestamp(secs, 0)
+}
+
+/// The best common ancestor of `a` and `b`.
+pub fn merge_base(cache: &Path, a: &str, b: &str) -> anyhow::Result<String> {
+    let out = git(cache, &["merge-base", a, b])?;
+    ok(&out, "merge-base")?;
+    Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
+}
+
+/// `git patch-id --stable` of the change from `base` to `head` (H-261 §3):
+/// the same for the same change whatever it was rebased onto; empty when
+/// there is no change. A blob-less cache fetches the blobs it needs.
+pub fn patch_id(cache: &Path, base: &str, head: &str) -> anyhow::Result<String> {
+    let diff = git(
+        cache,
+        &[
+            "diff",
+            "--no-color",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--full-index",
+            base,
+            head,
+        ],
+    )?;
+    ok(&diff, "diff")?;
+    if diff.stdout.is_empty() {
+        return Ok(String::new());
+    }
+    let out = SafeGit::local(cache)?
+        .args(&["patch-id", "--stable"])
+        .output_with_stdin(diff.stdout)?;
+    ok(&out, "patch-id")?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    Ok(text
+        .split_whitespace()
+        .next()
+        .unwrap_or_default()
+        .to_string())
+}
+
+/// The text of `path` at `commit`, or `None` when that tree has no such
+/// entry. An entry that is not a plain file (a directory, a link, a
+/// submodule) is `Some(Err(why))`. Its blob is fetched on demand, the cache
+/// being blob-less.
+pub fn file_at(
+    cache: &Path,
+    commit: &str,
+    path: &str,
+) -> anyhow::Result<Option<Result<String, String>>> {
+    let out = git(cache, &["ls-tree", "-z", commit, "--", path])?;
+    ok(&out, "ls-tree")?;
+    let listing = String::from_utf8_lossy(&out.stdout);
+    // `<mode> <type> <object>\t<path>`.
+    let Some((info, name)) = listing.trim_end_matches('\0').split_once('\t') else {
+        return Ok(None);
+    };
+    if name != path {
+        return Ok(None);
+    }
+    let mut info = info.split(' ');
+    let (mode, kind) = (info.next().unwrap_or(""), info.next().unwrap_or(""));
+    if kind != "blob" || !matches!(mode, "100644" | "100755") {
+        return Ok(Some(Err(format!(
+            "{path} isn't a file (a {kind}, mode {mode})"
+        ))));
+    }
+    let out = git(cache, &["cat-file", "blob", &format!("{commit}:{path}")])?;
+    ok(&out, "cat-file")?;
+    Ok(Some(Ok(String::from_utf8(out.stdout)?)))
+}
+
+/// The paths `head` changes since it left `base` (their merge base). A
+/// rename counts as both its paths; no blobs are needed.
+pub fn changed_paths(cache: &Path, base: &str, head: &str) -> anyhow::Result<Vec<String>> {
+    let range = format!("{base}...{head}");
+    let out = git(
+        cache,
+        &["diff", "--name-only", "--no-renames", "-z", &range, "--"],
+    )?;
+    ok(&out, "diff")?;
+    Ok(String::from_utf8_lossy(&out.stdout)
+        .split('\0')
+        .filter(|p| !p.is_empty())
+        .map(str::to_string)
+        .collect())
+}
+
+/// The files merging `a` and `b` would conflict on, or empty when it merges
+/// cleanly (`git merge-tree --write-tree`, writing nothing to any ref).
+pub fn conflicts(cache: &Path, a: &str, b: &str) -> anyhow::Result<Vec<String>> {
+    let out = git(
+        cache,
+        &[
+            "merge-tree",
+            "--write-tree",
+            "--name-only",
+            "--no-messages",
+            a,
+            b,
+        ],
+    )?;
+    match out.status.code() {
+        Some(0) => Ok(Vec::new()),
+        // The first line is the tree written; the conflicted files follow.
+        Some(1) => Ok(String::from_utf8_lossy(&out.stdout)
+            .lines()
+            .skip(1)
+            .filter(|l| !l.is_empty())
+            .map(str::to_string)
+            .collect()),
+        _ => {
+            ok(&out, "merge-tree")?;
+            Ok(Vec::new())
+        }
+    }
+}
+
+/// The tree reverting each `(base, merged)` range, in order, onto `onto`
+/// would give (H-272 M1): each step is a three-way merge with the range's
+/// end as the base, its start as theirs (`git merge-tree --write-tree
+/// --merge-base`), chained on trees, writing nothing to any ref. `None`
+/// when a step doesn't apply cleanly.
+pub fn revert_tree(
+    cache: &Path,
+    onto: &str,
+    reverts: &[(String, String)],
+) -> anyhow::Result<Option<String>> {
+    let Some(mut tree) = tree_of(cache, onto) else {
+        anyhow::bail!("{onto} isn't in the repository");
+    };
+    for (base, merged) in reverts {
+        let merge_base = format!("--merge-base={merged}");
+        let out = git(
+            cache,
+            &[
+                "merge-tree",
+                "--write-tree",
+                "--no-messages",
+                &merge_base,
+                &tree,
+                base,
+            ],
+        )?;
+        match out.status.code() {
+            Some(0) => {
+                tree = String::from_utf8_lossy(&out.stdout)
+                    .lines()
+                    .next()
+                    .unwrap_or_default()
+                    .trim()
+                    .to_string();
+            }
+            Some(1) => return Ok(None),
+            _ => {
+                ok(&out, "merge-tree")?;
+                return Ok(None);
+            }
+        }
+    }
+    Ok(Some(tree))
+}
+
+/// `git diff` of `from..to` with `how` (`--numstat -z`, `--name-status -z`,
+/// or nothing for the patch), renames found, limited to `path` when given.
+/// No textconv or external diff runs; blobs are fetched on demand.
+pub fn diff(
+    cache: &Path,
+    from: &str,
+    to: &str,
+    path: Option<&str>,
+    how: &[&str],
+) -> anyhow::Result<Vec<u8>> {
+    let mut args = vec!["diff", "--no-color", "--no-ext-diff", "--no-textconv", "-M"];
+    args.extend_from_slice(how);
+    args.extend_from_slice(&[from, to, "--"]);
+    args.extend(path);
+    let out = git(cache, &args)?;
+    ok(&out, "diff")?;
+    Ok(out.stdout)
+}
+
+/// Whether `path` at `commit` is a file (a blob), not missing or a folder.
+pub fn is_blob(cache: &Path, commit: &str, path: &str) -> anyhow::Result<bool> {
+    let out = git(cache, &["ls-tree", commit, "--", path])?;
+    ok(&out, "ls-tree")?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    Ok(text.lines().any(|l| {
+        l.split_once('\t').is_some_and(|(meta, name)| {
+            name == path && meta.split_whitespace().nth(1) == Some("blob")
+        })
+    }))
+}

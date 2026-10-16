@@ -24,7 +24,7 @@ describe("useWindowShortcut", () => {
   });
 
   it("registers the saved shortcut at launch", () => {
-    stubLocalStorage({ "hermes.prefs": JSON.stringify({ toggleWindowShortcut: "Super+KeyG" }) });
+    stubLocalStorage({ "flotilla.prefs": JSON.stringify({ toggleWindowShortcut: "Super+KeyG" }) });
     reloadPrefsForTest();
     const addToast = toastSpy();
 
@@ -48,7 +48,7 @@ describe("useWindowShortcut", () => {
   });
 
   it("clears the preference and warns when the shell refuses it", async () => {
-    stubLocalStorage({ "hermes.prefs": JSON.stringify({ toggleWindowShortcut: "Super+KeyG" }) });
+    stubLocalStorage({ "flotilla.prefs": JSON.stringify({ toggleWindowShortcut: "Super+KeyG" }) });
     reloadPrefsForTest();
     applyToggleWindowShortcut.mockRejectedValue(new Error("taken"));
     const addToast = toastSpy();

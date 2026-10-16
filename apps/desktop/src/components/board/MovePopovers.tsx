@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent, ReactElement, ReactNode } from "react";
-import type { BoardColumn, ItemCard, Unmet } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn, ItemCard, Unmet } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import OverlayShell from "../overlay/OverlayShell";
 import type { ColumnChecks } from "./moves";
-import { planMove, reasonChip } from "./moves";
-import type { Anchor } from "./useBoardMoves";
+import { moveMenuItem, planMove } from "./moves";
+import type { Anchor, BoardMoves } from "./useBoardMoves";
 
 const MARGIN = 8;
 
@@ -148,26 +148,30 @@ export function MoveMenu(props: MoveMenuProps): ReactElement {
         >
           {targets.map((column) => {
             const unmet = checks.get(column.key) ?? [];
-            const plan = planMove(unmet);
-            const refused = plan.kind === "refused";
-            const reason = refused ? reasonChip(unmet) : "";
+            const item = moveMenuItem(
+              planMove(unmet).kind,
+              checks.overrides.has(column.key),
+              unmet,
+            );
             return (
               <button
                 key={column.key}
                 type="button"
                 role="menuitem"
                 tabIndex={-1}
-                className={`board-move-item${refused ? " board-move-refused" : ""}`}
-                aria-label={refused ? `${column.name}, can't move: ${reason}` : column.name}
+                className={`board-move-item${item.className}`}
+                aria-label={item.note === "" ? column.name : `${column.name}, ${item.note}`}
                 onClick={() => {
                   onChoose(column.key);
                 }}
               >
                 <span className="board-move-mark" aria-hidden="true">
-                  {refused ? "✗" : "✓"}
+                  {item.mark}
                 </span>
                 <span className="board-move-name">{column.name}</span>
-                {refused ? <span className="board-move-reason">{reason}</span> : null}
+                {item.reason === "" ? null : (
+                  <span className="board-move-reason">{item.reason}</span>
+                )}
               </button>
             );
           })}
@@ -185,7 +189,26 @@ interface RefusalPopoverProps {
   readonly onClose: () => void;
 }
 
-/** "Can't move H-024 to Ready": every unmet guard, as the Hermes service words it (H-018 O2). */
+/** Every unmet guard or rule, with its fix, as the Flotilla service words them. */
+export function UnmetList({ unmet }: { readonly unmet: readonly Unmet[] }): ReactElement {
+  return (
+    <ul className="board-refusal-list">
+      {unmet.map((u) => (
+        <li key={`${u.code}:${u.text}`}>
+          <span className="board-refusal-mark" aria-hidden="true">
+            ✗
+          </span>
+          <span>
+            <span className="board-refusal-text">{u.text}</span>
+            {u.fix === undefined ? null : <span className="board-refusal-fix">{u.fix}</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** "Can't move H-024 to Ready": every unmet guard, as the Flotilla service words it (H-018 O2). */
 export function RefusalPopover({
   card,
   to,
@@ -203,19 +226,7 @@ export function RefusalPopover({
       className="board-refusal"
     >
       <h2 className="board-popover-title">{title}</h2>
-      <ul className="board-refusal-list">
-        {unmet.map((u) => (
-          <li key={`${u.code}:${u.text}`}>
-            <span className="board-refusal-mark" aria-hidden="true">
-              ✗
-            </span>
-            <span>
-              <span className="board-refusal-text">{u.text}</span>
-              {u.fix === undefined ? null : <span className="board-refusal-fix">{u.fix}</span>}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <UnmetList unmet={unmet} />
       <div className="board-popover-actions">
         <button type="button" className="btn btn-small" autoFocus onClick={onClose}>
           OK
@@ -231,6 +242,8 @@ interface MoveDialogProps {
   readonly needsReason: boolean;
   readonly needsOverride: boolean;
   readonly unmet: readonly Unmet[];
+  /** An unlisted move on a release-gated board: said as an override. */
+  readonly override?: boolean;
   readonly onConfirm: (reason: string, overrideReason: string) => void;
   readonly onCancel: () => void;
 }
@@ -260,7 +273,10 @@ export function MoveDialog(props: MoveDialogProps): ReactElement {
 
   const ready =
     (!needsReason || reason.trim().length > 0) && (!needsOverride || override.trim().length > 0);
-  const title = `Move ${card.id} to ${to.name}`;
+  const title =
+    props.override === true
+      ? `Override: move ${card.id} to ${to.name}`
+      : `Move ${card.id} to ${to.name}`;
   const onSubmit = (event: FormEvent): void => {
     event.preventDefault();
     if (ready && !sent) {
@@ -306,10 +322,57 @@ export function MoveDialog(props: MoveDialogProps): ReactElement {
             Cancel
           </button>
           <button type="submit" className="btn btn-small btn-primary" disabled={!ready || sent}>
-            {needsOverride ? "Move anyway" : "Move"}
+            {needsOverride || props.override === true ? "Move anyway" : "Move"}
           </button>
         </div>
       </form>
     </OverlayShell>
   );
+}
+
+/** Whichever of Move to…, its refusal or its reason dialog is open. */
+export function MovePopups(props: {
+  readonly moves: BoardMoves;
+  readonly columns: readonly BoardColumn[];
+}): ReactElement | null {
+  const { moves } = props;
+  const { ui } = moves;
+  switch (ui.kind) {
+    case "menu":
+      return (
+        <MoveMenu
+          card={ui.card}
+          anchor={ui.anchor}
+          columns={props.columns}
+          checks={ui.checks}
+          onChoose={(toKey) => moves.requestMove(ui.card, toKey, ui.anchor)}
+          onClose={moves.close}
+        />
+      );
+    case "refused":
+      return (
+        <RefusalPopover
+          card={ui.card}
+          to={ui.to}
+          anchor={ui.anchor}
+          unmet={ui.unmet}
+          onClose={moves.close}
+        />
+      );
+    case "input":
+      return (
+        <MoveDialog
+          card={ui.card}
+          to={ui.to}
+          needsReason={ui.needsReason}
+          needsOverride={ui.needsOverride}
+          unmet={ui.unmet}
+          override={ui.override}
+          onConfirm={moves.confirm}
+          onCancel={moves.close}
+        />
+      );
+    default:
+      return null;
+  }
 }

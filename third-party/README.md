@@ -1,6 +1,6 @@
 # Dependency notices
 
-Gravity's `LICENSE` covers Gravity. The separate notice bundles preserve upstream
+Flotilla's `LICENSE` covers Flotilla. The separate notice bundles preserve upstream
 license, copyright and NOTICE texts for dependencies of the macOS ARM64 and
 Windows x64 app and daemon builds. `inventory.json` records exact versions,
 provenance, file hashes and scope against the committed lockfiles. Other
@@ -43,7 +43,7 @@ option-ext and selectors) are unmodified registry sources. Each notice identifie
 the exact source archive, its lockfile SHA-256, MPL terms and the recipient's
 source access. Some are build dependencies; they are covered conservatively too.
 These source archives are available directly without authentication or charge.
-If Gravity patches one, make the modified MPL source available and update these
+If Flotilla patches one, make the modified MPL source available and update these
 instructions before distributing an executable. See Mozilla's
 [MPL distribution guidance](https://www.mozilla.org/en-US/MPL/2.0/FAQ/#q8-i-want-to-distribute-outside-my-organization-executable-programs-or-libraries-that-i-have-compiled-from-someone-elses-unchanged-mpl-licensed-source-code-either-standalone-or-part-of-a-larger-work-what-do-i-have-to-do).
 
@@ -78,7 +78,7 @@ generator inputs, overrides and notice bundles. Changing supported platforms or
 marketing runtime imports requires updating the generator and this document.
 
 The app carries `Contents/Resources/THIRD_PARTY_NOTICES.txt`; daemon archives
-carry `THIRD_PARTY_NOTICES.txt` and Gravity's `LICENSE`. `hermesd
+carry `THIRD_PARTY_NOTICES.txt` and Flotilla's `LICENSE`. `flotillad
 --third-party-notices` prints the embedded daemon notice even after the binary is
 installed or copied separately. Manual release dispatches verify the packaged
 copies before artifact upload; publishing still requires a release tag.

@@ -1,4 +1,4 @@
-// Drives a dev hermesd over its WS control plane for terminal-rendering
+// Drives a dev flotillad over its WS control plane for terminal-rendering
 // performance tests. Requires the daemon to run with `runtime = "double"`:
 // the double echoes every input byte back as terminal output, and prints
 // `[resize CxR]` markers for every pty resize it receives, which makes the
@@ -9,16 +9,16 @@
 //   node drive.mjs stream <botId> [seconds]   # continuous live output (~800 lines/s)
 //
 // Environment:
-//   GRAVITY_WS      WebSocket URL     (default ws://127.0.0.1:49555/ws)
-//   GRAVITY_HOME    daemon home dir to read secrets/client.token from
+//   FLOTILLA_WS      WebSocket URL     (default ws://127.0.0.1:49555/ws)
+//   FLOTILLA_HOME    daemon home dir to read secrets/client.token from
 //                   (required; use a fresh disposable home)
 
 import { readFileSync } from "node:fs";
 import { localDaemon } from "../../lib/local-daemon.mjs";
 
 const daemon = localDaemon(
-  process.env.GRAVITY_HOME,
-  process.env.GRAVITY_WS ?? "ws://127.0.0.1:49555/ws",
+  process.env.FLOTILLA_HOME,
+  process.env.FLOTILLA_WS ?? "ws://127.0.0.1:49555/ws",
 );
 const token = readFileSync(`${daemon.home}/secrets/client.token`, "utf8").trim();
 const ws = new WebSocket(daemon.endpoint);

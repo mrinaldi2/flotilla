@@ -16,7 +16,45 @@ export interface Prefs {
   readonly toggleWindowShortcut: string;
   /** Raise a native notification for an urgent or nearly-due decision. */
   readonly decisionNotifications: boolean;
+  /** Which board activity drops a toast from the top (0.19.0). */
+  readonly boardActivity: BoardActivityPrefs;
 }
+
+/** The kinds of board activity the owner can turn off one by one. */
+export interface BoardActivityPrefs {
+  /** A card moved: by a bot, the owner elsewhere, or automatically. */
+  readonly moved: boolean;
+  /** A card was assigned, or a bot picked one up. */
+  readonly assigned: boolean;
+  /** A move was refused, with why. */
+  readonly refused: boolean;
+  /** A bot started or finished a turn on a card. */
+  readonly turns: boolean;
+  /** A bot updated a draft. */
+  readonly drafts: boolean;
+  /** The board keeper asked a bot about its card, or raised a row for you. */
+  readonly checks: boolean;
+}
+
+export type BoardActivityKind = keyof BoardActivityPrefs;
+
+export const BOARD_ACTIVITY_KINDS: readonly BoardActivityKind[] = [
+  "moved",
+  "assigned",
+  "refused",
+  "turns",
+  "drafts",
+  "checks",
+];
+
+const DEFAULT_BOARD_ACTIVITY: BoardActivityPrefs = {
+  moved: true,
+  assigned: true,
+  refused: true,
+  turns: true,
+  drafts: true,
+  checks: true,
+};
 
 export const DEFAULT_PREFS: Prefs = {
   terminalFontSize: 13,
@@ -24,6 +62,7 @@ export const DEFAULT_PREFS: Prefs = {
   dockBadge: true,
   toggleWindowShortcut: "",
   decisionNotifications: true,
+  boardActivity: DEFAULT_BOARD_ACTIVITY,
 };
 
 export const MIN_TERMINAL_FONT_SIZE = 9;
@@ -47,6 +86,28 @@ function fontSizeFrom(value: unknown): number {
   return DEFAULT_PREFS.terminalFontSize;
 }
 
+function boardActivityFrom(value: unknown): BoardActivityPrefs {
+  if (!isRecord(value)) {
+    return DEFAULT_BOARD_ACTIVITY;
+  }
+  const kind = (key: BoardActivityKind): boolean => {
+    const stored = value[key];
+    return typeof stored === "boolean" ? stored : DEFAULT_BOARD_ACTIVITY[key];
+  };
+  return {
+    moved: kind("moved"),
+    assigned: kind("assigned"),
+    refused: kind("refused"),
+    turns: kind("turns"),
+    drafts: kind("drafts"),
+    checks: kind("checks"),
+  };
+}
+
+function sameBoardActivity(a: BoardActivityPrefs, b: BoardActivityPrefs): boolean {
+  return BOARD_ACTIVITY_KINDS.every((kind) => a[kind] === b[kind]);
+}
+
 function prefsFrom(value: unknown): Prefs {
   if (!isRecord(value)) {
     return DEFAULT_PREFS;
@@ -67,6 +128,7 @@ function prefsFrom(value: unknown): Prefs {
       typeof value["decisionNotifications"] === "boolean"
         ? value["decisionNotifications"]
         : DEFAULT_PREFS.decisionNotifications,
+    boardActivity: boardActivityFrom(value["boardActivity"]),
   };
 }
 
@@ -103,7 +165,8 @@ export function updatePrefs(patch: Partial<Prefs>): void {
     next.terminalFontFamily === current.terminalFontFamily &&
     next.dockBadge === current.dockBadge &&
     next.toggleWindowShortcut === current.toggleWindowShortcut &&
-    next.decisionNotifications === current.decisionNotifications
+    next.decisionNotifications === current.decisionNotifications &&
+    sameBoardActivity(next.boardActivity, current.boardActivity)
   ) {
     return;
   }
@@ -147,4 +210,18 @@ function getDecisionNotifications(): boolean {
 /** Whether an urgent or nearly-due decision raises a native notification. */
 export function useDecisionNotificationsPref(): boolean {
   return useSyncExternalStore(subscribePrefs, getDecisionNotifications);
+}
+
+function getBoardActivity(): BoardActivityPrefs {
+  return current.boardActivity;
+}
+
+/** Which board activity toasts, without rerendering for unrelated prefs. */
+export function useBoardActivityPrefs(): BoardActivityPrefs {
+  return useSyncExternalStore(subscribePrefs, getBoardActivity);
+}
+
+/** Turn one kind of board activity toast on or off. */
+export function setBoardActivity(kind: BoardActivityKind, on: boolean): void {
+  updatePrefs({ boardActivity: { ...current.boardActivity, [kind]: on } });
 }

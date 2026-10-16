@@ -10,8 +10,8 @@ import { useLoadOnConnect } from "../../hooks/useLoadOnConnect";
 import type { DaemonApi } from "../../protocol/api";
 import { boardCall } from "../../protocol/board";
 import type { Bot } from "../../protocol/entities";
-import { Role } from "../../protocol/gen/hermes/board/v1/board_pb";
-import type { ProjectRole } from "../../protocol/gen/hermes/board/v1/board_pb";
+import { Role } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import type { ProjectRole } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import { errText } from "../../util";
 
 /** Each role as the owner reads it, in the order the picker lists them. */

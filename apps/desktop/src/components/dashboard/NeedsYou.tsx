@@ -70,6 +70,10 @@ const ORDER: Readonly<Record<Shown["kind"], number>> = {
   main_moved_outside: 0,
   // Under 20 GB free stops builds for every bot; a held cleanup can wait.
   disk_low: 2,
+  // A bot's change to a draft waits on the owner like a question does.
+  draft_updated: 4,
+  // The board keeper's: a card waiting on the owner, like a question.
+  card_waiting: 4,
   cleanup_held: 6,
   routines_without_card: 7,
   // Sorted by the kind it carries (`orderOf`); this is the fallback.
@@ -226,7 +230,7 @@ function p0Row(r: Extract<Shown, { readonly kind: "p0" }>, props: NeedsYouProps)
   };
 }
 
-/** No build can be published until hermesd.toml is fixed (H-100). */
+/** No build can be published until flotillad.toml is fixed (H-100). */
 function servingRow(r: Extract<Shown, { readonly kind: "serving_off" }>): RowViewProps {
   return { glyph: "⚠", tone: "bad", title: r.title, meta: r.reason, verb: "Fix it" };
 }

@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import type { AddToast } from "../../app/useToasts";
 import type { BoardApi } from "../../protocol/board";
 import { boardCall } from "../../protocol/board";
-import type { BoardColumn, ItemCard, Unmet } from "../../protocol/gen/hermes/board/v1/board_pb";
+import type { BoardColumn, ItemCard, Unmet } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import type { ColumnChecks } from "./moves";
 import { columnChecks, MoveCheckCache, planMove } from "./moves";
 
@@ -29,6 +29,8 @@ type MoveUi =
       readonly needsReason: boolean;
       readonly needsOverride: boolean;
       readonly unmet: readonly Unmet[];
+      /** A release-gated board's unlisted move: the owner's override. */
+      readonly override: boolean;
     }
   | {
       readonly kind: "refused";
@@ -47,7 +49,7 @@ interface Options {
   readonly addToast: AddToast;
 }
 
-interface BoardMoves {
+export interface BoardMoves {
   readonly ui: MoveUi;
   /** The guards for every column `card` could move to (cached for drags). */
   readonly checksFor: (card: ItemCard) => Promise<ColumnChecks>;
@@ -161,7 +163,7 @@ export function useBoardMoves({ api, columns, refresh, addToast }: Options): Boa
         if (plan.kind === "go") {
           await commit(card, to, anchor);
         } else if (plan.kind === "input") {
-          setUi({ ...plan, card, to, anchor });
+          setUi({ ...plan, card, to, anchor, override: checks.overrides.has(toKey) });
         } else {
           setUi({ kind: "refused", card, to, anchor, unmet: plan.unmet });
         }

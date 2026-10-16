@@ -47,7 +47,7 @@ describe("eventLine", () => {
       () => undefined,
     );
     expect(line).toBe(
-      "Hermes moved iOS 0.5.0's deploy to the iPhone: frozen before per-platform targets.",
+      "Flotilla moved iOS 0.5.0's deploy to the iPhone: frozen before per-platform targets.",
     );
   });
 
@@ -87,7 +87,7 @@ describe("eventLine", () => {
       () => undefined,
     );
     expect(line).toBe(
-      "Hermes marked iOS 0.6.1 deployed: its install on iOS counts for the iPhone.",
+      "Flotilla marked iOS 0.6.1 deployed: its install on iOS counts for the iPhone.",
     );
   });
 });

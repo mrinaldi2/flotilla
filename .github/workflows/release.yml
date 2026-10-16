@@ -1,7 +1,7 @@
 name: release
 
 # Builds a production release: the macOS DMG, the Windows installer and a
-# macOS hermesd tarball (binary + config + launchd agent + installer).
+# macOS flotillad tarball (binary + config + launchd agent + installer).
 # Pushing a `v*` tag publishes a GitHub release; a manual dispatch only
 # uploads the artifacts to the run, for dry runs. Builds start without a Rust
 # cache: releases are rare, and keeping one warm would cost main-branch minutes.
@@ -84,10 +84,12 @@ jobs:
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
       UPDATER_ENABLED: ${{ needs.prepare.outputs.updater }}
-      GRAVITY_RELEASE_CONFIG: ${{ needs.prepare.outputs.release-config }}
-      # Compiled into hermesd, which recognises the owner's signed app by it
-      # (H-110). Not a secret; the APPLE_TEAM_ID secret is the fallback.
-      HERMES_TEAM_ID: ${{ vars.HERMES_TEAM_ID || secrets.APPLE_TEAM_ID }}
+      FLOTILLA_RELEASE_CONFIG: ${{ needs.prepare.outputs.release-config }}
+      # Compiled into flotillad, which recognises the owner's signed app by it
+      # (H-110). Not a secret. HERMES_TEAM_ID is the variable's name from
+      # before the rename, still read; the APPLE_TEAM_ID secret is the last
+      # fallback.
+      FLOTILLA_TEAM_ID: ${{ vars.FLOTILLA_TEAM_ID || vars.HERMES_TEAM_ID || secrets.APPLE_TEAM_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -104,43 +106,43 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       # A release with the placeholder Team ID never recognises the signed
-      # app, so it doesn't build (ARCH-R38). hermesd also holds phase 2 at
+      # app, so it doesn't build (ARCH-R38). flotillad also holds phase 2 at
       # runtime while it carries the placeholder.
       - name: Check the Team ID
         run: |
-          if [[ ! "$HERMES_TEAM_ID" =~ ^[A-Z0-9]{10}$ || "$HERMES_TEAM_ID" == 0000000000 ]]; then
-            echo "Set the HERMES_TEAM_ID variable (or APPLE_TEAM_ID secret) to the owner's 10-character Apple Team ID." >&2
+          if [[ ! "$FLOTILLA_TEAM_ID" =~ ^[A-Z0-9]{10}$ || "$FLOTILLA_TEAM_ID" == 0000000000 ]]; then
+            echo "Set the FLOTILLA_TEAM_ID variable (or HERMES_TEAM_ID, or the APPLE_TEAM_ID secret) to the owner's 10-character Apple Team ID." >&2
             exit 1
           fi
-          if [[ -n "${HERMES_DEV_BUILD:-}" ]]; then
-            echo "HERMES_DEV_BUILD must not be set for a release." >&2
+          if [[ -n "${FLOTILLA_DEV_BUILD:-}" || -n "${HERMES_DEV_BUILD:-}" ]]; then
+            echo "FLOTILLA_DEV_BUILD (or HERMES_DEV_BUILD) must not be set for a release." >&2
             exit 1
           fi
 
-      - name: Build hermesd
+      - name: Build flotillad
         run: |
           pnpm notices:check --check-toolchain
-          cargo build --locked --release -p hermesd
+          cargo build --locked --release -p flotillad
 
-      - name: Package hermesd
+      - name: Package flotillad
         run: |
-          stage="stage/hermesd-$VERSION"
+          stage="stage/flotillad-$VERSION"
           mkdir -p dist "$stage"
-          cp target/release/hermesd "$stage/hermesd"
+          cp target/release/flotillad "$stage/flotillad"
           cp LICENSE "$stage/"
           cp third-party/DAEMON_NOTICES.txt "$stage/THIRD_PARTY_NOTICES.txt"
-          cp ops/hermesd.example.toml "$stage/"
-          cp scripts/install-hermesd.sh "$stage/"
-          chmod +x "$stage/install-hermesd.sh"
-          tar -czf "dist/hermesd-$VERSION-aarch64-apple-darwin.tar.gz" -C stage "hermesd-$VERSION"
+          cp ops/flotillad.example.toml "$stage/"
+          cp scripts/install-flotillad.sh "$stage/"
+          chmod +x "$stage/install-flotillad.sh"
+          tar -czf "dist/flotillad-$VERSION-aarch64-apple-darwin.tar.gz" -C stage "flotillad-$VERSION"
 
       # The desktop bundle ships the daemon as a signed sidecar; the app's
       # first-run wizard installs it as a launchd user agent.
-      - name: Stage hermesd sidecar
+      - name: Stage flotillad sidecar
         run: |
           triple="$(rustc -vV | sed -n 's/^host: //p')"
           mkdir -p apps/desktop/src-tauri/binaries
-          cp target/release/hermesd "apps/desktop/src-tauri/binaries/hermesd-$triple"
+          cp target/release/flotillad "apps/desktop/src-tauri/binaries/flotillad-$triple"
 
       - name: Install desktop dependencies
         working-directory: apps/desktop
@@ -190,7 +192,7 @@ jobs:
           VITE_POSTHOG_PROJECT_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
         run: |
           if [[ "$UPDATER_ENABLED" == "true" ]]; then
-            pnpm tauri build --config "$GRAVITY_RELEASE_CONFIG"
+            pnpm tauri build --config "$FLOTILLA_RELEASE_CONFIG"
           else
             pnpm tauri build
           fi
@@ -198,10 +200,10 @@ jobs:
       - name: Collect DMG and updater artifact
         run: |
           bundle=apps/desktop/src-tauri/target/release/bundle
-          mv "$bundle"/dmg/*.dmg "dist/hermes-desktop-$VERSION-aarch64.dmg"
+          mv "$bundle"/dmg/*.dmg "dist/flotilla-desktop-$VERSION-aarch64.dmg"
           if [[ "$UPDATER_ENABLED" == "true" ]]; then
-            mv "$bundle"/macos/*.app.tar.gz "dist/hermes-desktop-$VERSION-aarch64.app.tar.gz"
-            mv "$bundle"/macos/*.app.tar.gz.sig "dist/hermes-desktop-$VERSION-aarch64.app.tar.gz.sig"
+            mv "$bundle"/macos/*.app.tar.gz "dist/flotilla-desktop-$VERSION-aarch64.app.tar.gz"
+            mv "$bundle"/macos/*.app.tar.gz.sig "dist/flotilla-desktop-$VERSION-aarch64.app.tar.gz.sig"
           fi
 
       # Tauri notarizes and staples the .app; notarize the DMG container too
@@ -209,7 +211,7 @@ jobs:
       - name: Notarize DMG
         if: env.SIGNED == 'true'
         run: |
-          dmg="dist/hermes-desktop-$VERSION-aarch64.dmg"
+          dmg="dist/flotilla-desktop-$VERSION-aarch64.dmg"
           xcrun notarytool submit "$dmg" \
             --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" --wait
@@ -218,8 +220,8 @@ jobs:
       - name: Verify packaged notices
         run: |
           python3 scripts/check-packaged-notices.py \
-            --app "apps/desktop/src-tauri/target/release/bundle/macos/The Hermes.app" \
-            --daemon "dist/hermesd-$VERSION-aarch64-apple-darwin.tar.gz"
+            --app "apps/desktop/src-tauri/target/release/bundle/macos/Flotilla.app" \
+            --daemon "dist/flotillad-$VERSION-aarch64-apple-darwin.tar.gz"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -234,7 +236,7 @@ jobs:
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
       UPDATER_ENABLED: ${{ needs.prepare.outputs.updater }}
-      GRAVITY_RELEASE_CONFIG: ${{ needs.prepare.outputs.release-config }}
+      FLOTILLA_RELEASE_CONFIG: ${{ needs.prepare.outputs.release-config }}
     steps:
       - uses: actions/checkout@v4
 
@@ -250,7 +252,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Stage hermesd sidecar
+      - name: Stage flotillad sidecar
         run: ./scripts/prepare-sidecar.ps1
 
       - name: Install desktop dependencies
@@ -270,7 +272,7 @@ jobs:
           VITE_POSTHOG_PROJECT_TOKEN: ${{ vars.POSTHOG_PROJECT_TOKEN }}
         run: |
           if [[ "$UPDATER_ENABLED" == "true" ]]; then
-            pnpm tauri build --bundles nsis --config "$GRAVITY_RELEASE_CONFIG"
+            pnpm tauri build --bundles nsis --config "$FLOTILLA_RELEASE_CONFIG"
           else
             pnpm tauri build --bundles nsis
           fi
@@ -283,9 +285,9 @@ jobs:
         run: |
           nsis=apps/desktop/src-tauri/target/release/bundle/nsis
           mkdir -p dist
-          mv "$nsis"/*-setup.exe "dist/hermes-desktop-$VERSION-x64-setup.exe"
+          mv "$nsis"/*-setup.exe "dist/flotilla-desktop-$VERSION-x64-setup.exe"
           if [[ "$UPDATER_ENABLED" == "true" ]]; then
-            mv "$nsis"/*-setup.exe.sig "dist/hermes-desktop-$VERSION-x64-setup.exe.sig"
+            mv "$nsis"/*-setup.exe.sig "dist/flotilla-desktop-$VERSION-x64-setup.exe.sig"
           fi
 
       - uses: actions/upload-artifact@v4
@@ -312,8 +314,8 @@ jobs:
         if: needs.prepare.outputs.updater == 'true'
         run: |
           base="https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME"
-          mac="hermes-desktop-$VERSION-aarch64.app.tar.gz"
-          win="hermes-desktop-$VERSION-x64-setup.exe"
+          mac="flotilla-desktop-$VERSION-aarch64.app.tar.gz"
+          win="flotilla-desktop-$VERSION-x64-setup.exe"
           jq -n \
             --arg version "$VERSION" \
             --arg pub_date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
@@ -344,7 +346,7 @@ jobs:
           ### Desktop app (this is all most people need)
 
           On a Mac, download the DMG attached to this release,
-          open it and drag **The Hermes** to Applications. On Windows, run the
+          open it and drag **Flotilla** to Applications. On Windows, run the
           `x64-setup.exe` installer; it installs for the current user only.
           The app bundles the daemon: on first launch a setup wizard offers to
           run bots on this machine (installs the bundled daemon as a background
@@ -352,44 +354,53 @@ jobs:
           daemon with a device token. Builds configured with updater signing offer app updates
           and can update the local daemon to match.
 
-          The Hermes keeps its state under `~/.thehermes` and serves on port
+          Flotilla keeps its state under `~/.flotilla` and serves on port
           `49777`. A daemon already answering there stops the install: it
           refuses to start rather than run a second one against the same state.
 
           ### Daemon only (headless Mac mini / server)
 
           ```sh
-          # Download the hermesd tarball attached to this release first.
-          tar -xzf hermesd-VERSION-aarch64-apple-darwin.tar.gz
-          hermesd-VERSION/hermesd service install
+          # Download the flotillad tarball attached to this release first.
+          tar -xzf flotillad-VERSION-aarch64-apple-darwin.tar.gz
+          flotillad-VERSION/flotillad service install
           ```
 
-          Installs `hermesd` under `~/.thehermes/bin`, writes a default
-          config to `~/.thehermes/hermesd.toml` (kept if it already exists), and
-          starts the launchd user agent `com.manuelrinaldi.thehermesd`. No sudo needed.
+          Installs `flotillad` under `~/.flotilla/bin`, writes a default
+          config to `~/.flotilla/flotillad.toml` (kept if it already exists), and
+          starts the launchd user agent `com.manuelrinaldi.flotillad`. No sudo needed.
 
-          ### Upgrading from 0.14 or earlier (`~/.gravity`)
+          ### Upgrading from The Hermes (`~/.thehermes`)
 
-          The first install of this release stops the old service
-          (`in.mikolajczuk.gravityd` on macOS, the `Gravity` task on Windows),
-          moves `~/.gravity` to `~/.thehermes` and starts the new one. Every bot
-          restarts once and keeps its history and memory. `~/.gravity` stays as
-          a link to the new home for one release. Preview it with
-          `hermesd migrate-home --dry-run`; undo it with
-          `hermesd service uninstall && hermesd migrate-home --rollback`.
+          The Hermes is now Flotilla. The first install of this release stops
+          the old service (`com.manuelrinaldi.thehermesd` on macOS, the
+          `The Hermes` task on Windows, and any Gravity one left over), moves
+          `~/.thehermes` to `~/.flotilla` and starts the new one. Every bot
+          restarts once and keeps its board, history and memory. `~/.thehermes`
+          stays as a link to the new home for one release. Preview it with
+          `flotillad migrate-home --dry-run`; undo it with
+          `flotillad service uninstall && flotillad migrate-home --rollback`.
+          A machine still on `~/.gravity` moves straight to `~/.flotilla`.
 
-          The app's identifier changed to `com.manuelrinaldi.thehermes`. Its
-          preferences are carried over, but macOS asks again for the
-          **microphone**, **speech recognition** and **accessibility (global
-          shortcut)** permissions: grant them in System Settings → Privacy &
-          Security when prompted, and remove the old "Gravity" entries there.
+          Flotilla is a new app to macOS (`com.manuelrinaldi.flotilla`): it
+          installs as `/Applications/Flotilla.app` beside The Hermes, takes
+          over its preferences, and tells you when you can move The Hermes to
+          the Trash. macOS asks again for the **microphone**, **speech
+          recognition** and **accessibility (global shortcut)** permissions:
+          grant them in System Settings → Privacy & Security when prompted,
+          and remove the old "The Hermes" entries there. On Windows the
+          installer replaces The Hermes in Program Files.
+
+          The iPhone app is a new app too: install Flotilla on the phone and
+          pair it again (Settings → Devices in the desktop app), then revoke
+          the old The Hermes device.
           EOF
           if [[ "$SIGNED" != "true" ]]; then
             cat >> notes.md <<'EOF'
 
           > **Note:** this build is not notarized. Gatekeeper will block the
           > first launch on another machine — clear the quarantine flag once:
-          > `xattr -cr "/Applications/The Hermes.app"`
+          > `xattr -cr "/Applications/Flotilla.app"`
           EOF
           fi
           cat >> notes.md <<'EOF'
@@ -399,7 +410,7 @@ jobs:
           EOF
           sed -i "s/VERSION/$VERSION/g" notes.md
           gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "The Hermes $VERSION" \
+            --title "Flotilla $VERSION" \
             --notes-file notes.md \
             --generate-notes --draft
           # Expose latest.json only after every release asset has uploaded.

@@ -41,7 +41,7 @@ export async function installForRecovery(status: ServiceStatus): Promise<Install
 }
 
 /**
- * Checks the Hermes service on this machine once on launch, when the app
+ * Checks the Flotilla service on this machine once on launch, when the app
  * talks to a local daemon, and holds the one fix to offer. Nothing installs
  * until the owner clicks.
  */
@@ -82,7 +82,7 @@ export function useServiceRecovery(endpoint: Endpoint, addToast: AddToast): Serv
       setError(typeof outcome === "object" ? outcome.error : null);
       setStatus(next);
       if (outcome === "installed" && (next === null || recoveryFor(next) === null)) {
-        addToast("info", "Hermes service running", "The app reconnects on its own.");
+        addToast("info", "Flotilla service running", "The app reconnects on its own.");
       }
     })();
   }, [addToast, status]);

@@ -1,7 +1,7 @@
-# Gravity marketing site
+# Flotilla marketing site
 
 Static Vite site with a small Cloudflare Worker route that resolves the latest
-macOS release from Gravity's updater manifest.
+macOS release from Flotilla's updater manifest.
 
 ```sh
 pnpm install
@@ -12,7 +12,11 @@ pnpm check
 ## Cloudflare
 
 `wrangler.jsonc` serves the built files through Workers Static Assets on your
-account's `workers.dev` domain. It does not require the Gravity domain or account.
+account's `workers.dev` domain. It does not require the Flotilla domain or account.
+The Worker names in `wrangler.jsonc` and `wrangler.updater-bridge.jsonc` still say
+`gravity` on purpose: renaming them deploys new Workers, so they change only when
+the deployment moves. The canonical URLs still point at `getgravity.build` until a
+Flotilla domain is chosen.
 
 ```sh
 pnpm worker:dev
@@ -28,8 +32,10 @@ branding when forking.
 ## Legacy updater bridge
 
 `wrangler.updater-bridge.jsonc` builds a separate, dependency-free compatibility
-Worker. It serves only GET/HEAD `/desktop/gravity/latest.json`, returning the
-configured upstream manifest without a redirect or content changes. Other paths
+Worker. It serves only GET/HEAD `/desktop/flotilla/latest.json` and its legacy
+alias `/desktop/gravity/latest.json`, returning the configured upstream manifest
+without a redirect or content changes. Both paths answer identically; keep the
+legacy alias, because apps installed before the rename keep polling it. Other paths
 and methods are rejected. Upstream errors/invalid manifests return 502; responses
 are not cached. The bridge does not forward caller headers or query parameters.
 
@@ -44,14 +50,15 @@ pnpm exec wrangler deploy --config wrangler.updater-bridge.jsonc \
 
 Verify the Worker on its `workers.dev` URL first. Publish and verify the transition
 release's GitHub assets, manifest and updater signature before attaching the exact
-legacy manifest route. Do not replace the R2 custom domain or route the entire
+manifest routes. Do not replace the R2 custom domain or route the entire
 host: existing versioned downloads must continue reaching their original objects.
-Attach a route with a trailing `*` to include requests with query parameters; the
-handler still rejects every pathname except the exact manifest path:
+Attach one route per path, each with a trailing `*` to include requests with query
+parameters; the handler still rejects every pathname except the two manifest paths:
 
 ```sh
 pnpm exec wrangler deploy --config wrangler.updater-bridge.jsonc \
   --var "RELEASE_MANIFEST_URL:https://github.com/OWNER/REPO/releases/latest/download/latest.json" \
+  --route "downloads.example.com/desktop/flotilla/latest.json*" \
   --route "downloads.example.com/desktop/gravity/latest.json*"
 ```
 

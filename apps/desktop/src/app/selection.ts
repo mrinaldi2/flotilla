@@ -62,6 +62,10 @@ export type Selection =
       readonly recheck?: boolean;
       /** Settings: focus this section ("Change" on a PR's Owner review line). */
       readonly section?: "owner_review";
+      /** Board: show this board (0.19.0); an `item`'s own board wins. */
+      readonly board?: string;
+      /** With `board`: open its settings ("Change it…" on a lead's proposal). */
+      readonly boardSettings?: boolean;
     }
   /**
    * The Control center. `decisionId` opens straight onto one record, which is

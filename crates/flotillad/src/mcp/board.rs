@@ -1,0 +1,392 @@
+//! The board tools (H-017 §4.1, H-020 §1.6): reads and moves here, edits in
+//! `board_edit`. Arguments decode from the contract's request messages
+//! (`board_schema`); every guarded change runs in one board transaction, and
+//! a refusal is a tool error listing the same `Unmet` texts the UI shows.
+
+use std::sync::Arc;
+
+use bus::contract::board as c;
+use serde_json::{json, Value};
+
+use crate::actor::Actor;
+use crate::app::AppState;
+use crate::kanban::contract::model_list;
+use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
+use crate::kanban::model::{Item, ItemType, Priority, Role, Unmet};
+use crate::kanban::moves::{item_move as move_item, item_move_check, MoveRequest, Moved};
+use crate::kanban::notice_text::Notice;
+use crate::kanban::notices::tell_assignee;
+
+use super::board_drafts::OWN_ITEM_TOOLS;
+pub(super) use super::board_output::conflict;
+pub use super::board_output::Conflict;
+use super::board_schema::{all_tools, decode, friendly};
+use super::caller;
+
+/// The calling bot, in a project that has a board.
+pub(super) struct Me {
+    pub bot: bus::Bot,
+}
+
+impl Me {
+    pub(super) fn actor(&self) -> Actor<'_> {
+        bot_actor(&self.bot)
+    }
+}
+
+/// The bot's board roles, or `None` when its project has no board.
+pub(super) fn board_roles(
+    app: &Arc<AppState>,
+    bot: &bus::Bot,
+) -> anyhow::Result<Option<Vec<Role>>> {
+    if app.db.board_settings(&bot.project_id)?.is_none() {
+        return Ok(None);
+    }
+    Ok(Some(
+        app.db
+            .project_roles(&bot.project_id)?
+            .into_iter()
+            .filter(|r| r.bot_id == bot.id)
+            .map(|r| r.role)
+            .collect(),
+    ))
+}
+
+pub(super) fn is_board_tool(name: &str) -> bool {
+    all_tools().any(|t| t.name == name)
+}
+
+/// Run a board tool. Tools a bot's roles don't list are refused here too.
+pub(super) fn call(
+    app: &Arc<AppState>,
+    bot_id: &str,
+    name: &str,
+    args: &Value,
+) -> anyhow::Result<Value> {
+    let bot = caller(app, bot_id)?;
+    let roles =
+        board_roles(app, &bot)?.ok_or_else(|| {
+        anyhow::anyhow!(
+            "this project has no board yet; the owner starts it from the Board tab on its home computer"
+        )
+    })?;
+    let tool = all_tools()
+        .find(|t| t.name == name)
+        .expect("checked by is_board_tool");
+    let invited = super::board_drafts::admits(app, &bot, name, args)?;
+    let by_role = invited || tool.audience.admits(&roles);
+    if !(by_role || (OWN_ITEM_TOOLS.contains(&name) && works_on(app, &bot, args)?)) {
+        anyhow::bail!(no_right(name));
+    }
+    // A card's own rights stay on the card: blocking another is a member's.
+    if !by_role && name == "item_link" && blocks_another(args, &bot.project_id)? {
+        anyhow::bail!(
+            "item_link item:blocks holds up another card, which needs a board role you don't \
+             have; comment on your card, or ask the lead"
+        );
+    }
+    let me = Me { bot };
+    let project = me.bot.project_id.as_str();
+    match name {
+        "board_get" => board_get(app, &me),
+        "item_get" => item_get(app, &me, decode("ItemGet", args, project)?),
+        "item_query" => item_query(app, &me, decode("ItemQuery", args, project)?),
+        "item_move" => item_move(app, &me, decode("ItemMove", args, project)?),
+        "item_move_check" => check(app, &me, decode("ItemMoveCheck", args, project)?),
+        "role_set" => super::board_roles::role_set(app, &me, decode("RoleSet", args, project)?),
+        board if super::board_structure::handles(board) => {
+            super::board_structure::call(app, &me, &roles, board, args)
+        }
+        meeting if super::meetings::handles(meeting) => {
+            super::meetings::call(app, &me.bot, roles, meeting, args)
+        }
+        release if super::releases::handles(release) => {
+            super::releases::call(app, &me.bot, roles, release, args)
+        }
+        pr if super::prs::handles(pr) => super::prs::call(app, &me.bot, &roles, pr, args),
+        "board_import" => {
+            super::board_import::call(app, &me, decode("BoardImport", args, project)?)
+        }
+        _ => super::board_edit::call(app, &me, name, args),
+    }
+}
+
+/// Why a bot without a board role was refused a tool: on its own cards it
+/// may use only `OWN_ITEM_TOOLS`, so the text says which, rather than that
+/// being assigned would have been enough.
+fn no_right(name: &str) -> String {
+    if OWN_ITEM_TOOLS.contains(&name) {
+        format!(
+            "{name} on this item needs a board role you don't have: it isn't assigned to \
+             you and no task of yours is linked to it. Ask the lead to assign it to you"
+        )
+    } else {
+        format!(
+            "{name} needs a board role you don't have; on a card assigned to you, you may \
+             use {} without one. Ask the lead for the role",
+            OWN_ITEM_TOOLS.join(", ")
+        )
+    }
+}
+
+/// Whether an `item_link` call says its card blocks another.
+fn blocks_another(args: &Value, project: &str) -> anyhow::Result<bool> {
+    let req: c::ItemAddLink = decode("ItemAddLink", args, project)?;
+    Ok(crate::kanban::model::LinkKind::from_wire(req.kind)?
+        == crate::kanban::model::LinkKind::ItemBlocks)
+}
+
+/// The item named in `args` is the bot's to work on: assigned to it, or
+/// linked to a task it holds.
+fn works_on(app: &Arc<AppState>, bot: &bus::Bot, args: &Value) -> anyhow::Result<bool> {
+    let Some(id) = args.get("id").and_then(Value::as_str) else {
+        return Ok(false);
+    };
+    if app.db.item_project(id)?.as_deref() != Some(bot.project_id.as_str()) {
+        return Ok(false);
+    }
+    let assigned = app
+        .db
+        .get_item(id)?
+        .is_some_and(|item| item.assignee.as_deref() == Some(bot.id.as_str()));
+    Ok(assigned || app.db.board_read(|t| t.task_holders(id))?.contains(&bot.id))
+}
+
+/// Contract output, with short enum names.
+pub(super) fn out(value: impl serde::Serialize) -> anyhow::Result<Value> {
+    Ok(friendly(serde_json::to_value(value)?))
+}
+
+pub(super) fn item_out(item: Item) -> anyhow::Result<Value> {
+    out(c::Item::from(item))
+}
+
+/// A refusal as a tool error: every unmet guard, with its fix.
+pub(super) fn refused(unmet: Vec<Unmet>) -> anyhow::Error {
+    let lines: Vec<String> = unmet
+        .into_iter()
+        .map(|u| match u.fix {
+            Some(fix) => format!("- {} ({}) Fix: {fix}", u.text, u.code),
+            None => format!("- {} ({})", u.text, u.code),
+        })
+        .collect();
+    anyhow::anyhow!("refused:\n{}", lines.join("\n"))
+}
+
+/// Run a bot's board write holding the feed (B4), and push the changed
+/// item's card once it has committed, so open boards see bots' changes. The
+/// write returns the item it changed; an error (a refusal, a conflict)
+/// changed nothing and pushes nothing.
+pub(super) fn published<T>(
+    app: &Arc<AppState>,
+    project_id: &str,
+    kind: ChangeKind,
+    from_column: Option<String>,
+    write: impl FnOnce() -> anyhow::Result<(T, String)>,
+) -> anyhow::Result<T> {
+    let mut feed = app.board.writer();
+    let (out, item_id) = write()?;
+    // Committed: from here on nothing may fail, or the push is lost.
+    let card = card_after_commit(&app.db, &item_id);
+    feed.publish(Change {
+        project_id,
+        kind,
+        item_id: &item_id,
+        card,
+        from_column,
+    });
+    Ok(out)
+}
+
+/// An item of the caller's project; another project's items don't exist here.
+/// A draft counts only for the bots invited to it.
+pub(super) fn own_item(app: &Arc<AppState>, me: &Me, id: &str) -> anyhow::Result<()> {
+    crate::kanban::edit::Editor {
+        app,
+        project_id: &me.bot.project_id,
+        actor: me.actor(),
+    }
+    .own_item(id)
+}
+
+/// The optional `item` argument of a bus tool (`send_message`,
+/// `raise_decision`, `complete_task`): an item of the caller's project.
+pub(super) fn item_arg(
+    app: &Arc<AppState>,
+    bot: &bus::Bot,
+    args: &Value,
+) -> anyhow::Result<Option<String>> {
+    let Some(id) = args
+        .get("item")
+        .and_then(Value::as_str)
+        .filter(|s| !s.is_empty())
+    else {
+        return Ok(None);
+    };
+    match app.db.item_project(id)? {
+        Some(p) if p == bot.project_id => Ok(Some(id.to_string())),
+        _ => anyhow::bail!("no item {id} in this project"),
+    }
+}
+
+pub(super) fn bot_actor(bot: &bus::Bot) -> Actor<'_> {
+    Actor::Bot {
+        id: &bot.id,
+        project_id: &bot.project_id,
+    }
+}
+
+/// A bot of the caller's project, by id or name.
+pub(super) fn bot_id(app: &Arc<AppState>, me: &Me, name_or_id: &str) -> anyhow::Result<String> {
+    crate::kanban::edit::project_bot(app, &me.bot.project_id, name_or_id)
+}
+
+/// The project's boards as a bot works them: the columns and cards of
+/// every board not archived, and the item-id prefix `item_create` uses
+/// when no board is named, the default board's.
+fn board_get(app: &Arc<AppState>, me: &Me) -> anyhow::Result<Value> {
+    let project = &me.bot.project_id;
+    let settings = app.db.board_settings(project)?.expect("checked in call");
+    let boards = app.db.boards(project)?;
+    let archived: Vec<&str> = boards
+        .iter()
+        .filter(|b| b.archived_at.is_some())
+        .map(|b| b.id.as_str())
+        .collect();
+    let key = boards
+        .iter()
+        .find(|b| b.is_default)
+        .map_or(settings.key, |b| b.key.clone());
+    let cards: Vec<_> = app
+        .db
+        .board_cards(project)?
+        .into_iter()
+        .filter(|card| !archived.contains(&card.board_id.as_str()))
+        .collect();
+    let columns = app
+        .db
+        .board_columns(project)?
+        .into_iter()
+        .filter(|col| col.visible && !archived.contains(&col.board_id.as_str()))
+        .map(|col| {
+            let count = cards
+                .iter()
+                .filter(|card| card.column_key == col.key)
+                .count();
+            let mut v = out(c::BoardColumn::from(col))?;
+            v["count"] = json!(count);
+            Ok(v)
+        })
+        .collect::<anyhow::Result<Vec<_>>>()?;
+    let cards = cards
+        .into_iter()
+        .map(|card| out(c::ItemCard::from(card)))
+        .collect::<anyhow::Result<Vec<_>>>()?;
+    Ok(json!({ "key": key, "columns": columns, "cards": cards }))
+}
+
+fn item_get(app: &Arc<AppState>, me: &Me, req: c::ItemGet) -> anyhow::Result<Value> {
+    own_item(app, me, &req.id)?;
+    // The assignee's first read of its card in an open column starts it.
+    let started = crate::kanban::starts::on_touch(app, &me.bot, &req.id);
+    let item = app
+        .db
+        .get_item(&req.id)?
+        .ok_or_else(|| anyhow::anyhow!("no item {}", req.id))?;
+    let links = app
+        .db
+        .item_links(&req.id)?
+        .into_iter()
+        .map(c::ItemLink::from)
+        .collect::<Vec<_>>();
+    let mut history = app.db.item_events(&req.id)?;
+    // The latest few; the drawer pages the rest.
+    let skip = history.len().saturating_sub(20);
+    let history: Vec<c::ItemEvent> = history.drain(skip..).map(Into::into).collect();
+    let comments = super::board_comments::comments(app, &req.id)?;
+    let mut reply = json!({ "item": item_out(item)?, "links": out(links)?,
+                            "history": out(history)?, "comments": comments });
+    super::board_drafts::item_get_extras(app, &me.bot.project_id, &req.id, &mut reply)?;
+    if let Some((key, text)) = started.reply() {
+        reply[key] = json!(text);
+    }
+    Ok(reply)
+}
+
+fn item_query(app: &Arc<AppState>, me: &Me, req: c::ItemQuery) -> anyhow::Result<Value> {
+    let project = &me.bot.project_id;
+    let cards = match req.text.as_deref().filter(|t| !t.trim().is_empty()) {
+        Some(text) => app.db.search_items(project, text)?,
+        None => app.db.board_cards(project)?,
+    };
+    let assignee = req
+        .assignee
+        .as_deref()
+        .map(|a| bot_id(app, me, a))
+        .transpose()?;
+    let labels = crate::compat018::query_labels(&req);
+    let types = model_list(req.types, ItemType::from_wire)?;
+    let priorities = model_list(req.priorities, Priority::from_wire)?;
+
+    let cards: Vec<c::ItemCard> = cards
+        .into_iter()
+        .filter(|card| req.column_keys.is_empty() || req.column_keys.contains(&card.column_key))
+        .filter(|card| types.is_empty() || types.contains(&card.item_type))
+        .filter(|card| priorities.is_empty() || priorities.contains(&card.priority))
+        .filter(|card| crate::kanban::labels::matches_any(&card.labels, &labels))
+        .filter(|card| assignee.is_none() || card.assignee == assignee)
+        .filter(|card| req.blocked.is_none_or(|b| card.blocked == b))
+        .map(c::ItemCard::from)
+        .collect();
+    Ok(json!({ "cards": out(cards)? }))
+}
+
+fn item_move(app: &Arc<AppState>, me: &Me, req: c::ItemMove) -> anyhow::Result<Value> {
+    own_item(app, me, &req.id)?;
+    let request = MoveRequest {
+        id: &req.id,
+        to: &req.to,
+        expected_version: req.expected_version,
+        reason: req.reason.as_deref(),
+        override_reason: req.override_reason.as_deref(),
+    };
+    let from = app.db.get_item(&req.id)?.map(|item| item.column_key);
+    let project = me.bot.project_id.as_str();
+    let mut after = None;
+    let reply = published(
+        app,
+        project,
+        ChangeKind::ItemMoved,
+        from,
+        || match move_item(&app.db, &request, &me.actor())? {
+            Moved::Done(item) => {
+                after = Some((*item).clone());
+                Ok((super::board_edit::moved(*item)?, req.id.clone()))
+            }
+            Moved::Refused(unmet) => {
+                crate::kanban::activity::refused(app, &req.id, &req.to, &me.actor(), &unmet);
+                Err(refused(unmet))
+            }
+            Moved::Conflict(current) => Err(conflict(*current)),
+        },
+    );
+    if let Some(item) = &after {
+        tell_assignee(app, item, &me.actor(), Notice::Moved);
+    } else if reply.is_err() {
+        // A refused move shows on its card ("can't move: …").
+        crate::kanban::stuck::publish_card(app, project, &req.id);
+    }
+    reply
+}
+
+fn check(app: &Arc<AppState>, me: &Me, req: c::ItemMoveCheck) -> anyhow::Result<Value> {
+    own_item(app, me, &req.id)?;
+    let columns = item_move_check(&app.db, &req.id, &me.actor())?
+        .into_iter()
+        .map(|(col, unmet)| {
+            let unmet: Vec<c::Unmet> = unmet.into_iter().map(c::Unmet::from).collect();
+            Ok(json!({ "column": col.key, "allowed": unmet.is_empty(), "unmet": out(unmet)? }))
+        })
+        .collect::<anyhow::Result<Vec<_>>>()?;
+    Ok(json!({ "columns": columns }))
+}

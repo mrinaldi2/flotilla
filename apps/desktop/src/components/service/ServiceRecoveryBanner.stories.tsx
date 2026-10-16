@@ -40,8 +40,8 @@ export const RepairWithInstallerError: Story = () => (
     installing={false}
     error={
       "daemon install failed: Error: the home is still held open; quit these and try again:\n" +
-      "  pid 4120 hermesd (cwd /Users/owner/.thehermes)\n" +
-      "  pid 4388 node (cwd /Users/owner/.thehermes/projects/gravity/bots/lead/workspace)"
+      "  pid 4120 flotillad (cwd /Users/owner/.flotilla)\n" +
+      "  pid 4388 node (cwd /Users/owner/.flotilla/projects/gravity/bots/lead/workspace)"
     }
     onInstall={noop}
     onDismiss={noop}

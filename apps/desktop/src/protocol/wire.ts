@@ -43,6 +43,7 @@ const PUSH_TYPES: Readonly<Record<ServerPushType, true>> = {
   projects_overview_changed: true,
   owner_thread_updated: true,
   project_pinned: true,
+  board_activity: true,
 };
 
 const REPLY_TYPES: ReadonlySet<string> = new Set(
@@ -106,6 +107,9 @@ const REPLY_TYPES: ReadonlySet<string> = new Set(
     cleanup_item: true,
     disk_report: true,
     cleanup_done: true,
+    project_delete_preview: true,
+    deleted_projects_preview: true,
+    deleted_projects_cleaned: true,
     meetings: true,
     meeting: true,
     quiesce: true,

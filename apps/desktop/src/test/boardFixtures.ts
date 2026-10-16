@@ -6,25 +6,24 @@ import type {
   ItemCard,
   ProjectRole,
   Unmet,
-} from "../protocol/gen/hermes/board/v1/board_pb";
+} from "../protocol/gen/flotilla/board/v1/board_pb";
 import {
   BoardColumnSchema,
   BoardSettingsSchema,
   ColumnCategory,
   ItemCardSchema,
   ItemType,
-  Platform,
   Priority,
   ProjectRoleSchema,
   UnmetSchema,
   WipScope,
-} from "../protocol/gen/hermes/board/v1/board_pb";
-import type { BoardEvent, BoardSnapshot } from "../protocol/gen/hermes/board/v1/requests_pb";
+} from "../protocol/gen/flotilla/board/v1/board_pb";
+import type { BoardEvent, BoardSnapshot } from "../protocol/gen/flotilla/board/v1/requests_pb";
 import {
   BoardEventKind,
   BoardEventSchema,
   BoardSnapshotSchema,
-} from "../protocol/gen/hermes/board/v1/requests_pb";
+} from "../protocol/gen/flotilla/board/v1/requests_pb";
 
 const PROJECT = "p1";
 
@@ -114,7 +113,7 @@ export function sampleCards(): ItemCard[] {
       title: "Releases tab with approval flow",
       columnKey: "ready",
       rank: "a0",
-      platforms: [Platform.DESKTOP],
+      labels: ["platform:desktop"],
       acTotal: 4,
     }),
     card({
@@ -123,7 +122,7 @@ export function sampleCards(): ItemCard[] {
       type: ItemType.CHORE,
       columnKey: "ready",
       rank: "a1",
-      platforms: [Platform.DESKTOP, Platform.IOS],
+      labels: ["platform:desktop", "platform:ios"],
     }),
     card({
       id: "H-017",
@@ -131,7 +130,7 @@ export function sampleCards(): ItemCard[] {
       columnKey: "doing",
       priority: Priority.P1,
       assignee: "b1",
-      platforms: [Platform.DESKTOP, Platform.IOS, Platform.DAEMON],
+      labels: ["platform:desktop", "platform:ios", "platform:daemon"],
       blocked: true,
       stale: true,
       acChecked: 2,
@@ -142,7 +141,7 @@ export function sampleCards(): ItemCard[] {
       title: "Board over the WebSocket",
       columnKey: "doing",
       assignee: "b2",
-      platforms: [Platform.DAEMON],
+      labels: ["platform:daemon"],
       acChecked: 1,
       acTotal: 3,
     }),
@@ -152,8 +151,7 @@ export function sampleCards(): ItemCard[] {
       columnKey: "doing",
       assignee: "b2",
       priority: Priority.P0,
-      labels: ["wip-override"],
-      platforms: [Platform.DESKTOP],
+      labels: ["wip-override", "platform:desktop"],
     }),
     card({
       id: "H-012",
@@ -161,7 +159,7 @@ export function sampleCards(): ItemCard[] {
       columnKey: "review",
       type: ItemType.BUG,
       assignee: "b1",
-      platforms: [Platform.IOS],
+      labels: ["platform:ios"],
       acChecked: 3,
       acTotal: 3,
     }),
@@ -170,7 +168,7 @@ export function sampleCards(): ItemCard[] {
       title: "iOS first run",
       columnKey: "verify",
       assignee: "b1",
-      platforms: [Platform.IOS],
+      labels: ["platform:ios"],
       acChecked: 2,
       acTotal: 2,
     }),
@@ -180,7 +178,7 @@ export function sampleCards(): ItemCard[] {
       columnKey: "verify",
       rank: "a1",
       assignee: "b2",
-      platforms: [Platform.DAEMON],
+      labels: ["platform:daemon"],
     }),
     card({
       id: "H-009",
@@ -188,13 +186,13 @@ export function sampleCards(): ItemCard[] {
       columnKey: "verify",
       rank: "a2",
       type: ItemType.CHORE,
-      platforms: [Platform.INFRA],
+      labels: ["platform:infra"],
     }),
     card({
       id: "H-003",
       title: "Home screen in light mode",
       columnKey: "done",
-      platforms: [Platform.DESKTOP],
+      labels: ["platform:desktop"],
     }),
   ];
 }

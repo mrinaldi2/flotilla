@@ -96,7 +96,7 @@ describe("SettingsOverlay", () => {
     expect(screen.getByLabelText("Terminal font size")).toBeInTheDocument();
     expect(screen.getByLabelText("Terminal font")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: /^Dock badge/ })).toBeChecked();
-    expect(screen.getByRole("button", { description: "Show or hide Hermes" })).toHaveTextContent(
+    expect(screen.getByRole("button", { description: "Show or hide Flotilla" })).toHaveTextContent(
       "Not set",
     );
   });

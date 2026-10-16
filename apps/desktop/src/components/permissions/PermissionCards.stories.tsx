@@ -21,9 +21,9 @@ export const Waiting: Story = () => (
 );
 
 const origin = {
-  command: "hermesd board import --dry-run",
+  command: "flotillad board import --dry-run",
   pid: 4242,
-  process: "hermesd",
+  process: "flotillad",
   launched_from: "Terminal",
   cwd: "/Users/me/Developer/gravity",
 };
@@ -62,7 +62,7 @@ export const FromTerminalInABotWorkspace: Story = () => (
         pending: [
           ...pending,
           terminal({
-            cwd: "/Users/me/.thehermes/projects/gravity/bots/desktop-dev/workspace",
+            cwd: "/Users/me/.flotilla/projects/gravity/bots/desktop-dev/workspace",
             launched_from: "claude",
             bot: "Desktop Dev",
           }),

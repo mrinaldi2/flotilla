@@ -126,6 +126,13 @@
   color: var(--amber);
 }
 
+.board-card-stuck {
+  overflow: hidden;
+  color: var(--amber);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .board-card-foot {
   display: flex;
   align-items: center;
@@ -224,6 +231,11 @@
 
 .board-move-refused .board-move-mark {
   color: var(--red);
+}
+
+.board-move-override .board-move-mark,
+.board-move-override .board-move-reason {
+  color: var(--amber);
 }
 
 .board-move-reason {
