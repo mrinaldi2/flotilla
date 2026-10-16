@@ -93,12 +93,88 @@ describe("DevicesPanel", () => {
     const created = daemon.requests.find((r) => r.body.type === "create_device");
     expect(created?.body).toMatchObject({ name: "ci", capabilities: ["read", "control"] });
 
-    await user.click(screen.getByRole("button", { name: "Copy" }));
+    await user.click(screen.getByRole("button", { name: "Copy token" }));
     expect(writeText).toHaveBeenCalledWith("secret-token");
     expect(onToast).toHaveBeenCalledWith("info", "Token copied", expect.any(String));
 
     await user.click(screen.getByRole("button", { name: "Dismiss" }));
     expect(screen.queryByDisplayValue("secret-token")).not.toBeInTheDocument();
+  });
+
+  it("shows a pairing code for the daemon's Tailscale address, until dismissed", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn<(text: string) => Promise<void>>(() => Promise.resolve());
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+
+    const daemon = daemonWith([])
+      .onRequest("create_device", () => ({
+        type: "device",
+        req_id: "1",
+        device: fx.device({ id: "dev9", name: "phone" }),
+        token: "secret-token",
+      }))
+      .onRequest("get_config", () => ({
+        type: "config",
+        req_id: "2",
+        config: {
+          bind: ["127.0.0.1", "192.168.1.20", "100.126.133.52"],
+          port: 49777,
+          configured_port: 49777,
+          runtime: "pty",
+          auto_compact_window: null,
+          computer_name: "Studio Mac",
+          os: "macos",
+        },
+      }));
+    renderPanel(daemon);
+
+    await user.click(screen.getByText("+ New device"));
+    await user.type(screen.getByPlaceholderText("phone, laptop, ci-runner…"), "phone");
+    await user.click(screen.getByRole("button", { name: "Create device" }));
+
+    const qr = await screen.findByRole("img", {
+      name: "Pairing code for Studio Mac at 100.126.133.52",
+    });
+    expect(qr).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Copy pairing link" }));
+    expect(writeText).toHaveBeenCalledWith(
+      "flotilla://pair?host=100.126.133.52&port=49777&token=secret-token&name=Studio%20Mac&kind=mac",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Copy pairing link" })).not.toBeInTheDocument();
+  });
+
+  it("explains a loopback-only daemon instead of drawing a code", async () => {
+    const user = userEvent.setup();
+    const daemon = daemonWith([])
+      .onRequest("create_device", () => ({
+        type: "device",
+        req_id: "1",
+        device: fx.device({ id: "dev9", name: "phone" }),
+        token: "secret-token",
+      }))
+      .onRequest("get_config", () => ({
+        type: "config",
+        req_id: "2",
+        config: {
+          bind: ["127.0.0.1"],
+          port: 49777,
+          configured_port: 49777,
+          runtime: "pty",
+          auto_compact_window: null,
+        },
+      }));
+    renderPanel(daemon);
+
+    await user.click(screen.getByText("+ New device"));
+    await user.type(screen.getByPlaceholderText("phone, laptop, ci-runner…"), "phone");
+    await user.click(screen.getByRole("button", { name: "Create device" }));
+
+    expect(await screen.findByText(/your phone can’t reach this computer yet/)).toBeVisible();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue("secret-token")).toBeInTheDocument();
   });
 
   it("warns when the daemon returns no token", async () => {

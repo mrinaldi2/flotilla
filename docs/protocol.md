@@ -308,6 +308,9 @@ breaking wire-shape change; v1 clients must upgrade before connecting.
   `port` is what the daemon serves and points bots at; `configured_port` is what
   `flotillad.toml` asked for. They differ when the configured port was occupied
   and a fallback was negotiated, which also moves the bus `/mcp` URL.
+  `computer_name` (this computer's name as releases know it, or `null`) and `os`
+  (`macos`, `windows` or `linux`) let the desktop build a phone's pairing link
+  from the non-loopback `bind` addresses.
 
 ## Server pushes (no `req_id`)
 
@@ -389,7 +392,8 @@ Signal   { "id", "name", "source": "bot"|"manual", "project_id", "from_bot_id?",
 Diagnostics { "daemon_version", "protocol_version", "db_healthy", "runtime": {"kind","available","version?"},
               "delivery_backlog", "active_bots", "uptime_seconds" }
 Config   { "bind": ["127.0.0.1"], "port": 49777, "configured_port": 49777,
-           "runtime": "pty"|"double", "auto_compact_window": 250000|null }
+           "runtime": "pty"|"double", "auto_compact_window": 250000|null,
+           "computer_name": "Studio Mac"|null, "os": "macos"|"windows"|"linux" }
 Worker   { "id", "project_id", "name", "state": "queued"|"running"|"done"|"cancelled"|"expired"|"failed",
            "queue_position"?, "machine"?, "parent_bot_id", "parent_name"?, "brief", "task_id"?,
            "note"?, "bot_id"?, "created_at", "started_at"?, "finished_at"? }

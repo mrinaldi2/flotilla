@@ -33,6 +33,91 @@
   min-width: 0;
 }
 
+/* The phone's pairing code. The QR tile stays black on white in either
+   theme: a camera needs the contrast, and the quiet zone is inside it. */
+.pairing {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-top: 10px;
+  padding: 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.pairing-qr-code {
+  flex: none;
+  border-radius: 6px;
+}
+
+.pairing-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pairing-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.pairing-hint,
+.pairing-address,
+.pairing-status {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.pairing-status {
+  margin-top: 10px;
+}
+
+.pairing-hosts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: 12px;
+}
+
+.pairing-hosts legend {
+  margin-bottom: 4px;
+  padding: 0;
+  color: var(--text-dim);
+}
+
+.pairing-network {
+  color: var(--text-faint);
+}
+
+.pairing-warning {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg-raised);
+  border: 1px solid var(--amber);
+  border-radius: 8px;
+}
+
+.pairing-warning p {
+  margin: 0;
+}
+
+.pairing-warning code {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
 .cap-checks {
   display: flex;
   align-items: center;
