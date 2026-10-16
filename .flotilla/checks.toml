@@ -1,4 +1,4 @@
-# .flotilla/checks.toml — mrinaldi2/gravity (H-279 draft, Architect 2026-10-10)
+# .flotilla/checks.toml — mrinaldi2/flotilla (H-279 draft, Architect 2026-10-10)
 #
 # Read from the PR's BASE (H-270). Each reported head queues the checks whose
 # `paths` match what the PR changes (no `paths` = every change). Results come
