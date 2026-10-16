@@ -57,13 +57,14 @@ pub fn receive(app: &Arc<AppState>, peer: &Peer, frame: &Value) {
     super::in_background("project_trash_serve", move || {
         let (outcome, leftovers, kept) = decided;
         let report = run::trash(&app, &leftovers);
-        let mut summary = format!("{}: {}", project.name, report.sentence());
+        let name = crate::db::Db::display_project_name(&project);
+        let mut summary = format!("{name}: {}", report.sentence());
         if let Some(why) = &kept {
             summary.push_str(&format!(" The project stays here: {why}."));
         }
         app.events.push(Push::notice(
             "info",
-            format!("{} deleted on {}", project.name, peer.name),
+            format!("{name} deleted on {}", peer.name),
             summary.clone(),
         ));
         app.peers
