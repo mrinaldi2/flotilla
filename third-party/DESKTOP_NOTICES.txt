@@ -89434,11 +89434,11 @@ IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
 ========================================================================
-Rust toolchain: standard-library rustc 1.99.0 (b940084d7 2026-09-28)
+Rust toolchain: standard-library rustc 1.99.1 (58cf8f9c3 2026-10-13)
 Declared license: MIT OR Apache-2.0; upstream component exceptions below
-Source: https://static.rust-lang.org/dist/rustc-1.99.0-src.tar.xz
-Source archive SHA-256: cc41916a8c84f5d9ec4f55561b44e39f43b647b133f8a6f51be9ea13c83f7036
-Official library copyright inventory: https://static.rust-lang.org/dist/rustc-1.99.0-aarch64-apple-darwin.tar.xz
+Source: https://static.rust-lang.org/dist/rustc-1.99.1-src.tar.xz
+Source archive SHA-256: 6451598a99e77f07571960f6b21d577399d3a30f33e80cbd2e3a4aae6535d265
+Official library copyright inventory: https://static.rust-lang.org/dist/rustc-1.99.1-aarch64-apple-darwin.tar.xz
 Includes upstream platform/build dependencies conservatively.
 Unmodified third-party sources are available from each versioned crate URL below.
 MPL components are available in source form under their included MPL terms.
