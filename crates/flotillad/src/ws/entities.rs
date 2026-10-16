@@ -90,15 +90,15 @@ impl Conn {
         Ok(())
     }
 
-    /// Archive a project and every bot in it. Archival, not destructive: see
-    /// `projectmgmt::archive_project`.
+    /// Delete a project: its rows archived, what it left on disk moved to
+    /// the trash. See `projectmgmt::delete_project`.
     pub(super) fn delete_project(&self, req_id: &Value, req: &Value) -> anyhow::Result<()> {
         let project_id = Self::str_field(req, "project_id")?;
         let Some(project) = self.app.db.get_live_project(project_id)? else {
             self.reply_err(req_id, "not_found", "project not found or already deleted");
             return Ok(());
         };
-        projectmgmt::archive_project(&self.app, &project, &Actor::User)?;
+        projectmgmt::delete_project(&self.app, &project, &Actor::User)?;
         self.send(json!({ "type": "ok", "req_id": req_id }));
         Ok(())
     }

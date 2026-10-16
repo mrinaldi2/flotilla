@@ -36,6 +36,7 @@ pub use releases::NewRelease;
 pub use routines::RoutineLimits;
 pub use runs::NewRun;
 pub use signals::NewSignal;
+pub use trash_orders::TrashOrder;
 pub use workers::NewWorker;
 
 pub mod agent_talk;
@@ -140,6 +141,7 @@ mod task_views;
 mod tasks;
 #[cfg(test)]
 mod tests;
+mod trash_orders;
 mod typed_prompts;
 mod workers;
 #[cfg(test)]

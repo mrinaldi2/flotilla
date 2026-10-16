@@ -240,6 +240,9 @@ impl PeerHub {
         tracing::info!(peer_id, "peer link up");
         let _ = app.db.touch_peer(&peer_id);
         push_stand_ins(&app, &peer_id);
+        // A deleted project's ask first, while that computer still knows
+        // the link the sync below may drop.
+        crate::project_trash::peer::link_up(&app, &peer_id);
         // Whatever changed in linked projects while the link was down.
         {
             let (app, peer_id) = (app.clone(), peer_id.clone());

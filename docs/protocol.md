@@ -170,7 +170,10 @@ Codes: `auth_failed`, `unsupported_version`, `not_found`, `invalid_request`,
 | `set_project_repo` | `project_id, url \| null, branch?` (default `main`) | `project`: the shared git repository workers check out and push to; `url: null` clears it. Bots' prompts are rewritten for their next start |
 | `set_project_permission_profile` | `project_id, profile` (`standard` \| `trusted` \| `full`) | `project` (`permission_profile`). **approve** grant. What the project's bots may do without asking (H-031); its local bots restart to pick it up |
 | `set_bot_permission_extras` | `bot_id, extras: [publish \| daemon_restart \| app_restart \| install \| release_main]` | `bot` (`permission_extras`). **approve** grant. Replaces the bot's extras, which apply in Trusted and Full (`release_main`, pushing and merging to `main`, in every profile); the bot restarts |
-| `delete_project` | `project_id` | `ok` — archives the project and every bot in it; see Semantics |
+| `delete_project` | `project_id` | `ok` — archives the project and every bot in it, then moves what it left on disk to the trash; see Semantics. Owner only (the app's ticket or a paired device) |
+| `project_delete_preview` | `project_id` | `project_delete_preview`: `{ preview: { project_id, project_name, groups: [{ group, label, bytes, count, items: [{ path, bytes }] }], total_bytes, refused: [{ path, reason }], bin, peers: [{ peer_id, name, online }] } }` — what `delete_project` would move to the trash, by kind (`project_files`, `session_history`, `git_cache`, `worktrees`, `saved_work`). Moves nothing. Owner only |
+| `deleted_projects_preview` | – | `deleted_projects_preview`: `{ preview: { projects: [leftovers as above, with deleted_at], total_bytes, bin, linked: [{ project_name, peer_name, state }] } }` — what projects deleted before left on this computer, and the linked computers that haven't confirmed their half. Owner only |
+| `deleted_projects_cleanup` | – | `deleted_projects_cleaned`: `{ moved: [{ group, path, bytes, bin }], moved_bytes, skipped: [{ path, reason }], bin, summary }` — moves what `deleted_projects_preview` lists to the trash. Owner only |
 | `list_bots` | `project_id?` | `bots` |
 | `list_bot_activity` | `project_id?` | `bot_activity` — one preview line per bot; see Semantics |
 | `create_bot` | `project_id, name?, description?, instructions?, avatar?, runtime?, peer_id?` | `bot` (starts running immediately). With `peer_id`, the peer creates the bot in the project linked with this one (`runtime` defaults to the peer's `default_bot_runtime`), and the reply is its stand-in here, with `peer` set; `not_linked` when the project is not linked through that peer, `unavailable` when it is offline |
@@ -598,9 +601,39 @@ valid credentials for a project the user believes is gone.
 
 Like a bot, a project is archived rather than deleted (`bot.project_id` and
 `conversation.project_id` are foreign keys into `project`) and its name is
-tombstoned so it can be reused immediately. Its directory is kept; the
-workspaces inside it are reclaimed by retention on the usual
-`archived_bot_days` schedule.
+tombstoned so it can be reused immediately.
+
+What the project left on disk is then moved to the trash (0.19.0), never
+erased: its folder `~/.flotilla/projects/<dir_name>/` with every bot folder;
+each bot's Claude Code session history `~/.claude/projects/<key>` (the
+workspace path with every character but an ASCII letter or digit replaced by
+`-`; a longer key only when its transcripts say they started inside the
+workspace) and a Codex bot's session file for its thread; the git cache
+`~/.flotilla/cache/repos/<project-id>.git`; saved work
+`~/.flotilla/salvage/<project-id>`; and its bots' `<repo>-wt-<bot>` worktrees
+under the trusted paths, pruned from their main clone, unless a live bot of
+another project could own the same tree.
+
+- The trash is the OS one: the macOS Trash (`NSFileManager`), the Windows
+  Recycle Bin (local fixed drives only), the freedesktop trash on a Linux
+  desktop. A headless box, an item the OS trash refuses, or
+  `trash.os_trash = false` uses `~/.flotilla/trash/<date>-<dir_name>/<kind>/`
+  instead, which the daily retention empties after `trash.fallback_days`
+  (default 30).
+- Each item must lie in its known root, spelled from that root down with no
+  `..` and no link or junction in any part, and resolve inside it: a crafted
+  `workspace_path` or a planted link is refused and reported, never
+  followed. A bot whose workspace isn't `projects/<dir>/bots/<bot>/workspace`
+  in this home has nothing trashed for it.
+- The delete stops the bots first; anything a process still holds after
+  `trash.held_wait_seconds` (a working folder or an open file) is left and
+  reported. A notice says what moved and what was left.
+- Linked computers are asked to do the same with their half; see "Linked
+  projects" in [peer-bots.md](peer-bots.md).
+- What projects deleted before 0.19 left is found the same way and moved only
+  on the owner's word: `flotillad cleanup deleted-projects [--yes]` (asked of
+  the running daemon, allowed in the app like every owner command) or
+  Settings → Storage → Clean up deleted projects.
 
 ### Deletion is archival
 

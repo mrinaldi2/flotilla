@@ -333,6 +333,7 @@ impl Conn {
             "set_project_repo" => self.set_project_repo(&req_id, req),
             pr if super::prs::KINDS.contains(&pr) => self.pr_request(pr, &req_id, req),
             "disk_report" | "cleanup_now" => self.cleanup_request(kind, &req_id, req),
+            t if super::project_trash::KINDS.contains(&t) => self.trash_request(t, &req_id, req),
             "set_project_extra_repos" => self.set_project_extra_repos(&req_id, req),
             "set_project_permission_profile" => self.set_project_permission_profile(&req_id, req),
             "set_bot_permission_extras" => self.set_bot_permission_extras(&req_id, req),

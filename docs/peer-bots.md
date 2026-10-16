@@ -182,6 +182,19 @@ and stays that way as the team changes.
   History is kept. If the peer is offline, it drops its half when the link
   next comes up. Revoking a peer unlinks every project linked through it.
   Archiving a linked project unlinks it.
+- **Deleting** a linked project (0.19.0) asks every computer it is linked
+  with to trash that computer's half, with the `project_trash` event. The
+  ask is written to the database before the links go, sent at once, and
+  again first thing each time the link comes back, so a computer offline at
+  the delete still hears it. The receiver deletes the bots the deleted
+  project's bots created there, and when what is left is only a mirror (no
+  bot of its own, no board there, no other link) deletes its project too;
+  everything that removes goes to its trash, found and confined there as
+  for a local delete (see "Deleting a project" in `protocol.md`). It answers
+  `project_trash_done`. A computer before 0.19 ignores the event: after
+  `trash.peer_attempts` asks on a live link (every `trash.peer_resend_minutes`)
+  the ask ends unconfirmed and the owner is told how many computers didn't
+  confirm.
 
 Linking: the owner calls `link_project` on one daemon. It sends the peer a
 `link_project` frame with its project's id, name and roster. The peer checks
@@ -226,6 +239,8 @@ Peer frames (ids are the sender's own, except `bot_id` on `update_bot` and
 | `delete_bot` | `bot_id, reason?, as_bot_id?` | `{}` |
 | `project_roster` (event) | `project: { project_id, project_name, bots }` | – |
 | `project_links` (event) | `links: [{ project_id, remote_project_id }]` | – |
+| `project_trash` (event) | `order_id, project_id` (the receiver's), `from_project_id, project_name` | – |
+| `project_trash_done` (event) | `order_id, outcome` (`trashed` \| `kept` \| `not_linked`), `moved_bytes, skipped, summary` | – |
 
 A peer acts only on projects linked through it, except `list_projects` and
 `link_project`. A refusal carries a `code` (`conflict`, `not_linked`,

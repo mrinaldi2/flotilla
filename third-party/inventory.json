@@ -4,9 +4,9 @@
     "x86_64-pc-windows-msvc"
   ],
   "inputs": {
-    "Cargo.lock": "adb5f13f0529f506d9a1bc93a0056952021f0908f45cd2cc6a2b782457127d99",
+    "Cargo.lock": "1ee7fc01d62558810696bdc25cbcbea2d6ed294832e6ac37f7687a52e0777ee5",
     "Cargo.toml": "f35fbb365e4164b1a24242070c05aa1ec886210ac49b5e27ebe5add00e419497",
-    "crates/flotillad/Cargo.toml": "3349b94c21a1f3b50885098fe242654f7d5e56ad231428c0ea793a0ff9ef124a",
+    "crates/flotillad/Cargo.toml": "76993ab8b9fda68b0f444223773136d316dfb1f9300f120c18378b1a0cc04fc9",
     "crates/bus/Cargo.toml": "5819fe1a3e52f7e68addf67e02f42145ff216cdd1e406fdee53b06df4af938cc",
     "apps/desktop/src-tauri/Cargo.lock": "8d64bc9c21885a3f4420a97f3bb1f3d4c7cf5ab14703e9b752480d59d37c43be",
     "apps/desktop/src-tauri/Cargo.toml": "e3f89f0de981403551d1218f1f6f9b4ea7758561ff46a1bb87df27efd80c0424",
@@ -60,8 +60,8 @@
     "third-party/overrides/index.json": "7d1fb16e6984e5d8077696b8caa395c6be08db487ba9c30c2eab559cb724f7bb"
   },
   "outputs": {
-    "third-party/DAEMON_NOTICES.txt": "0c536d55badf4547e4346c415a3754456ff4b83688474e2966af2ac051cda660",
-    "third-party/DESKTOP_NOTICES.txt": "a49bc6adc238c99d723a6474f0e2caeaeba188225d9f4c26118496d14519bbea",
+    "third-party/DAEMON_NOTICES.txt": "ecf03d64d641cb5e291b5cee324900318e62969e3f2c71b72e8b0eca8e956665",
+    "third-party/DESKTOP_NOTICES.txt": "24a68d9e112c34afd0def1de0654632b96f419500f283ab62af172224d119f91",
     "apps/marketing/public/THIRD_PARTY_NOTICES.txt": "f9e1ca1d1471053baa6e874130438f03fc2ff76ce441239ff2161d4522b57f0b"
   },
   "packages": [
@@ -7710,6 +7710,7 @@
       "version": "0.6.4",
       "license": "MIT",
       "components": {
+        "daemon": "runtime",
         "desktop": "runtime"
       },
       "source": "https://static.crates.io/crates/objc2/objc2-0.6.4.crate",
@@ -7950,6 +7951,7 @@
       "version": "4.1.0",
       "license": "MIT",
       "components": {
+        "daemon": "runtime",
         "desktop": "runtime"
       },
       "source": "https://static.crates.io/crates/objc2-encode/objc2-encode-4.1.0.crate",
@@ -7986,6 +7988,7 @@
       "version": "0.3.2",
       "license": "MIT",
       "components": {
+        "daemon": "runtime",
         "desktop": "runtime"
       },
       "source": "https://static.crates.io/crates/objc2-foundation/objc2-foundation-0.3.2.crate",
@@ -12181,6 +12184,23 @@
     },
     {
       "ecosystem": "Rust",
+      "name": "trash",
+      "version": "5.2.9",
+      "license": "MIT",
+      "components": {
+        "daemon": "runtime"
+      },
+      "source": "https://static.crates.io/crates/trash/trash-5.2.9.crate",
+      "checksum": "be89b3fe156965d29ac4f8522f3a640c655affdd9f21cb4f36857f0c92c00317",
+      "notices": [
+        {
+          "path": "LICENSE.txt",
+          "sha256": "1ea4646aa1951cfea62ddd5aaac4dc3dbb84fa31feb66a8b3a51fc0cd395d0e9"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
       "name": "tray-icon",
       "version": "0.24.2",
       "license": "MIT OR Apache-2.0",
@@ -12586,6 +12606,18 @@
           "sha256": "b38f11f6096706e6de553dabe2a7ed142d59b6fa8c97e290c67496154745cdd5"
         }
       ]
+    },
+    {
+      "ecosystem": "Rust",
+      "name": "urlencoding",
+      "version": "2.1.3",
+      "license": "MIT",
+      "components": {
+        "daemon": "other-platform"
+      },
+      "source": "https://static.crates.io/crates/urlencoding/urlencoding-2.1.3.crate",
+      "checksum": "daf8dba3b7eb870caf1ddeed7bc9d2a049f3cfdfae7cb521b087cc33ae4c49da",
+      "notices": []
     },
     {
       "ecosystem": "Rust",
@@ -13190,6 +13222,27 @@
     },
     {
       "ecosystem": "Rust",
+      "name": "windows",
+      "version": "0.62.2",
+      "license": "MIT OR Apache-2.0",
+      "components": {
+        "daemon": "runtime"
+      },
+      "source": "https://static.crates.io/crates/windows/windows-0.62.2.crate",
+      "checksum": "527fadee13e0c05939a6a05d5bd6eec6cd2e3dbd648b9f8e447c6518133d8580",
+      "notices": [
+        {
+          "path": "license-apache-2.0",
+          "sha256": "c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b"
+        },
+        {
+          "path": "license-mit",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
       "name": "windows-collections",
       "version": "0.2.0",
       "license": "MIT OR Apache-2.0",
@@ -13198,6 +13251,27 @@
       },
       "source": "https://static.crates.io/crates/windows-collections/windows-collections-0.2.0.crate",
       "checksum": "3beeceb5e5cfd9eb1d76b381630e82c4241ccd0d27f1a39ed41b2760b255c5e8",
+      "notices": [
+        {
+          "path": "license-apache-2.0",
+          "sha256": "c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b"
+        },
+        {
+          "path": "license-mit",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "name": "windows-collections",
+      "version": "0.3.2",
+      "license": "MIT OR Apache-2.0",
+      "components": {
+        "daemon": "runtime"
+      },
+      "source": "https://static.crates.io/crates/windows-collections/windows-collections-0.3.2.crate",
+      "checksum": "23b2d95af1a8a14a3c7367e1ed4fc9c20e0a26e79551b1454d72583c97cc6610",
       "notices": [
         {
           "path": "license-apache-2.0",
@@ -13236,12 +13310,21 @@
       "version": "0.62.2",
       "license": "MIT OR Apache-2.0",
       "components": {
-        "daemon": "other-platform",
+        "daemon": "runtime",
         "desktop": "other-platform"
       },
       "source": "https://static.crates.io/crates/windows-core/windows-core-0.62.2.crate",
       "checksum": "b8e83a14d34d0623b51dce9581199302a221863196a1dde71a7663a4c2be9deb",
-      "notices": []
+      "notices": [
+        {
+          "path": "license-apache-2.0",
+          "sha256": "c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b"
+        },
+        {
+          "path": "license-mit",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
     },
     {
       "ecosystem": "Rust",
@@ -13266,11 +13349,32 @@
     },
     {
       "ecosystem": "Rust",
+      "name": "windows-future",
+      "version": "0.3.2",
+      "license": "MIT OR Apache-2.0",
+      "components": {
+        "daemon": "runtime"
+      },
+      "source": "https://static.crates.io/crates/windows-future/windows-future-0.3.2.crate",
+      "checksum": "e1d6f90251fe18a279739e78025bd6ddc52a7e22f921070ccdc67dde84c605cb",
+      "notices": [
+        {
+          "path": "license-apache-2.0",
+          "sha256": "c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b"
+        },
+        {
+          "path": "license-mit",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
       "name": "windows-implement",
       "version": "0.60.2",
       "license": "MIT OR Apache-2.0",
       "components": {
-        "daemon": "other-platform",
+        "daemon": "build/test",
         "desktop": "build/test"
       },
       "source": "https://static.crates.io/crates/windows-implement/windows-implement-0.60.2.crate",
@@ -13292,7 +13396,7 @@
       "version": "0.59.3",
       "license": "MIT OR Apache-2.0",
       "components": {
-        "daemon": "other-platform",
+        "daemon": "build/test",
         "desktop": "build/test"
       },
       "source": "https://static.crates.io/crates/windows-interface/windows-interface-0.59.3.crate",
@@ -13374,6 +13478,27 @@
     },
     {
       "ecosystem": "Rust",
+      "name": "windows-numerics",
+      "version": "0.3.1",
+      "license": "MIT OR Apache-2.0",
+      "components": {
+        "daemon": "runtime"
+      },
+      "source": "https://static.crates.io/crates/windows-numerics/windows-numerics-0.3.1.crate",
+      "checksum": "6e2e40844ac143cdb44aead537bbf727de9b044e107a0f1220392177d15b0f26",
+      "notices": [
+        {
+          "path": "license-apache-2.0",
+          "sha256": "c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b"
+        },
+        {
+          "path": "license-mit",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
       "name": "windows-registry",
       "version": "0.6.1",
       "license": "MIT OR Apache-2.0",
@@ -13420,7 +13545,7 @@
       "version": "0.4.1",
       "license": "MIT OR Apache-2.0",
       "components": {
-        "daemon": "build/test",
+        "daemon": "runtime",
         "desktop": "other-platform"
       },
       "source": "https://static.crates.io/crates/windows-result/windows-result-0.4.1.crate",
@@ -13463,7 +13588,7 @@
       "version": "0.5.1",
       "license": "MIT OR Apache-2.0",
       "components": {
-        "daemon": "build/test",
+        "daemon": "runtime",
         "desktop": "other-platform"
       },
       "source": "https://static.crates.io/crates/windows-strings/windows-strings-0.5.1.crate",
@@ -13633,6 +13758,27 @@
       },
       "source": "https://static.crates.io/crates/windows-threading/windows-threading-0.1.0.crate",
       "checksum": "b66463ad2e0ea3bbf808b7f1d371311c80e115c0b71d60efc142cafbcfb057a6",
+      "notices": [
+        {
+          "path": "license-apache-2.0",
+          "sha256": "c16f8dcf1a368b83be78d826ea23de4079fe1b4469a0ab9ee20563f37ff3d44b"
+        },
+        {
+          "path": "license-mit",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "ecosystem": "Rust",
+      "name": "windows-threading",
+      "version": "0.2.1",
+      "license": "MIT OR Apache-2.0",
+      "components": {
+        "daemon": "runtime"
+      },
+      "source": "https://static.crates.io/crates/windows-threading/windows-threading-0.2.1.crate",
+      "checksum": "3949bd5b99cafdf1c7ca86b43ca564028dfe27d66958f2470940f73d86d75b37",
       "notices": [
         {
           "path": "license-apache-2.0",

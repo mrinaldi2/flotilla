@@ -178,6 +178,8 @@ pub fn spawn_workers(app: &Arc<AppState>) {
     tokio::spawn(crate::peer::chat::forward(app.clone()));
     tokio::spawn(crate::decisions::run_watch(app.clone()));
     tokio::spawn(crate::workers::run(app.clone()));
+    // Linked computers asked to trash a deleted project's half (0.19.0).
+    crate::project_trash::peer::spawn_sweeper(app);
 
     if app.cfg.retention.enabled {
         let app = app.clone();
@@ -214,6 +216,11 @@ pub fn spawn_workers(app: &Arc<AppState>) {
                     }
                     Ok(_) => {}
                     Err(e) => tracing::warn!(error = %e, "workspace reclamation failed"),
+                }
+                // The trash folder, for what the OS trash couldn't take.
+                let emptied = crate::trash::sweep(&app.cfg);
+                if emptied > 0 {
+                    tracing::info!(buckets = emptied, "trash folder emptied");
                 }
             }
         });
