@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { NotifyLevel } from "../../protocol/entities";
 import { errText } from "../../util";
+import PairingCode from "./PairingCode";
 import type { IssuedToken } from "./useDevices";
 
 interface TokenRevealProps {
@@ -9,16 +10,20 @@ interface TokenRevealProps {
   readonly onToast: (level: NotifyLevel, title: string, body: string) => void;
 }
 
-/** One-time device token: shown once, never returned by the daemon again. */
+/**
+ * One-time device token: shown once, never returned by the daemon again,
+ * with the code a phone pairs from. Dismissing it drops both.
+ */
 export default function TokenReveal({
   issued,
   onDismiss,
   onToast,
 }: TokenRevealProps): ReactElement {
-  const copy = async (): Promise<void> => {
+  // The toasts name what was copied, never the secret itself.
+  const copy = async (text: string, title: string, body: string): Promise<void> => {
     try {
-      await navigator.clipboard.writeText(issued.token);
-      onToast("info", "Token copied", "The device token is on your clipboard.");
+      await navigator.clipboard.writeText(text);
+      onToast("info", title, body);
     } catch (error) {
       onToast("error", "Copy failed", errText(error));
     }
@@ -43,15 +48,26 @@ export default function TokenReveal({
           type="button"
           className="btn btn-small"
           onClick={() => {
-            void copy();
+            void copy(issued.token, "Token copied", "The device token is on your clipboard.");
           }}
         >
-          Copy
+          Copy token
         </button>
         <button type="button" className="btn btn-small" onClick={onDismiss}>
           Dismiss
         </button>
       </div>
+      <PairingCode
+        token={issued.token}
+        pairing={issued.pairing}
+        onCopyLink={(link) => {
+          void copy(
+            link,
+            "Pairing link copied",
+            "It holds the device token: paste it only on your phone.",
+          );
+        }}
+      />
     </div>
   );
 }
