@@ -176,6 +176,10 @@ async fn main() -> anyhow::Result<()> {
             flotillad::peer::cli::run(&cfg, &args[1..]).await?;
             return Ok(());
         }
+        Some("cleanup") => {
+            flotillad::project_trash::cli::run(&cfg, &args[1..]).await?;
+            return Ok(());
+        }
         Some("service") => {
             let paths =
                 flotillad::service::ServicePaths::new(cfg.home.clone(), cfg.user_home.clone());

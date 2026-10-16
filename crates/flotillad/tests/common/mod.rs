@@ -42,6 +42,7 @@ pub mod supersede;
 pub mod tasks;
 pub mod team;
 pub mod transcripts;
+pub mod trash;
 pub mod waits;
 
 pub use waits::{frame_wait, setup_wait, timeout_scale};
@@ -87,6 +88,12 @@ pub async fn spawn_daemon_on(
     // Release blockers move when a test steps them: the 5 s ticker, with a
     // memory of its own, would push a second release_updated (H-333).
     cfg.release_watch_by_hand_for_tests(true);
+    // The user's home is the test's own: a delete trashes Claude Code's
+    // history there, and no test may touch the real one's (0.19.0).
+    cfg.user_home = home.path().join("user");
+    std::fs::create_dir_all(&cfg.user_home).expect("user home");
+    // A held item is left after this long, not the product's 10 s.
+    cfg.trash.held_wait_seconds = 2;
     tweak(&mut cfg);
 
     // SafeGit's home is the process's, and the first daemon names it: name

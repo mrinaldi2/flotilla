@@ -110,6 +110,12 @@ pub(super) fn event(app: &Arc<AppState>, peer_id: &str, frame: &Value) {
         "owner_action_output" => super::owner_actions::receive_output(app, peer_id, frame),
         "project_attention_changed" => crate::overview::receive_changed(app, peer_id),
         "owner_thread_updated" => crate::owner_threads::receive_updated(app, peer_id, frame),
+        crate::project_trash::peer::ORDER => {
+            crate::project_trash::serve::receive(app, &peer, frame)
+        }
+        crate::project_trash::peer::DONE => {
+            crate::project_trash::peer::receive_done(app, peer_id, frame)
+        }
         #[cfg(test)]
         "test_panic" => panic!("a test peer event panicked"),
         #[cfg(test)]

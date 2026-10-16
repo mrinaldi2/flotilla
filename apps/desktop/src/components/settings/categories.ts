@@ -1,8 +1,14 @@
-import { Activity, Info, Plug, Settings2, Smartphone } from "lucide-react";
+import { Activity, HardDrive, Info, Plug, Settings2, Smartphone } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 /** Categories in the settings overlay's left rail, in display order. */
-export type SettingsCategory = "general" | "connection" | "devices" | "diagnostics" | "about";
+export type SettingsCategory =
+  | "general"
+  | "connection"
+  | "devices"
+  | "storage"
+  | "diagnostics"
+  | "about";
 
 export const SETTINGS_CATEGORIES: readonly {
   id: SettingsCategory;
@@ -12,6 +18,7 @@ export const SETTINGS_CATEGORIES: readonly {
   { id: "general", label: "General", icon: Settings2 },
   { id: "connection", label: "Connection", icon: Plug },
   { id: "devices", label: "Devices", icon: Smartphone },
+  { id: "storage", label: "Storage", icon: HardDrive },
   { id: "diagnostics", label: "Diagnostics", icon: Activity },
   { id: "about", label: "About", icon: Info },
 ];

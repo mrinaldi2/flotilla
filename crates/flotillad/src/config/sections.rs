@@ -87,3 +87,36 @@ impl Default for SchedulerConfig {
         }
     }
 }
+
+/// Where a deleted project's leftovers go (0.19.0): the OS trash when there
+/// is one, else `<home>/trash/<date>-<project-dir>/`, kept `fallback_days`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TrashConfig {
+    /// Use the macOS Trash, the Windows Recycle Bin or the freedesktop
+    /// trash. Off: everything goes to the trash folder in the home.
+    pub os_trash: bool,
+    /// How long the trash folder in the home keeps what it holds; swept
+    /// with the daily retention.
+    pub fallback_days: i64,
+    /// How many times a linked computer is asked, on a live link, to trash
+    /// its half of a deleted project before it counts as not confirming.
+    pub peer_attempts: i64,
+    /// Minutes between those asks while it doesn't answer.
+    pub peer_resend_minutes: i64,
+    /// How long a delete waits for the project's stopped sessions to let go
+    /// of their files before it leaves what they still hold.
+    pub held_wait_seconds: u64,
+}
+
+impl Default for TrashConfig {
+    fn default() -> Self {
+        Self {
+            os_trash: true,
+            fallback_days: 30,
+            peer_attempts: 3,
+            peer_resend_minutes: 15,
+            held_wait_seconds: 10,
+        }
+    }
+}

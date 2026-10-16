@@ -70,6 +70,7 @@ describe("ProjectView", () => {
     expect(within(dialog).getByText(/2 bots are stopped and archived/)).toBeInTheDocument();
     expect(onDelete).not.toHaveBeenCalled();
 
+    await user.type(within(dialog).getByLabelText("Type Acme to delete it"), "Acme");
     await user.click(within(dialog).getByRole("button", { name: "Delete project" }));
     expect(onDelete).toHaveBeenCalledWith("p1");
   });

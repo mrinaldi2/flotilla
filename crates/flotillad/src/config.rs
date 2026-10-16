@@ -11,7 +11,7 @@ mod task_limits;
 mod test_support;
 
 pub use overridden::{home_notice, home_override_var};
-pub use sections::{DeliveryConfig, RetentionConfig, SchedulerConfig};
+pub use sections::{DeliveryConfig, RetentionConfig, SchedulerConfig, TrashConfig};
 pub use task_limits::{TaskLimits, TaskLimitsConfig};
 
 #[cfg(test)]
@@ -78,6 +78,10 @@ pub struct Config {
     /// See [`Config::release_watch_by_hand_for_tests`].
     #[serde(skip)]
     pub(crate) release_watch_by_hand: bool,
+    /// Ignores a linked computer's `project_trash` ask, as a computer from
+    /// before 0.19 does. See [`Config::ignore_trash_asks_for_tests`].
+    #[serde(skip)]
+    pub(crate) ignore_trash_asks: bool,
     /// `pty` (each bot's saved CLI) or `double` (deterministic test runtime).
     pub runtime: RuntimeKind,
     pub claude_bin: String,
@@ -148,6 +152,8 @@ pub struct Config {
     /// header (native clients) and tauri/localhost origins are always allowed.
     pub allowed_origins: Vec<String>,
     pub retention: RetentionConfig,
+    /// Where a deleted project's leftovers go; see [`crate::trash`].
+    pub trash: TrashConfig,
     /// Each bot's own browser. See [`crate::browser`].
     pub browser: crate::browser::BrowserConfig,
     /// Serving release builds on the tailnet (H-020 §6.6).
@@ -187,6 +193,7 @@ impl Default for Config {
             disk_free_for_tests: None,
             merge_queue_by_hand: false,
             release_watch_by_hand: false,
+            ignore_trash_asks: false,
             runtime: RuntimeKind::Pty,
             claude_bin: "claude".to_string(),
             claude_args: Vec::new(),
@@ -219,6 +226,7 @@ impl Default for Config {
             scrollback_bytes: 1_048_576,
             allowed_origins: Vec::new(),
             retention: RetentionConfig::default(),
+            trash: TrashConfig::default(),
             user_home: dirs_home(),
         }
     }

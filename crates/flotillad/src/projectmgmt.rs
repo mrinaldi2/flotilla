@@ -1,4 +1,6 @@
-//! Project lifecycle: creation, renaming, and archival deletion.
+//! Project lifecycle: creation, renaming, and deletion: the rows archived,
+//! and what the project left on disk moved to the trash
+//! ([`crate::project_trash`]).
 //!
 //! A project owns a directory on disk and every bot inside it, so the two
 //! mutations here are careful about different things. A rename must not touch
@@ -103,6 +105,40 @@ pub fn rename_project(
     });
     tracing::info!(project_id = %renamed.id, from = %project.name, to = %name, "project renamed");
     Ok(renamed)
+}
+
+/// Delete a project: tell its linked computers (before the links go),
+/// archive it with every bot, then move what it left on disk to the trash
+/// on a thread of its own, the owner told what moved once it is done.
+pub fn delete_project(
+    app: &Arc<AppState>,
+    project: &Project,
+    actor: &Actor<'_>,
+) -> anyhow::Result<()> {
+    crate::project_trash::peer::record(app, project);
+    archive_project(app, project, actor)?;
+    let (app, id) = (app.clone(), project.id.clone());
+    crate::project_trash::in_background("project_delete_trash", move || {
+        let Ok(Some(archived)) = app.db.get_project(&id) else {
+            return;
+        };
+        let found = crate::project_trash::collect::collect(&app, &archived);
+        let report = crate::project_trash::run::trash(&app, &found);
+        if report.moved.is_empty() && report.skipped.is_empty() {
+            return;
+        }
+        let level = if report.skipped.is_empty() {
+            "info"
+        } else {
+            "warn"
+        };
+        app.events.push(Push::notice(
+            level,
+            format!("{} cleaned up", Db::display_project_name(&archived)),
+            report.sentence(),
+        ));
+    });
+    Ok(())
 }
 
 /// Archive a project and every bot in it.

@@ -33,6 +33,9 @@ futures = { workspace = true }
 bytes = { workspace = true }
 tokio-tungstenite = "0.24"
 base64 = "0.22"
+# Moving a deleted project's leftovers to the OS trash (macOS Trash,
+# Windows Recycle Bin, freedesktop trash).
+trash = "5.2"
 
 [features]
 # Test-only switches the integration tests turn on through the dev-dependency

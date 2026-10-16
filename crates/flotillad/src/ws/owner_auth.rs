@@ -59,6 +59,9 @@ pub(super) fn owner_driven(kind: &str) -> bool {
     OWNER_DRIVEN.contains(&kind)
         || CREDENTIALS.contains(&kind)
         || super::prs::OWNER_ONLY.contains(&kind)
+        // What a delete moves to the trash lists the owner's folders, and
+        // the cleanup moves them (0.19.0).
+        || super::project_trash::KINDS.contains(&kind)
 }
 
 impl Conn {
@@ -94,6 +97,8 @@ mod tests {
         assert!(owner_driven("update_bot"));
         assert!(owner_driven("delete_project"));
         assert!(owner_driven("release_send_to_device"));
+        assert!(owner_driven("project_delete_preview"));
+        assert!(owner_driven("deleted_projects_cleanup"));
         for kind in CREDENTIALS {
             assert!(owner_driven(kind), "{kind}");
         }

@@ -49,6 +49,7 @@ pub mod peer;
 mod permissions;
 pub mod pr_cli;
 pub mod project_roles;
+pub mod project_trash;
 pub mod projectmgmt;
 pub mod prs;
 pub mod push;
@@ -74,6 +75,7 @@ pub mod terminal;
 #[cfg(test)]
 pub(crate) mod test_logs;
 pub mod tool_path;
+pub mod trash;
 pub mod workers;
 pub mod worktree;
 pub mod ws;

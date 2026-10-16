@@ -33,4 +33,11 @@ impl Config {
     pub fn release_watch_by_hand_for_tests(&mut self, on: bool) {
         self.release_watch_by_hand = on;
     }
+
+    /// Answers no `project_trash` ask from a linked computer, as a computer
+    /// from before 0.19 ignores an event it doesn't know.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn ignore_trash_asks_for_tests(&mut self, on: bool) {
+        self.ignore_trash_asks = on;
+    }
 }
