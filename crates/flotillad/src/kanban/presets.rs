@@ -10,6 +10,12 @@ use super::facts::Fact;
 use super::flow::{ColumnPolicy, EntryRule, Mover};
 use super::model::{BoardFlow, ColumnCategory, ColumnKind, Size, WipScope};
 
+mod start;
+#[cfg(test)]
+mod start_tests;
+
+pub use start::Start;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Preset {
     Simple,
@@ -20,9 +26,10 @@ pub enum Preset {
     ReleaseGated,
 }
 
+#[derive(Debug, Clone)]
 pub struct PresetColumn {
-    pub key: &'static str,
-    pub name: &'static str,
+    pub key: String,
+    pub name: String,
     pub kind: ColumnKind,
     pub wip_limit: Option<u32>,
     pub wip_scope: WipScope,
@@ -169,8 +176,8 @@ impl Preset {
             Preset::ReleaseGated => COLUMNS
                 .iter()
                 .map(|c| PresetColumn {
-                    key: c.key,
-                    name: c.name,
+                    key: c.key.to_string(),
+                    name: c.name.to_string(),
                     kind: c.category.kind(),
                     wip_limit: c.wip_limit,
                     wip_scope: c.wip_scope,
@@ -217,8 +224,8 @@ fn col(
     policy: ColumnPolicy,
 ) -> PresetColumn {
     PresetColumn {
-        key,
-        name,
+        key: key.to_string(),
+        name: name.to_string(),
         kind,
         wip_limit,
         wip_scope: WipScope::Column,

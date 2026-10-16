@@ -74,6 +74,60 @@ impl Db {
         Ok(())
     }
 
+    /// What the project is for, in the owner's words; empty when unset.
+    pub fn project_description(&self, project_id: &str) -> anyhow::Result<String> {
+        Ok(self
+            .lock()
+            .query_row(
+                "SELECT description FROM project WHERE id = ?1",
+                params![project_id],
+                |r| r.get(0),
+            )
+            .optional()?
+            .unwrap_or_default())
+    }
+
+    pub fn set_project_description(
+        &self,
+        project_id: &str,
+        description: &str,
+    ) -> anyhow::Result<()> {
+        self.lock().execute(
+            "UPDATE project SET description = ?2 WHERE id = ?1",
+            params![project_id, description],
+        )?;
+        Ok(())
+    }
+
+    /// Make `bot_id` the project's lead (0.20.0, `create_bot {lead}`): its
+    /// `lead_bot_id`, and when the project has a board the board's Lead
+    /// role, in place of whoever held it. True when it has a board.
+    pub fn make_lead(&self, project_id: &str, bot_id: &str) -> anyhow::Result<bool> {
+        let mut conn = self.lock();
+        let tx = conn.transaction()?;
+        tx.execute(
+            "UPDATE project SET lead_bot_id = ?2 WHERE id = ?1",
+            params![project_id, bot_id],
+        )?;
+        let board: bool = tx.query_row(
+            "SELECT EXISTS(SELECT 1 FROM board_settings WHERE project_id = ?1)",
+            params![project_id],
+            |r| r.get(0),
+        )?;
+        if board {
+            tx.execute(
+                "DELETE FROM project_role WHERE project_id = ?1 AND role = 'lead' AND bot_id != ?2",
+                params![project_id, bot_id],
+            )?;
+            tx.execute(
+                "INSERT OR IGNORE INTO project_role(project_id, role, bot_id) VALUES (?1, 'lead', ?2)",
+                params![project_id, bot_id],
+            )?;
+        }
+        tx.commit()?;
+        Ok(board)
+    }
+
     /// Make `bot_id` the project's lead when the project has none and no
     /// other live bot of its own made before it (0.19.0: a project's first
     /// bot leads it). Two bots made at once: the earlier one leads, rather

@@ -118,8 +118,9 @@ const APPROVE_ONLY: &[&str] = &[
     "link_peer_bot",
     "link_project",
     "unlink_project",
-    // Which repositories a project's PRs may name (H-266, ARCH M1).
+    // Repositories PRs may name (H-266, ARCH M1); the owner's clone (0.20.0).
     "set_project_extra_repos",
+    "clone_project_repo",
     // The owner's review, comments and setting (H-269).
     "review_settings_set",
     "pr_review_submit",
@@ -330,11 +331,10 @@ impl Conn {
             "rename_tag" => self.rename_tag(&req_id, req),
             "delete_tag" => self.delete_tag(&req_id, req),
             "set_project_lead" => self.set_project_lead(&req_id, req),
-            "set_project_repo" => self.set_project_repo(&req_id, req),
+            r if super::project_repo::KINDS.contains(&r) => self.repo_request(r, &req_id, req),
             pr if super::prs::KINDS.contains(&pr) => self.pr_request(pr, &req_id, req),
             "disk_report" | "cleanup_now" => self.cleanup_request(kind, &req_id, req),
             t if super::project_trash::KINDS.contains(&t) => self.trash_request(t, &req_id, req),
-            "set_project_extra_repos" => self.set_project_extra_repos(&req_id, req),
             "set_project_permission_profile" => self.set_project_permission_profile(&req_id, req),
             "set_bot_permission_extras" => self.set_bot_permission_extras(&req_id, req),
             "bot_grants" => self.bot_grants(&req_id, req),

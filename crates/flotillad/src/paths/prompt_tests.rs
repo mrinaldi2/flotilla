@@ -15,6 +15,7 @@ fn spec<'a>(instructions: &'a str) -> BotProvision<'a> {
         max_workers_per_project: 4,
         temporary: false,
         repo: None,
+        project_description: String::new(),
         artifacts_dir: "/home/u/.gravity/projects/proj/artifacts".to_string(),
         linked_machines: Vec::new(),
         own_browser: false,
@@ -172,4 +173,15 @@ fn the_pr_section_is_there_only_after_cut_over_and_names_only_served_tools() {
     for name in named {
         assert!(served.contains(&name), "{name} isn't a PR tool: {served:?}");
     }
+}
+
+/// What the owner said the project is for (0.20.0), when they said it.
+#[test]
+fn states_the_project_description() {
+    let mut described = spec("");
+    described.project_description = "A recipe site for my family.".to_string();
+    let md = system_md(&described);
+    assert!(md.contains("## About this project"));
+    assert!(md.contains("A recipe site for my family."));
+    assert!(!system_md(&spec("")).contains("## About this project"));
 }

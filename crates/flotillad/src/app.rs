@@ -59,9 +59,15 @@ pub const CAPABILITIES: &[&str] = &[
     "pull_requests",
     "checks",
     // The 0.19 board structure requests, named after the fact (0.20.0).
-    // The other `bus::contract::capability` strings are added as the
-    // daemon serves them.
     bus::contract::capability::BOARDS_0_19,
+    // The 0.20 Board glance and project setup.
+    bus::contract::capability::BOARD_PRESETS,
+    bus::contract::capability::PROJECT_DESCRIPTION,
+    bus::contract::capability::CREATE_BOT_LEAD,
+    bus::contract::capability::PROJECT_REPO_CLONE,
+    bus::contract::capability::OVERVIEW_BOTS,
+    bus::contract::capability::OVERVIEW_TOP_ATTENTION,
+    bus::contract::capability::ATTENTION_BOT_STOPPED,
 ];
 
 pub struct AppState {
@@ -102,6 +108,8 @@ pub struct AppState {
     pub owner: crate::bus_auth::owner::Owner,
     /// Paired devices connected now, for Send to phone (H-229).
     pub live_devices: crate::releases::phone::LiveDevices,
+    /// The projects with a repository clone running (0.20.0).
+    pub repo_clones: crate::repo_clone::Clones,
     pub started_at: Instant,
     /// Wall-clock start, kept alongside the monotonic `started_at` purely so
     /// [`AppState::stale_build`] can compare it against a file mtime.
@@ -165,6 +173,7 @@ impl AppState {
             bearers: crate::bus_auth::BearerLog::default(),
             owner: crate::bus_auth::owner::Owner::new(&cfg_home),
             live_devices: Default::default(),
+            repo_clones: Default::default(),
             started_at: Instant::now(),
             started_wall: SystemTime::now(),
         });
@@ -210,5 +219,16 @@ mod tests {
     fn the_0_19_board_structure_is_advertised() {
         assert!(CAPABILITIES.contains(&capability::BOARDS_0_19));
         assert!(capability::ALL.contains(&capability::BOARDS_0_19));
+    }
+}
+
+#[cfg(test)]
+mod capability_tests {
+    /// The 0.19 and 0.20 board and home additions are all served.
+    #[test]
+    fn every_board_glance_capability_is_served() {
+        for capability in bus::contract::capability::ALL {
+            assert!(super::CAPABILITIES.contains(capability), "{capability}");
+        }
     }
 }

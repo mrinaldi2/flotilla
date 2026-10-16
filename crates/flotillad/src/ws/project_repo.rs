@@ -5,7 +5,27 @@ use serde_json::{json, Value};
 use super::Conn;
 use crate::botmgmt;
 
+/// The requests on a project's repositories.
+pub(super) const KINDS: &[&str] = &[
+    "set_project_repo",
+    "set_project_extra_repos",
+    "clone_project_repo",
+];
+
 impl Conn {
+    pub(super) fn repo_request(
+        &self,
+        kind: &str,
+        req_id: &Value,
+        req: &Value,
+    ) -> anyhow::Result<()> {
+        match kind {
+            "set_project_repo" => self.set_project_repo(req_id, req),
+            "set_project_extra_repos" => self.set_project_extra_repos(req_id, req),
+            _ => self.clone_project_repo(req_id, req),
+        }
+    }
+
     /// Set the repository with `url` (and `branch`, default `main`), or clear
     /// it with `url: null`. Bots' system prompts are rewritten to match, for
     /// their next start.
@@ -105,6 +125,62 @@ impl Conn {
         let mut view = super::project_view(&self.app, &project);
         view["extra_repos"] = json!(self.app.db.extra_repos(&project.id)?);
         self.send(json!({ "type": "project", "req_id": req_id, "project": view }));
+        Ok(())
+    }
+
+    /// `clone_project_repo {project_id, url, branch?, dest}` (0.20.0): the
+    /// owner's clone into a folder in their home, run in the background;
+    /// see [`crate::repo_clone`]. It leaves the project's `repo` as it is.
+    pub(super) fn clone_project_repo(&self, req_id: &Value, req: &Value) -> anyhow::Result<()> {
+        let project_id = Self::str_field(req, "project_id")?;
+        if self.app.db.get_live_project(project_id)?.is_none() {
+            self.reply_err(req_id, "not_found", "project not found or already deleted");
+            return Ok(());
+        }
+        if matches!(self.owner_proof(), Some(crate::db::OwnerProof::Peer { .. })) {
+            self.reply_err(req_id, "forbidden", "clone on the project's own computer");
+            return Ok(());
+        }
+        let url = Self::str_field(req, "url")?.trim().to_string();
+        let branch = req
+            .get("branch")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|b| !b.is_empty());
+        let checked = bus::ProjectRepo::parse(&url, branch)
+            .and_then(|_| crate::repo_clone::check_url(&url))
+            .and_then(|()| {
+                crate::repo_clone::destination(
+                    &self.app.cfg.user_home,
+                    &self.app.cfg.home,
+                    Self::str_field(req, "dest").unwrap_or_default(),
+                )
+            });
+        let dest = match checked {
+            Ok(dest) => dest,
+            Err(message) => {
+                self.reply_err(req_id, "invalid_request", &message);
+                return Ok(());
+            }
+        };
+        if !self.app.repo_clones.begin(project_id) {
+            self.reply_err(
+                req_id,
+                "conflict",
+                "a clone for this project is already running",
+            );
+            return Ok(());
+        }
+        self.send(
+            json!({ "type": "repo_clone_started", "req_id": req_id, "project_id": project_id }),
+        );
+        crate::repo_clone::spawn(
+            self.app.clone(),
+            project_id.to_string(),
+            url,
+            branch.map(str::to_string),
+            dest,
+        );
         Ok(())
     }
 }

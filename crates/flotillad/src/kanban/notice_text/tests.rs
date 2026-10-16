@@ -18,8 +18,8 @@ fn columns(preset: Preset) -> Vec<BoardColumn> {
         .map(|(ord, (c, category))| BoardColumn {
             project_id: "p".into(),
             board_id: "b".into(),
-            key: c.key.into(),
-            name: c.name.into(),
+            key: c.key,
+            name: c.name,
             ord: ord as u32,
             category,
             kind: c.kind,

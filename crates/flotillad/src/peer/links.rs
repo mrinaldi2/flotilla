@@ -297,7 +297,7 @@ pub(super) fn serve_link(app: &Arc<AppState>, peer: &Peer, frame: &Value) -> any
                     format!("a project named '{name}' already exists here; link that one instead"),
                 ));
             }
-            crate::projectmgmt::create_project(app, &name)?
+            crate::projectmgmt::create_project(app, &name, None)?
         }
     };
     adopt(app, peer, &project, &theirs)?;

@@ -160,6 +160,8 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_PLATFORM_LABELS,
     MIGRATION_BOARD_KEEPER,
     MIGRATION_PROJECT_TRASH,
+    // What a project is for, in the owner's words (0.20.0): told to its bots.
+    "ALTER TABLE project ADD COLUMN description TEXT NOT NULL DEFAULT '';",
 ];
 
 #[cfg(test)]

@@ -11,23 +11,31 @@ use serde_json::{json, Value};
 use super::reads::{snapshot, Enable};
 use super::{binary, refuse, Refusal, Reply};
 use crate::app::AppState;
-use crate::kanban::presets::Preset;
+use crate::kanban::presets::Start;
 use crate::ws::Conn;
 
 impl Conn {
-    /// A board that already exists is returned as it is. An unlinked
-    /// project's is enabled at once; a linked one's after asking each peer,
-    /// off the connection's task, so the answer is sent from there.
-    pub(super) fn board_enable(&self, req_id: u64, project_id: String) -> Reply {
+    /// A board that already exists is returned as it is, whatever the
+    /// request's preset and columns. Otherwise they are checked first
+    /// (0.20.0, `board_presets`), then an unlinked project's board is
+    /// enabled at once and a linked one's after asking each peer, off the
+    /// connection's task, so the answer is sent from there.
+    pub(super) fn board_enable(&self, req_id: u64, r: c::BoardEnable) -> Reply {
         let db = &self.app.db;
+        let project_id = r.project_id;
+        if db.board_settings(&project_id)?.is_some() {
+            return Ok(Some(Response::Board(self.snapshot(&project_id)?)));
+        }
+        let start = Start::parse(r.preset.as_deref(), &r.columns)
+            .map_err(|m| refuse("invalid_request", m))?;
         let links = db.project_links(&project_id)?;
-        if db.board_settings(&project_id)?.is_some() || links.is_empty() {
-            self.enable_board(&project_id, Enable::Owner)?;
+        if links.is_empty() {
+            self.enable_board(&project_id, Enable::Owner, &start)?;
             return Ok(Some(Response::Board(self.snapshot(&project_id)?)));
         }
         let app = self.app.clone();
         self.spawn_frame(req_id, "board:BoardEnable", async move {
-            match enable_linked(&app, &project_id, &links).await {
+            match enable_linked(&app, &project_id, &links, &start).await {
                 Ok(board) => binary::response(
                     req_id,
                     c::BoardResponse {
@@ -45,6 +53,7 @@ async fn enable_linked(
     app: &AppState,
     project_id: &str,
     links: &[ProjectLink],
+    start: &Start,
 ) -> Result<c::BoardSnapshot, Refusal> {
     for link in links {
         peer_has_no_board(app, link).await?;
@@ -57,7 +66,7 @@ async fn enable_linked(
         return Err(refuse("not_found", format!("no project {project_id}")));
     }
     let mut feed = app.board.writer();
-    db.ensure_board_from(project_id, &db.daemon_id()?, None, Preset::FIRST)?;
+    db.ensure_board_from(project_id, &db.daemon_id()?, None, start)?;
     // Relayed to the linked peers, which start mirroring it (B9).
     feed.publish(crate::kanban::feed::Change {
         project_id,
