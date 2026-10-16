@@ -35,7 +35,11 @@ pub(crate) fn weight(kind: AttentionKind) -> u32 {
         | AttentionKind::MainMovedOutside
         | AttentionKind::OwnerAction
         | AttentionKind::PermissionPrompt => 3,
-        AttentionKind::P0Item
+        // A bot that stopped or can't run (0.20.0) is work halted, not a
+        // question: below what blocks a release or a prompt the owner must
+        // answer, above a bot politely waiting, as a stopped server is.
+        AttentionKind::BotStopped
+        | AttentionKind::P0Item
         | AttentionKind::ServingOff
         | AttentionKind::PrMergeStuck
         | AttentionKind::CheckUnroutable

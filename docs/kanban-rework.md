@@ -275,6 +275,11 @@ code (`kanban/presets.rs`):
     `pr.changes_requested` → Doing.
 - **Release-gated:** the H-017 flow and columns.
 
+From 0.20.0 (`board_presets`) the owner can start a project's first board from
+any preset, and give it its own visible columns, with `board_enable {preset?,
+columns?}`; the rules are in `BoardEnable` (`proto/flotilla/board/v1/requests.proto`)
+and [protocol](protocol.md#the-board-glance-and-project-setup-0200).
+
 ### Who changes structure
 
 Structure means boards, columns, rules, automations, types and templates.

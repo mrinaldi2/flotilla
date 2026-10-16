@@ -58,6 +58,10 @@ pub const CAPABILITIES: &[&str] = &[
     // as `bus::contract::pr::CAPABILITIES` names them.
     "pull_requests",
     "checks",
+    // The 0.19 board structure requests, named after the fact (0.20.0).
+    // The other `bus::contract::capability` strings are added as the
+    // daemon serves them.
+    bus::contract::capability::BOARDS_0_19,
 ];
 
 pub struct AppState {
@@ -184,5 +188,27 @@ impl AppState {
         std::env::current_exe()
             .and_then(|exe| exe.metadata()?.modified())
             .is_ok_and(|modified| modified > self.started_wall)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::CAPABILITIES;
+    use bus::contract::capability;
+
+    #[test]
+    fn each_capability_is_advertised_once() {
+        let mut seen = std::collections::BTreeSet::new();
+        for name in CAPABILITIES {
+            assert!(seen.insert(*name), "{name} is listed twice");
+        }
+    }
+
+    /// The 0.19 board structure is served, so it is advertised; the 0.20
+    /// strings join the list as the daemon serves each of them.
+    #[test]
+    fn the_0_19_board_structure_is_advertised() {
+        assert!(CAPABILITIES.contains(&capability::BOARDS_0_19));
+        assert!(capability::ALL.contains(&capability::BOARDS_0_19));
     }
 }

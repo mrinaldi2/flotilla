@@ -97,6 +97,8 @@ export type ServerReply =
     })
   | (ReplyBase & { readonly type: "ok" })
   | (ReplyBase & { readonly type: "project"; readonly project: Project })
+  /** `clone_project_repo` was accepted; `repo_clone` pushes follow (0.20.0). */
+  | (ReplyBase & { readonly type: "repo_clone_started"; readonly project_id: string })
   | (ReplyBase & {
       readonly type: "projects";
       readonly projects: readonly Project[];
@@ -284,6 +286,16 @@ export type ServerPush =
   | { readonly type: "bot_updated"; readonly bot: Bot }
   | { readonly type: "project_updated"; readonly project: Project }
   | { readonly type: "workers_updated"; readonly project_id: string }
+  /** A `clone_project_repo` clone started, finished or failed (0.20.0). */
+  | {
+      readonly type: "repo_clone";
+      readonly project_id: string;
+      readonly state: "cloning" | "done" | "failed";
+      /** On `done`: the clone's absolute path. */
+      readonly path?: string;
+      /** On `failed`: what went wrong, to show. */
+      readonly error?: string;
+    }
   /** Every project here paused for an install, or resumed (H-117). */
   | { readonly type: "quiesce_update"; readonly quiesce: Quiesce | null }
   /** An owner action was proposed, ran or closed (H-117). */

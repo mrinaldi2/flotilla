@@ -226,6 +226,11 @@ same rule as a local bot: only bots it created. The owner's `update_bot`,
 forwarded to its machine too; changing only the stand-in would be undone by
 the next roster.
 
+The owner's `create_bot` with `peer_id` and `lead: true` (0.20.0,
+`create_bot_lead`) makes the stand-in this computer's project lead, and its
+board's `ROLE_LEAD` when the project has one; the peer frame carries no
+`lead`, so the bot's own computer keeps its own lead.
+
 Peer frames (ids are the sender's own, except `bot_id` on `update_bot` and
 `delete_bot`, which is the receiver's):
 

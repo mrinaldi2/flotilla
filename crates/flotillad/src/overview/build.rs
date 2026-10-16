@@ -91,6 +91,9 @@ fn row(
         daemon_id: me.to_string(),
         project_id: project.id.clone(),
         computer_name: computer.to_string(),
+        // Presence and the bots are the 0.20 Board glance's (`overview_bots`):
+        // left unset until the daemon serves them.
+        ..Member::default()
     }];
     let mut parts: Vec<&Part> = vec![&here];
     let mut stale = Vec::new();
@@ -106,6 +109,7 @@ fn row(
                 daemon_id: daemon_id.clone(),
                 project_id: link.remote_project_id.clone(),
                 computer_name: Db::display_peer_name(&peer.peer),
+                ..Member::default()
             });
         }
         if peer.entry.state != State::Ok {
@@ -154,6 +158,9 @@ fn row(
             u32::try_from(b.in_category(ColumnCategory::Doing).count()).unwrap_or(u32::MAX)
         }),
         bots_waiting: parts.iter().map(|p| p.bots_waiting).sum(),
+        // `overview_bots` and `overview_top_attention` (0.20.0): not served yet.
+        bot_list: Vec::new(),
+        top_attention: None,
     })
 }
 
@@ -231,6 +238,8 @@ fn columns(board: &Board) -> Vec<ColumnCount> {
             key: column.key.clone(),
             name: column.name.clone(),
             category: column.category.as_str().to_string(),
+            kind: column.kind.as_str().to_string(),
+            hidden: !column.visible,
             count: u32::try_from(
                 board
                     .cards

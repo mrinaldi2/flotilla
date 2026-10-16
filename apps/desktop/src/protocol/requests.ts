@@ -48,11 +48,28 @@ export type ClientRequestBody =
       readonly contracts?: Readonly<Record<string, number>>;
     }
   | { readonly type: "list_projects" }
-  | { readonly type: "create_project"; readonly name: string }
+  | {
+      readonly type: "create_project";
+      readonly name: string;
+      /** What the project is for; only to a daemon with `project_description` (0.20.0). */
+      readonly description?: string;
+    }
   | {
       readonly type: "update_project";
       readonly project_id: string;
-      readonly name: string;
+      /** At least one of the two; `description` only with `project_description` (0.20.0). */
+      readonly name?: string;
+      readonly description?: string;
+    }
+  | {
+      /** Owner only, needs `project_repo_clone` (0.20.0): answered `repo_clone_started`, then `repo_clone` pushes. */
+      readonly type: "clone_project_repo";
+      readonly project_id: string;
+      readonly url: string;
+      /** Left out, the remote's default branch. */
+      readonly branch?: string;
+      /** Absolute or `~/…`, inside the home directory; missing or an empty directory. */
+      readonly dest: string;
     }
   | {
       readonly type: "set_project_repo";
@@ -75,6 +92,8 @@ export type ClientRequestBody =
       readonly description?: string;
       readonly instructions?: string;
       readonly avatar?: string;
+      /** Make it the project's lead (and its board's ROLE_LEAD); needs `create_bot_lead` (0.20.0). */
+      readonly lead?: boolean;
     }
   | {
       readonly type: "update_bot";
