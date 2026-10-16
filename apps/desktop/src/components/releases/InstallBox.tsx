@@ -6,7 +6,7 @@ import type { ReactElement } from "react";
 import type { InstallDevice, Release } from "../../protocol/releases";
 import { errText } from "../../util";
 import { deviceLine, installLine, installStage } from "./install";
-import InstallQr from "./InstallQr";
+import QrCode from "../QrCode";
 import { releaseTitle } from "./labels";
 import type { ReleaseInstallState } from "./useReleaseInstall";
 
@@ -177,7 +177,7 @@ function QrTile(props: {
 }): ReactElement {
   return (
     <div className={props.ready ? "install-qr" : "install-qr off"}>
-      <InstallQr text={props.page} label={props.label} />
+      <QrCode text={props.page} label={props.label} />
       {props.ready ? (
         <p className="release-hint">
           Scan with the iPhone camera, then tap Install. The phone must be on your tailnet.

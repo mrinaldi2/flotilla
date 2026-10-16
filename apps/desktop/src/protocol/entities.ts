@@ -276,6 +276,10 @@ export interface DaemonConfig {
   readonly runtime: string;
   /** Null when unset: Claude Code uses the model default. */
   readonly auto_compact_window: number | null;
+  /** This computer's name for a phone's pairing link; absent from older daemons. */
+  readonly computer_name?: string | null;
+  /** `macos`, `windows` or `linux`; absent from older daemons. */
+  readonly os?: string;
 }
 
 /** Permission grants attached to a connection (from `hello_ok`) or a device. */
