@@ -1,4 +1,4 @@
-# .flotilla/reviewers.toml — mrinaldi2/gravity (H-279 draft, Architect 2026-10-10)
+# .flotilla/reviewers.toml — mrinaldi2/flotilla (H-279 draft, Architect 2026-10-10)
 #
 # Read from the PR's BASE, never its head (H-267). A change's required roles
 # are the union of every area its paths match. A change no area matches needs
