@@ -48,6 +48,17 @@ pub enum Push {
     WorkersUpdated {
         project_id: String,
     },
+    /// A `clone_project_repo` clone started (`cloning`), finished (`done`,
+    /// with the clone's `path`) or failed (`failed`, with an `error` to
+    /// show) (0.20.0).
+    RepoClone {
+        project_id: String,
+        state: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        path: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        error: Option<String>,
+    },
     /// This computer paused or resumed every project for an install
     /// (H-117): the open pause, or none.
     QuiesceUpdate {

@@ -1188,10 +1188,12 @@ serves all of it.
   `clone_project_repo {project_id, url, branch?, dest}`, the owner's alone
   (`approve`, from the app's ticket or a paired device, as
   `set_project_extra_repos`; no bot tool). `url` follows `set_project_repo`'s
-  rules; `branch` left out is the remote's default. `dest` is absolute or
-  `~/…` (the daemon user's home, on Windows too) and must resolve, symlinks
-  followed, to a path inside the home directory and not the home itself; it
-  must not exist, or be an empty directory. The clone runs through the
+  rules and is `https://…`, `file://…` or a local absolute path: the daemon's
+  git has no SSH keys. `branch` left out is the remote's default. `dest` is
+  absolute or `~/…` (the daemon user's home, on Windows too), without `..`,
+  and must resolve, symlinks followed, to a path inside the home directory
+  and not the home itself nor inside the daemon's own folder; it must not
+  exist, or be an empty directory. The clone runs through the
   daemon's own git (no hooks, no credential prompts, the safe settings its
   other git calls use), one per project at a time. The answer is
   `repo_clone_started {project_id}`; then every connection gets `repo_clone

@@ -120,6 +120,8 @@ const APPROVE_ONLY: &[&str] = &[
     "unlink_project",
     // Which repositories a project's PRs may name (H-266, ARCH M1).
     "set_project_extra_repos",
+    // Writing into a folder of the owner's choosing (0.20.0).
+    "clone_project_repo",
     // The owner's review, comments and setting (H-269).
     "review_settings_set",
     "pr_review_submit",
@@ -335,6 +337,7 @@ impl Conn {
             "disk_report" | "cleanup_now" => self.cleanup_request(kind, &req_id, req),
             t if super::project_trash::KINDS.contains(&t) => self.trash_request(t, &req_id, req),
             "set_project_extra_repos" => self.set_project_extra_repos(&req_id, req),
+            "clone_project_repo" => self.clone_project_repo(&req_id, req),
             "set_project_permission_profile" => self.set_project_permission_profile(&req_id, req),
             "set_bot_permission_extras" => self.set_bot_permission_extras(&req_id, req),
             "bot_grants" => self.bot_grants(&req_id, req),

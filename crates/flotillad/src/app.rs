@@ -64,6 +64,7 @@ pub const CAPABILITIES: &[&str] = &[
     bus::contract::capability::BOARD_PRESETS,
     bus::contract::capability::PROJECT_DESCRIPTION,
     bus::contract::capability::CREATE_BOT_LEAD,
+    bus::contract::capability::PROJECT_REPO_CLONE,
 ];
 
 pub struct AppState {
@@ -104,6 +105,8 @@ pub struct AppState {
     pub owner: crate::bus_auth::owner::Owner,
     /// Paired devices connected now, for Send to phone (H-229).
     pub live_devices: crate::releases::phone::LiveDevices,
+    /// The projects with a repository clone running (0.20.0).
+    pub repo_clones: crate::repo_clone::Clones,
     pub started_at: Instant,
     /// Wall-clock start, kept alongside the monotonic `started_at` purely so
     /// [`AppState::stale_build`] can compare it against a file mtime.
@@ -167,6 +170,7 @@ impl AppState {
             bearers: crate::bus_auth::BearerLog::default(),
             owner: crate::bus_auth::owner::Owner::new(&cfg_home),
             live_devices: Default::default(),
+            repo_clones: Default::default(),
             started_at: Instant::now(),
             started_wall: SystemTime::now(),
         });

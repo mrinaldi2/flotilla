@@ -183,6 +183,7 @@ mod release_supersede;
 mod release_target_guards;
 mod release_tester_targets;
 mod releases;
+mod repo_clone;
 mod resume;
 mod routines;
 mod scratch_safety;
