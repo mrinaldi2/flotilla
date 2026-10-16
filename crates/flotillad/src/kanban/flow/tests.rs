@@ -21,10 +21,10 @@ fn column(key: &str) -> (BoardColumn, ColumnPolicy) {
     let column = BoardColumn {
         project_id: "p".into(),
         board_id: "b".into(),
+        category: c.category(),
         key: c.key.into(),
         name: c.name.into(),
         ord: ord as u32,
-        category: c.category(),
         kind: c.kind,
         wip_limit: c.wip_limit,
         wip_scope: c.wip_scope,

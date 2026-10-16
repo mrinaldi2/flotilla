@@ -135,7 +135,7 @@ impl Conn {
             | Request::ColumnRemove(_)
             | Request::AutomationSet(_)
             | Request::BoardProposalRule(_)) => Response::Structure(self.structure_request(req)?),
-            Request::BoardEnable(r) => return self.board_enable(req_id, r.project_id),
+            Request::BoardEnable(r) => return self.board_enable(req_id, r),
             Request::ColumnSetLimit(r) => {
                 team::set_column_limit(&self.app, &r.project_id, &r.column_key, r.wip_limit)
                     .map_err(invalid)?;

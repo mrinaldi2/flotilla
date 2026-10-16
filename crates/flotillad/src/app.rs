@@ -59,9 +59,9 @@ pub const CAPABILITIES: &[&str] = &[
     "pull_requests",
     "checks",
     // The 0.19 board structure requests, named after the fact (0.20.0).
-    // The other `bus::contract::capability` strings are added as the
-    // daemon serves them.
     bus::contract::capability::BOARDS_0_19,
+    // The 0.20 Board glance and project setup.
+    bus::contract::capability::BOARD_PRESETS,
 ];
 
 pub struct AppState {

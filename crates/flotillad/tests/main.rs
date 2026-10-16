@@ -40,6 +40,7 @@ mod board_peer_conflict;
 mod board_peer_drafts;
 mod board_peer_files;
 mod board_post_install;
+mod board_presets;
 mod board_roles;
 mod board_structure;
 mod board_tasked;

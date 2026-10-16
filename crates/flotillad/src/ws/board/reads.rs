@@ -9,7 +9,7 @@ use crate::kanban::attachments::to_wire;
 use crate::kanban::contract::MapError;
 use crate::kanban::model as m;
 use crate::kanban::moves;
-use crate::kanban::presets::Preset;
+use crate::kanban::presets::{Preset, Start};
 use crate::ws::Conn;
 
 /// History events per page when the client names no limit, and the most it
@@ -28,7 +28,7 @@ impl Conn {
                 return self.mirrored_snapshot(project_id)
             }
             None => {
-                self.enable_board(project_id, Enable::Auto)?;
+                self.enable_board(project_id, Enable::Auto, &Start::of(Preset::FIRST))?;
                 snapshot(&self.app, project_id)?
                     .ok_or_else(|| refuse("internal", "the board was enabled but is missing"))?
             }
@@ -50,7 +50,12 @@ impl Conn {
     /// daemon as its home (H-037). `board_get` does it on its own only for
     /// a project with no link: which computer of a linked team is the home
     /// is the owner's call, made with `board_enable`.
-    pub(super) fn enable_board(&self, project_id: &str, how: Enable) -> Result<(), Refusal> {
+    pub(super) fn enable_board(
+        &self,
+        project_id: &str,
+        how: Enable,
+        start: &Start,
+    ) -> Result<(), Refusal> {
         let db = &self.app.db;
         if !db
             .get_project(project_id)?
@@ -73,7 +78,7 @@ impl Conn {
                 ));
             }
         }
-        db.ensure_board_from(project_id, &db.daemon_id()?, None, Preset::FIRST)?;
+        db.ensure_board_from(project_id, &db.daemon_id()?, None, start)?;
         Ok(())
     }
 
