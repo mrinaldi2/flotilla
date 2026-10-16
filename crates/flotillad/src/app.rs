@@ -65,6 +65,9 @@ pub const CAPABILITIES: &[&str] = &[
     bus::contract::capability::PROJECT_DESCRIPTION,
     bus::contract::capability::CREATE_BOT_LEAD,
     bus::contract::capability::PROJECT_REPO_CLONE,
+    bus::contract::capability::OVERVIEW_BOTS,
+    bus::contract::capability::OVERVIEW_TOP_ATTENTION,
+    bus::contract::capability::ATTENTION_BOT_STOPPED,
 ];
 
 pub struct AppState {
@@ -216,5 +219,16 @@ mod tests {
     fn the_0_19_board_structure_is_advertised() {
         assert!(CAPABILITIES.contains(&capability::BOARDS_0_19));
         assert!(capability::ALL.contains(&capability::BOARDS_0_19));
+    }
+}
+
+#[cfg(test)]
+mod capability_tests {
+    /// The 0.19 and 0.20 board and home additions are all served.
+    #[test]
+    fn every_board_glance_capability_is_served() {
+        for capability in bus::contract::capability::ALL {
+            assert!(super::CAPABILITIES.contains(capability), "{capability}");
+        }
     }
 }

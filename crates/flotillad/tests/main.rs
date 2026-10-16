@@ -114,6 +114,7 @@ mod messaging;
 mod migration;
 mod model;
 mod needs_counts;
+mod overview_bots;
 mod owner_actions;
 mod owner_actions_peer;
 mod owner_answers;

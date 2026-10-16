@@ -1116,7 +1116,9 @@ serves all of it.
     `ProjectAttention.Part.bots` (11, its own bots, stand-ins left out). A linked
     computer that isn't answering gives its last good part's bots with status
     `BOT_STATUS_OFFLINE` (and the last `state` known); one that never answered,
-    its bots' stand-ins here, also offline. Order: the lead, then waiting,
+    its bots' stand-ins here, also offline. A linked computer before 0.20
+    sends no bots: while it answers, its stand-ins are listed with status
+    `BOT_STATUS_UNSPECIFIED` and no `state`. Order: the lead, then waiting,
     working, failed and stopped, idle, offline; within a group by name, ignoring
     case. At most 24; `bots`, `bots_working` and `bots_waiting` stay the totals.
   - `BotBrief {daemon_id, bot_id, name, avatar, runtime, status, state,
@@ -1129,8 +1131,8 @@ serves all of it.
     `bot_waiting` row; `STOPPED` stopping, stopped; `FAILED` crashed,
     auth_failed, rate_limited; `OFFLINE` its computer isn't answering.
   - `Member.online` (4): this computer always, a linked one while its link is
-    up; `Member.last_seen_at` (5): when that link was last up (unset for this
-    computer). Without the capability every member reads `online: false`: use
+    up; `Member.last_seen_at` (5): when that link was last up, now while it is
+    (unset for this computer). Without the capability every member reads `online: false`: use
     the member's `Source.state` instead.
   - Peers: `project_attention {project_ids, revision}` (0.20.0). A daemon
     decodes the peer link's proto3 JSON strictly, so a callee sends
@@ -1151,7 +1153,10 @@ serves all of it.
   prompt to answer, above a bot waiting) is a bot whose session isn't running:
   `AttentionRow.bot` names it and `bot_state` (24) says why, `crashed`,
   `auth_failed`, `rate_limited` or `stopped` (its session ended and didn't come
-  back; not while projects are paused for an install). The bot's own computer
+  back; not while projects are paused for an install). A bot gets the row once
+  it has been down for a minute, so a restart or a crash the supervisor
+  recovers from raises none; `created_at` is when it went down, and `bot_state`
+  the last of those four states it was in. The bot's own computer
   owns the row, `bot_stopped:<daemon_id>:<bot_id>`, and it closes when the bot
   runs again. The action is `restart_bot {bot_id}` on `bot.daemon_id` (or on
   the stand-in, which forwards it): a client offers Restart for `crashed` and

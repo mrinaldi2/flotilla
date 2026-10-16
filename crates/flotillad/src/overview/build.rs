@@ -10,7 +10,7 @@ use bus::contract::home::{
 };
 use bus::Peer;
 
-use super::PeerEntry;
+use super::{bots, PeerEntry};
 use crate::app::AppState;
 use crate::attention::{self, cut, key, timestamp};
 use crate::db::Db;
@@ -91,36 +91,45 @@ fn row(
         daemon_id: me.to_string(),
         project_id: project.id.clone(),
         computer_name: computer.to_string(),
-        // Presence and the bots are the 0.20 Board glance's (`overview_bots`):
-        // left unset until the daemon serves them.
-        ..Member::default()
+        online: true,
+        last_seen_at: None,
     }];
     let mut parts: Vec<&Part> = vec![&here];
     let mut stale = Vec::new();
+    let mut linked = Vec::new();
     for link in db.project_links(&project.id)? {
         let Some(peer) = asked.get(&link.peer_id) else {
             continue;
         };
-        let daemon_id = peer.peer.daemon_id.clone().unwrap_or_default();
+        let daemon_id = peer.peer.daemon_id.as_deref().unwrap_or_default();
         // A peer whose daemon id isn't known yet can't be merged by clients
         // (R2.3); it still counts here.
         if !daemon_id.is_empty() {
+            let online = app.peers.is_online(&peer.peer.id);
+            let last_seen = if online {
+                Some(chrono::Utc::now())
+            } else {
+                peer.peer.last_seen_at
+            };
             members.push(Member {
-                daemon_id: daemon_id.clone(),
+                daemon_id: daemon_id.to_string(),
                 project_id: link.remote_project_id.clone(),
                 computer_name: Db::display_peer_name(&peer.peer),
-                ..Member::default()
+                online,
+                last_seen_at: last_seen.map(timestamp),
             });
         }
         if peer.entry.state != State::Ok {
-            stale.push(daemon_id);
+            stale.push(daemon_id.to_string());
         }
-        parts.extend(
-            peer.entry
-                .parts
-                .iter()
-                .filter(|p| p.project_id == project.id),
-        );
+        let part = peer.entry.parts.iter().find(|p| p.project_id == project.id);
+        parts.extend(part);
+        linked.push(bots::Linked {
+            peer: &peer.peer,
+            daemon_id,
+            answering: peer.entry.state == State::Ok,
+            part,
+        });
     }
     let mut summary = AttentionSummary::default();
     for part in &parts {
@@ -130,6 +139,17 @@ fn row(
     }
     let home = parts.iter().find(|p| p.is_home);
     let bots = db.list_bots(Some(&project.id))?;
+    let stand_ins: Vec<bus::Bot> = bots.iter().filter(|b| b.is_linked()).cloned().collect();
+    let bot_list = bots::merge(
+        &here.bots,
+        &linked,
+        &stand_ins,
+        project.lead_bot_id.as_deref(),
+    );
+    // The row the project's Needs-you list shows first, over every part.
+    let mut every_row: Vec<_> = parts.iter().flat_map(|p| p.rows.iter().cloned()).collect();
+    attention::sort(&mut every_row);
+    let top_attention = every_row.into_iter().next();
     let last_activity_at = parts
         .iter()
         .filter_map(|p| p.last_activity_at)
@@ -158,9 +178,8 @@ fn row(
             u32::try_from(b.in_category(ColumnCategory::Doing).count()).unwrap_or(u32::MAX)
         }),
         bots_waiting: parts.iter().map(|p| p.bots_waiting).sum(),
-        // `overview_bots` and `overview_top_attention` (0.20.0): not served yet.
-        bot_list: Vec::new(),
-        top_attention: None,
+        bot_list,
+        top_attention,
     })
 }
 

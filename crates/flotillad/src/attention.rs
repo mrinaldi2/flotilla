@@ -18,12 +18,14 @@ mod keeper;
 mod legacy;
 mod prs;
 mod rows;
+mod stopped;
 #[cfg(test)]
 mod tests;
 mod waiting;
 
 pub(crate) use legacy::{needs_you, routines_without_card, NeedsYou};
 pub(crate) use rows::{is_home, rows, Scope};
+pub(crate) use stopped::STOPPED_AFTER;
 pub(crate) use waiting::waiting_bots;
 
 /// Each kind's weight in the score (H-128 §1). A product choice, kept in one

@@ -5,7 +5,8 @@
 use std::sync::Arc;
 
 use bus::contract::home::{
-    project_attention::Part, source::State, ProjectAttention, ProjectAttentionRequest,
+    project_attention::Part, source::State, AttentionKind, ProjectAttention,
+    ProjectAttentionRequest,
 };
 use bus::Peer;
 use serde_json::{json, Value};
@@ -17,6 +18,10 @@ use crate::peer::PeerError;
 
 /// The answer of a peer that has no `project_attention`: an older daemon.
 const UNKNOWN_REQUEST: &str = "unknown peer request";
+
+/// The `ProjectAttentionRequest.revision` this daemon decodes: 1, the 0.20
+/// additions (`Part.bots`, `bot_stopped` rows).
+const REVISION: u32 = 1;
 
 /// Asks the peer for its part in the background, unless that is under way.
 pub fn refresh(app: Arc<AppState>, peer_id: String) {
@@ -80,10 +85,13 @@ async fn refresh_once(app: &AppState, peer_id: &str) -> Vec<String> {
     }
     let request = ProjectAttentionRequest {
         project_ids: links.iter().map(|l| l.remote_project_id.clone()).collect(),
-        // The 0.20 additions (`revision` 1) are asked for once they are served.
-        revision: 0,
+        revision: REVISION,
     };
-    let frame = json!({ "type": "project_attention", "project_ids": request.project_ids });
+    let frame = json!({
+        "type": "project_attention",
+        "project_ids": request.project_ids,
+        "revision": request.revision,
+    });
     let answer = tokio::time::timeout(PEER_TIMEOUT, app.peers.request(peer_id, frame)).await;
     let mut entry = app.overview.entry(peer_id);
     entry.state = match answer {
@@ -133,12 +141,15 @@ fn decode(value: &Value, links: &[bus::ProjectLink]) -> Option<Vec<Part>> {
     )
 }
 
-/// On the peer: `project_attention {project_ids}`, this computer's part of
-/// each project linked with the caller, in the caller's ids. A project not
-/// linked with it is left out (as `board_call` refuses it).
+/// On the peer: `project_attention {project_ids, revision}`, this
+/// computer's part of each project linked with the caller, in the caller's
+/// ids. A project not linked with it is left out (as `board_call` refuses
+/// it). A caller before 0.20 (no `revision`) decodes strictly and knows
+/// neither `Part.bots` nor `bot_stopped` rows, so it gets neither.
 pub fn serve(app: &AppState, peer: &Peer, frame: &Value) -> anyhow::Result<Value> {
     let request: ProjectAttentionRequest = serde_json::from_value(json!({
         "project_ids": frame.get("project_ids").cloned().unwrap_or_else(|| json!([])),
+        "revision": frame.get("revision").and_then(Value::as_u64).unwrap_or(0),
     }))?;
     let mut parts = Vec::new();
     for project_id in &request.project_ids {
@@ -147,7 +158,22 @@ pub fn serve(app: &AppState, peer: &Peer, frame: &Value) -> anyhow::Result<Value
         };
         let mut part = super::part(app, project_id)?;
         part.project_id = link.remote_project_id;
+        if request.revision < REVISION {
+            for_old_caller(&mut part);
+        }
         parts.push(part);
     }
     Ok(serde_json::to_value(ProjectAttention { parts })?)
+}
+
+/// A part as a caller before 0.20 can read it: no bots, no `bot_stopped`
+/// rows, and its summary counted without them.
+fn for_old_caller(part: &mut Part) {
+    part.bots.clear();
+    let before = part.rows.len();
+    part.rows
+        .retain(|row| row.kind() != AttentionKind::BotStopped);
+    if part.rows.len() != before {
+        part.local = Some(crate::attention::summary(&part.rows));
+    }
 }
