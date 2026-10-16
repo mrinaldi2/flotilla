@@ -66,6 +66,7 @@ pub async fn setup() -> K9 {
         &mut p.mac_client,
         Request::BoardEnable(c::BoardEnable {
             project_id: mac_rb.clone(),
+            ..Default::default()
         }),
     )
     .await;

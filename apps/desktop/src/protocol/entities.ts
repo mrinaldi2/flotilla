@@ -44,6 +44,8 @@ export interface Project {
   readonly item_prefix?: string | null;
   /** What its bots may do without asking (H-031); absent on older daemons. */
   readonly permission_profile?: PermissionProfile;
+  /** What the project is for; empty when unset, absent before `project_description` (0.20.0). */
+  readonly description?: string;
   readonly created_at: string;
 }
 

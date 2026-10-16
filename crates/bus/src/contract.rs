@@ -79,6 +79,47 @@ pub mod pr {
     pub const CAPABILITIES: &[&str] = &["pull_requests", "checks"];
 }
 
+/// `hello_ok.capabilities` strings for the 0.19 and 0.20 board and home
+/// additions, named once for the daemon and the clients' docs
+/// (docs/protocol.md). A daemon advertises one only once it serves all of
+/// it; a client sends the request or reads the field only when it is there.
+pub mod capability {
+    /// The 0.19 board structure (named after the fact, 0.20.0): several
+    /// boards per project from presets (`board_list`, `board_create`,
+    /// `board_update`), custom columns (`column_add`, `column_update`,
+    /// `column_remove`, `automation_set`), the lead's proposals
+    /// (`board_proposal_rule`), `role_set` and `project_delete_preview`.
+    pub const BOARDS_0_19: &str = "boards_0_19";
+    /// `BoardEnable.preset` and `BoardEnable.columns` (0.20.0).
+    pub const BOARD_PRESETS: &str = "board_presets";
+    /// `description` on `create_project`, `update_project` and projects.
+    pub const PROJECT_DESCRIPTION: &str = "project_description";
+    /// `create_bot {lead: true}`.
+    pub const CREATE_BOT_LEAD: &str = "create_bot_lead";
+    /// `ProjectRow.bot_list`, `ProjectAttention.Part.bots`, `Member.online`
+    /// and `Member.last_seen_at`.
+    pub const OVERVIEW_BOTS: &str = "overview_bots";
+    /// `ProjectRow.top_attention`.
+    pub const OVERVIEW_TOP_ATTENTION: &str = "overview_top_attention";
+    /// `AttentionKind::BotStopped` rows, with `AttentionRow.bot_state`.
+    pub const ATTENTION_BOT_STOPPED: &str = "attention_bot_stopped";
+    /// `clone_project_repo`, its `repo_clone_started` answer and the
+    /// `repo_clone` pushes.
+    pub const PROJECT_REPO_CLONE: &str = "project_repo_clone";
+
+    /// Every string above, in the order listed.
+    pub const ALL: &[&str] = &[
+        BOARDS_0_19,
+        BOARD_PRESETS,
+        PROJECT_DESCRIPTION,
+        CREATE_BOT_LEAD,
+        OVERVIEW_BOTS,
+        OVERVIEW_TOP_ATTENTION,
+        ATTENTION_BOT_STOPPED,
+        PROJECT_REPO_CLONE,
+    ];
+}
+
 /// What a WebSocket binary frame carries: an `Envelope` per frame.
 pub mod wire {
     pub use super::flotilla::wire::v1::*;

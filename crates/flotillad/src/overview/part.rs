@@ -62,6 +62,8 @@ pub fn part(app: &AppState, project_id: &str) -> anyhow::Result<Part> {
         last_activity_at: app.db.project_last_activity(project_id)?.map(timestamp),
         pinned: app.db.project_pinned(project_id)?,
         bots_waiting: u32::try_from(bots_waiting).unwrap_or(u32::MAX),
+        // `overview_bots` (0.20.0): not served yet.
+        bots: Vec::new(),
     })
 }
 

@@ -21,7 +21,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file flotilla/home/v1/home.proto.
  */
 export const file_flotilla_home_v1_home: GenFile = /*@__PURE__*/
-  fileDesc("ChtmbG90aWxsYS9ob21lL3YxL2hvbWUucHJvdG8SEGZsb3RpbGxhLmhvbWUudjEiLgoXUHJvamVjdHNPdmVydmlld1JlcXVlc3QSEwoLcHJvamVjdF9pZHMYASADKAkiKgoUQXR0ZW50aW9uUm93c1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCSIlChdBdHRlbnRpb25EaXNtaXNzUmVxdWVzdBIKCgJpZBgBIAEoCSI3ChFQcm9qZWN0UGluUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEg4KBnBpbm5lZBgCIAEoCCIVChNPd25lclRocmVhZHNSZXF1ZXN0Im0KFU93bmVyVGhyZWFkR2V0UmVxdWVzdBIOCgZib3RfaWQYASABKAkSFwoKYmVmb3JlX251bRgCIAEoA0gAiAEBEhIKBWxpbWl0GAMgASgNSAGIAQFCDQoLX2JlZm9yZV9udW1CCAoGX2xpbWl0IjsKFk93bmVyVGhyZWFkUmVhZFJlcXVlc3QSDgoGYm90X2lkGAEgASgJEhEKCXVwX3RvX251bRgCIAEoAyLHAQoQUHJvamVjdHNPdmVydmlldxIpCgVhc19vZhgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKgoEcm93cxgCIAMoCzIcLmZsb3RpbGxhLmhvbWUudjEuUHJvamVjdFJvdxIpCgdzb3VyY2VzGAMgAygLMhguZmxvdGlsbGEuaG9tZS52MS5Tb3VyY2USMQoFdG90YWwYBCABKAsyIi5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvblN1bW1hcnki4QQKClByb2plY3RSb3cSEgoKcHJvamVjdF9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEikKB21lbWJlcnMYAyADKAsyGC5mbG90aWxsYS5ob21lLnYxLk1lbWJlchISCgpib2FyZF9ob21lGAQgASgJEjcKD2N1cnJlbnRfcmVsZWFzZRgFIAEoCzIeLmZsb3RpbGxhLmhvbWUudjEuUmVsZWFzZUJyaWVmEhIKCm9wZW5fdGFza3MYBiABKA0SKwoFZG9pbmcYByADKAsyHC5mbG90aWxsYS5ob21lLnYxLkRvaW5nQnJpZWYSDAoEYm90cxgIIAEoDRIUCgxib3RzX3dvcmtpbmcYCSABKA0SNQoJYXR0ZW50aW9uGAogASgLMiIuZmxvdGlsbGEuaG9tZS52MS5BdHRlbnRpb25TdW1tYXJ5Eg8KB3BhcnRpYWwYCyABKAgSFQoNc3RhbGVfc291cmNlcxgMIAMoCRI0ChBsYXN0X2FjdGl2aXR5X2F0GA0gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZwaW5uZWQYDiABKAgSDAoEcmFuaxgPIAEoDRI2Cg5sYXRlc3Rfc3VtbWFyeRgQIAEoCzIeLmZsb3RpbGxhLmhvbWUudjEuU3VtbWFyeUJyaWVmEg4KBmxlZ2FjeRgRIAEoCBIuCgdjb2x1bW5zGBIgAygLMh0uZmxvdGlsbGEuaG9tZS52MS5Db2x1bW5Db3VudBITCgtkb2luZ190b3RhbBgTIAEoDRIUCgxib3RzX3dhaXRpbmcYFCABKA0iSQoLQ29sdW1uQ291bnQSCwoDa2V5GAEgASgJEgwKBG5hbWUYAiABKAkSEAoIY2F0ZWdvcnkYAyABKAkSDQoFY291bnQYBCABKA0iRgoGTWVtYmVyEhEKCWRhZW1vbl9pZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEhUKDWNvbXB1dGVyX25hbWUYAyABKAki1gEKBlNvdXJjZRIRCglkYWVtb25faWQYASABKAkSDAoEbmFtZRgCIAEoCRItCgVzdGF0ZRgDIAEoDjIeLmZsb3RpbGxhLmhvbWUudjEuU291cmNlLlN0YXRlEikKBWFzX29mGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJRCgVTdGF0ZRIVChFTVEFURV9VTlNQRUNJRklFRBAAEgYKAk9LEAESCwoHT0ZGTElORRACEgsKB1RJTUVPVVQQAxIPCgtPTERfVkVSU0lPThAEIs8BChBBdHRlbnRpb25TdW1tYXJ5Eg0KBWNvdW50GAEgASgNEg0KBXNjb3JlGAIgASgNEj8KB2J5X2tpbmQYAyADKAsyLi5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvblN1bW1hcnkuQnlLaW5kRW50cnkSLQoJb2xkZXN0X2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBotCgtCeUtpbmRFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKA06AjgBIpQECgxBdHRlbnRpb25Sb3cSCgoCaWQYASABKAkSLQoEa2luZBgCIAEoDjIfLmZsb3RpbGxhLmhvbWUudjEuQXR0ZW50aW9uS2luZBIRCglkYWVtb25faWQYAyABKAkSEgoKcHJvamVjdF9pZBgEIAEoCRINCgV0aXRsZRgFIAEoCRIuCgpjcmVhdGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZ3ZWlnaHQYByABKA0SFQoLZGVjaXNpb25faWQYCiABKAlIABIUCgpyZWxlYXNlX2lkGAsgASgJSAASEwoJYWN0aW9uX2lkGAwgASgJSAASFAoKcmVxdWVzdF9pZBgNIAEoCUgAEicKA2JvdBgOIAEoCzIYLmZsb3RpbGxhLmhvbWUudjEuQm90UmVmSAASEQoHaXRlbV9pZBgPIAEoCUgAEhMKCXByX251bWJlchgQIAEoDUgAEhgKDmNsZWFudXBfam9iX2lkGBEgASgJSAASEQoHbWFjaGluZRgSIAEoCUgAEhUKDXJlbGF5ZWRfY291bnQYFCABKA0SEAoIcHJpb3JpdHkYFSABKAkSGwoTcXVlc3Rpb25fY29tbWVudF9pZBgWIAEoCRItCgdjbGVhbnVwGBcgASgLMhwuZmxvdGlsbGEuaG9tZS52MS5DbGVhbnVwUm93QggKBnRhcmdldCLaAQoKQ2xlYW51cFJvdxINCgVzdGF0ZRgBIAEoCRIPCgdtYWNoaW5lGAIgASgJEiUKA2JvdBgDIAEoCzIYLmZsb3RpbGxhLmhvbWUudjEuQm90UmVmEhEKCXByX251bWJlchgEIAEoDRITCgt1bmNvbW1pdHRlZBgFIAEoDRIQCgh1bnB1c2hlZBgGIAEoDRIQCghzYWx2YWdlZBgHIAEoCBIOCgZyZWFzb24YCCABKAkSKQoFc2luY2UYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wImgKDUF0dGVudGlvblJvd3MSLAoEcm93cxgBIAMoCzIeLmZsb3RpbGxhLmhvbWUudjEuQXR0ZW50aW9uUm93EikKB3NvdXJjZXMYAiADKAsyGC5mbG90aWxsYS5ob21lLnYxLlNvdXJjZSI5CgZCb3RSZWYSEQoJZGFlbW9uX2lkGAEgASgJEg4KBmJvdF9pZBgCIAEoCRIMCgRuYW1lGAMgASgJIuYBCgxSZWxlYXNlQnJpZWYSEgoKcmVsZWFzZV9pZBgBIAEoCRIPCgd2ZXJzaW9uGAIgASgJEg0KBXN0YXRlGAMgASgJEhYKDmF3YWl0aW5nX293bmVyGAQgASgIEhMKC2l0ZW1zX3RvdGFsGAUgASgNEhIKCml0ZW1zX2RvbmUYBiABKA0SLwoLZGVwbG95ZWRfYXQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC2l0ZW1zX3JlYWR5GAggASgNEhsKE293bmVyX2Jsb2NrZXJfY291bnQYCSABKA0iXAoKRG9pbmdCcmllZhIPCgdpdGVtX2lkGAEgASgJEg0KBXRpdGxlGAIgASgJEhUKDWFzc2lnbmVlX25hbWUYAyABKAkSFwoPYXNzaWduZWVfYm90X2lkGAQgASgJIlgKDFN1bW1hcnlCcmllZhISCgptZWV0aW5nX2lkGAEgASgJEgwKBHRleHQYAiABKAkSJgoCYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIj4KDE93bmVyVGhyZWFkcxIuCgd0aHJlYWRzGAEgAygLMh0uZmxvdGlsbGEuaG9tZS52MS5Pd25lclRocmVhZCKdAQoLT3duZXJUaHJlYWQSJQoDYm90GAEgASgLMhguZmxvdGlsbGEuaG9tZS52MS5Cb3RSZWYSEgoKcHJvamVjdF9pZBgCIAEoCRIsCgRsYXN0GAMgASgLMh4uZmxvdGlsbGEuaG9tZS52MS5NZXNzYWdlQnJpZWYSDgoGdW5yZWFkGAQgASgNEhUKDW9wZW5fcXVlc3Rpb24YBSABKAgijAEKDE1lc3NhZ2VCcmllZhILCgNudW0YASABKAMSEgoKZnJvbV9vd25lchgCIAEoCBIMCgR0ZXh0GAMgASgJEiYKAmF0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRhc2tzGAUgASgIEhcKD3VudmVyaWZpZWRfZnJvbRgGIAEoCSIuChdQcm9qZWN0c092ZXJ2aWV3Q2hhbmdlZBITCgtwcm9qZWN0X2lkcxgBIAMoCSJPChJPd25lclRocmVhZFVwZGF0ZWQSJQoDYm90GAEgASgLMhguZmxvdGlsbGEuaG9tZS52MS5Cb3RSZWYSEgoKcHJvamVjdF9pZBgCIAEoCSKPAwoNQm9hcmRBY3Rpdml0eRISCgpwcm9qZWN0X2lkGAEgASgJEg8KB2l0ZW1faWQYAiABKAkSMQoEa2luZBgDIAEoDjIjLmZsb3RpbGxhLmhvbWUudjEuQm9hcmRBY3Rpdml0eUtpbmQSDQoFYWN0b3IYBCABKAkSEgoKYWN0b3JfbmFtZRgFIAEoCRISCgppdGVtX3RpdGxlGAYgASgJEhMKC2Zyb21fY29sdW1uGAcgASgJEhEKCXRvX2NvbHVtbhgIIAEoCRIRCglmcm9tX25hbWUYCSABKAkSDwoHdG9fbmFtZRgKIAEoCRIMCgRub3RlGAsgASgJEg0KBXVubWV0GAwgAygJEhAKCGFzc2lnbmVlGA0gASgJEhUKDWFzc2lnbmVlX25hbWUYDiABKAkSJgoCYXQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhgKEGZyb21fdGhpc19jbGllbnQYECABKAgSDQoFdGl0bGUYESABKAkSDAoEYm9keRgSIAEoCSIuChdQcm9qZWN0QXR0ZW50aW9uUmVxdWVzdBITCgtwcm9qZWN0X2lkcxgBIAMoCSK8AwoQUHJvamVjdEF0dGVudGlvbhI2CgVwYXJ0cxgBIAMoCzInLmZsb3RpbGxhLmhvbWUudjEuUHJvamVjdEF0dGVudGlvbi5QYXJ0Gu8CCgRQYXJ0EhIKCnByb2plY3RfaWQYASABKAkSMQoFbG9jYWwYAiABKAsyIi5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvblN1bW1hcnkSLAoEcm93cxgDIAMoCzIeLmZsb3RpbGxhLmhvbWUudjEuQXR0ZW50aW9uUm93EhQKDGJvdHNfd29ya2luZxgEIAEoDRIPCgdpc19ob21lGAUgASgIEjcKD2N1cnJlbnRfcmVsZWFzZRgGIAEoCzIeLmZsb3RpbGxhLmhvbWUudjEuUmVsZWFzZUJyaWVmEjYKDmxhdGVzdF9zdW1tYXJ5GAcgASgLMh4uZmxvdGlsbGEuaG9tZS52MS5TdW1tYXJ5QnJpZWYSNAoQbGFzdF9hY3Rpdml0eV9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDgoGcGlubmVkGAkgASgIEhQKDGJvdHNfd2FpdGluZxgKIAEoDSIuChdQcm9qZWN0QXR0ZW50aW9uQ2hhbmdlZBITCgtwcm9qZWN0X2lkcxgBIAMoCSLyAwoLSG9tZVJlcXVlc3QSRgoRcHJvamVjdHNfb3ZlcnZpZXcYASABKAsyKS5mbG90aWxsYS5ob21lLnYxLlByb2plY3RzT3ZlcnZpZXdSZXF1ZXN0SAASQAoOYXR0ZW50aW9uX3Jvd3MYAiABKAsyJi5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvblJvd3NSZXF1ZXN0SAASRgoRYXR0ZW50aW9uX2Rpc21pc3MYAyABKAsyKS5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvbkRpc21pc3NSZXF1ZXN0SAASOgoLcHJvamVjdF9waW4YBCABKAsyIy5mbG90aWxsYS5ob21lLnYxLlByb2plY3RQaW5SZXF1ZXN0SAASPgoNb3duZXJfdGhyZWFkcxgFIAEoCzIlLmZsb3RpbGxhLmhvbWUudjEuT3duZXJUaHJlYWRzUmVxdWVzdEgAEkMKEG93bmVyX3RocmVhZF9nZXQYBiABKAsyJy5mbG90aWxsYS5ob21lLnYxLk93bmVyVGhyZWFkR2V0UmVxdWVzdEgAEkUKEW93bmVyX3RocmVhZF9yZWFkGAcgASgLMiguZmxvdGlsbGEuaG9tZS52MS5Pd25lclRocmVhZFJlYWRSZXF1ZXN0SABCCQoHcmVxdWVzdCLOAwoMSG9tZVJlc3BvbnNlEj8KEXByb2plY3RzX292ZXJ2aWV3GAEgASgLMiIuZmxvdGlsbGEuaG9tZS52MS5Qcm9qZWN0c092ZXJ2aWV3SAASOQoOYXR0ZW50aW9uX3Jvd3MYAiABKAsyHy5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvblJvd3NIABJDChNhdHRlbnRpb25fZGlzbWlzc2VkGAMgASgLMiQuZmxvdGlsbGEuaG9tZS52MS5BdHRlbnRpb25EaXNtaXNzZWRIABI5Cg5wcm9qZWN0X3Bpbm5lZBgEIAEoCzIfLmZsb3RpbGxhLmhvbWUudjEuUHJvamVjdFBpbm5lZEgAEjcKDW93bmVyX3RocmVhZHMYBSABKAsyHi5mbG90aWxsYS5ob21lLnYxLk93bmVyVGhyZWFkc0gAEjkKDG93bmVyX3RocmVhZBgGIAEoCzIhLmZsb3RpbGxhLmhvbWUudjEuT3duZXJUaHJlYWRQYWdlSAASQgoTb3duZXJfdGhyZWFkX21hcmtlZBgHIAEoCzIjLmZsb3RpbGxhLmhvbWUudjEuT3duZXJUaHJlYWRNYXJrZWRIAEIKCghyZXNwb25zZSIgChJBdHRlbnRpb25EaXNtaXNzZWQSCgoCaWQYASABKAkiMwoNUHJvamVjdFBpbm5lZBISCgpwcm9qZWN0X2lkGAEgASgJEg4KBnBpbm5lZBgCIAEoCCKoAQoPT3duZXJUaHJlYWRQYWdlEiUKA2JvdBgBIAEoCzIYLmZsb3RpbGxhLmhvbWUudjEuQm90UmVmEhIKCnByb2plY3RfaWQYAiABKAkSMQoIbWVzc2FnZXMYAyADKAsyHy5mbG90aWxsYS5ob21lLnYxLlRocmVhZE1lc3NhZ2USFQoNbGFzdF9yZWFkX251bRgEIAEoAxIQCghoYXNfbW9yZRgFIAEoCCKnAQoNVGhyZWFkTWVzc2FnZRILCgNudW0YASABKAMSCgoCaWQYAiABKAkSEgoKZnJvbV9vd25lchgDIAEoCBIMCgR0ZXh0GAQgASgJEiYKAmF0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRhc2tzGAYgASgIEgwKBG9wZW4YByABKAgSFwoPdW52ZXJpZmllZF9mcm9tGAggASgJIkoKEU93bmVyVGhyZWFkTWFya2VkEg4KBmJvdF9pZBgBIAEoCRIVCg1sYXN0X3JlYWRfbnVtGAIgASgDEg4KBnVucmVhZBgDIAEoDSI/ChVSZWxlYXNlSW5zdGFsbFJlcXVlc3QSEgoKcmVsZWFzZV9pZBgBIAEoCRISCgpjaGVja19zaXRlGAIgASgIIoMDCg5SZWxlYXNlSW5zdGFsbBISCgpyZWxlYXNlX2lkGAEgASgJEhIKCnByb2plY3RfaWQYAiABKAkSDwoHdmVyc2lvbhgDIAEoCRINCgVidWlsZBgEIAEoCRINCgVzdGF0ZRgFIAEoCRITCgtpbnN0YWxsYWJsZRgGIAEoCBITCgtmb3JfdGVzdGluZxgHIAEoCBIQCghwYWdlX3VybBgIIAEoCRITCgtpbnN0YWxsX3VybBgJIAEoCRIpCgRzaXRlGAogASgLMhsuZmxvdGlsbGEuaG9tZS52MS5TaXRlQ2hlY2sSEAoIY29tcHV0ZXIYCyABKAkSFgoOY2FuX3N0YXJ0X3NpdGUYDCABKAgSMAoHZGV2aWNlcxgNIAMoCzIfLmZsb3RpbGxhLmhvbWUudjEuSW5zdGFsbERldmljZRIRCglhcHBfdGl0bGUYDiABKAkSLwoLYXBwcm92ZWRfYXQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIl0KCVNpdGVDaGVjaxIPCgdzZXJ2aW5nGAEgASgIEg8KB3Byb2JsZW0YAiABKAkSLgoKY2hlY2tlZF9hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiwwEKDUluc3RhbGxEZXZpY2USEQoJZGV2aWNlX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSMAoMbGFzdF9zZWVuX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCgljb25uZWN0ZWQYBCABKAgSEwoLYXBwX3ZlcnNpb24YBSABKAkSNwoTYXBwX3ZlcnNpb25fc2Vlbl9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiQwoaUmVsZWFzZVNlbmRUb0RldmljZVJlcXVlc3QSEgoKcmVsZWFzZV9pZBgBIAEoCRIRCglkZXZpY2VfaWQYAiABKAkilwIKDEluc3RhbGxPZmZlchISCgpyZWxlYXNlX2lkGAEgASgJEhIKCnByb2plY3RfaWQYAiABKAkSEQoJZGV2aWNlX2lkGAMgASgJEhMKC2RldmljZV9uYW1lGAQgASgJEg8KB3ZlcnNpb24YBSABKAkSDQoFYnVpbGQYBiABKAkSEwoLaW5zdGFsbF91cmwYByABKAkSEAoIcGFnZV91cmwYCCABKAkSDQoFdGl0bGUYCSABKAkSDAoEYm9keRgKIAEoCRITCgtmb3JfdGVzdGluZxgLIAEoCBIrCgdzZW50X2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglkZWxpdmVyZWQYDSABKAgiFgoUSW5zdGFsbE9mZmVyc1JlcXVlc3QiPwoNSW5zdGFsbE9mZmVycxIuCgZvZmZlcnMYASADKAsyHi5mbG90aWxsYS5ob21lLnYxLkluc3RhbGxPZmZlciIwChpJbnN0YWxsT2ZmZXJEaXNtaXNzUmVxdWVzdBISCgpyZWxlYXNlX2lkGAEgASgJKvkCCg1BdHRlbnRpb25LaW5kEh4KGkFUVEVOVElPTl9LSU5EX1VOU1BFQ0lGSUVEEAASFAoQUkVMRUFTRV9BV0FJVElORxABEhAKDE9XTkVSX0FDVElPThACEhUKEVBFUk1JU1NJT05fUFJPTVBUEAMSDAoIREVDSVNJT04QBBITCg9SRUxBWUVEX1JVTElOR1MQBRILCgdQMF9JVEVNEAYSDwoLQk9UX1dBSVRJTkcQBxINCglPRkZfQk9BUkQQCBIPCgtTRVJWSU5HX09GRhAJEhIKDk9XTkVSX1FVRVNUSU9OEAoSDQoJUFJfUkVWSUVXEAsSEgoOUFJfTUVSR0VfU1RVQ0sQDBIWChJNQUlOX01PVkVEX09VVFNJREUQDRIQCgxDTEVBTlVQX0hFTEQQDhIMCghESVNLX0xPVxAPEhQKEENIRUNLX1VOUk9VVEFCTEUQEBIRCg1EUkFGVF9VUERBVEVEEBESEAoMQ0FSRF9XQUlUSU5HEBIqiwIKEUJvYXJkQWN0aXZpdHlLaW5kEiMKH0JPQVJEX0FDVElWSVRZX0tJTkRfVU5TUEVDSUZJRUQQABIdChlCT0FSRF9BQ1RJVklUWV9LSU5EX01PVkVEEAESIAocQk9BUkRfQUNUSVZJVFlfS0lORF9BU1NJR05FRBACEiIKHkJPQVJEX0FDVElWSVRZX0tJTkRfVU5BU1NJR05FRBADEiQKIEJPQVJEX0FDVElWSVRZX0tJTkRfTU9WRV9SRUZVU0VEEAQSJQohQk9BUkRfQUNUSVZJVFlfS0lORF9EUkFGVF9VUERBVEVEEAUSHwobQk9BUkRfQUNUSVZJVFlfS0lORF9DSEVDS0VEEAZiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("ChtmbG90aWxsYS9ob21lL3YxL2hvbWUucHJvdG8SEGZsb3RpbGxhLmhvbWUudjEiLgoXUHJvamVjdHNPdmVydmlld1JlcXVlc3QSEwoLcHJvamVjdF9pZHMYASADKAkiKgoUQXR0ZW50aW9uUm93c1JlcXVlc3QSEgoKcHJvamVjdF9pZBgBIAEoCSIlChdBdHRlbnRpb25EaXNtaXNzUmVxdWVzdBIKCgJpZBgBIAEoCSI3ChFQcm9qZWN0UGluUmVxdWVzdBISCgpwcm9qZWN0X2lkGAEgASgJEg4KBnBpbm5lZBgCIAEoCCIVChNPd25lclRocmVhZHNSZXF1ZXN0Im0KFU93bmVyVGhyZWFkR2V0UmVxdWVzdBIOCgZib3RfaWQYASABKAkSFwoKYmVmb3JlX251bRgCIAEoA0gAiAEBEhIKBWxpbWl0GAMgASgNSAGIAQFCDQoLX2JlZm9yZV9udW1CCAoGX2xpbWl0IjsKFk93bmVyVGhyZWFkUmVhZFJlcXVlc3QSDgoGYm90X2lkGAEgASgJEhEKCXVwX3RvX251bRgCIAEoAyLHAQoQUHJvamVjdHNPdmVydmlldxIpCgVhc19vZhgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKgoEcm93cxgCIAMoCzIcLmZsb3RpbGxhLmhvbWUudjEuUHJvamVjdFJvdxIpCgdzb3VyY2VzGAMgAygLMhguZmxvdGlsbGEuaG9tZS52MS5Tb3VyY2USMQoFdG90YWwYBCABKAsyIi5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvblN1bW1hcnkixgUKClByb2plY3RSb3cSEgoKcHJvamVjdF9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEikKB21lbWJlcnMYAyADKAsyGC5mbG90aWxsYS5ob21lLnYxLk1lbWJlchISCgpib2FyZF9ob21lGAQgASgJEjcKD2N1cnJlbnRfcmVsZWFzZRgFIAEoCzIeLmZsb3RpbGxhLmhvbWUudjEuUmVsZWFzZUJyaWVmEhIKCm9wZW5fdGFza3MYBiABKA0SKwoFZG9pbmcYByADKAsyHC5mbG90aWxsYS5ob21lLnYxLkRvaW5nQnJpZWYSDAoEYm90cxgIIAEoDRIUCgxib3RzX3dvcmtpbmcYCSABKA0SNQoJYXR0ZW50aW9uGAogASgLMiIuZmxvdGlsbGEuaG9tZS52MS5BdHRlbnRpb25TdW1tYXJ5Eg8KB3BhcnRpYWwYCyABKAgSFQoNc3RhbGVfc291cmNlcxgMIAMoCRI0ChBsYXN0X2FjdGl2aXR5X2F0GA0gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZwaW5uZWQYDiABKAgSDAoEcmFuaxgPIAEoDRI2Cg5sYXRlc3Rfc3VtbWFyeRgQIAEoCzIeLmZsb3RpbGxhLmhvbWUudjEuU3VtbWFyeUJyaWVmEg4KBmxlZ2FjeRgRIAEoCBIuCgdjb2x1bW5zGBIgAygLMh0uZmxvdGlsbGEuaG9tZS52MS5Db2x1bW5Db3VudBITCgtkb2luZ190b3RhbBgTIAEoDRIUCgxib3RzX3dhaXRpbmcYFCABKA0SLAoIYm90X2xpc3QYFSADKAsyGi5mbG90aWxsYS5ob21lLnYxLkJvdEJyaWVmEjUKDXRvcF9hdHRlbnRpb24YFiABKAsyHi5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvblJvdyJnCgtDb2x1bW5Db3VudBILCgNrZXkYASABKAkSDAoEbmFtZRgCIAEoCRIQCghjYXRlZ29yeRgDIAEoCRINCgVjb3VudBgEIAEoDRIMCgRraW5kGAUgASgJEg4KBmhpZGRlbhgGIAEoCCKIAQoGTWVtYmVyEhEKCWRhZW1vbl9pZBgBIAEoCRISCgpwcm9qZWN0X2lkGAIgASgJEhUKDWNvbXB1dGVyX25hbWUYAyABKAkSDgoGb25saW5lGAQgASgIEjAKDGxhc3Rfc2Vlbl9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAi/gEKCEJvdEJyaWVmEhEKCWRhZW1vbl9pZBgBIAEoCRIOCgZib3RfaWQYAiABKAkSDAoEbmFtZRgDIAEoCRIOCgZhdmF0YXIYBCABKAkSDwoHcnVudGltZRgFIAEoCRIrCgZzdGF0dXMYBiABKA4yGy5mbG90aWxsYS5ob21lLnYxLkJvdFN0YXR1cxINCgVzdGF0ZRgHIAEoCRIUCgxzdGF0ZV9yZWFzb24YCCABKAkSFQoNY29tcHV0ZXJfbmFtZRgJIAEoCRIMCgRsZWFkGAogASgIEikKBXNpbmNlGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCLWAQoGU291cmNlEhEKCWRhZW1vbl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEi0KBXN0YXRlGAMgASgOMh4uZmxvdGlsbGEuaG9tZS52MS5Tb3VyY2UuU3RhdGUSKQoFYXNfb2YYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIlEKBVN0YXRlEhUKEVNUQVRFX1VOU1BFQ0lGSUVEEAASBgoCT0sQARILCgdPRkZMSU5FEAISCwoHVElNRU9VVBADEg8KC09MRF9WRVJTSU9OEAQizwEKEEF0dGVudGlvblN1bW1hcnkSDQoFY291bnQYASABKA0SDQoFc2NvcmUYAiABKA0SPwoHYnlfa2luZBgDIAMoCzIuLmZsb3RpbGxhLmhvbWUudjEuQXR0ZW50aW9uU3VtbWFyeS5CeUtpbmRFbnRyeRItCglvbGRlc3RfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wGi0KC0J5S2luZEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoDToCOAEipwQKDEF0dGVudGlvblJvdxIKCgJpZBgBIAEoCRItCgRraW5kGAIgASgOMh8uZmxvdGlsbGEuaG9tZS52MS5BdHRlbnRpb25LaW5kEhEKCWRhZW1vbl9pZBgDIAEoCRISCgpwcm9qZWN0X2lkGAQgASgJEg0KBXRpdGxlGAUgASgJEi4KCmNyZWF0ZWRfYXQYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEg4KBndlaWdodBgHIAEoDRIVCgtkZWNpc2lvbl9pZBgKIAEoCUgAEhQKCnJlbGVhc2VfaWQYCyABKAlIABITCglhY3Rpb25faWQYDCABKAlIABIUCgpyZXF1ZXN0X2lkGA0gASgJSAASJwoDYm90GA4gASgLMhguZmxvdGlsbGEuaG9tZS52MS5Cb3RSZWZIABIRCgdpdGVtX2lkGA8gASgJSAASEwoJcHJfbnVtYmVyGBAgASgNSAASGAoOY2xlYW51cF9qb2JfaWQYESABKAlIABIRCgdtYWNoaW5lGBIgASgJSAASFQoNcmVsYXllZF9jb3VudBgUIAEoDRIQCghwcmlvcml0eRgVIAEoCRIbChNxdWVzdGlvbl9jb21tZW50X2lkGBYgASgJEi0KB2NsZWFudXAYFyABKAsyHC5mbG90aWxsYS5ob21lLnYxLkNsZWFudXBSb3cSEQoJYm90X3N0YXRlGBggASgJQggKBnRhcmdldCLaAQoKQ2xlYW51cFJvdxINCgVzdGF0ZRgBIAEoCRIPCgdtYWNoaW5lGAIgASgJEiUKA2JvdBgDIAEoCzIYLmZsb3RpbGxhLmhvbWUudjEuQm90UmVmEhEKCXByX251bWJlchgEIAEoDRITCgt1bmNvbW1pdHRlZBgFIAEoDRIQCgh1bnB1c2hlZBgGIAEoDRIQCghzYWx2YWdlZBgHIAEoCBIOCgZyZWFzb24YCCABKAkSKQoFc2luY2UYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wImgKDUF0dGVudGlvblJvd3MSLAoEcm93cxgBIAMoCzIeLmZsb3RpbGxhLmhvbWUudjEuQXR0ZW50aW9uUm93EikKB3NvdXJjZXMYAiADKAsyGC5mbG90aWxsYS5ob21lLnYxLlNvdXJjZSI5CgZCb3RSZWYSEQoJZGFlbW9uX2lkGAEgASgJEg4KBmJvdF9pZBgCIAEoCRIMCgRuYW1lGAMgASgJIuYBCgxSZWxlYXNlQnJpZWYSEgoKcmVsZWFzZV9pZBgBIAEoCRIPCgd2ZXJzaW9uGAIgASgJEg0KBXN0YXRlGAMgASgJEhYKDmF3YWl0aW5nX293bmVyGAQgASgIEhMKC2l0ZW1zX3RvdGFsGAUgASgNEhIKCml0ZW1zX2RvbmUYBiABKA0SLwoLZGVwbG95ZWRfYXQYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC2l0ZW1zX3JlYWR5GAggASgNEhsKE293bmVyX2Jsb2NrZXJfY291bnQYCSABKA0iXAoKRG9pbmdCcmllZhIPCgdpdGVtX2lkGAEgASgJEg0KBXRpdGxlGAIgASgJEhUKDWFzc2lnbmVlX25hbWUYAyABKAkSFwoPYXNzaWduZWVfYm90X2lkGAQgASgJIlgKDFN1bW1hcnlCcmllZhISCgptZWV0aW5nX2lkGAEgASgJEgwKBHRleHQYAiABKAkSJgoCYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIj4KDE93bmVyVGhyZWFkcxIuCgd0aHJlYWRzGAEgAygLMh0uZmxvdGlsbGEuaG9tZS52MS5Pd25lclRocmVhZCKdAQoLT3duZXJUaHJlYWQSJQoDYm90GAEgASgLMhguZmxvdGlsbGEuaG9tZS52MS5Cb3RSZWYSEgoKcHJvamVjdF9pZBgCIAEoCRIsCgRsYXN0GAMgASgLMh4uZmxvdGlsbGEuaG9tZS52MS5NZXNzYWdlQnJpZWYSDgoGdW5yZWFkGAQgASgNEhUKDW9wZW5fcXVlc3Rpb24YBSABKAgijAEKDE1lc3NhZ2VCcmllZhILCgNudW0YASABKAMSEgoKZnJvbV9vd25lchgCIAEoCBIMCgR0ZXh0GAMgASgJEiYKAmF0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRhc2tzGAUgASgIEhcKD3VudmVyaWZpZWRfZnJvbRgGIAEoCSIuChdQcm9qZWN0c092ZXJ2aWV3Q2hhbmdlZBITCgtwcm9qZWN0X2lkcxgBIAMoCSJPChJPd25lclRocmVhZFVwZGF0ZWQSJQoDYm90GAEgASgLMhguZmxvdGlsbGEuaG9tZS52MS5Cb3RSZWYSEgoKcHJvamVjdF9pZBgCIAEoCSKPAwoNQm9hcmRBY3Rpdml0eRISCgpwcm9qZWN0X2lkGAEgASgJEg8KB2l0ZW1faWQYAiABKAkSMQoEa2luZBgDIAEoDjIjLmZsb3RpbGxhLmhvbWUudjEuQm9hcmRBY3Rpdml0eUtpbmQSDQoFYWN0b3IYBCABKAkSEgoKYWN0b3JfbmFtZRgFIAEoCRISCgppdGVtX3RpdGxlGAYgASgJEhMKC2Zyb21fY29sdW1uGAcgASgJEhEKCXRvX2NvbHVtbhgIIAEoCRIRCglmcm9tX25hbWUYCSABKAkSDwoHdG9fbmFtZRgKIAEoCRIMCgRub3RlGAsgASgJEg0KBXVubWV0GAwgAygJEhAKCGFzc2lnbmVlGA0gASgJEhUKDWFzc2lnbmVlX25hbWUYDiABKAkSJgoCYXQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhgKEGZyb21fdGhpc19jbGllbnQYECABKAgSDQoFdGl0bGUYESABKAkSDAoEYm9keRgSIAEoCSJAChdQcm9qZWN0QXR0ZW50aW9uUmVxdWVzdBITCgtwcm9qZWN0X2lkcxgBIAMoCRIQCghyZXZpc2lvbhgCIAEoDSLmAwoQUHJvamVjdEF0dGVudGlvbhI2CgVwYXJ0cxgBIAMoCzInLmZsb3RpbGxhLmhvbWUudjEuUHJvamVjdEF0dGVudGlvbi5QYXJ0GpkDCgRQYXJ0EhIKCnByb2plY3RfaWQYASABKAkSMQoFbG9jYWwYAiABKAsyIi5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvblN1bW1hcnkSLAoEcm93cxgDIAMoCzIeLmZsb3RpbGxhLmhvbWUudjEuQXR0ZW50aW9uUm93EhQKDGJvdHNfd29ya2luZxgEIAEoDRIPCgdpc19ob21lGAUgASgIEjcKD2N1cnJlbnRfcmVsZWFzZRgGIAEoCzIeLmZsb3RpbGxhLmhvbWUudjEuUmVsZWFzZUJyaWVmEjYKDmxhdGVzdF9zdW1tYXJ5GAcgASgLMh4uZmxvdGlsbGEuaG9tZS52MS5TdW1tYXJ5QnJpZWYSNAoQbGFzdF9hY3Rpdml0eV9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDgoGcGlubmVkGAkgASgIEhQKDGJvdHNfd2FpdGluZxgKIAEoDRIoCgRib3RzGAsgAygLMhouZmxvdGlsbGEuaG9tZS52MS5Cb3RCcmllZiIuChdQcm9qZWN0QXR0ZW50aW9uQ2hhbmdlZBITCgtwcm9qZWN0X2lkcxgBIAMoCSLyAwoLSG9tZVJlcXVlc3QSRgoRcHJvamVjdHNfb3ZlcnZpZXcYASABKAsyKS5mbG90aWxsYS5ob21lLnYxLlByb2plY3RzT3ZlcnZpZXdSZXF1ZXN0SAASQAoOYXR0ZW50aW9uX3Jvd3MYAiABKAsyJi5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvblJvd3NSZXF1ZXN0SAASRgoRYXR0ZW50aW9uX2Rpc21pc3MYAyABKAsyKS5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvbkRpc21pc3NSZXF1ZXN0SAASOgoLcHJvamVjdF9waW4YBCABKAsyIy5mbG90aWxsYS5ob21lLnYxLlByb2plY3RQaW5SZXF1ZXN0SAASPgoNb3duZXJfdGhyZWFkcxgFIAEoCzIlLmZsb3RpbGxhLmhvbWUudjEuT3duZXJUaHJlYWRzUmVxdWVzdEgAEkMKEG93bmVyX3RocmVhZF9nZXQYBiABKAsyJy5mbG90aWxsYS5ob21lLnYxLk93bmVyVGhyZWFkR2V0UmVxdWVzdEgAEkUKEW93bmVyX3RocmVhZF9yZWFkGAcgASgLMiguZmxvdGlsbGEuaG9tZS52MS5Pd25lclRocmVhZFJlYWRSZXF1ZXN0SABCCQoHcmVxdWVzdCLOAwoMSG9tZVJlc3BvbnNlEj8KEXByb2plY3RzX292ZXJ2aWV3GAEgASgLMiIuZmxvdGlsbGEuaG9tZS52MS5Qcm9qZWN0c092ZXJ2aWV3SAASOQoOYXR0ZW50aW9uX3Jvd3MYAiABKAsyHy5mbG90aWxsYS5ob21lLnYxLkF0dGVudGlvblJvd3NIABJDChNhdHRlbnRpb25fZGlzbWlzc2VkGAMgASgLMiQuZmxvdGlsbGEuaG9tZS52MS5BdHRlbnRpb25EaXNtaXNzZWRIABI5Cg5wcm9qZWN0X3Bpbm5lZBgEIAEoCzIfLmZsb3RpbGxhLmhvbWUudjEuUHJvamVjdFBpbm5lZEgAEjcKDW93bmVyX3RocmVhZHMYBSABKAsyHi5mbG90aWxsYS5ob21lLnYxLk93bmVyVGhyZWFkc0gAEjkKDG93bmVyX3RocmVhZBgGIAEoCzIhLmZsb3RpbGxhLmhvbWUudjEuT3duZXJUaHJlYWRQYWdlSAASQgoTb3duZXJfdGhyZWFkX21hcmtlZBgHIAEoCzIjLmZsb3RpbGxhLmhvbWUudjEuT3duZXJUaHJlYWRNYXJrZWRIAEIKCghyZXNwb25zZSIgChJBdHRlbnRpb25EaXNtaXNzZWQSCgoCaWQYASABKAkiMwoNUHJvamVjdFBpbm5lZBISCgpwcm9qZWN0X2lkGAEgASgJEg4KBnBpbm5lZBgCIAEoCCKoAQoPT3duZXJUaHJlYWRQYWdlEiUKA2JvdBgBIAEoCzIYLmZsb3RpbGxhLmhvbWUudjEuQm90UmVmEhIKCnByb2plY3RfaWQYAiABKAkSMQoIbWVzc2FnZXMYAyADKAsyHy5mbG90aWxsYS5ob21lLnYxLlRocmVhZE1lc3NhZ2USFQoNbGFzdF9yZWFkX251bRgEIAEoAxIQCghoYXNfbW9yZRgFIAEoCCKnAQoNVGhyZWFkTWVzc2FnZRILCgNudW0YASABKAMSCgoCaWQYAiABKAkSEgoKZnJvbV9vd25lchgDIAEoCBIMCgR0ZXh0GAQgASgJEiYKAmF0GAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRhc2tzGAYgASgIEgwKBG9wZW4YByABKAgSFwoPdW52ZXJpZmllZF9mcm9tGAggASgJIkoKEU93bmVyVGhyZWFkTWFya2VkEg4KBmJvdF9pZBgBIAEoCRIVCg1sYXN0X3JlYWRfbnVtGAIgASgDEg4KBnVucmVhZBgDIAEoDSI/ChVSZWxlYXNlSW5zdGFsbFJlcXVlc3QSEgoKcmVsZWFzZV9pZBgBIAEoCRISCgpjaGVja19zaXRlGAIgASgIIoMDCg5SZWxlYXNlSW5zdGFsbBISCgpyZWxlYXNlX2lkGAEgASgJEhIKCnByb2plY3RfaWQYAiABKAkSDwoHdmVyc2lvbhgDIAEoCRINCgVidWlsZBgEIAEoCRINCgVzdGF0ZRgFIAEoCRITCgtpbnN0YWxsYWJsZRgGIAEoCBITCgtmb3JfdGVzdGluZxgHIAEoCBIQCghwYWdlX3VybBgIIAEoCRITCgtpbnN0YWxsX3VybBgJIAEoCRIpCgRzaXRlGAogASgLMhsuZmxvdGlsbGEuaG9tZS52MS5TaXRlQ2hlY2sSEAoIY29tcHV0ZXIYCyABKAkSFgoOY2FuX3N0YXJ0X3NpdGUYDCABKAgSMAoHZGV2aWNlcxgNIAMoCzIfLmZsb3RpbGxhLmhvbWUudjEuSW5zdGFsbERldmljZRIRCglhcHBfdGl0bGUYDiABKAkSLwoLYXBwcm92ZWRfYXQYDyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIl0KCVNpdGVDaGVjaxIPCgdzZXJ2aW5nGAEgASgIEg8KB3Byb2JsZW0YAiABKAkSLgoKY2hlY2tlZF9hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiwwEKDUluc3RhbGxEZXZpY2USEQoJZGV2aWNlX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSMAoMbGFzdF9zZWVuX2F0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCgljb25uZWN0ZWQYBCABKAgSEwoLYXBwX3ZlcnNpb24YBSABKAkSNwoTYXBwX3ZlcnNpb25fc2Vlbl9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiQwoaUmVsZWFzZVNlbmRUb0RldmljZVJlcXVlc3QSEgoKcmVsZWFzZV9pZBgBIAEoCRIRCglkZXZpY2VfaWQYAiABKAkilwIKDEluc3RhbGxPZmZlchISCgpyZWxlYXNlX2lkGAEgASgJEhIKCnByb2plY3RfaWQYAiABKAkSEQoJZGV2aWNlX2lkGAMgASgJEhMKC2RldmljZV9uYW1lGAQgASgJEg8KB3ZlcnNpb24YBSABKAkSDQoFYnVpbGQYBiABKAkSEwoLaW5zdGFsbF91cmwYByABKAkSEAoIcGFnZV91cmwYCCABKAkSDQoFdGl0bGUYCSABKAkSDAoEYm9keRgKIAEoCRITCgtmb3JfdGVzdGluZxgLIAEoCBIrCgdzZW50X2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglkZWxpdmVyZWQYDSABKAgiFgoUSW5zdGFsbE9mZmVyc1JlcXVlc3QiPwoNSW5zdGFsbE9mZmVycxIuCgZvZmZlcnMYASADKAsyHi5mbG90aWxsYS5ob21lLnYxLkluc3RhbGxPZmZlciIwChpJbnN0YWxsT2ZmZXJEaXNtaXNzUmVxdWVzdBISCgpyZWxlYXNlX2lkGAEgASgJKrMBCglCb3RTdGF0dXMSGgoWQk9UX1NUQVRVU19VTlNQRUNJRklFRBAAEhYKEkJPVF9TVEFUVVNfV09SS0lORxABEhMKD0JPVF9TVEFUVVNfSURMRRACEhYKEkJPVF9TVEFUVVNfV0FJVElORxADEhYKEkJPVF9TVEFUVVNfU1RPUFBFRBAEEhUKEUJPVF9TVEFUVVNfRkFJTEVEEAUSFgoSQk9UX1NUQVRVU19PRkZMSU5FEAYqigMKDUF0dGVudGlvbktpbmQSHgoaQVRURU5USU9OX0tJTkRfVU5TUEVDSUZJRUQQABIUChBSRUxFQVNFX0FXQUlUSU5HEAESEAoMT1dORVJfQUNUSU9OEAISFQoRUEVSTUlTU0lPTl9QUk9NUFQQAxIMCghERUNJU0lPThAEEhMKD1JFTEFZRURfUlVMSU5HUxAFEgsKB1AwX0lURU0QBhIPCgtCT1RfV0FJVElORxAHEg0KCU9GRl9CT0FSRBAIEg8KC1NFUlZJTkdfT0ZGEAkSEgoOT1dORVJfUVVFU1RJT04QChINCglQUl9SRVZJRVcQCxISCg5QUl9NRVJHRV9TVFVDSxAMEhYKEk1BSU5fTU9WRURfT1VUU0lERRANEhAKDENMRUFOVVBfSEVMRBAOEgwKCERJU0tfTE9XEA8SFAoQQ0hFQ0tfVU5ST1VUQUJMRRAQEhEKDURSQUZUX1VQREFURUQQERIQCgxDQVJEX1dBSVRJTkcQEhIPCgtCT1RfU1RPUFBFRBATKosCChFCb2FyZEFjdGl2aXR5S2luZBIjCh9CT0FSRF9BQ1RJVklUWV9LSU5EX1VOU1BFQ0lGSUVEEAASHQoZQk9BUkRfQUNUSVZJVFlfS0lORF9NT1ZFRBABEiAKHEJPQVJEX0FDVElWSVRZX0tJTkRfQVNTSUdORUQQAhIiCh5CT0FSRF9BQ1RJVklUWV9LSU5EX1VOQVNTSUdORUQQAxIkCiBCT0FSRF9BQ1RJVklUWV9LSU5EX01PVkVfUkVGVVNFRBAEEiUKIUJPQVJEX0FDVElWSVRZX0tJTkRfRFJBRlRfVVBEQVRFRBAFEh8KG0JPQVJEX0FDVElWSVRZX0tJTkRfQ0hFQ0tFRBAGYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * ---- requests (WS type in brackets; grant) ----
@@ -345,6 +345,29 @@ export type ProjectRow = Message<"flotilla.home.v1.ProjectRow"> & {
    * @generated from field: uint32 bots_waiting = 20;
    */
   botsWaiting: number;
+
+  /**
+   * Additions (0.20.0, capability `overview_bots`), for the Board glance:
+   * every bot of the project across its computers, this computer's own and
+   * each linked computer's (`ProjectAttention.Part.bots`), a linked bot
+   * once. Order: the lead first, then WAITING, WORKING, FAILED and STOPPED,
+   * IDLE, OFFLINE; within a group by name, case-insensitively. At most 24:
+   * `bots` and the counts above stay the totals. Empty from an older daemon.
+   *
+   * @generated from field: repeated flotilla.home.v1.BotBrief bot_list = 21;
+   */
+  botList: BotBrief[];
+
+  /**
+   * Addition (0.20.0, capability `overview_top_attention`): the row the
+   * project's Needs-you list would show first, by the `AttentionRows` sort
+   * (weight desc, created_at asc, then id) over every computer's rows, this
+   * one's and the linked ones' parts. Unset when nothing needs the owner,
+   * and from an older daemon.
+   *
+   * @generated from field: flotilla.home.v1.AttentionRow top_attention = 22;
+   */
+  topAttention?: AttentionRow | undefined;
 };
 
 /**
@@ -383,6 +406,23 @@ export type ColumnCount = Message<"flotilla.home.v1.ColumnCount"> & {
    * @generated from field: uint32 count = 4;
    */
   count: number;
+
+  /**
+   * Additions (0.20.0). An older daemon leaves both unset: derive the kind
+   * from `category`, and treat a column as visible.
+   *
+   * ColumnKind name, lowercase: open, active, done, cancelled
+   *
+   * @generated from field: string kind = 5;
+   */
+  kind: string;
+
+  /**
+   * hidden on the board (a preset's Cancelled); still counted
+   *
+   * @generated from field: bool hidden = 6;
+   */
+  hidden: boolean;
 };
 
 /**
@@ -410,6 +450,23 @@ export type Member = Message<"flotilla.home.v1.Member"> & {
    * @generated from field: string computer_name = 3;
    */
   computerName: string;
+
+  /**
+   * Additions (0.20.0, capability `overview_bots`). `online`: this computer
+   * always; a linked one while its link is up. An older daemon sends false
+   * for every member: without the capability, read the member's `Source`
+   * instead (none for this computer, which is online).
+   *
+   * @generated from field: bool online = 4;
+   */
+  online: boolean;
+
+  /**
+   * the link last up; unset for this computer and a computer never seen
+   *
+   * @generated from field: google.protobuf.Timestamp last_seen_at = 5;
+   */
+  lastSeenAt?: Timestamp | undefined;
 };
 
 /**
@@ -418,6 +475,94 @@ export type Member = Message<"flotilla.home.v1.Member"> & {
  */
 export const MemberSchema: GenMessage<Member> = /*@__PURE__*/
   messageDesc(file_flotilla_home_v1_home, 10);
+
+/**
+ * One bot, for the Board glance (0.20.0). Ids are its own computer's: a
+ * client opens or restarts it there (`restart_bot` on `daemon_id`).
+ *
+ * @generated from message flotilla.home.v1.BotBrief
+ */
+export type BotBrief = Message<"flotilla.home.v1.BotBrief"> & {
+  /**
+   * the bot's own computer
+   *
+   * @generated from field: string daemon_id = 1;
+   */
+  daemonId: string;
+
+  /**
+   * its id there
+   *
+   * @generated from field: string bot_id = 2;
+   */
+  botId: string;
+
+  /**
+   * @generated from field: string name = 3;
+   */
+  name: string;
+
+  /**
+   * as on the bot: icon:<name>, color:#rrggbb or empty
+   *
+   * @generated from field: string avatar = 4;
+   */
+  avatar: string;
+
+  /**
+   * claude_code | codex_cli
+   *
+   * @generated from field: string runtime = 5;
+   */
+  runtime: string;
+
+  /**
+   * @generated from field: flotilla.home.v1.BotStatus status = 6;
+   */
+  status: BotStatus;
+
+  /**
+   * its raw BotState, lowercase: working, crashed…
+   *
+   * @generated from field: string state = 7;
+   */
+  state: string;
+
+  /**
+   * as on the bot; empty when none
+   *
+   * @generated from field: string state_reason = 8;
+   */
+  stateReason: string;
+
+  /**
+   * its computer, as Member.computer_name
+   *
+   * @generated from field: string computer_name = 9;
+   */
+  computerName: string;
+
+  /**
+   * the project's lead (as the answering computer has it)
+   *
+   * @generated from field: bool lead = 10;
+   */
+  lead: boolean;
+
+  /**
+   * in this status since; unset when unknown
+   *
+   * @generated from field: google.protobuf.Timestamp since = 11;
+   */
+  since?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message flotilla.home.v1.BotBrief.
+ * Use `create(BotBriefSchema)` to create a new message.
+ */
+export const BotBriefSchema: GenMessage<BotBrief> = /*@__PURE__*/
+  messageDesc(file_flotilla_home_v1_home, 11);
 
 /**
  * @generated from message flotilla.home.v1.Source
@@ -451,7 +596,7 @@ export type Source = Message<"flotilla.home.v1.Source"> & {
  * Use `create(SourceSchema)` to create a new message.
  */
 export const SourceSchema: GenMessage<Source> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 11);
+  messageDesc(file_flotilla_home_v1_home, 12);
 
 /**
  * @generated from enum flotilla.home.v1.Source.State
@@ -487,7 +632,7 @@ export enum Source_State {
  * Describes the enum flotilla.home.v1.Source.State.
  */
 export const Source_StateSchema: GenEnum<Source_State> = /*@__PURE__*/
-  enumDesc(file_flotilla_home_v1_home, 11, 0);
+  enumDesc(file_flotilla_home_v1_home, 12, 0);
 
 /**
  * @generated from message flotilla.home.v1.AttentionSummary
@@ -523,7 +668,7 @@ export type AttentionSummary = Message<"flotilla.home.v1.AttentionSummary"> & {
  * Use `create(AttentionSummarySchema)` to create a new message.
  */
 export const AttentionSummarySchema: GenMessage<AttentionSummary> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 12);
+  messageDesc(file_flotilla_home_v1_home, 13);
 
 /**
  * @generated from message flotilla.home.v1.AttentionRow
@@ -605,7 +750,7 @@ export type AttentionRow = Message<"flotilla.home.v1.AttentionRow"> & {
     case: "requestId";
   } | {
     /**
-     * bot_waiting, off_board, owner_question in a thread
+     * bot_waiting, off_board, owner_question in a thread, bot_stopped
      *
      * @generated from field: flotilla.home.v1.BotRef bot = 14;
      */
@@ -672,6 +817,18 @@ export type AttentionRow = Message<"flotilla.home.v1.AttentionRow"> & {
    * @generated from field: flotilla.home.v1.CleanupRow cleanup = 23;
    */
   cleanup?: CleanupRow | undefined;
+
+  /**
+   * bot_stopped (0.20.0): why the bot isn't running, its raw BotState:
+   * crashed | auth_failed | rate_limited | stopped. The row's action is
+   * `restart_bot {bot_id}` on the bot's computer (`bot.daemon_id`), but
+   * auth_failed needs the owner to sign the runtime in on that computer
+   * first, and rate_limited clears by itself: a client offers Restart for
+   * crashed and stopped, and words the other two as what to do.
+   *
+   * @generated from field: string bot_state = 24;
+   */
+  botState: string;
 };
 
 /**
@@ -679,7 +836,7 @@ export type AttentionRow = Message<"flotilla.home.v1.AttentionRow"> & {
  * Use `create(AttentionRowSchema)` to create a new message.
  */
 export const AttentionRowSchema: GenMessage<AttentionRow> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 13);
+  messageDesc(file_flotilla_home_v1_home, 14);
 
 /**
  * A held or failed cleanup, in fields: the app composes the words (UX-055).
@@ -756,7 +913,7 @@ export type CleanupRow = Message<"flotilla.home.v1.CleanupRow"> & {
  * Use `create(CleanupRowSchema)` to create a new message.
  */
 export const CleanupRowSchema: GenMessage<CleanupRow> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 14);
+  messageDesc(file_flotilla_home_v1_home, 15);
 
 /**
  * @generated from message flotilla.home.v1.AttentionRows
@@ -780,7 +937,7 @@ export type AttentionRows = Message<"flotilla.home.v1.AttentionRows"> & {
  * Use `create(AttentionRowsSchema)` to create a new message.
  */
 export const AttentionRowsSchema: GenMessage<AttentionRows> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 15);
+  messageDesc(file_flotilla_home_v1_home, 16);
 
 /**
  * @generated from message flotilla.home.v1.BotRef
@@ -811,7 +968,7 @@ export type BotRef = Message<"flotilla.home.v1.BotRef"> & {
  * Use `create(BotRefSchema)` to create a new message.
  */
 export const BotRefSchema: GenMessage<BotRef> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 16);
+  messageDesc(file_flotilla_home_v1_home, 17);
 
 /**
  * iOS M4
@@ -876,7 +1033,7 @@ export type ReleaseBrief = Message<"flotilla.home.v1.ReleaseBrief"> & {
  * Use `create(ReleaseBriefSchema)` to create a new message.
  */
 export const ReleaseBriefSchema: GenMessage<ReleaseBrief> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 17);
+  messageDesc(file_flotilla_home_v1_home, 18);
 
 /**
  * @generated from message flotilla.home.v1.DoingBrief
@@ -910,7 +1067,7 @@ export type DoingBrief = Message<"flotilla.home.v1.DoingBrief"> & {
  * Use `create(DoingBriefSchema)` to create a new message.
  */
 export const DoingBriefSchema: GenMessage<DoingBrief> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 18);
+  messageDesc(file_flotilla_home_v1_home, 19);
 
 /**
  * @generated from message flotilla.home.v1.SummaryBrief
@@ -939,7 +1096,7 @@ export type SummaryBrief = Message<"flotilla.home.v1.SummaryBrief"> & {
  * Use `create(SummaryBriefSchema)` to create a new message.
  */
 export const SummaryBriefSchema: GenMessage<SummaryBrief> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 19);
+  messageDesc(file_flotilla_home_v1_home, 20);
 
 /**
  * @generated from message flotilla.home.v1.OwnerThreads
@@ -956,7 +1113,7 @@ export type OwnerThreads = Message<"flotilla.home.v1.OwnerThreads"> & {
  * Use `create(OwnerThreadsSchema)` to create a new message.
  */
 export const OwnerThreadsSchema: GenMessage<OwnerThreads> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 20);
+  messageDesc(file_flotilla_home_v1_home, 21);
 
 /**
  * @generated from message flotilla.home.v1.OwnerThread
@@ -993,7 +1150,7 @@ export type OwnerThread = Message<"flotilla.home.v1.OwnerThread"> & {
  * Use `create(OwnerThreadSchema)` to create a new message.
  */
 export const OwnerThreadSchema: GenMessage<OwnerThread> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 21);
+  messageDesc(file_flotilla_home_v1_home, 22);
 
 /**
  * @generated from message flotilla.home.v1.MessageBrief
@@ -1039,7 +1196,7 @@ export type MessageBrief = Message<"flotilla.home.v1.MessageBrief"> & {
  * Use `create(MessageBriefSchema)` to create a new message.
  */
 export const MessageBriefSchema: GenMessage<MessageBrief> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 22);
+  messageDesc(file_flotilla_home_v1_home, 23);
 
 /**
  * ---- pushes ----
@@ -1058,7 +1215,7 @@ export type ProjectsOverviewChanged = Message<"flotilla.home.v1.ProjectsOverview
  * Use `create(ProjectsOverviewChangedSchema)` to create a new message.
  */
 export const ProjectsOverviewChangedSchema: GenMessage<ProjectsOverviewChanged> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 23);
+  messageDesc(file_flotilla_home_v1_home, 24);
 
 /**
  * @generated from message flotilla.home.v1.OwnerThreadUpdated
@@ -1080,7 +1237,7 @@ export type OwnerThreadUpdated = Message<"flotilla.home.v1.OwnerThreadUpdated"> 
  * Use `create(OwnerThreadUpdatedSchema)` to create a new message.
  */
 export const OwnerThreadUpdatedSchema: GenMessage<OwnerThreadUpdated> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 24);
+  messageDesc(file_flotilla_home_v1_home, 25);
 
 /**
  * @generated from message flotilla.home.v1.BoardActivity
@@ -1201,10 +1358,12 @@ export type BoardActivity = Message<"flotilla.home.v1.BoardActivity"> & {
  * Use `create(BoardActivitySchema)` to create a new message.
  */
 export const BoardActivitySchema: GenMessage<BoardActivity> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 25);
+  messageDesc(file_flotilla_home_v1_home, 26);
 
 /**
  * ---- peer (wire envelope, peer protocol v1 unchanged otherwise) ----
+ *
+ * [project_attention]
  *
  * @generated from message flotilla.home.v1.ProjectAttentionRequest
  */
@@ -1213,6 +1372,17 @@ export type ProjectAttentionRequest = Message<"flotilla.home.v1.ProjectAttention
    * @generated from field: repeated string project_ids = 1;
    */
   projectIds: string[];
+
+  /**
+   * Addition (0.20.0): the home additions the caller decodes. A daemon's
+   * proto3 JSON refuses fields and enum values it doesn't know, so an answer
+   * carries only what the caller asked for: 0 (left out, a caller before
+   * 0.20) gets no `Part.bots`, no BOT_STOPPED rows and no `bot_state`; 1
+   * gets the 0.20.0 additions. A callee older than 0.20 ignores the field.
+   *
+   * @generated from field: uint32 revision = 2;
+   */
+  revision: number;
 };
 
 /**
@@ -1220,7 +1390,7 @@ export type ProjectAttentionRequest = Message<"flotilla.home.v1.ProjectAttention
  * Use `create(ProjectAttentionRequestSchema)` to create a new message.
  */
 export const ProjectAttentionRequestSchema: GenMessage<ProjectAttentionRequest> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 26);
+  messageDesc(file_flotilla_home_v1_home, 27);
 
 /**
  * @generated from message flotilla.home.v1.ProjectAttention
@@ -1237,7 +1407,7 @@ export type ProjectAttention = Message<"flotilla.home.v1.ProjectAttention"> & {
  * Use `create(ProjectAttentionSchema)` to create a new message.
  */
 export const ProjectAttentionSchema: GenMessage<ProjectAttention> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 27);
+  messageDesc(file_flotilla_home_v1_home, 28);
 
 /**
  * @generated from message flotilla.home.v1.ProjectAttention.Part
@@ -1308,6 +1478,14 @@ export type ProjectAttention_Part = Message<"flotilla.home.v1.ProjectAttention.P
    * @generated from field: uint32 bots_waiting = 10;
    */
   botsWaiting: number;
+
+  /**
+   * Addition (0.20.0, capability `overview_bots`): its own bots, linked
+   * ones (stand-ins of another computer's) left out, in `bot_list` order.
+   *
+   * @generated from field: repeated flotilla.home.v1.BotBrief bots = 11;
+   */
+  bots: BotBrief[];
 };
 
 /**
@@ -1315,7 +1493,7 @@ export type ProjectAttention_Part = Message<"flotilla.home.v1.ProjectAttention.P
  * Use `create(ProjectAttention_PartSchema)` to create a new message.
  */
 export const ProjectAttention_PartSchema: GenMessage<ProjectAttention_Part> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 27, 0);
+  messageDesc(file_flotilla_home_v1_home, 28, 0);
 
 /**
  * @generated from message flotilla.home.v1.ProjectAttentionChanged
@@ -1332,7 +1510,7 @@ export type ProjectAttentionChanged = Message<"flotilla.home.v1.ProjectAttention
  * Use `create(ProjectAttentionChangedSchema)` to create a new message.
  */
 export const ProjectAttentionChangedSchema: GenMessage<ProjectAttentionChanged> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 28);
+  messageDesc(file_flotilla_home_v1_home, 29);
 
 /**
  * ---- binary transport (additions to the frozen contract) ----
@@ -1394,7 +1572,7 @@ export type HomeRequest = Message<"flotilla.home.v1.HomeRequest"> & {
  * Use `create(HomeRequestSchema)` to create a new message.
  */
 export const HomeRequestSchema: GenMessage<HomeRequest> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 29);
+  messageDesc(file_flotilla_home_v1_home, 30);
 
 /**
  * @generated from message flotilla.home.v1.HomeResponse
@@ -1467,7 +1645,7 @@ export type HomeResponse = Message<"flotilla.home.v1.HomeResponse"> & {
  * Use `create(HomeResponseSchema)` to create a new message.
  */
 export const HomeResponseSchema: GenMessage<HomeResponse> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 30);
+  messageDesc(file_flotilla_home_v1_home, 31);
 
 /**
  * [attention_dismissed] the row closed.
@@ -1486,7 +1664,7 @@ export type AttentionDismissed = Message<"flotilla.home.v1.AttentionDismissed"> 
  * Use `create(AttentionDismissedSchema)` to create a new message.
  */
 export const AttentionDismissedSchema: GenMessage<AttentionDismissed> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 31);
+  messageDesc(file_flotilla_home_v1_home, 32);
 
 /**
  * [project_pinned] the pin as stored on this computer.
@@ -1510,7 +1688,7 @@ export type ProjectPinned = Message<"flotilla.home.v1.ProjectPinned"> & {
  * Use `create(ProjectPinnedSchema)` to create a new message.
  */
 export const ProjectPinnedSchema: GenMessage<ProjectPinned> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 32);
+  messageDesc(file_flotilla_home_v1_home, 33);
 
 /**
  * [owner_thread] a page of one bot's owner thread, oldest first.
@@ -1555,7 +1733,7 @@ export type OwnerThreadPage = Message<"flotilla.home.v1.OwnerThreadPage"> & {
  * Use `create(OwnerThreadPageSchema)` to create a new message.
  */
 export const OwnerThreadPageSchema: GenMessage<OwnerThreadPage> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 33);
+  messageDesc(file_flotilla_home_v1_home, 34);
 
 /**
  * @generated from message flotilla.home.v1.ThreadMessage
@@ -1616,7 +1794,7 @@ export type ThreadMessage = Message<"flotilla.home.v1.ThreadMessage"> & {
  * Use `create(ThreadMessageSchema)` to create a new message.
  */
 export const ThreadMessageSchema: GenMessage<ThreadMessage> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 34);
+  messageDesc(file_flotilla_home_v1_home, 35);
 
 /**
  * [owner_thread_marked] read state after `owner_thread_read`.
@@ -1645,7 +1823,7 @@ export type OwnerThreadMarked = Message<"flotilla.home.v1.OwnerThreadMarked"> & 
  * Use `create(OwnerThreadMarkedSchema)` to create a new message.
  */
 export const OwnerThreadMarkedSchema: GenMessage<OwnerThreadMarked> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 35);
+  messageDesc(file_flotilla_home_v1_home, 36);
 
 /**
  * [release_install] what an iOS package offers for install on a phone.
@@ -1673,7 +1851,7 @@ export type ReleaseInstallRequest = Message<"flotilla.home.v1.ReleaseInstallRequ
  * Use `create(ReleaseInstallRequestSchema)` to create a new message.
  */
 export const ReleaseInstallRequestSchema: GenMessage<ReleaseInstallRequest> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 36);
+  messageDesc(file_flotilla_home_v1_home, 37);
 
 /**
  * @generated from message flotilla.home.v1.ReleaseInstall
@@ -1786,7 +1964,7 @@ export type ReleaseInstall = Message<"flotilla.home.v1.ReleaseInstall"> & {
  * Use `create(ReleaseInstallSchema)` to create a new message.
  */
 export const ReleaseInstallSchema: GenMessage<ReleaseInstall> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 37);
+  messageDesc(file_flotilla_home_v1_home, 38);
 
 /**
  * @generated from message flotilla.home.v1.SiteCheck
@@ -1817,7 +1995,7 @@ export type SiteCheck = Message<"flotilla.home.v1.SiteCheck"> & {
  * Use `create(SiteCheckSchema)` to create a new message.
  */
 export const SiteCheckSchema: GenMessage<SiteCheck> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 38);
+  messageDesc(file_flotilla_home_v1_home, 39);
 
 /**
  * @generated from message flotilla.home.v1.InstallDevice
@@ -1865,7 +2043,7 @@ export type InstallDevice = Message<"flotilla.home.v1.InstallDevice"> & {
  * Use `create(InstallDeviceSchema)` to create a new message.
  */
 export const InstallDeviceSchema: GenMessage<InstallDevice> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 39);
+  messageDesc(file_flotilla_home_v1_home, 40);
 
 /**
  * [install_offer] answers `release_send_to_device`; also pushed, with no
@@ -1892,7 +2070,7 @@ export type ReleaseSendToDeviceRequest = Message<"flotilla.home.v1.ReleaseSendTo
  * Use `create(ReleaseSendToDeviceRequestSchema)` to create a new message.
  */
 export const ReleaseSendToDeviceRequestSchema: GenMessage<ReleaseSendToDeviceRequest> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 40);
+  messageDesc(file_flotilla_home_v1_home, 41);
 
 /**
  * @generated from message flotilla.home.v1.InstallOffer
@@ -1979,7 +2157,7 @@ export type InstallOffer = Message<"flotilla.home.v1.InstallOffer"> & {
  * Use `create(InstallOfferSchema)` to create a new message.
  */
 export const InstallOfferSchema: GenMessage<InstallOffer> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 41);
+  messageDesc(file_flotilla_home_v1_home, 42);
 
 /**
  * [install_offers] this device's waiting offer, at most one: the latest
@@ -1995,7 +2173,7 @@ export type InstallOffersRequest = Message<"flotilla.home.v1.InstallOffersReques
  * Use `create(InstallOffersRequestSchema)` to create a new message.
  */
 export const InstallOffersRequestSchema: GenMessage<InstallOffersRequest> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 42);
+  messageDesc(file_flotilla_home_v1_home, 43);
 
 /**
  * @generated from message flotilla.home.v1.InstallOffers
@@ -2012,7 +2190,7 @@ export type InstallOffers = Message<"flotilla.home.v1.InstallOffers"> & {
  * Use `create(InstallOffersSchema)` to create a new message.
  */
 export const InstallOffersSchema: GenMessage<InstallOffers> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 43);
+  messageDesc(file_flotilla_home_v1_home, 44);
 
 /**
  * [install_offers] Not now: the banner stays hidden until the next package.
@@ -2033,7 +2211,63 @@ export type InstallOfferDismissRequest = Message<"flotilla.home.v1.InstallOfferD
  * Use `create(InstallOfferDismissRequestSchema)` to create a new message.
  */
 export const InstallOfferDismissRequestSchema: GenMessage<InstallOfferDismissRequest> = /*@__PURE__*/
-  messageDesc(file_flotilla_home_v1_home, 44);
+  messageDesc(file_flotilla_home_v1_home, 45);
+
+/**
+ * What a bot is doing, in the words the Board glance shows (0.20.0). Read
+ * off its raw `BotState` (`BotBrief.state`) on the bot's own computer:
+ *   WORKING   starting, working
+ *   IDLE      ready, with nothing waiting on the owner
+ *   WAITING   waits on the owner: waiting_for_approval (a permission
+ *             prompt), waiting_for_user, or a BOT_WAITING row (a question)
+ *   STOPPED   stopping, stopped
+ *   FAILED    crashed, auth_failed, rate_limited
+ *   OFFLINE   its computer isn't answering; `state` is the last one known
+ *
+ * @generated from enum flotilla.home.v1.BotStatus
+ */
+export enum BotStatus {
+  /**
+   * @generated from enum value: BOT_STATUS_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: BOT_STATUS_WORKING = 1;
+   */
+  WORKING = 1,
+
+  /**
+   * @generated from enum value: BOT_STATUS_IDLE = 2;
+   */
+  IDLE = 2,
+
+  /**
+   * @generated from enum value: BOT_STATUS_WAITING = 3;
+   */
+  WAITING = 3,
+
+  /**
+   * @generated from enum value: BOT_STATUS_STOPPED = 4;
+   */
+  STOPPED = 4,
+
+  /**
+   * @generated from enum value: BOT_STATUS_FAILED = 5;
+   */
+  FAILED = 5,
+
+  /**
+   * @generated from enum value: BOT_STATUS_OFFLINE = 6;
+   */
+  OFFLINE = 6,
+}
+
+/**
+ * Describes the enum flotilla.home.v1.BotStatus.
+ */
+export const BotStatusSchema: GenEnum<BotStatus> = /*@__PURE__*/
+  enumDesc(file_flotilla_home_v1_home, 0);
 
 /**
  * @generated from enum flotilla.home.v1.AttentionKind
@@ -2149,13 +2383,20 @@ export enum AttentionKind {
    * @generated from enum value: CARD_WAITING = 18;
    */
   CARD_WAITING = 18,
+
+  /**
+   * a bot stopped, crashed, or can't run: `bot`, `bot_state` (0.20.0, capability `attention_bot_stopped`)
+   *
+   * @generated from enum value: BOT_STOPPED = 19;
+   */
+  BOT_STOPPED = 19,
 }
 
 /**
  * Describes the enum flotilla.home.v1.AttentionKind.
  */
 export const AttentionKindSchema: GenEnum<AttentionKind> = /*@__PURE__*/
-  enumDesc(file_flotilla_home_v1_home, 0);
+  enumDesc(file_flotilla_home_v1_home, 1);
 
 /**
  * [board_activity] What someone just did on a board (0.19.0), for the
@@ -2217,5 +2458,5 @@ export enum BoardActivityKind {
  * Describes the enum flotilla.home.v1.BoardActivityKind.
  */
 export const BoardActivityKindSchema: GenEnum<BoardActivityKind> = /*@__PURE__*/
-  enumDesc(file_flotilla_home_v1_home, 1);
+  enumDesc(file_flotilla_home_v1_home, 2);
 

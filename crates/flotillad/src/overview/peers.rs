@@ -80,6 +80,8 @@ async fn refresh_once(app: &AppState, peer_id: &str) -> Vec<String> {
     }
     let request = ProjectAttentionRequest {
         project_ids: links.iter().map(|l| l.remote_project_id.clone()).collect(),
+        // The 0.20 additions (`revision` 1) are asked for once they are served.
+        revision: 0,
     };
     let frame = json!({ "type": "project_attention", "project_ids": request.project_ids });
     let answer = tokio::time::timeout(PEER_TIMEOUT, app.peers.request(peer_id, frame)).await;

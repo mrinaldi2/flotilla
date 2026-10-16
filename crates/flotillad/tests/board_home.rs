@@ -22,6 +22,7 @@ fn board_get(project_id: &str) -> Request {
 fn board_enable(project_id: &str) -> Request {
     Request::BoardEnable(c::BoardEnable {
         project_id: project_id.to_string(),
+        ..Default::default()
     })
 }
 
