@@ -159,6 +159,7 @@ function Settings({ ctx }: { readonly ctx: TabContext }): ReactElement {
       onToast={ctx.addToast}
       ownerReview={client.capabilities.includes(PULL_REQUESTS)}
       focusOwnerReview={at.kind === "project" && at.section === "owner_review"}
+      plan={ctx.plan}
     />
   );
 }

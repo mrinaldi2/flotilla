@@ -6,6 +6,8 @@ import { fmtTimestamp } from "../util";
 import ProjectPermissionsForm from "./ProjectPermissionsForm";
 import ProjectRepoForm from "./ProjectRepoForm";
 import DeleteProjectDialog, { botsSentence } from "./project/DeleteProjectDialog";
+import PlanningSettings from "./plan/PlanningSettings";
+import type { UsePlan } from "./plan/usePlan";
 import OwnerReviewSettings from "./prs/OwnerReviewSettings";
 import WorkersPanel from "./WorkersPanel";
 
@@ -24,6 +26,8 @@ interface ProjectViewProps {
   readonly ownerReview?: boolean;
   /** Opened from a PR's "Change": focus Owner review. */
   readonly focusOwnerReview?: boolean;
+  /** The project's plan, for its switch (0.21.0); none hides it. */
+  readonly plan?: UsePlan;
 }
 
 /** How deleting this project is described before it happens. */
@@ -138,6 +142,17 @@ export default function ProjectView(props: ProjectViewProps): ReactElement {
         disabled={!connected || !canControl}
         onSave={(repo) => onSetRepo(project.id, repo)}
       />
+
+      {props.plan === undefined ? null : (
+        <PlanningSettings
+          api={client}
+          projectId={project.id}
+          plan={props.plan}
+          hasRepo={project.repo !== null && project.repo !== undefined}
+          connected={connected}
+          canControl={canControl}
+        />
+      )}
 
       <ProjectPermissionsForm
         key={`${project.id}:${project.permission_profile ?? "standard"}`}
