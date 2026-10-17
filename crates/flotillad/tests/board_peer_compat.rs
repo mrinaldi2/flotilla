@@ -31,7 +31,7 @@ async fn create(b: &mut Board, board_id: Option<String>, title: &str) -> String 
         &mut b.p.mac_client,
         Request::ItemCreate(c::ItemCreate {
             project_id: b.mac_app.clone(),
-            r#type: c::ItemType::Feature as i32,
+            r#type: c::ItemType::Task as i32,
             title: title.into(),
             board_id,
             ..Default::default()

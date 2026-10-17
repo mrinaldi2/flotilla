@@ -147,7 +147,8 @@ impl Editor<'_> {
 
     /// A new item in the board's inbox, or a draft (the owner's alone).
     pub fn create(&self, req: &c::ItemCreate) -> anyhow::Result<Edited> {
-        let unmet = guards::check_new(&req.title);
+        let mut unmet = guards::check_new(&req.title);
+        unmet.extend(guards::check_type(req.r#type));
         if !unmet.is_empty() {
             return Ok(Edited::Refused(unmet));
         }
@@ -188,6 +189,10 @@ impl Editor<'_> {
     }
 
     pub fn update(&self, req: &c::ItemUpdate) -> anyhow::Result<Edited> {
+        let retired = req.r#type.map(guards::check_type).unwrap_or_default();
+        if !retired.is_empty() {
+            return Ok(Edited::Refused(retired));
+        }
         if let Some(parent) = req.parent_id.as_deref().filter(|p| !p.is_empty()) {
             self.own_item(parent)?;
         }
@@ -232,7 +237,7 @@ impl Editor<'_> {
             }
             // Raising to P0 is the lead's or the owner's call.
             let to_p0 = priority == Some(Priority::P0) && item.priority != Priority::P0;
-            // So is changing an item's type, e.g. feature → epic.
+            // So is changing an item's type, e.g. task → spike.
             let retyped = retype.is_some_and(|t| t != item.item_type);
             let mut unmet = if to_p0 || retyped {
                 guards::check_lead(who)

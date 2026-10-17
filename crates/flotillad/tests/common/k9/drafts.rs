@@ -55,7 +55,7 @@ async fn phone_drafts(k: &mut K9, board_id: &str) -> (String, Vec<u8>) {
             &mut k.phone,
             Request::ItemCreate(c::ItemCreate {
                 project_id: k.mac_rb.clone(),
-                r#type: c::ItemType::Feature as i32,
+                r#type: c::ItemType::Task as i32,
                 title: "Scaling".into(),
                 description: Some("Doubling a recipe splits the sauce.".into()),
                 board_id: Some(board_id.to_string()),

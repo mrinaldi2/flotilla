@@ -31,7 +31,7 @@ pub fn item(pair: &Pair, project: &str, column: &str, assignee: Option<&str>) ->
             &NewItem {
                 project_id: project,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title: "Workflow",
                 description: "",
                 size: None,

@@ -61,7 +61,7 @@ impl Fresh {
     pub async fn item(&mut self, title: &str) -> c::Item {
         let req = Request::ItemCreate(c::ItemCreate {
             project_id: self.project.clone(),
-            r#type: c::ItemType::Feature as i32,
+            r#type: c::ItemType::Task as i32,
             title: title.into(),
             description: Some("Two button styles for the shop page.".into()),
             ..Default::default()

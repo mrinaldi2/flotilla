@@ -37,7 +37,7 @@ pub(super) fn new_item<'a>(project_id: &'a str, title: &'a str) -> NewItem<'a> {
     NewItem {
         project_id,
         board_id: None,
-        item_type: ItemType::Feature,
+        item_type: ItemType::Task,
         title,
         description: "",
         size: Some(Size::M),
@@ -76,7 +76,7 @@ fn a_new_board_gets_columns_templates_and_its_lead_once() {
     );
     assert_eq!(columns[5].name, "Awaiting owner");
     assert_eq!(columns[2].wip_scope, WipScope::PerAssignee);
-    assert_eq!(db.templates(&p, TemplateKind::ItemType).unwrap().len(), 5);
+    assert_eq!(db.templates(&p, TemplateKind::ItemType).unwrap().len(), 4);
     let roles: Vec<Role> = db
         .project_roles(&p)
         .unwrap()
@@ -161,7 +161,7 @@ fn items_take_sequential_ids_and_rank_last_in_the_inbox() {
     assert_eq!((first.id.as_str(), second.id.as_str()), ("H-001", "H-002"));
     assert!(first.rank < second.rank);
     assert_eq!(first.column_key, "inbox");
-    assert!(first.description.starts_with("## User/problem"));
+    assert!(first.description.starts_with("## What and why"));
     assert_eq!(first.acceptance_criteria[0].text, "Cards move");
     assert_eq!(db.board_settings(&p).unwrap().unwrap().next_seq, 3);
     let history = db.item_events(&first.id).unwrap();

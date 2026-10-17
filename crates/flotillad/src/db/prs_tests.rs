@@ -12,7 +12,7 @@ fn card(db: &Db, project: &str, title: &str) -> String {
         &NewItem {
             project_id: project,
             board_id: None,
-            item_type: ItemType::Feature,
+            item_type: ItemType::Task,
             title,
             description: "",
             size: None,

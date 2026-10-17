@@ -20,7 +20,7 @@ fn code_once_linked_keeps_the_release_path_whatever_the_type_is_now() {
     // the history still says it had code.
     c.ctx.ever_had_code = true;
     assert_eq!(run(&c, Cat::Done), ["done.flow"]);
-    c.item.item_type = ItemType::Chore;
+    c.item.item_type = ItemType::Design;
     assert_eq!(run(&c, Cat::Done), ["done.flow"]);
     // Not started, it gets the release path's refusal, not "move it on".
     let mut early = case(Cat::Ready);

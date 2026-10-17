@@ -68,6 +68,7 @@ pub const CAPABILITIES: &[&str] = &[
     bus::contract::capability::OVERVIEW_BOTS,
     bus::contract::capability::OVERVIEW_TOP_ATTENTION,
     bus::contract::capability::ATTENTION_BOT_STOPPED,
+    bus::contract::capability::ITEM_TYPES_V2,
 ];
 
 pub struct AppState {
@@ -230,7 +231,6 @@ mod capability_tests {
     /// (#43, steps 2 to 4).
     const NOT_SERVED_YET: &[&str] = &[
         capability::PLAN_V1,
-        capability::ITEM_TYPES_V2,
         capability::COLUMN_RESEARCH,
         capability::ATTENTION_PLAN,
     ];

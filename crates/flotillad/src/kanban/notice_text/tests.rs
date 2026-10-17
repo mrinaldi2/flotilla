@@ -55,7 +55,7 @@ fn item(column: &BoardColumn) -> Item {
         id: "P-1".into(),
         board_id: "b".into(),
         seq: 1,
-        item_type: ItemType::Feature,
+        item_type: ItemType::Task,
         title: "Buttons".into(),
         description: String::new(),
         size: None,

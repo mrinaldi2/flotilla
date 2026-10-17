@@ -118,7 +118,7 @@ fn only_a_heads_author_or_pusher_wrote_it() {
             &NewItem {
                 project_id: &p,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title: "one",
                 description: "",
                 size: None,

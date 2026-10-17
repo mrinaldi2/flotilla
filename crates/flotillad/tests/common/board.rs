@@ -139,7 +139,7 @@ pub fn new_item(db: &Db, project: &str, title: &str, priority: Priority) -> (Str
             &NewItem {
                 project_id: project,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title,
                 description: "",
                 size: None,

@@ -34,6 +34,7 @@ pub mod notice_text;
 pub mod notices;
 pub mod presets;
 pub mod rank;
+pub mod retired;
 pub mod starts;
 pub mod stuck;
 pub mod team;

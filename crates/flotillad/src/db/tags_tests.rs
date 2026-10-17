@@ -2,6 +2,7 @@
 
 use super::tests::setup;
 use super::*;
+use bus::schema::MIGRATIONS;
 
 fn raise(db: &Db, bot: &Bot, title: &str) -> Decision {
     db.insert_decision(NewDecision {

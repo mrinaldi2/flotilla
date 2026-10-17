@@ -15,6 +15,7 @@ mod board_flow;
 mod board_links;
 mod board_proposals;
 mod boards;
+mod card_types;
 mod checks;
 mod cleanup;
 mod decisions;
@@ -49,6 +50,7 @@ use board_links::{
 };
 use board_proposals::MIGRATION_BOARD_PROPOSALS;
 use boards::MIGRATION_BOARDS;
+use card_types::MIGRATION_CARD_TYPES;
 use checks::{
     MIGRATION_CHECKS, MIGRATION_CHECK_HEAVY, MIGRATION_CHECK_JOBS, MIGRATION_CHECK_UNROUTABLE,
 };
@@ -162,6 +164,7 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_PROJECT_TRASH,
     // What a project is for, in the owner's words (0.20.0): told to its bots.
     "ALTER TABLE project ADD COLUMN description TEXT NOT NULL DEFAULT '';",
+    MIGRATION_CARD_TYPES,
 ];
 
 #[cfg(test)]

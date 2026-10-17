@@ -122,7 +122,7 @@ async fn a_bots_assignment_move_and_refusal_reach_every_app() {
     let created = lead
         .call(
             "item_create",
-            json!({"type": "feature", "title": "Board toasts", "labels": ["area:daemon"],
+            json!({"type": "task", "title": "Board toasts", "labels": ["area:daemon"],
                    "size": "M", "acceptance_criteria": ["the owner sees it"]}),
         )
         .await;

@@ -63,7 +63,7 @@ fn short_names_decode_and_come_back_short() {
     let err = decode::<c::ItemCreate>("ItemCreate", &json!({"type": "story", "title": "x"}), "p")
         .unwrap_err()
         .to_string();
-    assert!(err.contains("epic, feature, bug, spike, chore"), "{err}");
+    assert!(err.contains("task, design, bug, spike"), "{err}");
     let err = decode::<c::ItemMove>("ItemMove", &json!({"id": "H-1"}), "p")
         .unwrap_err()
         .to_string();

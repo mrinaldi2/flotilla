@@ -22,7 +22,7 @@ fn open_item(r: &Releases, title: &str) -> String {
             &NewItem {
                 project_id: &r.project,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title,
                 description: "",
                 size: None,
