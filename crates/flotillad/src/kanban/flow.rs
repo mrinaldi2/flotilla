@@ -46,6 +46,9 @@ pub enum EntryRule {
     /// whoever linked its branch or PR.
     Independent,
     Reason,
+    /// A task or bug has its code research recorded (0.21.0,
+    /// `start.research`); other types pass.
+    ResearchRecorded,
     /// A check another module registers (`release.in_open_package`).
     Predicate {
         name: String,
@@ -240,6 +243,9 @@ fn check(rule: &EntryRule, item: &Item, mv: &Move<'_>, who: &Who, ctx: &Context)
             Some(_) => Vec::new(),
         },
         EntryRule::Independent => independent(item, who, ctx),
+        EntryRule::ResearchRecorded => super::guards::unmet_research(item, ctx)
+            .into_iter()
+            .collect(),
         EntryRule::Reason if !mv.reason.is_some_and(|r| !r.trim().is_empty()) => {
             fail("reason.required", "Give a reason.".into(), None)
         }

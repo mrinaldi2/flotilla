@@ -90,7 +90,7 @@ async fn a_linked_bot_edits_a_board_homed_elsewhere_and_reads_its_screenshot() {
         .tester
         .call(
             "item_create",
-            json!({"board_id": rs_id, "type": "feature", "title": "Read the logs"}),
+            json!({"board_id": rs_id, "type": "task", "title": "Read the logs"}),
         )
         .await;
     let rs_item = created["item"]["id"].as_str().expect("id").to_string();

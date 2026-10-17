@@ -54,6 +54,7 @@ impl EntryRule {
             EntryRule::Link { kind } => format!("link:{kind}"),
             EntryRule::Independent => "independent".into(),
             EntryRule::Reason => "reason".into(),
+            EntryRule::ResearchRecorded => "research_recorded".into(),
             EntryRule::Predicate { name } => format!("predicate:{name}"),
         }
     }
@@ -83,6 +84,7 @@ impl EntryRule {
             }
             ("independent", None) => EntryRule::Independent,
             ("reason", None) => EntryRule::Reason,
+            ("research_recorded", None) => EntryRule::ResearchRecorded,
             ("predicate", Some(name)) => {
                 if super::predicate(name, &Default::default()).is_none() {
                     return Err(format!("“{name}” is not a known rule"));

@@ -131,7 +131,7 @@ async fn a_question_about_a_draft_closes_when_its_discussion_ends() {
         &mut f.owner,
         Request::ItemCreate(c::ItemCreate {
             project_id: f.project.clone(),
-            r#type: c::ItemType::Feature as i32,
+            r#type: c::ItemType::Task as i32,
             title: "Gift cards".into(),
             draft: Some(true),
             ..Default::default()

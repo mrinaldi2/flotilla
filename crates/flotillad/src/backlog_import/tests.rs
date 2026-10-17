@@ -76,7 +76,7 @@ fn states_types_and_fields_map_without_guessing() {
 
     assert_eq!(entry(&parsed, "H-006").item_type, ItemType::Bug);
     assert_eq!(entry(&parsed, "H-011").item_type, ItemType::Spike);
-    assert_eq!(entry(&parsed, "H-002").item_type, ItemType::Feature);
+    assert_eq!(entry(&parsed, "H-002").item_type, ItemType::Task);
 
     let h1 = entry(&parsed, "H-001");
     assert_eq!(h1.key, Key::Kept(1));

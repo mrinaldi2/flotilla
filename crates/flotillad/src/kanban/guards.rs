@@ -10,6 +10,7 @@ pub use ac::{check_ac, check_ac_edit, flag_ac, needs_evidence};
 use conditions::conditions;
 pub(crate) use conditions::section_filled;
 pub use conditions::{check_template, open_post_install, DOR_FIELDS};
+pub(crate) use research::{unmet_research, SECTION as RESEARCH_SECTION};
 
 use super::model::{
     BoardColumn, ColumnCategory as Cat, Item, ItemLink, LinkKind, PersonRole, Role, Unmet, WipScope,
@@ -339,6 +340,25 @@ pub fn check_new(title: &str) -> Vec<Unmet> {
     out
 }
 
+/// A card's type on the wire, before it is mapped: features and epics live
+/// in the plan and chores became tasks (0.21.0), so those are refused with a
+/// fix rather than as an unknown value.
+pub fn check_type(wire: i32) -> Vec<Unmet> {
+    use bus::contract::board::ItemType as Wire;
+    let retired = match Wire::try_from(wire) {
+        Ok(Wire::Epic | Wire::Feature) => {
+            "Features and epics are created in the plan, not as cards."
+        }
+        Ok(Wire::Chore) => "Chores are tasks now.",
+        _ => return Vec::new(),
+    };
+    vec![unmet(
+        "new.type_retired",
+        retired,
+        Some("Use task, design, bug or spike; propose a feature through plan_propose."),
+    )]
+}
+
 /// Setting or clearing `blocked`: the assignee, the lead or the owner, with a
 /// reason when setting.
 pub fn check_block(item: &Item, who: &Who, setting: bool, reason: Option<&str>) -> Vec<Unmet> {
@@ -375,5 +395,6 @@ pub fn check_lead(who: &Who) -> Vec<Unmet> {
 
 mod ac;
 mod conditions;
+mod research;
 #[cfg(test)]
 mod tests;

@@ -37,13 +37,6 @@ pub(super) fn conditions(
                     Some("Assign it first."),
                 ));
             }
-            if item.item_type == ItemType::Epic {
-                out.push(unmet(
-                    "start.epic",
-                    "Epics don't go to Doing; their children do.",
-                    None,
-                ));
-            }
             if !ctx.has_link(&[LinkKind::Task]) {
                 out.push(unmet(
                     "start.task",
@@ -53,7 +46,9 @@ pub(super) fn conditions(
             }
         }
         Rule::Submit => {
-            let code = matches!(item.item_type, ItemType::Feature | ItemType::Bug);
+            // Tasks are built and bugs fixed in code (0.21.0: a task is what
+            // a feature card was).
+            let code = matches!(item.item_type, ItemType::Task | ItemType::Bug);
             if code && !ctx.has_link(&code_links) {
                 out.push(unmet(
                     "review.branch",
@@ -105,12 +100,12 @@ pub(super) fn conditions(
     }
 }
 
-/// A spike, or a chore, that has never had a branch or PR linked: the work
-/// that closes on its outcome rather than in a release. Code linked once,
-/// even since unlinked or before a retype, keeps the release path.
+/// A spike or a design ticket that has never had a branch or PR linked: the
+/// work that closes on its outcome rather than in a release. Code linked
+/// once, even since unlinked or before a retype, keeps the release path.
 pub(super) fn closes_on_outcome(item: &Item, ctx: &Context) -> bool {
     let had_code = ctx.ever_had_code || ctx.has_link(&[LinkKind::Branch, LinkKind::Pr]);
-    matches!(item.item_type, ItemType::Spike | ItemType::Chore) && !had_code
+    matches!(item.item_type, ItemType::Spike | ItemType::Design) && !had_code
 }
 
 /// Inbox/Ready → Done for work that closes on its outcome: not a release

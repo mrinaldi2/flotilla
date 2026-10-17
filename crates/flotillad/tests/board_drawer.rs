@@ -42,7 +42,7 @@ async fn the_owner_comments_from_the_drawer() {
             &NewItem {
                 project_id: &project_id,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title: "Drawer",
                 description: "",
                 size: None,

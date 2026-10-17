@@ -148,7 +148,7 @@ async fn a_chore_whose_branch_was_unlinked_keeps_the_release_path() {
     let version = version_of(lead, &id).await;
     lead.call(
         "item_update",
-        json!({"id": id, "expected_version": version, "type": "chore"}),
+        json!({"id": id, "expected_version": version, "type": "task"}),
     )
     .await;
     lead.call(

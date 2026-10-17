@@ -20,7 +20,7 @@ async fn a_card_stacked_on_one_in_verify_goes_to_ready() {
             &NewItem {
                 project_id: &r.project,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title,
                 description: "",
                 size: Some(Size::S),

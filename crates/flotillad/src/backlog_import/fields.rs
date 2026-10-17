@@ -43,7 +43,7 @@ pub const AWAITING_OWNER_LABEL: &str = "imported:awaiting-owner";
 pub const DEPLOYING_LABEL: &str = "imported:deploying";
 
 /// A bug says so; a plan is a spike (an artifact is its outcome); the rest
-/// are features until the lead says otherwise.
+/// are tasks until the lead says otherwise (features live in the plan).
 pub(super) fn item_type(title: &str) -> ItemType {
     let t = title.trim_start().to_lowercase();
     if t.starts_with("bug") {
@@ -51,7 +51,7 @@ pub(super) fn item_type(title: &str) -> ItemType {
     } else if t.starts_with("plan:") || t.starts_with("architect:") {
         ItemType::Spike
     } else {
-        ItemType::Feature
+        ItemType::Task
     }
 }
 

@@ -44,7 +44,7 @@ pub async fn releases_on(d: super::TestDaemon, items: usize) -> Releases {
                     &NewItem {
                         project_id: &project,
                         board_id: None,
-                        item_type: ItemType::Feature,
+                        item_type: ItemType::Task,
                         title: &title,
                         description: "",
                         size: None,

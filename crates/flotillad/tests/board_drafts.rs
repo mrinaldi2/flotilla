@@ -110,7 +110,7 @@ async fn a_bot_shapes_a_draft_with_the_owner_who_finalizes_it() {
             &mut owner,
             Request::ItemCreate(c::ItemCreate {
                 project_id: project_id.clone(),
-                r#type: c::ItemType::Feature as i32,
+                r#type: c::ItemType::Task as i32,
                 title: "Unit conversion".into(),
                 description: Some("Import breaks on this site.".into()),
                 board_id: Some(recipes.id.clone()),

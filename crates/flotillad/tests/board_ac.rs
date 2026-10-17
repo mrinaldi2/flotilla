@@ -33,7 +33,7 @@ async fn bots_add_and_edit_acceptance_criteria_to_meet_the_dor() {
     let created = lead
         .call(
             "item_create",
-            json!({"type": "feature", "title": "No AC", "size": "S",
+            json!({"type": "task", "title": "No AC", "size": "S",
                    "description": "## Design/spec link\n\nartifacts/no-ac.md\n"}),
         )
         .await;

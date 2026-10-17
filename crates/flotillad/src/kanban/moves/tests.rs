@@ -55,7 +55,7 @@ impl Board {
                 &NewItem {
                     project_id: &self.project,
                     board_id: None,
-                    item_type: ItemType::Feature,
+                    item_type: ItemType::Task,
                     title,
                     description: "",
                     size: Some(Size::M),

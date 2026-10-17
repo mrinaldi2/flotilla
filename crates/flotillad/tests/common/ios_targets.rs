@@ -69,7 +69,7 @@ pub async fn team(platform: &str) -> Team {
             &NewItem {
                 project_id: &project,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title: "Per platform",
                 description: "",
                 size: None,

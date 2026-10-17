@@ -82,8 +82,9 @@ map_enum!(ColumnCategory {
     Approval,
     Deploying,
     Done,
-    Cancelled
-} unserved { Research });
+    Cancelled,
+    Research
+});
 map_enum!(ColumnKind {
     Open,
     Active,
@@ -105,12 +106,11 @@ map_enum!(Role {
     ReviewerCe
 });
 map_enum!(ItemType {
-    Epic,
-    Feature,
+    Task,
+    Design,
     Bug,
-    Spike,
-    Chore
-} unserved { Task, Design });
+    Spike
+} unserved { Epic, Feature, Chore });
 map_enum!(Size { S, M, L });
 map_enum!(Priority { P0, P1, P2, P3 });
 map_enum!(PersonRole { Reviewer, Verifier });
@@ -129,8 +129,9 @@ map_enum!(LinkKind {
     ItemBlocks,
     ItemRelates,
     ItemDuplicates,
-    Thread
-} unserved { Design });
+    Thread,
+    Design
+});
 map_enum!(ItemEventKind {
     Created,
     Moved,

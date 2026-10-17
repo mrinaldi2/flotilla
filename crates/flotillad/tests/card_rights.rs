@@ -79,7 +79,7 @@ async fn the_assignee_owns_its_card_without_a_board_role() {
     assert!(text.contains("it isn't assigned to you"), "{text}");
     assert!(text.contains("Ask the lead to assign it to you"), "{text}");
     let raw = f.bots[1]
-        .call_raw("item_create", json!({"type": "chore", "title": "Mine"}))
+        .call_raw("item_create", json!({"type": "task", "title": "Mine"}))
         .await;
     let text = error_text(&raw);
     assert!(
