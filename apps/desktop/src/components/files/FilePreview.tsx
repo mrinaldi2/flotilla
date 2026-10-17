@@ -3,6 +3,8 @@ import type { ReactElement } from "react";
 import type { DaemonApi } from "../../protocol/api";
 import type { FileBody } from "../../protocol/chat";
 import { errText } from "../../util";
+import { SandboxedPage } from "../board/attachments/DocumentPreview";
+import { inlinePage } from "../board/attachments/preview";
 import ChatMarkdown from "../chat/ChatMarkdown";
 import CodeBlock from "../chat/CodeBlock";
 import { languageOf } from "../chat/highlight";
@@ -68,13 +70,50 @@ export default function FilePreview({
         {state.status === "failed" ? (
           <div className="chat-note chat-error">{state.message}</div>
         ) : null}
-        {state.status === "ready" ? <FileBodyView file={state.file} /> : null}
+        {state.status === "ready" ? (
+          <FileBodyView file={state.file} client={client} botId={botId} path={path} />
+        ) : null}
       </div>
     </div>
   );
 }
 
-function FileBodyView({ file }: { readonly file: FileBody }): ReactElement {
+/** An HTML file as its page (0.20.0), its CSS and images read beside it. */
+function PageView(props: {
+  readonly file: FileBody;
+  readonly client: DaemonApi;
+  readonly botId: string;
+  readonly path: string;
+}): ReactElement {
+  const { file, client, botId, path } = props;
+  const [page, setPage] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    const read = async (at: string): Promise<FileBody> =>
+      (await client.request({ type: "read_file", bot_id: botId, path: at }, "file")).file;
+    void inlinePage(file.text ?? "", path, read).then((next) => {
+      if (live) {
+        setPage(next);
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [file, client, botId, path]);
+  return page === null ? <div className="files-empty">Loading…</div> : <SandboxedPage page={page} title={file.name} />;
+}
+
+function FileBodyView({
+  file,
+  client,
+  botId,
+  path,
+}: {
+  readonly file: FileBody;
+  readonly client: DaemonApi;
+  readonly botId: string;
+  readonly path: string;
+}): ReactElement {
   const note = file.truncated ? (
     <div className="chat-note">Only the first 16 MB are shown.</div>
   ) : null;
@@ -88,6 +127,9 @@ function FileBodyView({ file }: { readonly file: FileBody }): ReactElement {
   }
   if (file.text === undefined) {
     return <div className="files-empty">No preview for this kind of file ({file.mime}).</div>;
+  }
+  if (file.mime === "text/html") {
+    return <PageView file={file} client={client} botId={botId} path={path} />;
   }
   if (file.mime === "text/markdown") {
     return (

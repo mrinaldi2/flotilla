@@ -110,3 +110,35 @@
 .lightbox-next {
   right: 12px;
 }
+
+/* A card's document read in place (0.20.0): a page in a sandbox, or text. */
+.document-page {
+  width: min(1100px, 92vw);
+  height: min(80vh, 900px);
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.document-text {
+  width: min(860px, 92vw);
+  max-height: min(80vh, 900px);
+  overflow: auto;
+  padding: 24px 28px;
+  border-radius: 10px;
+  background: var(--bg-raised);
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.document-plain {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.files-preview .document-page {
+  width: 100%;
+  height: 70vh;
+}

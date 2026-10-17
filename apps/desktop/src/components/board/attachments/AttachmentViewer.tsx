@@ -1,5 +1,6 @@
-// An attachment full size (0.19.0): an image fitted to the window, or a
-// file's or document's details. Esc or the backdrop closes it.
+// An attachment full size (0.19.0): an image fitted to the window; from
+// 0.20.0 a document read in place (Markdown, an HTML page, text, a PDF).
+// Esc or the backdrop closes it.
 
 import { X } from "lucide-react";
 import type { ReactElement } from "react";
@@ -7,20 +8,29 @@ import { useDialogKeys } from "../../../hooks/useReturnFocus";
 import type { BoardApi } from "../../../protocol/board";
 import type { ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { kindLabel, sizeWords } from "./attachments";
+import DocumentPreview from "./DocumentPreview";
+import type { Reader } from "./preview";
 import { useAttachmentImage } from "./useAttachmentImage";
 
 interface AttachmentViewerProps {
   readonly api: BoardApi;
   readonly attachment: ItemAttachment;
+  /** Reads the project's artifacts, for a linked document; none where it can't. */
+  readonly readArtifact?: Reader;
   readonly onClose: () => void;
 }
 
 function Stage(props: {
   readonly api: BoardApi;
   readonly attachment: ItemAttachment;
+  readonly readArtifact: Reader | null;
 }): ReactElement {
   const { attachment: a } = props;
   const image = useAttachmentImage(props.api, a.kind === "image" && !a.removed ? a.id : null);
+  const readable = !a.removed && (a.kind === "file" || (a.kind === "doc" && a.path !== ""));
+  if (a.kind !== "image" && readable) {
+    return <DocumentPreview api={props.api} attachment={a} readArtifact={props.readArtifact} />;
+  }
   if (a.kind !== "image") {
     return (
       <div className="attachment-details">
@@ -78,7 +88,7 @@ export default function AttachmentViewer(props: AttachmentViewerProps): ReactEle
           </button>
         </div>
         <div className="lightbox-stage" data-backdrop="true">
-          <Stage api={props.api} attachment={a} />
+          <Stage api={props.api} attachment={a} readArtifact={props.readArtifact ?? null} />
         </div>
       </div>
     </div>
