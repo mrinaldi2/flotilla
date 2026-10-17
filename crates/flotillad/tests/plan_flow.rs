@@ -203,6 +203,14 @@ async fn approved_gates_make_epics_features_and_task_cards() {
             "{}",
             item.description
         );
+        // The summary goes under the template's first section, and the
+        // card still has its Code research section to fill.
+        assert!(
+            item.description.starts_with("## What and why\n\n")
+                && item.description.contains("## Code research"),
+            "{}",
+            item.description
+        );
     }
     let kinds: Vec<String> = plan
         .owner()
