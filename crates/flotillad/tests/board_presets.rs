@@ -119,6 +119,8 @@ async fn a_release_gated_board_takes_new_names_only() {
         pairs(&[
             ("inbox", "Ideas"),
             ("ready", "Ready"),
+            // Listed by a client from before 0.21.0, Research keeps its name.
+            ("research", "Research"),
             ("doing", "Building"),
             ("review", "Code review"),
             ("verify", "QA"),

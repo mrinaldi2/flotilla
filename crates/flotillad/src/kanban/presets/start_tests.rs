@@ -23,7 +23,7 @@ fn no_preset_is_the_first_board() {
     assert_eq!(start.preset, Preset::FIRST);
     assert_eq!(
         keys(&start),
-        ["todo", "doing", "review", "done", "cancelled"]
+        ["todo", "research", "doing", "review", "done", "cancelled"]
     );
 }
 
@@ -211,8 +211,11 @@ fn release_gated_columns_are_only_renamed() {
     let preset = Start::of(Preset::ReleaseGated);
     assert_eq!(keys(&start), keys(&preset));
     assert_eq!(start.categories, preset.categories);
-    assert_eq!(start.columns[2].name, "Building");
-    assert_eq!(start.columns[2].wip_limit, preset.columns[2].wip_limit);
+    // Listed without Research (a client before 0.21.0), Research keeps its
+    // name and Doing is the fourth column.
+    assert_eq!(start.columns[2].name, "Research");
+    assert_eq!(start.columns[3].name, "Building");
+    assert_eq!(start.columns[3].wip_limit, preset.columns[3].wip_limit);
 
     let mut moved = specs.clone();
     moved.swap(0, 1);

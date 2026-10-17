@@ -42,7 +42,7 @@ fn item(in_column: &str) -> Item {
         seq: 1,
         item_type: ItemType::Task,
         title: "Tags".into(),
-        description: String::new(),
+        description: "## Code research\n\nRead it.\n".into(),
         size: Some(Size::S),
         priority: Priority::P2,
         rank: "a".into(),

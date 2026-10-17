@@ -63,7 +63,7 @@ fn item(category: Cat) -> Item {
         seq: 1,
         item_type: ItemType::Task,
         title: "A thing".into(),
-        description: "## User/problem\n\nIt hurts.\n".into(),
+        description: "## User/problem\n\nIt hurts.\n\n## Code research\n\nguards.rs\n".into(),
         size: Some(Size::M),
         priority: Priority::P2,
         rank: "a".into(),

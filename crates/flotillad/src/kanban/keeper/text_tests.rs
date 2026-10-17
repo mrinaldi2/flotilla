@@ -27,6 +27,7 @@ fn plan() -> Plan {
         start: Some(("Doing".into(), true)),
         finish: Some("Review".into()),
         back: Some("To do".into()),
+        then: None,
     }
 }
 

@@ -69,6 +69,7 @@ pub const CAPABILITIES: &[&str] = &[
     bus::contract::capability::OVERVIEW_TOP_ATTENTION,
     bus::contract::capability::ATTENTION_BOT_STOPPED,
     bus::contract::capability::ITEM_TYPES_V2,
+    bus::contract::capability::COLUMN_RESEARCH,
 ];
 
 pub struct AppState {
@@ -229,11 +230,7 @@ mod capability_tests {
 
     /// The 0.21 strings join the list as the daemon serves each of them
     /// (#43, steps 2 to 4).
-    const NOT_SERVED_YET: &[&str] = &[
-        capability::PLAN_V1,
-        capability::COLUMN_RESEARCH,
-        capability::ATTENTION_PLAN,
-    ];
+    const NOT_SERVED_YET: &[&str] = &[capability::PLAN_V1, capability::ATTENTION_PLAN];
 
     /// The 0.19 and 0.20 board and home additions are all served.
     #[test]

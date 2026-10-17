@@ -103,6 +103,17 @@ const ROWS: &[Row] = &[
         expect: &["start.assignee", "start.task"],
     },
     Row {
+        rule: "Ready → Doing: a task's code research is recorded (0.21.0)",
+        from: Cat::Ready,
+        to: Cat::Doing,
+        ok: |c| {
+            c.who = bot("lead", LEAD);
+            c.ctx.links.push(link(LinkKind::Task, "lead"));
+        },
+        bad: |c| c.item.description = "## Code research\n\n".into(),
+        expect: &["start.research"],
+    },
+    Row {
         rule: "Ready → Doing (assignee pulls): per-assignee WIP",
         from: Cat::Ready,
         to: Cat::Doing,

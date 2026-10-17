@@ -6,7 +6,7 @@
 
 use chrono::Duration;
 
-use super::super::model::{BoardColumn, ColumnKind};
+use super::super::model::{BoardColumn, ColumnCategory, ColumnKind};
 use super::super::notice_text::{inline, state_word, Plan, NAME_MAX};
 
 /// The card a note or a row is about.
@@ -53,6 +53,14 @@ impl About<'_> {
         self.plan.and_then(|p| p.finish.as_deref())
     }
 
+    /// In a Research column (0.21.0): where the card goes once its code
+    /// research is recorded.
+    fn after_research(&self) -> Option<&str> {
+        (self.column.category == ColumnCategory::Research)
+            .then(|| self.plan.and_then(|p| p.then.as_deref()))
+            .flatten()
+    }
+
     fn ask_owner(&self) -> String {
         let back = match self.plan.and_then(|p| p.back.as_deref()) {
             Some(back) => format!("move it back to {back} and "),
@@ -67,14 +75,20 @@ impl About<'_> {
 
 /// Rule 1: quiet in its work column.
 pub fn nudge(a: &About<'_>, quiet: Duration) -> String {
-    let done = match a.finish() {
-        Some(finish) => format!(
-            "If the work is done, comment the result on the card, link or attach what you \
-             made, and move it to {finish} with item_move."
+    let done = match (a.after_research(), a.finish()) {
+        (Some(then), _) => format!(
+            "If you have read the code, write what you found under “Code research” and move it \
+             to {then} with item_move."
         ),
-        None => "If the work is done, comment the result on the card and link or attach what \
+        (None, finish) => match finish {
+            Some(finish) => format!(
+                "If the work is done, comment the result on the card, link or attach what you \
+             made, and move it to {finish} with item_move."
+            ),
+            None => "If the work is done, comment the result on the card and link or attach what \
                  you made."
-            .to_string(),
+                .to_string(),
+        },
     };
     format!(
         "{} {} is assigned to you and is in {}, and nothing has happened on it for {}. {done} \
@@ -105,6 +119,11 @@ pub fn ask_to_move(a: &About<'_>) -> String {
         (ColumnKind::Open, Some((start, _))) => format!(
             "If you have started it, move it to {start} with item_move; if it can't start, \
              say why in a comment on the card."
+        ),
+        _ if a.after_research().is_some() => format!(
+            "If you have read the code, write what you found under “Code research” and move \
+             it to {} with item_move. If not, say in a comment on the card what is left.",
+            a.after_research().unwrap_or_default()
         ),
         _ => match a.finish() {
             Some(finish) => format!(

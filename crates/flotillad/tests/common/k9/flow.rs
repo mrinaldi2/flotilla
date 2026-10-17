@@ -1,12 +1,12 @@
 //! Steps 5 to 7 of the K9 scenario: the cook, on the linked PC, takes the
-//! item through To do → Doing → QA → Done, refused once with the rule it
-//! misses; the phone approves the lead's second board; and with the home
+//! item through To do → Research → Doing → QA → Done, refused once with
+//! the rule it misses (a spike, research itself, goes straight to Doing); the phone approves the lead's second board; and with the home
 //! offline the cook's reads still work and its writes name the home.
 
 use bus::contract::board::{self as c, board_request::Request};
 use serde_json::{json, Value};
 
-use super::super::board::call;
+use super::super::board::{call, record_research};
 use super::super::peers::wait_until;
 use super::{approve, board, column, proposed, refusal, version_of, K9};
 
@@ -37,13 +37,17 @@ async fn lead_checks(k: &mut K9, id: &str) {
 }
 
 pub async fn step5(k: &mut K9, s: &c::BoardSnapshot, recipes: &str, id: &str) {
-    let (doing, qa, done) = (
+    let (research, doing, qa, done) = (
+        column(s, recipes, "Research"),
         column(s, recipes, "Doing"),
         column(s, recipes, "QA"),
         column(s, recipes, "Done"),
     );
+    let raw = cook_moves(k, id, &research).await;
+    assert_ne!(raw["isError"], json!(true), "To do → Research: {raw}");
+    record_research(&mut k.cook, id).await;
     let raw = cook_moves(k, id, &doing).await;
-    assert_ne!(raw["isError"], json!(true), "To do → Doing: {raw}");
+    assert_ne!(raw["isError"], json!(true), "Research → Doing: {raw}");
     let raw = cook_moves(k, id, &qa).await;
     let text = refusal(&raw);
     assert!(text.contains("rule.ac_all_checked"), "{text}");

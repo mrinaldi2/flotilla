@@ -132,6 +132,28 @@ pub fn version(item: &serde_json::Value) -> u64 {
     }
 }
 
+/// What a bot found in the code, as a card's "Code research" section
+/// (0.21.0): what a task or bug needs before it may enter Doing.
+pub const CODE_RESEARCH: &str =
+    "## Code research\n\nRead the code the card touches: one module, and nothing outside it \
+     calls the part that changes.";
+
+/// `bot` writes what it found in the code under "Code research" on item
+/// `id` with `item_update`, after the description it has; the reply.
+pub async fn record_research(bot: &mut super::McpClient, id: &str) -> serde_json::Value {
+    let got = bot.call("item_get", json!({ "id": id })).await;
+    let item = &got["item"];
+    let description = format!(
+        "{}\n\n{CODE_RESEARCH}",
+        item["description"].as_str().unwrap_or_default()
+    );
+    bot.call(
+        "item_update",
+        json!({"id": id, "expected_version": version(item), "description": description}),
+    )
+    .await
+}
+
 /// A new item of `project`, created by the owner.
 pub fn new_item(db: &Db, project: &str, title: &str, priority: Priority) -> (String, u64) {
     let item = db

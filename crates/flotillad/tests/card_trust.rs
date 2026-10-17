@@ -1,6 +1,6 @@
 //! What a bot can't do with the rights its own card gives it (0.19.0 card
 //! flow, review of PR #29): approve its own work by handing the card on
-//! first, start cards past the Doing column's limit or rules, restart a
+//! first, take cards into Doing past its limit or rules, restart a
 //! card the owner moved back, or block another card from its own.
 
 use crate::common;
@@ -24,33 +24,28 @@ async fn bot_assign(f: &mut common::cards::Fresh, i: usize, id: &str, bot: Optio
 #[tokio::test]
 async fn the_lead_cant_approve_its_own_card_by_handing_it_on() {
     let (mut f, _) = fresh(&["Builder", "Helper"]).await;
-    let item = f.item("Pricing table").await;
-    f.assign(&item.id, Some("Builder")).await;
-    let got = f.bots[0].call("item_get", json!({"id": item.id})).await;
-    assert_eq!(got["item"]["column_key"], "doing", "{got}");
-    let review = f.bot_move(0, &item.id, "review").await;
+    let id = f.started_card(0, "Pricing table").await;
+    let review = f.bot_move(0, &id, "review").await;
     assert_ne!(review["isError"], json!(true), "{review}");
 
     // Taken off itself, the lead still did the work.
-    bot_assign(&mut f, 0, &item.id, None).await;
-    let unassigned = f.bot_move(0, &item.id, "done").await;
+    bot_assign(&mut f, 0, &id, None).await;
+    let unassigned = f.bot_move(0, &id, "done").await;
     assert!(
         error_text(&unassigned).contains("rule.independent"),
         "{unassigned}"
     );
     // Nor when it hands the card to another bot.
-    bot_assign(&mut f, 0, &item.id, Some("Helper")).await;
-    let handed = f.bot_move(0, &item.id, "done").await;
+    bot_assign(&mut f, 0, &id, Some("Helper")).await;
+    let handed = f.bot_move(0, &id, "done").await;
     assert!(error_text(&handed).contains("rule.independent"), "{handed}");
-    assert_eq!(f.now(&item.id).column_key, "review");
+    assert_eq!(f.now(&id).column_key, "review");
 
     // A lead who never held it may: that is the review.
-    let other = f.item("Footer").await;
-    f.assign(&other.id, Some("Helper")).await;
-    f.bots[1].call("item_get", json!({"id": other.id})).await;
-    let r = f.bot_move(1, &other.id, "review").await;
+    let other = f.started_card(1, "Footer").await;
+    let r = f.bot_move(1, &other, "review").await;
     assert_ne!(r["isError"], json!(true), "{r}");
-    let approved = f.bot_move(0, &other.id, "done").await;
+    let approved = f.bot_move(0, &other, "done").await;
     assert_ne!(approved["isError"], json!(true), "{approved}");
 }
 
@@ -63,16 +58,20 @@ async fn a_read_never_starts_a_card_past_the_doing_limit() {
         f.assign(&item.id, Some("Builder")).await;
         ids.push(item.id);
     }
-    for id in &ids[..3] {
+    for id in &ids {
         let got = f.bots[0].call("item_get", json!({"id": id})).await;
-        assert_eq!(got["item"]["column_key"], "doing", "{got}");
+        assert_eq!(got["item"]["column_key"], "research", "{got}");
+        f.research(0, id).await;
     }
-    // Doing holds 3: the fourth stays in To do, and the reply says why.
-    let fourth = f.bots[0].call("item_get", json!({"id": ids[3]})).await;
-    assert_eq!(f.now(&ids[3]).column_key, "todo");
-    assert!(fourth.get("started").is_none(), "{fourth}");
-    let why = fourth["not_started"].as_str().unwrap_or_default();
-    assert!(why.contains("Doing"), "{fourth}");
+    for id in &ids[..3] {
+        let moved = f.bot_move(0, id, "doing").await;
+        assert_ne!(moved["isError"], json!(true), "{moved}");
+    }
+    // Doing holds 3: the fourth stays in Research, and the refusal says why.
+    let fourth = f.bot_move(0, &ids[3], "doing").await;
+    assert_eq!(f.now(&ids[3]).column_key, "research");
+    let why = error_text(&fourth);
+    assert!(why.contains("Doing is at its WIP limit of 3"), "{why}");
 }
 
 #[tokio::test]
@@ -81,7 +80,7 @@ async fn a_card_the_owner_moved_back_isnt_started_again_by_a_read() {
     let item = f.item("Search box").await;
     f.assign(&item.id, Some("Builder")).await;
     let got = f.bots[0].call("item_get", json!({"id": item.id})).await;
-    assert_eq!(got["item"]["column_key"], "doing", "{got}");
+    assert_eq!(got["item"]["column_key"], "research", "{got}");
 
     // The owner says "not now": back to To do. The bot reads the notice
     // and the card; the card stays where the owner put it.

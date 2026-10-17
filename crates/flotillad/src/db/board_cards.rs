@@ -14,6 +14,7 @@ pub(crate) fn is_active(category: ColumnCategory) -> bool {
     matches!(
         category,
         ColumnCategory::Ready
+            | ColumnCategory::Research
             | ColumnCategory::Doing
             | ColumnCategory::Review
             | ColumnCategory::Verify
