@@ -15,6 +15,8 @@ const TYPE_LABEL: Readonly<Record<ItemType, TypeLabel>> = {
   [ItemType.BUG]: { glyph: "✱", word: "Bug" },
   [ItemType.SPIKE]: { glyph: "◎", word: "Spike" },
   [ItemType.CHORE]: { glyph: "▪", word: "Chore" },
+  [ItemType.TASK]: { glyph: "■", word: "Task" },
+  [ItemType.DESIGN]: { glyph: "✎", word: "Design" },
 };
 
 export function typeLabel(type: ItemType): TypeLabel {

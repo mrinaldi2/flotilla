@@ -26,7 +26,15 @@ pub enum MapError {
 }
 
 macro_rules! map_enum {
+    // `unserved`: contract values this build does not hold yet (0.21.0 #43
+    // adds them step by step); they are refused like an unknown number.
+    ($name:ident { $($variant:ident),+ $(,)? } unserved { $($unserved:ident),+ $(,)? }) => {
+        map_enum!(@impl $name { $($variant),+ } { $(c::$name::$unserved)|+ });
+    };
     ($name:ident { $($variant:ident),+ $(,)? }) => {
+        map_enum!(@impl $name { $($variant),+ } { c::$name::Unspecified });
+    };
+    (@impl $name:ident { $($variant:ident),+ } { $($refused:pat_param)|+ }) => {
         impl From<m::$name> for c::$name {
             fn from(value: m::$name) -> Self {
                 match value {
@@ -45,8 +53,10 @@ macro_rules! map_enum {
             type Error = MapError;
 
             fn try_from(value: c::$name) -> Result<Self, MapError> {
+                #[allow(unreachable_patterns)]
                 match value {
                     c::$name::Unspecified => Err(MapError::UnknownEnum(stringify!($name))),
+                    $($refused)|+ => Err(MapError::UnknownEnum(stringify!($name))),
                     $(c::$name::$variant => Ok(m::$name::$variant)),+
                 }
             }
@@ -73,7 +83,7 @@ map_enum!(ColumnCategory {
     Deploying,
     Done,
     Cancelled
-});
+} unserved { Research });
 map_enum!(ColumnKind {
     Open,
     Active,
@@ -100,7 +110,7 @@ map_enum!(ItemType {
     Bug,
     Spike,
     Chore
-});
+} unserved { Task, Design });
 map_enum!(Size { S, M, L });
 map_enum!(Priority { P0, P1, P2, P3 });
 map_enum!(PersonRole { Reviewer, Verifier });
@@ -120,7 +130,7 @@ map_enum!(LinkKind {
     ItemRelates,
     ItemDuplicates,
     Thread
-});
+} unserved { Design });
 map_enum!(ItemEventKind {
     Created,
     Moved,

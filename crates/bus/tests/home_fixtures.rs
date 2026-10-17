@@ -235,3 +235,18 @@ fn parts_list_their_bots_and_stopped_bots_say_why() {
     let weights: Vec<u32> = rows.rows.iter().map(|r| r.weight).collect();
     assert!(weights.windows(2).all(|w| w[0] >= w[1]), "{weights:?}");
 }
+
+/// A plan gate row (0.21.0) targets the node the owner rules on.
+#[test]
+fn a_plan_gate_row_targets_its_node() {
+    let rows: AttentionRows = serde_json::from_str(&read("attention_rows")).expect("decodes");
+    let gate = rows
+        .rows
+        .iter()
+        .find(|r| r.kind() == AttentionKind::PlanGate)
+        .expect("a plan_gate row");
+    assert!(
+        matches!(&gate.target, Some(Target::PlanNodeId(id)) if id == "PL-4"),
+        "{gate:?}"
+    );
+}

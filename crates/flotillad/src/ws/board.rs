@@ -97,7 +97,10 @@ impl Conn {
             | Request::BoardUnwatch(_)
             | Request::BoardList(_)
             | Request::AttachmentRead(_)
-            | Request::ItemDraftChanges(_) => Capability::Read,
+            | Request::ItemDraftChanges(_)
+            | Request::PlanGet(_)
+            | Request::PlanNodeGet(_)
+            | Request::PlanDocRead(_) => Capability::Read,
             // Choosing the board's home is the owner's call (H-037), and so
             // is the boards' structure (0.19.0).
             Request::BoardEnable(_)
@@ -109,7 +112,12 @@ impl Conn {
             | Request::ColumnUpdate(_)
             | Request::ColumnRemove(_)
             | Request::AutomationSet(_)
-            | Request::BoardProposalRule(_) => Capability::Approve,
+            | Request::BoardProposalRule(_)
+            // The plan's rulings are the owner's (0.21.0).
+            | Request::PlanEnable(_)
+            | Request::PlanRule(_)
+            | Request::PlanResearchSkip(_)
+            | Request::PlanDrop(_) => Capability::Approve,
             _ => Capability::Control,
         };
         if !self.caps.contains(&cap) {
@@ -187,6 +195,24 @@ impl Conn {
             | Request::ItemDiscard(_)
             | Request::ItemDraftChanges(_)
             | Request::ItemDraftUndo(_)) => self.draft_request(req)?,
+            // The plan (0.21.0 #43): the contract is here, the daemon serves
+            // it from a later step, advertised as `plan_v1`.
+            Request::PlanGet(_)
+            | Request::PlanNodeGet(_)
+            | Request::PlanEnable(_)
+            | Request::PlanCreate(_)
+            | Request::PlanPropose(_)
+            | Request::PlanUpdate(_)
+            | Request::PlanSubmit(_)
+            | Request::PlanRule(_)
+            | Request::PlanResearchSkip(_)
+            | Request::PlanDrop(_)
+            | Request::PlanDocRead(_) => {
+                return Err(refuse(
+                    "unsupported",
+                    "this daemon does not serve the plan yet (capability plan_v1)",
+                ))
+            }
         }))
     }
 

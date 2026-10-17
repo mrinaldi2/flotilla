@@ -224,10 +224,25 @@ mod tests {
 
 #[cfg(test)]
 mod capability_tests {
+    use bus::contract::capability;
+
+    /// The 0.21 strings join the list as the daemon serves each of them
+    /// (#43, steps 2 to 4).
+    const NOT_SERVED_YET: &[&str] = &[
+        capability::PLAN_V1,
+        capability::ITEM_TYPES_V2,
+        capability::COLUMN_RESEARCH,
+        capability::ATTENTION_PLAN,
+    ];
+
     /// The 0.19 and 0.20 board and home additions are all served.
     #[test]
     fn every_board_glance_capability_is_served() {
-        for capability in bus::contract::capability::ALL {
+        for capability in capability::ALL {
+            if NOT_SERVED_YET.contains(capability) {
+                assert!(!super::CAPABILITIES.contains(capability), "{capability}");
+                continue;
+            }
             assert!(super::CAPABILITIES.contains(capability), "{capability}");
         }
     }
