@@ -143,16 +143,14 @@ export default function ProjectView(props: ProjectViewProps): ReactElement {
         onSave={(repo) => onSetRepo(project.id, repo)}
       />
 
-      {props.plan === undefined ? null : (
-        <PlanningSettings
-          api={client}
-          projectId={project.id}
-          plan={props.plan}
-          hasRepo={project.repo !== null && project.repo !== undefined}
-          connected={connected}
-          canControl={canControl}
-        />
-      )}
+      <PlanningSettings
+        api={client}
+        projectId={project.id}
+        plan={props.plan}
+        repo={project.repo}
+        connected={connected}
+        canControl={canControl}
+      />
 
       <ProjectPermissionsForm
         key={`${project.id}:${project.permission_profile ?? "standard"}`}
