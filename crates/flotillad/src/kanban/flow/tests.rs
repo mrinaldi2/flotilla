@@ -71,6 +71,7 @@ fn item(in_column: &str) -> Item {
         done_at: None,
         version: 1,
         state: crate::kanban::model::ItemState::Live,
+        plan_node_id: None,
     }
 }
 

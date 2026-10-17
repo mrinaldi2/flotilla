@@ -223,8 +223,12 @@ pub fn spawn_relay(app: Arc<AppState>) {
 }
 
 fn relay(app: &AppState, change: &BoardChange) {
-    // Drafts stay on the home: only the owner's apps hear of them.
-    if change.kind == ChangeKind::DraftChanged {
+    // Drafts stay on the home: only the owner's apps hear of them. So does
+    // the plan (0.21.0), which a linked computer doesn't mirror.
+    if matches!(
+        change.kind,
+        ChangeKind::DraftChanged | ChangeKind::PlanChanged
+    ) {
         return;
     }
     let db = &app.db;
@@ -308,6 +312,7 @@ pub(super) fn kind_name(kind: ChangeKind) -> &'static str {
         ChangeKind::ColumnsChanged => "columns_changed",
         ChangeKind::SettingsChanged => "settings_changed",
         ChangeKind::DraftChanged => "draft_changed",
+        ChangeKind::PlanChanged => "plan_changed",
     }
 }
 

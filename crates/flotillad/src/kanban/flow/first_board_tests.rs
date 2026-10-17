@@ -60,6 +60,7 @@ fn item(in_column: &str, assignee: Option<&str>) -> Item {
         done_at: None,
         version: 1,
         state: ItemState::Live,
+        plan_node_id: None,
     }
 }
 

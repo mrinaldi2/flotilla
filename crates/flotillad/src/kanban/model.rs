@@ -260,6 +260,8 @@ pub struct Item {
     pub done_at: Option<DateTime<Utc>>,
     pub version: u64,
     pub state: ItemState,
+    /// The plan node it belongs to (0.21.0).
+    pub plan_node_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -288,6 +290,8 @@ pub struct ItemCard {
     pub invited: Vec<String>,
     /// Why it can't move on, filled when the card is read (`kanban::stuck`).
     pub move_block: Option<MoveBlock>,
+    /// The plan node it belongs to (0.21.0).
+    pub plan_node_id: Option<String>,
 }
 
 /// What stops a card: its last refused move, or the next column's rules.
@@ -384,15 +388,5 @@ pub struct Unmet {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn stored_spellings_parse_back() {
-        for kind in LinkKind::ALL {
-            assert_eq!(LinkKind::parse(kind.as_str()), Some(*kind));
-        }
-        assert_eq!(Role::parse("reviewer.ux"), Some(Role::ReviewerUx));
-        assert_eq!(Size::parse("XL"), None);
-    }
-}
+#[path = "model_tests.rs"]
+mod tests;

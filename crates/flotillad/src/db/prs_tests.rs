@@ -20,6 +20,7 @@ fn card(db: &Db, project: &str, title: &str) -> String {
             labels: &["platform:daemon".to_string()],
             parent_id: None,
             acceptance_criteria: &[],
+            plan_node_id: None,
         },
         &Actor::User,
     )

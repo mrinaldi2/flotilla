@@ -53,6 +53,7 @@ async fn gate() -> Gate {
                 labels: &["platform:desktop".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &Actor::User,
         )

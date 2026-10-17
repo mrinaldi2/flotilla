@@ -327,6 +327,7 @@ fn item_query(app: &Arc<AppState>, me: &Me, req: c::ItemQuery) -> anyhow::Result
     let labels = crate::compat018::query_labels(&req);
     let types = model_list(req.types, ItemType::from_wire)?;
     let priorities = model_list(req.priorities, Priority::from_wire)?;
+    let nodes = crate::plan::subtree_ids(app, &req.plan_node_ids)?;
 
     let cards: Vec<c::ItemCard> = cards
         .into_iter()
@@ -336,6 +337,12 @@ fn item_query(app: &Arc<AppState>, me: &Me, req: c::ItemQuery) -> anyhow::Result
         .filter(|card| crate::kanban::labels::matches_any(&card.labels, &labels))
         .filter(|card| assignee.is_none() || card.assignee == assignee)
         .filter(|card| req.blocked.is_none_or(|b| card.blocked == b))
+        .filter(|card| {
+            let node = card.plan_node_id.as_ref();
+            nodes
+                .as_ref()
+                .is_none_or(|n| node.is_some_and(|id| n.contains(id)))
+        })
         .map(c::ItemCard::from)
         .collect();
     Ok(json!({ "cards": out(cards)? }))

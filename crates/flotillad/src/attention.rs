@@ -16,6 +16,7 @@ use serde_json::Value;
 mod cleanup;
 mod keeper;
 mod legacy;
+mod plan;
 mod prs;
 mod rows;
 mod stopped;

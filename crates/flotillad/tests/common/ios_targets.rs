@@ -77,6 +77,7 @@ pub async fn team(platform: &str) -> Team {
                 labels: &[format!("platform:{platform}")],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &Actor::User,
         )

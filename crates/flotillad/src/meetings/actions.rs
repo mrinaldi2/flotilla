@@ -183,6 +183,7 @@ pub fn promote(
                 labels: &[],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &actor,
         )?;

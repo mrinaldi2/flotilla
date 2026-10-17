@@ -52,6 +52,7 @@ pub async fn releases_on(d: super::TestDaemon, items: usize) -> Releases {
                         labels: &["platform:daemon".to_string()],
                         parent_id: None,
                         acceptance_criteria: &[],
+                        plan_node_id: None,
                     },
                     &Actor::User,
                 )

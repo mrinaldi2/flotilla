@@ -50,6 +50,7 @@ async fn the_owner_comments_from_the_drawer() {
                 labels: &["platform:desktop".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &Actor::User,
         )

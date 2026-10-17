@@ -1,12 +1,11 @@
 //! Guard tests: the release-gated table (`table`), then the finer points of WIP,
 //! reviewers, DoR sections and the rules outside moves.
-use chrono::Utc;
-
 use super::*;
 use crate::kanban::defaults::COLUMNS;
 use crate::kanban::model::{
     AcceptanceCriterion, ItemPerson, ItemType, ItemVerification, Priority, Size, VerificationResult,
 };
+use chrono::Utc;
 
 struct Case {
     item: Item,
@@ -93,6 +92,7 @@ fn item(category: Cat) -> Item {
         done_at: None,
         version: 1,
         state: crate::kanban::model::ItemState::Live,
+        plan_node_id: None,
     }
 }
 

@@ -34,6 +34,7 @@ impl From<m::Item> for c::Item {
             done_at: v.done_at.and_then(stamp),
             version: v.version,
             state: v.state.as_str().to_string(),
+            plan_node_id: v.plan_node_id,
             ..Default::default()
         };
         crate::compat018::item_out(&mut item);
@@ -77,6 +78,7 @@ impl TryFrom<c::Item> for m::Item {
                 "" => m::ItemState::Live,
                 text => m::ItemState::parse(text).ok_or(MapError::UnknownEnum("ItemState"))?,
             },
+            plan_node_id: v.plan_node_id,
         })
     }
 }
@@ -108,6 +110,7 @@ impl From<m::ItemCard> for c::ItemCard {
                 more: b.more,
                 refused: b.refused,
             }),
+            plan_node_id: v.plan_node_id,
             ..Default::default()
         };
         crate::compat018::card_out(&mut card);
@@ -145,6 +148,7 @@ impl TryFrom<c::ItemCard> for m::ItemCard {
                 more: b.more,
                 refused: b.refused,
             }),
+            plan_node_id: v.plan_node_id,
         })
     }
 }

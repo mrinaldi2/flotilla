@@ -70,6 +70,7 @@ pub async fn board_on(mut p: Paired) -> Board {
                 labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &Actor::User,
         )

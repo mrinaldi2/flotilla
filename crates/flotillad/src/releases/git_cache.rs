@@ -202,6 +202,40 @@ pub fn file_at(
     commit: &str,
     path: &str,
 ) -> anyhow::Result<Option<Result<String, String>>> {
+    Ok(match bytes_at(cache, commit, path)? {
+        Some(Ok(bytes)) => Some(Ok(String::from_utf8(bytes)?)),
+        Some(Err(why)) => Some(Err(why)),
+        None => None,
+    })
+}
+
+/// [`file_at`]'s bytes, for a file that need not be text (a document's
+/// images, 0.21.0).
+pub fn bytes_at(
+    cache: &Path,
+    commit: &str,
+    path: &str,
+) -> anyhow::Result<Option<Result<Vec<u8>, String>>> {
+    let Some(object) = blob_at(cache, commit, path)? else {
+        return Ok(None);
+    };
+    let object = match object {
+        Ok(object) => object,
+        Err(why) => return Ok(Some(Err(why))),
+    };
+    let out = git(cache, &["cat-file", "blob", &object])?;
+    ok(&out, "cat-file")?;
+    Ok(Some(Ok(out.stdout)))
+}
+
+/// The blob `path` names at `commit`: `None` when that tree has no such
+/// entry, `Some(Err(why))` when it is not a plain file. Two commits with the
+/// same blob there hold the same file.
+pub fn blob_at(
+    cache: &Path,
+    commit: &str,
+    path: &str,
+) -> anyhow::Result<Option<Result<String, String>>> {
     let out = git(cache, &["ls-tree", "-z", commit, "--", path])?;
     ok(&out, "ls-tree")?;
     let listing = String::from_utf8_lossy(&out.stdout);
@@ -219,9 +253,22 @@ pub fn file_at(
             "{path} isn't a file (a {kind}, mode {mode})"
         ))));
     }
-    let out = git(cache, &["cat-file", "blob", &format!("{commit}:{path}")])?;
-    ok(&out, "cat-file")?;
-    Ok(Some(Ok(String::from_utf8(out.stdout)?)))
+    Ok(Some(Ok(info.next().unwrap_or_default().to_string())))
+}
+
+/// The files under folder `dir` at `commit`, at any depth.
+pub fn files_under(cache: &Path, commit: &str, dir: &str) -> anyhow::Result<Vec<String>> {
+    let dir = format!("{}/", dir.trim_end_matches('/'));
+    let out = git(
+        cache,
+        &["ls-tree", "-r", "-z", "--name-only", commit, "--", &dir],
+    )?;
+    ok(&out, "ls-tree")?;
+    Ok(String::from_utf8_lossy(&out.stdout)
+        .split('\0')
+        .filter(|p| !p.is_empty())
+        .map(str::to_string)
+        .collect())
 }
 
 /// The paths `head` changes since it left `base` (their merge base). A

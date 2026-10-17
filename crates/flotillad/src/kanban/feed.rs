@@ -31,6 +31,10 @@ pub enum ChangeKind {
     /// A draft was created, changed, finalized or discarded (0.19.0 K4b):
     /// only the owner's apps hear of it, never a linked computer.
     DraftChanged,
+    /// A plan node changed or appeared (0.21.0): its node is on the change.
+    /// It takes no number of the project's sequence, since its push carries
+    /// none, and stays on this computer like a draft.
+    PlanChanged,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -54,6 +58,8 @@ pub struct BoardChange {
     pub events: Vec<ItemEvent>,
     /// The WebSocket connection that asked for it, if one did.
     pub origin: Option<u64>,
+    /// The node of a `PlanChanged`, as it is after the change.
+    pub plan: Option<Box<crate::plan::model::Node>>,
 }
 
 /// How many changes a slow connection may fall behind before it is told to
@@ -216,8 +222,30 @@ impl FeedWriter<'_> {
             note,
             events,
             origin: feed_by::origin(),
+            plan: None,
         }));
         *seq
+    }
+
+    /// A plan node as it is after a change: sent to the project's watchers
+    /// at the project's current number, which it doesn't take.
+    pub fn publish_plan(&mut self, node: crate::plan::model::Node, actor: Option<String>) {
+        let project_id = node.project_id.clone();
+        let seq = self.seqs.get(&project_id).copied().unwrap_or(0);
+        let _ = self.tx.send(Arc::new(BoardChange {
+            project_id,
+            seq,
+            kind: ChangeKind::PlanChanged,
+            item_id: String::new(),
+            card: None,
+            from_column: None,
+            board_id: node.board_id.clone(),
+            actor,
+            note: None,
+            events: Vec::new(),
+            origin: feed_by::origin(),
+            plan: Some(Box::new(node)),
+        }));
     }
 }
 
