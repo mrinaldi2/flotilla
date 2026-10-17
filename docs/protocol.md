@@ -43,8 +43,9 @@ project, custom columns, proposals, `role_set`, `project_delete_preview`). The 0
 Board glance and project setup add `board_presets`, `project_description`,
 `create_bot_lead`, `overview_bots`, `overview_top_attention`, `attention_bot_stopped`
 and `project_repo_clone`, each advertised once the daemon serves it (see
-[the Board glance and project setup](#the-board-glance-and-project-setup-0200)); the
-strings are `bus::contract::capability`.
+[the Board glance and project setup](#the-board-glance-and-project-setup-0200)). The
+0.21 plan adds `plan_v1`, `item_types_v2`, `column_research` and `attention_plan`
+(see [the plan](#the-plan-0210)); the strings are `bus::contract::capability`.
 
 `hello_ok.contracts` maps each typed surface to its contract version, e.g.
 `{"board": 1}`. Those surfaces are defined once in protobuf under
@@ -1208,6 +1209,39 @@ serves all of it.
   workers to use it sends `set_project_repo` as well. `not_found` for an
   unknown project, `conflict` while a clone for it runs, `forbidden` without
   the owner, `invalid_request` for a bad `url` or `dest`.
+
+### The plan (0.21.0)
+
+Additions to contracts `board` 1 and `home` 1 (#43); no version changes. As in
+0.20, a client uses an addition only with a daemon that advertises its
+capability.
+
+- **The plan (`plan_v1`).** `proto/flotilla/board/v1/plan.proto`: a project's
+  goals, initiatives, epics and features (`PlanNode`), each with a `PlanStage`
+  and its documents (`PlanDoc`) in the project's repository. Gates (PRD,
+  design, HLD, LLD), a proposed initiative and the lead's request to skip
+  research wait in `PlanNode.gate` until the owner's `plan_rule`. Board
+  requests `plan_get` → `plan`, `plan_node_get` → `plan_node`,
+  `plan_doc_read` → `plan_doc` (grant `read`); `plan_create`, `plan_propose`,
+  `plan_update`, `plan_submit` → `planned` (`control`); `plan_enable` →
+  `plan`, and `plan_rule`, `plan_research_skip`, `plan_drop` → `planned`
+  (`approve`). `planned` is `done` (the node after the change, with
+  `created` naming an approval's new children), `refused` (`Unmet`, e.g.
+  `plan.research_open`) or `conflict` (the node now, for a stale
+  `expected_version`). Pushes: `plan_change` to connections watching the
+  project. Items, cards, `item_create`, `item_update` and `item_query` carry
+  `plan_node_id`. A daemon without `plan_v1` answers the requests with the
+  envelope error `unsupported`.
+- **Card types (`item_types_v2`).** `ItemType` `TASK` (6) and `DESIGN` (7).
+  Such a daemon refuses creating or retyping a card to `EPIC`, `FEATURE` or
+  `CHORE` (`new.type_retired`); the values stay for older peers. Before it, a
+  `TASK` or `DESIGN` is refused as an unknown type.
+- **The Research column (`column_research`).** `ColumnCategory` `RESEARCH`
+  (10) between Ready and Doing, with the guard `start.research`; and
+  `LinkKind` `DESIGN` (11), linking a task to the Design card it builds.
+- **Plan gates in Needs you (`attention_plan`).** `AttentionKind`
+  `PLAN_GATE` (20, weight 3), targeting `plan_node_id`; the owner answers
+  with `plan_rule`.
 
 ### Flow metrics (B11)
 

@@ -21,6 +21,7 @@ const ENTITIES: &[&str] = &[
     "event",
     "item",
     "link",
+    "plan_node",
     "revision",
     "role",
     "settings",
@@ -67,6 +68,7 @@ fn every_board_fixture_round_trips() {
             "event" => round_trip::<ItemEvent>(name),
             "item" => round_trip::<Item>(name),
             "link" => round_trip::<ItemLink>(name),
+            "plan_node" => round_trip::<PlanNode>(name),
             "revision" => round_trip::<DraftRevision>(name),
             "role" => round_trip::<ProjectRole>(name),
             "settings" => round_trip::<BoardSettings>(name),
@@ -114,7 +116,7 @@ fn the_enum_fixture_lists_every_value() {
         serde_json::from_value(fixture[enum_name].clone())
             .unwrap_or_else(|e| panic!("enums.json {enum_name}: {e}"))
     };
-    let checks: [(&str, Vec<String>); 14] = [
+    let checks: [(&str, Vec<String>); 18] = [
         (
             "ColumnCategory",
             defined::<ColumnCategory>(|e| e.as_str_name()),
@@ -140,6 +142,13 @@ fn the_enum_fixture_lists_every_value() {
         (
             "BoardEventKind",
             defined::<BoardEventKind>(|e| e.as_str_name()),
+        ),
+        ("PlanKind", defined::<PlanKind>(|e| e.as_str_name())),
+        ("PlanStage", defined::<PlanStage>(|e| e.as_str_name())),
+        ("PlanDocKind", defined::<PlanDocKind>(|e| e.as_str_name())),
+        (
+            "PlanResearchState",
+            defined::<PlanResearchState>(|e| e.as_str_name()),
         ),
     ];
     for (enum_name, values) in &checks {
@@ -207,6 +216,17 @@ fn arm_of(envelope: &bus::contract::wire::Envelope) -> String {
                 board_request::Request::ItemDiscard(_) => "item_discard",
                 board_request::Request::ItemDraftChanges(_) => "item_draft_changes",
                 board_request::Request::ItemDraftUndo(_) => "item_draft_undo",
+                board_request::Request::PlanGet(_) => "plan_get",
+                board_request::Request::PlanNodeGet(_) => "plan_node_get",
+                board_request::Request::PlanEnable(_) => "plan_enable",
+                board_request::Request::PlanCreate(_) => "plan_create",
+                board_request::Request::PlanPropose(_) => "plan_propose",
+                board_request::Request::PlanUpdate(_) => "plan_update",
+                board_request::Request::PlanSubmit(_) => "plan_submit",
+                board_request::Request::PlanRule(_) => "plan_rule",
+                board_request::Request::PlanResearchSkip(_) => "plan_research_skip",
+                board_request::Request::PlanDrop(_) => "plan_drop",
+                board_request::Request::PlanDocRead(_) => "plan_doc_read",
             }
         ),
         Body::BoardResponse(r) => format!(
@@ -229,12 +249,22 @@ fn arm_of(envelope: &bus::contract::wire::Envelope) -> String {
                 board_response::Response::Upload(_) => "upload",
                 board_response::Response::Attachment(_) => "attachment",
                 board_response::Response::DraftChanges(_) => "draft_changes",
+                board_response::Response::Plan(_) => "plan",
+                board_response::Response::PlanNode(_) => "plan_node",
+                board_response::Response::Planned(p) =>
+                    match p.outcome.as_ref().expect("an outcome") {
+                        plan_result::Outcome::Done(_) => "planned.done",
+                        plan_result::Outcome::Refused(_) => "planned.refused",
+                        plan_result::Outcome::Conflict(_) => "planned.conflict",
+                    },
+                board_response::Response::PlanDoc(_) => "plan_doc",
             }
         ),
         Body::BoardPush(p) => format!(
             "push.{}",
             match p.push.as_ref().expect("a push") {
                 board_push::Push::BoardEvent(_) => "board_event",
+                board_push::Push::PlanChange(_) => "plan_change",
             }
         ),
         Body::HomeRequest(r) => format!(

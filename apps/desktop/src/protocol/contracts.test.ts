@@ -45,6 +45,7 @@ import {
   ReleaseFromMainSchema,
   ReviewSettingsSchema,
 } from "./gen/flotilla/pr/v1/pr_pb";
+import { file_flotilla_board_v1_plan, PlanNodeSchema } from "./gen/flotilla/board/v1/plan_pb";
 import { EnvelopeSchema } from "./gen/flotilla/wire/v1/envelope_pb";
 import type { Envelope } from "./gen/flotilla/wire/v1/envelope_pb";
 
@@ -60,6 +61,7 @@ const ENTITIES: Readonly<Record<string, DescMessage>> = {
   event: ItemEventSchema,
   item: ItemSchema,
   link: ItemLinkSchema,
+  plan_node: PlanNodeSchema,
   revision: DraftRevisionSchema,
   role: ProjectRoleSchema,
   settings: BoardSettingsSchema,
@@ -105,10 +107,11 @@ describe("board contract", () => {
 
   it("lists every value of every enum", () => {
     const fromProto = Object.fromEntries(
-      [...file_flotilla_board_v1_board.enums, ...file_flotilla_board_v1_requests.enums].map((e) => [
-        e.name,
-        e.values.filter((v) => v.number !== 0).map((v) => v.name),
-      ]),
+      [
+        ...file_flotilla_board_v1_board.enums,
+        ...file_flotilla_board_v1_requests.enums,
+        ...file_flotilla_board_v1_plan.enums,
+      ].map((e) => [e.name, e.values.filter((v) => v.number !== 0).map((v) => v.name)]),
     );
     expect(readJson("enums")).toEqual(fromProto);
   });

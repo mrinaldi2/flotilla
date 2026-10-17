@@ -106,6 +106,18 @@ pub mod capability {
     /// `clone_project_repo`, its `repo_clone_started` answer and the
     /// `repo_clone` pushes.
     pub const PROJECT_REPO_CLONE: &str = "project_repo_clone";
+    /// The plan (0.21.0, plan.proto): the `plan_*` board requests, the
+    /// `planned`, `plan`, `plan_node` and `plan_doc` answers, the
+    /// `plan_change` push, and `plan_node_id` on items, cards and queries.
+    pub const PLAN_V1: &str = "plan_v1";
+    /// 0.21 card types (0.21.0): `ItemType::Task` and `ItemType::Design`;
+    /// creating or retyping to epic, feature or chore is refused.
+    pub const ITEM_TYPES_V2: &str = "item_types_v2";
+    /// `ColumnCategory::Research` columns and the `start.research` guard, and
+    /// `LinkKind::Design` (0.21.0).
+    pub const COLUMN_RESEARCH: &str = "column_research";
+    /// `AttentionKind::PlanGate` rows targeting `plan_node_id` (0.21.0).
+    pub const ATTENTION_PLAN: &str = "attention_plan";
 
     /// Every string above, in the order listed.
     pub const ALL: &[&str] = &[
@@ -117,6 +129,10 @@ pub mod capability {
         OVERVIEW_TOP_ATTENTION,
         ATTENTION_BOT_STOPPED,
         PROJECT_REPO_CLONE,
+        PLAN_V1,
+        ITEM_TYPES_V2,
+        COLUMN_RESEARCH,
+        ATTENTION_PLAN,
     ];
 }
 
