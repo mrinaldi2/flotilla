@@ -16,6 +16,8 @@ interface BoardDrawerProps {
   readonly api: BoardApi;
   /** For a draft's docked chat. */
   readonly client?: DaemonApi;
+  /** The board's project: its documents open in the drawer (0.20.0). */
+  readonly projectId?: string;
   readonly openId: string | null;
   /** The cards the board shows, in board order. */
   readonly shown: readonly ItemCard[];
@@ -65,6 +67,7 @@ export default function BoardDrawer(props: BoardDrawerProps): ReactElement | nul
       key={openId}
       api={props.api}
       client={props.client}
+      projectId={props.projectId}
       itemId={openId}
       version={(card ?? draft)?.version}
       invited={draft?.invited}
