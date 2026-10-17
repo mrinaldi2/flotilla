@@ -87,8 +87,12 @@ fn fill(conn: &Connection, node: &mut Node) -> anyhow::Result<()> {
     }
     let (total, done): (u32, u32) = conn.query_row(
         "SELECT count(*), coalesce(sum(category = ?2), 0) FROM item
-         WHERE plan_node_id = ?1 AND state = 'live'",
-        params![node.id, to_text(&ColumnCategory::Done)],
+         WHERE plan_node_id = ?1 AND state = 'live' AND category != ?3",
+        params![
+            node.id,
+            to_text(&ColumnCategory::Done),
+            to_text(&ColumnCategory::Cancelled)
+        ],
         |r| Ok((r.get(0)?, r.get(1)?)),
     )?;
     (node.cards_total, node.cards_done) = (total, done);

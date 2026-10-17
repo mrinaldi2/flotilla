@@ -171,14 +171,20 @@ impl Planner<'_> {
         node: &Node,
         kept: &[&Child],
     ) -> anyhow::Result<()> {
+        let template = t.task_template(&node.project_id)?;
         for child in kept {
+            let summary = child.summary.as_deref().unwrap_or_default();
+            let description = match &template {
+                Some(template) => crate::kanban::defaults::description_with(template, summary),
+                None => summary.to_string(),
+            };
             let item = t.create_item(
                 &NewItem {
                     project_id: &node.project_id,
                     board_id: node.board_id.as_deref(),
                     item_type: ItemType::Task,
                     title: &child.title,
-                    description: child.summary.as_deref().unwrap_or_default(),
+                    description: &description,
                     size: None,
                     priority: Priority::P2,
                     labels: &[],

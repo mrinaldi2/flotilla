@@ -73,6 +73,7 @@ impl Planner<'_> {
             }
         }
         db.board_tx(|t| t.set_plan_enabled(project_id, enabled))?;
+        tell_bots(self.app, project_id, enabled);
         Ok(None)
     }
 
@@ -348,4 +349,36 @@ fn created(
     t.record_plan_event(id, by, kind, Some(stage), None)?;
     wrote.node(id);
     Ok(Step::Done(id.to_string()))
+}
+
+/// Planning switched: every bot of the project gets its prompt rewritten
+/// (the plan's section in or out) and one note, so a running bot needn't
+/// wait for its next start to know.
+fn tell_bots(app: &std::sync::Arc<crate::app::AppState>, project_id: &str, enabled: bool) {
+    let text = match enabled {
+        true => {
+            "The owner turned on planning for this project: goals, initiatives, epics and \
+                 features now live in the plan (plan_get), each initiative has its own board, \
+                 and features and epics are never cards. Read the plan and docs/guidelines/ \
+                 before your next card."
+        }
+        false => {
+            "The owner turned off planning for this project: its plan is hidden and your \
+                  cards work as before."
+        }
+    };
+    let bots = app.db.list_bots(Some(project_id)).unwrap_or_default();
+    for bot in bots
+        .iter()
+        .filter(|b| !b.is_linked() && b.deleted_at.is_none())
+    {
+        if let Err(error) = crate::botmgmt::reprovision(app, bot) {
+            tracing::warn!(bot_id = %bot.id, %error, "system.md not rewritten for planning");
+        }
+        let sender = crate::messaging::daemon_sender();
+        let dm = crate::messaging::Dm::new(&bot.id, &sender, bus::MessageKind::Note, text);
+        if let Err(error) = crate::messaging::send_dm(&app.db, &app.events, dm) {
+            tracing::warn!(bot_id = %bot.id, %error, "planning note not delivered");
+        }
+    }
 }
