@@ -139,6 +139,7 @@ mod permission_extras;
 mod permission_profiles;
 mod permissions;
 mod plan_flow;
+mod plan_mcp;
 mod plan_rules;
 mod plan_ws;
 mod pr_comments;

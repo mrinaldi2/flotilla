@@ -33,6 +33,7 @@ mod ipc_hooks;
 pub mod no_follow;
 mod own;
 mod prompt;
+mod prompt_plan;
 mod prompt_sections;
 #[cfg(test)]
 mod tests;
@@ -170,6 +171,9 @@ pub struct BotProvision<'a> {
     /// The project's code goes through pull requests (H-286): its bots'
     /// prompts say how. Set per project at cut-over (`pr_flow_projects`).
     pub pull_requests: bool,
+    /// The project's owner turned planning on (0.21.0): its bots' prompts
+    /// describe the plan.
+    pub planning: bool,
 }
 
 /// Create the bot's directory tree: `bot.json`, `system.md`, `mcp.json`, and a

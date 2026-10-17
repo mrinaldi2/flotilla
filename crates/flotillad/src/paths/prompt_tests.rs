@@ -22,6 +22,7 @@ fn spec<'a>(instructions: &'a str) -> BotProvision<'a> {
         user_chrome: false,
         task_limits: Default::default(),
         pull_requests: false,
+        planning: false,
     }
 }
 
@@ -136,6 +137,7 @@ fn the_pr_section_is_there_only_after_cut_over_and_names_only_served_tools() {
     assert!(!off.contains("## Code goes through pull requests"));
     let on = system_md(&BotProvision {
         pull_requests: true,
+        planning: false,
         ..spec("")
     });
     let at = on
@@ -184,4 +186,26 @@ fn states_the_project_description() {
     assert!(md.contains("## About this project"));
     assert!(md.contains("A recipe site for my family."));
     assert!(!system_md(&spec("")).contains("## About this project"));
+}
+
+/// 0.21.0: every bot hears the card types and the Research column; only a
+/// planned project's bots hear about the plan, whose tools are served.
+#[test]
+fn the_plan_section_is_there_only_when_planning_is_on() {
+    let off = system_md(&spec(""));
+    assert!(off.contains("## Cards and the Research column"));
+    assert!(!off.contains("## The plan"));
+    let on = system_md(&BotProvision {
+        planning: true,
+        ..spec("")
+    });
+    let at = on.find("## The plan").expect("the section");
+    for tool in [
+        "`plan_get`",
+        "`plan_submit`",
+        "`plan_doc_read`",
+        "`plan_propose`",
+    ] {
+        assert!(on[at..].contains(tool), "{tool}");
+    }
 }

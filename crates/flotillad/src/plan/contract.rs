@@ -88,6 +88,33 @@ plan_enum!(
     }
 );
 
+/// Every plan enum's short and wire names, for bots' output (MCP writes
+/// the short ones, as for the board's enums).
+pub fn spellings() -> Vec<(&'static str, &'static str)> {
+    let mut out: Vec<(&'static str, &'static str)> = Vec::new();
+    out.extend(
+        m::Kind::ALL
+            .iter()
+            .map(|v| (v.as_str(), c::PlanKind::from(*v).as_str_name())),
+    );
+    out.extend(
+        m::Stage::ALL
+            .iter()
+            .map(|v| (v.as_str(), c::PlanStage::from(*v).as_str_name())),
+    );
+    out.extend(
+        m::DocKind::ALL
+            .iter()
+            .map(|v| (v.as_str(), c::PlanDocKind::from(*v).as_str_name())),
+    );
+    out.extend(
+        m::ResearchState::ALL
+            .iter()
+            .map(|v| (v.as_str(), c::PlanResearchState::from(*v).as_str_name())),
+    );
+    out
+}
+
 impl From<m::Doc> for c::PlanDoc {
     fn from(v: m::Doc) -> Self {
         c::PlanDoc {
