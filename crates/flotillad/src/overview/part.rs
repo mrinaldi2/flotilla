@@ -1,5 +1,5 @@
 //! A computer's part of a project (H-128 §2.3): the attention rows it owns,
-//! its own bots at work, and, on the board's home, the current release and
+//! its own bots (0.20.0), and, on the board's home, the current release and
 //! the latest meeting summary. The overview builds its own part the same
 //! way it asks a peer for one, so both sides count alike.
 
@@ -62,6 +62,12 @@ pub fn part(app: &AppState, project_id: &str) -> anyhow::Result<Part> {
         last_activity_at: app.db.project_last_activity(project_id)?.map(timestamp),
         pinned: app.db.project_pinned(project_id)?,
         bots_waiting: u32::try_from(bots_waiting).unwrap_or(u32::MAX),
+        bots: super::bots::here(
+            app,
+            project_id,
+            &app.db
+                .board_read(crate::releases::machines::this_computer)?,
+        )?,
     })
 }
 

@@ -11,6 +11,14 @@ use bus::contract::wire::Envelope;
 use prost::Message;
 use serde_json::Value;
 
+/// Message fixtures for fields added after the rename (0.20.0): the old
+/// schema has no way to encode them, so they have no recorded frame.
+const AFTER_THE_RENAME: &[&str] = &[
+    "request.board_enable.columns",
+    "request.board_enable.preset",
+    "request.board_enable.release_gated",
+];
+
 fn fixtures() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures")
 }
@@ -23,8 +31,22 @@ fn frames_from_before_the_rename_read_and_write_the_same() {
     .expect("json");
     let envelopes = golden["envelopes"].as_object().expect("envelopes");
     let messages = fixtures().join("board/messages");
-    let count = std::fs::read_dir(&messages).expect("messages").count();
-    assert_eq!(envelopes.len(), count, "one recorded frame per fixture");
+    let mut unrecorded: Vec<String> = std::fs::read_dir(&messages)
+        .expect("messages")
+        .map(|entry| {
+            let path = entry.expect("entry").path();
+            path.file_stem()
+                .expect("stem")
+                .to_string_lossy()
+                .into_owned()
+        })
+        .filter(|name| !envelopes.contains_key(name))
+        .collect();
+    unrecorded.sort();
+    assert_eq!(
+        unrecorded, AFTER_THE_RENAME,
+        "one recorded frame per fixture from before the rename"
+    );
     for (name, hex_bytes) in envelopes {
         let old = hex::decode(hex_bytes.as_str().expect("hex")).expect("hex decodes");
         let text = std::fs::read_to_string(messages.join(format!("{name}.json"))).expect(name);

@@ -23,6 +23,7 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
         max_workers_per_project,
         temporary,
         repo,
+        project_description,
         artifacts_dir,
         linked_machines,
         own_browser,
@@ -48,6 +49,7 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
     // A worker hears what it is for up front, and nothing about spawning:
     // it may not.
     let repo_section = super::prompt_sections::repo(repo.as_ref(), *temporary, name, bot_id);
+    let project_section = super::prompt_sections::project(project_description);
     let (worker_section, spawning_section) = if *temporary {
         (super::prompt_sections::temporary(), String::new())
     } else {
@@ -64,7 +66,8 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
     let board_section = super::prompt_sections::board_work(task_limits);
     let pr_section = super::prompt_sections::pull_requests(*pull_requests);
     format!(
-        "# {name}\n\n{description}\n\n{worker_section}{repo_section}{instructions_section}\
+        "# {name}\n\n{description}\n\n{worker_section}{project_section}{repo_section}\
+         {instructions_section}\
          ## How to use the {short} bus\n\n\
          You are the bot \"{name}\". You receive messages rendered as\n\
          `[msg #N from SENDER · kind] body`. A task delegated to you also\n\

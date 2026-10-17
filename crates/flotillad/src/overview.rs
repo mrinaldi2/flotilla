@@ -11,9 +11,11 @@ use std::collections::HashMap;
 use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
-use bus::contract::home::{project_attention::Part, source::State};
+use bus::contract::home::{project_attention::Part, source::State, BotStatus};
+use bus::BotState;
 use chrono::{DateTime, Utc};
 
+mod bots;
 mod build;
 mod detail;
 mod liveness;
@@ -74,7 +76,21 @@ pub struct Overview {
     watched_at: Mutex<Option<Instant>>,
     /// Since when each bot has been waiting for the owner.
     waiting: Mutex<HashMap<String, DateTime<Utc>>>,
+    /// Each bot's status as its state shows it, and since when (0.20.0).
+    status: Mutex<HashMap<String, (BotStatus, DateTime<Utc>)>>,
+    /// Since when each bot's session hasn't been running, and the last way
+    /// it stopped (0.20.0): the `bot_stopped` rows.
+    down: Mutex<HashMap<String, Down>>,
     started_at: DateTime<Utc>,
+}
+
+/// A bot whose session isn't running.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Down {
+    pub since: DateTime<Utc>,
+    /// Crashed, auth failed, rate limited or stopped: the last of those it
+    /// was in, which `starting` and `stopping` in between don't change.
+    pub state: BotState,
 }
 
 impl Default for Overview {
@@ -84,6 +100,8 @@ impl Default for Overview {
             in_flight: Mutex::default(),
             watched_at: Mutex::default(),
             waiting: Mutex::default(),
+            status: Mutex::default(),
+            down: Mutex::default(),
             started_at: Utc::now(),
         }
     }
@@ -118,6 +136,62 @@ impl Overview {
                 waiting.remove(bot_id);
             }
         }
+    }
+
+    /// Since when the bot has had `status`, as far as this daemon has seen.
+    pub fn status_since(&self, bot_id: &str, status: BotStatus) -> Option<DateTime<Utc>> {
+        lock(&self.status)
+            .get(bot_id)
+            .filter(|(seen, _)| *seen == status)
+            .map(|(_, since)| *since)
+    }
+
+    /// Since when the bot, in `state` now, hasn't been running. A bot not
+    /// seen running yet has been down since this daemon started, or since
+    /// it was made (`created_at`) if that was later: a bot about to start
+    /// for the first time isn't one that stopped.
+    pub fn down(&self, bot_id: &str, state: BotState, created_at: DateTime<Utc>) -> Option<Down> {
+        if bots::running(state) {
+            return None;
+        }
+        Some(lock(&self.down).get(bot_id).copied().unwrap_or(Down {
+            since: self.started_at.max(created_at),
+            state: bots::down_state(state).unwrap_or(BotState::Stopped),
+        }))
+    }
+
+    /// Makes the bot down since `since`, as if it went down then. For
+    /// tests, which can't wait out [`crate::attention::STOPPED_AFTER`].
+    #[doc(hidden)]
+    pub fn set_down_for_tests(&self, bot_id: &str, state: BotState, since: DateTime<Utc>) {
+        lock(&self.down).insert(bot_id.to_string(), Down { since, state });
+    }
+
+    /// The bot's state changed at `at`; `true` when its session just went
+    /// down.
+    fn saw_state(&self, bot_id: &str, state: BotState, at: DateTime<Utc>) -> bool {
+        let status = bots::status(state, false);
+        {
+            let mut seen = lock(&self.status);
+            let entry = seen.entry(bot_id.to_string()).or_insert((status, at));
+            if entry.0 != status {
+                *entry = (status, at);
+            }
+        }
+        let mut down = lock(&self.down);
+        if bots::running(state) {
+            down.remove(bot_id);
+            return false;
+        }
+        let went_down = !down.contains_key(bot_id);
+        let entry = down.entry(bot_id.to_string()).or_insert(Down {
+            since: at,
+            state: BotState::Stopped,
+        });
+        if let Some(why) = bots::down_state(state) {
+            entry.state = why;
+        }
+        went_down
     }
 
     /// A client read the overview: peers stay refreshed for a while.

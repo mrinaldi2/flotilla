@@ -56,6 +56,7 @@ pub mod push;
 pub mod quiesce;
 pub mod redact;
 pub mod releases;
+pub mod repo_clone;
 pub mod resume;
 pub mod routine_validation;
 pub mod runtime;

@@ -38,6 +38,13 @@ can be restarted or cleared (`restart_bot`, `clear_bot_session`), and `workers`
 when bots can spawn temporary workers (`temporary` on bots, `repo` on projects,
 `set_project_repo`, `list_workers`, `cancel_worker`, the `workers_updated` push;
 see [workers](workers.md)), and `permission_profiles` when projects carry a permission profile and bots their extras (`set_project_permission_profile`, `set_bot_permission_extras`).
+`boards_0_19` names the 0.19 board structure after the fact (several boards per
+project, custom columns, proposals, `role_set`, `project_delete_preview`). The 0.20
+Board glance and project setup add `board_presets`, `project_description`,
+`create_bot_lead`, `overview_bots`, `overview_top_attention`, `attention_bot_stopped`
+and `project_repo_clone`, each advertised once the daemon serves it (see
+[the Board glance and project setup](#the-board-glance-and-project-setup-0200)); the
+strings are `bus::contract::capability`.
 
 `hello_ok.contracts` maps each typed surface to its contract version, e.g.
 `{"board": 1}`. Those surfaces are defined once in protobuf under
@@ -163,8 +170,9 @@ Codes: `auth_failed`, `unsupported_version`, `not_found`, `invalid_request`,
 | type | fields | reply |
 |---|---|---|
 | `list_projects` | – | `projects` |
-| `create_project` | `name` | `project` |
-| `update_project` | `project_id, name` | `project` |
+| `create_project` | `name, description?` | `project`. `description` needs `project_description` (0.20.0) |
+| `update_project` | `project_id, name?, description?` | `project`. At least one of the two; `description` needs `project_description`, and before it `name` is required |
+| `clone_project_repo` | `project_id, url, branch?, dest` | `repo_clone_started {project_id}`, then `repo_clone` pushes. Owner only, capability `project_repo_clone` (0.20.0); see [the Board glance and project setup](#the-board-glance-and-project-setup-0200) |
 | `list_workers` | `project_id` | `workers`: `{ project_id, workers: [Worker], running_here, max_workers_here }`, queued and running oldest first, then recently finished. Requires `read` |
 | `cancel_worker` | `worker_id, reason?` | `worker`: a queued spawn is dropped; a running worker is told to stop, in the owner's name, and retires. `conflict` once it has finished |
 | `set_project_repo` | `project_id, url \| null, branch?` (default `main`) | `project`: the shared git repository workers check out and push to; `url: null` clears it. Bots' prompts are rewritten for their next start |
@@ -176,7 +184,7 @@ Codes: `auth_failed`, `unsupported_version`, `not_found`, `invalid_request`,
 | `deleted_projects_cleanup` | – | `deleted_projects_cleaned`: `{ moved: [{ group, path, bytes, bin }], moved_bytes, skipped: [{ path, reason }], bin, summary }` — moves what `deleted_projects_preview` lists to the trash. Owner only |
 | `list_bots` | `project_id?` | `bots` |
 | `list_bot_activity` | `project_id?` | `bot_activity` — one preview line per bot; see Semantics |
-| `create_bot` | `project_id, name?, description?, instructions?, avatar?, runtime?, peer_id?` | `bot` (starts running immediately). With `peer_id`, the peer creates the bot in the project linked with this one (`runtime` defaults to the peer's `default_bot_runtime`), and the reply is its stand-in here, with `peer` set; `not_linked` when the project is not linked through that peer, `unavailable` when it is offline |
+| `create_bot` | `project_id, name?, description?, instructions?, avatar?, runtime?, peer_id?, lead?` | `bot` (starts running immediately). `lead: true` (capability `create_bot_lead`, 0.20.0) also makes it the project's lead, as `set_project_lead` would, and gives it `ROLE_LEAD` when the project has a board. With `peer_id`, the peer creates the bot in the project linked with this one (`runtime` defaults to the peer's `default_bot_runtime`), and the reply is its stand-in here, with `peer` set; `not_linked` when the project is not linked through that peer, `unavailable` when it is offline |
 | `set_bot_runtime` | `bot_id, runtime` | `bot` (requires `control`; restarts when changed) |
 | `restart_bot` | `bot_id` | `ok`: the bot's session restarts and picks its conversation back up, and is told what it left unfinished (see Semantics). On a linked bot, restarted on its machine. Requires `control` |
 | `clear_bot_session` | `bot_id` | `ok`: the bot restarts with a fresh conversation, without the old one's history (which leaves the chat); its workspace, memory files and tasks are kept, and it is told what it was working on. On a linked bot, done on its machine. Requires `control` |
@@ -288,6 +296,7 @@ breaking wire-shape change; v1 clients must upgrade before connecting.
 ## Server replies (carry `req_id`)
 
 - `ok`: `{}`
+- `repo_clone_started`: `{ "project_id" }` — `clone_project_repo` was accepted (0.20.0).
 - `project` / `projects`, `bot` / `bots`, `message` / `messages`,
   `conversations`, `routine` / `routines`, `routine_run` / `routine_runs`, `signal`, `deliveries`, `search_results`,
   `diagnostics`: payload under a field of the same name. `diagnostics` carries
@@ -333,6 +342,7 @@ breaking wire-shape change; v1 clients must upgrade before connecting.
 - `bot_updated`: `{ "bot": {...} }` — a bot was created, edited, or archived. Bots edit themselves unprompted, so clients must not cache identity across this push.
 - `project_updated`: `{ "project": {...} }` — a project was created, renamed, archived, or linked or unlinked through a peer. As with `bot_updated`, archival is signalled by `deleted_at` being set rather than by a separate frame.
 - `workers_updated`: `{ "project_id" }` — a project's worker queue changed: a spawn was queued, placed, waits for a new reason, or finished. Clients refetch `list_workers`.
+- `repo_clone`: `{ "project_id", "state": "cloning"|"done"|"failed", "path"?, "error"? }` (0.20.0, `project_repo_clone`) — a `clone_project_repo` clone started, finished (`path`) or failed (`error`). Sent to every connection.
 - `activity_update`: `{ "activity": { "bot_id", "from", "text", "at" } }` — a bot's preview
   line changed. Sent when a finished turn becomes readable in the transcript, which lags
   the `ready` state; see Semantics.
@@ -367,7 +377,8 @@ breaking wire-shape change; v1 clients must upgrade before connecting.
 
 ```jsonc
 Project  { "id", "name", "dir_name", "lead_bot_id"?, "links", "repo": {"url","branch"}|null,
-           "deleted_at"?, "created_at" }
+           "description"?, "deleted_at"?, "created_at" }
+           // description: "" when unset; absent before `project_description` (0.20.0)
 ProjectLink { "peer_id", "peer_name", "online", "remote_project_id",
            "remote_project_name", "linked_at" }
 Bot      { "id", "project_id", "name", "description", "avatar", "instructions",
@@ -1069,7 +1080,7 @@ The typed surface `flotilla.home.v1` (`proto/flotilla/home/v1/home.proto`, contr
 - **`attention_dismiss {id}`** (approve) closes an `owner_question` row (D6); any other kind is refused with `invalid_request`. The bot that asked is told, as a note from the service, that the owner dismissed it without answering (UX-042).
 - **`question_comment_id`** (H-211): on an `owner_question` row on a card, the comment that asked, so the owner's reply can name it in `reply_to`.
 - **Push `projects_overview_changed {project_ids}`**, debounced at 2 s: a bot's state, a task or message, a card, a decision, an owner action, a permission prompt or a meeting changed one of those rows, or a peer's part changed. Clients refetch.
-- **Weights:** release awaiting, owner action, permission prompt 3; P0 item, serving off 2; relayed rulings, bot waiting, off board, owner question 1; a decision 3 when urgent, else 1. Each computer counts only the rows it owns: its prompts, Run cards (`target_machine` here), waiting bots, decisions and serving state, plus releases awaiting the owner and P0 cards when it holds the board.
+- **Weights:** release awaiting, owner action, permission prompt 3; P0 item, serving off, bot stopped 2; relayed rulings, bot waiting, off board, owner question 1; a decision 3 when urgent, else 1. Each computer counts only the rows it owns: its prompts, Run cards (`target_machine` here), waiting bots, decisions and serving state, plus releases awaiting the owner and P0 cards when it holds the board.
 - **Peers:** `project_attention {project_ids}` (peer request, the callee's ids) answers `ProjectAttention` in proto3 JSON: a `Part` per project linked with the caller, in the caller's ids, with its rows, summary, own working bots, and on the board's home the current release and latest meeting summary. A project not linked with the caller is left out. A peer sends `project_attention_changed {project_ids}` (the receiver's ids), debounced at 2 s, when its part may have changed; the receiver asks again. It also asks on link-up and every 60 s while a client fetched the overview in the last 5 min, at most one request per peer at a time, 3 s each. A peer without `project_attention` is `OLD_VERSION`.
 - **Bots** carry `origin {daemon_id, bot_id}`: where the bot runs, a stand-in's peer and remote id, so a client connected to several computers shows each bot once.
 - **A card on the owner's message (D5):** `send_user_message` with `item_id` checks the card is on the bot's project's board and open (else `invalid_request`, or `not_found`), stores and delivers the body as `[card <id>] <body>`, and comments "Owner asked <bot>: …" on the card when its board lives here (`commented: false` on a board mirrored from its home).
@@ -1089,6 +1100,114 @@ The typed surface `flotilla.home.v1` (`proto/flotilla/home/v1/home.proto`, contr
     - A `message_owner` call shows in the transcript as `{type: "sent", to: "owner", msg_kind: "owner", body}`, which is also what tells the capture the turn answered already.
 - **Pins (D7, capability `project_pin`).** `project_pin {project_id, pinned}` (control) → `{type: "project_pinned", project_id, pinned}` (binary arm 4). Stored per computer (`project.pinned_at`) and forwarded best-effort as peer request `project_pin` (the callee's id) to each linked computer, which stores it without forwarding. `ProjectAttention.Part.pinned` carries it across. Push `project_pinned {project_id, pinned}`, and the row's `projects_overview_changed`.
 - **Redaction (CE-014 F1):** a permission prompt's `summary` and every attention row's `title` mask token-like values (`Bearer …`, `--password …`, `--token …`, `token=`, `password=`, `secret=`, `*_TOKEN=`, `*_KEY=`, `*_SECRET=`, `*_PASSWORD=`) as `***`. A prompt's full `input` is unchanged.
+
+### The Board glance and project setup (0.20.0)
+
+Additions to contracts `home` 1 and `board` 1 and to the JSON requests; no
+version changes. Each comes with a capability (`bus::contract::capability`): a
+client sends a new request or field only to a daemon that advertises it, and
+reads a new field only then, because an older daemon leaves it unset (proto3
+defaults: `false`, `""`, empty, unset). A daemon advertises a capability once it
+serves all of it.
+
+- **The bots on the projects home (`overview_bots`).**
+  - `ProjectRow.bot_list` (21): a `BotBrief` per bot of the project across its
+    computers, each once: this computer's own bots, and each linked computer's
+    `ProjectAttention.Part.bots` (11, its own bots, stand-ins left out). A linked
+    computer that isn't answering gives its last good part's bots with status
+    `BOT_STATUS_OFFLINE` (and the last `state` known); one that never answered,
+    its bots' stand-ins here, also offline. A linked computer before 0.20
+    sends no bots: while it answers, its stand-ins are listed with status
+    `BOT_STATUS_UNSPECIFIED` and no `state`. Order: the lead, then waiting,
+    working, failed and stopped, idle, offline; within a group by name, ignoring
+    case. At most 24; `bots`, `bots_working` and `bots_waiting` stay the totals.
+  - `BotBrief {daemon_id, bot_id, name, avatar, runtime, status, state,
+    state_reason, computer_name, lead, since}`: ids and the computer are the
+    bot's own; `runtime` is `claude_code` or `codex_cli`; `state` is the raw
+    `BotState`; `since` is when it entered this status. `lead` is the project's
+    lead as the answering computer has it.
+  - `BotStatus` from the raw state: `WORKING` starting, working; `IDLE` ready;
+    `WAITING` waiting_for_approval, waiting_for_user, or a bot with a
+    `bot_waiting` row; `STOPPED` stopping, stopped; `FAILED` crashed,
+    auth_failed, rate_limited; `OFFLINE` its computer isn't answering.
+  - `Member.online` (4): this computer always, a linked one while its link is
+    up; `Member.last_seen_at` (5): when that link was last up, now while it is
+    (unset for this computer). Without the capability every member reads `online: false`: use
+    the member's `Source.state` instead.
+  - Peers: `project_attention {project_ids, revision}` (0.20.0). A daemon
+    decodes the peer link's proto3 JSON strictly, so a callee sends
+    `Part.bots`, `BOT_STOPPED` rows and `bot_state` only to a caller that sends
+    `revision: 1`; a caller before 0.20 sends none and gets none of them, and
+    a callee before 0.20 ignores it.
+- **The project's first row (`overview_top_attention`).** `ProjectRow.top_attention`
+  (22) is the row `attention_rows` would list first for the project (weight desc,
+  `created_at` asc, then id) over every computer's rows; unset when nothing
+  needs the owner.
+- **Column kinds.** `ColumnCount.kind` (5) is the lowercase `ColumnKind` name
+  (`open`, `active`, `done`, `cancelled`) and `ColumnCount.hidden` (6) a column
+  the board hides (a preset's Cancelled), still counted. Filled from 0.20.0
+  with no capability: empty `kind` means an older daemon (derive it from
+  `category`), and `hidden` then reads `false`.
+- **Stopped bots (`attention_bot_stopped`).** `AttentionKind` `BOT_STOPPED` (19,
+  `by_kind` key `bot_stopped`, weight 2: below a release awaiting the owner or a
+  prompt to answer, above a bot waiting) is a bot whose session isn't running:
+  `AttentionRow.bot` names it and `bot_state` (24) says why, `crashed`,
+  `auth_failed`, `rate_limited` or `stopped` (its session ended and didn't come
+  back; not while projects are paused for an install). A bot gets the row once
+  it has been down for a minute, so a restart or a crash the supervisor
+  recovers from raises none; `created_at` is when it went down, and `bot_state`
+  the last of those four states it was in. The bot's own computer
+  owns the row, `bot_stopped:<daemon_id>:<bot_id>`, and it closes when the bot
+  runs again. The action is `restart_bot {bot_id}` on `bot.daemon_id` (or on
+  the stand-in, which forwards it): a client offers Restart for `crashed` and
+  `stopped`; `auth_failed` needs the owner to sign the runtime in on that
+  computer first, and `rate_limited` clears when the limit lifts.
+- **Starting a board from a preset (`board_presets`).** `board_enable
+  {project_id, preset?, columns?}`: `preset` is `simple`, `simple_review`,
+  `software` or `release_gated` (left out: `simple_review`; another name:
+  `invalid_request`), `columns` the complete ordered list of the visible columns
+  as `ColumnSpec {key?, name, kind}`, in place of the preset's. Every board
+  keeps the preset's hidden Cancelled column (`cancelled`, last), which is never
+  listed. On a custom preset the kinds are open, active or done, with at least
+  one open and one done column, and names unique ignoring case; a listed key
+  that is the preset's keeps that column's WIP limit, movers, rules,
+  `allowed_from` and automations, and any other column has none. A key is
+  lowercase letters and digits in words joined by `-`, at most 32 characters,
+  not `cancelled`; left out, it is made from the name as `column_add` does. On
+  `release_gated` only names change: the list is exactly its eight visible
+  columns in order (`inbox`, `ready`, `doing`, `review`, `verify`, `approval`,
+  `deploying`, `done`), keys left out or the same, kinds unspecified or the
+  same. Anything else is `invalid_request` and starts nothing. A board that
+  exists already is returned unchanged.
+- **Project descriptions (`project_description`).** `create_project {name,
+  description?}` and `update_project {project_id, name?, description?}` (at
+  least one; `""` clears the description). Trimmed, at most 2 KB, else
+  `invalid_request`. Projects carry `description`, `""` when unset, in replies,
+  `project_updated` and `list_projects`.
+- **A lead on creation (`create_bot_lead`).** `create_bot {..., lead: true}`
+  makes the new bot the project's lead (`lead_bot_id`, as `set_project_lead`)
+  and, when the project has a board, gives it `ROLE_LEAD` as `role_set` would,
+  replacing the lead before. With `peer_id` the lead is the stand-in here. A
+  bot that can't be made lead fails the request before it is created.
+- **Cloning a project's repository (`project_repo_clone`).**
+  `clone_project_repo {project_id, url, branch?, dest}`, the owner's alone
+  (`approve`, from the app's ticket or a paired device, as
+  `set_project_extra_repos`; no bot tool). `url` follows `set_project_repo`'s
+  rules and is `https://…`, `file://…` or a local absolute path: the daemon's
+  git has no SSH keys. `branch` left out is the remote's default. `dest` is
+  absolute or `~/…` (the daemon user's home, on Windows too), without `..`,
+  and must resolve, symlinks followed, to a path inside the home directory
+  and not the home itself nor inside the daemon's own folder; it must not
+  exist, or be an empty directory. The clone runs through the
+  daemon's own git (no hooks, no credential prompts, the safe settings its
+  other git calls use), one per project at a time. The answer is
+  `repo_clone_started {project_id}`; then every connection gets `repo_clone
+  {project_id, state}`: `cloning` once, then `done` with `path` (the absolute
+  clone) or `failed` with `error` (a sentence to show; what was cloned is
+  removed). It doesn't change the project's `repo`: a client that wants
+  workers to use it sends `set_project_repo` as well. `not_found` for an
+  unknown project, `conflict` while a clone for it runs, `forbidden` without
+  the owner, `invalid_request` for a bad `url` or `dest`.
 
 ### Flow metrics (B11)
 

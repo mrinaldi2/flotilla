@@ -9,7 +9,7 @@ const MB = 1024 * 1024;
 export const CHUNK = 512 * 1024;
 
 const IMAGES = new Set(["png", "jpg", "jpeg", "webp", "gif"]);
-const FILES = new Set(["pdf", "md", "txt", "log"]);
+const FILES = new Set(["pdf", "md", "txt", "log", "html", "htm"]);
 
 /** The caps the Flotilla service applies by default (kanban-rework.md, decision 6). */
 export const CAPS = { image: 10 * MB, file: 25 * MB, item: 100 * MB } as const;
@@ -45,7 +45,7 @@ export function refusalFor(name: string, bytes: number, onItem: number): string 
   }
   const image = IMAGES.has(ext);
   if (!image && !FILES.has(ext)) {
-    return `${ext === "" ? "A file without a type" : `.${ext}`} isn't taken: attach png, jpg, webp, gif, pdf, md, txt or log.`;
+    return `${ext === "" ? "A file without a type" : `.${ext}`} isn't taken: attach png, jpg, webp, gif, pdf, md, txt, log or html.`;
   }
   if (bytes === 0) {
     return `${name} is empty: there is nothing to attach.`;

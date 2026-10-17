@@ -35,7 +35,7 @@ fn the_allowlist_takes_known_types_and_refuses_the_rest() {
         file_type(&limits, "a.jpeg").expect("jpeg").mime,
         "image/jpeg"
     );
-    for refused in ["tool.exe", "archive.zip", "noextension", "page.html"] {
+    for refused in ["tool.exe", "archive.zip", "noextension", "drawing.svg"] {
         assert!(file_type(&limits, refused).is_err(), "{refused}");
     }
     let heic = file_type(&limits, "IMG_0001.HEIC").expect_err("heic");
@@ -82,6 +82,11 @@ fn content_must_match_the_type() {
     let log = file_type(&limits, "build.log").expect("log");
     assert!(check_content(log, b"error: it broke\n").is_ok());
     assert!(check_content(log, b"\x7fELF\0\0").is_err());
+    // A report the owner opens from the card (0.20.0): text, as html.
+    let html = file_type(&limits, "report.HTML").expect("html");
+    assert_eq!((html.kind, html.mime), (AttachmentKind::File, "text/html"));
+    assert!(check_content(html, b"<!doctype html><h1>Benchmarks</h1>").is_ok());
+    assert!(check_content(html, b"PK\x03\x04\0zip").is_err());
 }
 
 #[test]

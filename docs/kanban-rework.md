@@ -146,7 +146,7 @@ caption, added_by, at)`
   `items/<item-id>/`, so they get the same retention and backup as other
   artifacts. Kanban stores only the record.
 - **Limits:** a type allowlist (png, jpg, heic converted to jpg, webp, gif,
-  pdf, md, txt, log) and caps of 10 MB per image, 25 MB per file and 100 MB per
+  pdf, md, txt, log; html from 0.20.0) and caps of 10 MB per image, 25 MB per file and 100 MB per
   item. Both are configurable.
 - **In the description:** images can appear inline as
   `![caption](attachment:<id>)`. An attachment that is removed shows as a
@@ -274,6 +274,11 @@ code (`kanban/presets.rs`):
   - Automations: `pr.opened` → Review; `pr.merged` → Done; `pr.closed` and
     `pr.changes_requested` → Doing.
 - **Release-gated:** the H-017 flow and columns.
+
+From 0.20.0 (`board_presets`) the owner can start a project's first board from
+any preset, and give it its own visible columns, with `board_enable {preset?,
+columns?}`; the rules are in `BoardEnable` (`proto/flotilla/board/v1/requests.proto`)
+and [protocol](protocol.md#the-board-glance-and-project-setup-0200).
 
 ### Who changes structure
 

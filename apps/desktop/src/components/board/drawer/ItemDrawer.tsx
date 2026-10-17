@@ -19,6 +19,7 @@ import type { Bot } from "../../../protocol/entities";
 import type { BoardColumn, ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import AttachmentsSection from "../attachments/AttachmentsSection";
 import AttachmentViewer from "../attachments/AttachmentViewer";
+import { useArtifactReader } from "../attachments/DocumentPreview";
 import ItemMarkdown from "../attachments/ItemMarkdown";
 import { useDrawerAttachments } from "../attachments/useDrawerAttachments";
 import { useDraftDrawer } from "../drafts/useDraftDrawer";
@@ -58,6 +59,8 @@ export interface ItemDrawerProps {
   readonly footer?: ReactNode;
   /** For a draft's docked chat ("Discuss with a bot"). */
   readonly client?: DaemonApi;
+  /** The card's project, so its linked documents can be read (0.20.0). */
+  readonly projectId?: string;
   readonly connected?: boolean;
   /** The project's lead, first in "Discuss with a bot". */
   readonly leadId?: string;
@@ -234,6 +237,7 @@ function DrawerMain(props: { readonly p: ItemDrawerProps; readonly d: DrawerStat
 export default function ItemDrawer(props: ItemDrawerProps): ReactElement {
   const { api, itemId } = props;
   const d = useItemDrawer(props);
+  const readArtifact = useArtifactReader(props.client, props.projectId);
   const item = d.state.detail?.item;
   const isDraft = d.draft.isDraft;
   const canEdit = d.editable && item !== undefined && !d.editing;
@@ -257,7 +261,12 @@ export default function ItemDrawer(props: ItemDrawerProps): ReactElement {
       {d.draft.side}
       {d.draft.overlay}
       {d.viewing === null ? null : (
-        <AttachmentViewer api={api} attachment={d.viewing} onClose={() => d.setViewing(null)} />
+        <AttachmentViewer
+          api={api}
+          attachment={d.viewing}
+          readArtifact={readArtifact ?? undefined}
+          onClose={() => d.setViewing(null)}
+        />
       )}
     </aside>
   );

@@ -8,7 +8,7 @@
 //! image_mb = 10    # per image
 //! file_mb = 25     # per other file
 //! item_mb = 100    # every file on one item
-//! types = ["png", "jpg", "jpeg", "webp", "gif", "pdf", "md", "txt", "log"]
+//! types = ["png", "jpg", "jpeg", "webp", "gif", "pdf", "md", "txt", "log", "html", "htm"]
 //! ```
 
 use std::path::{Path, PathBuf};
@@ -58,6 +58,10 @@ const KNOWN: &[(&str, AttachmentKind, &str)] = &[
     ("md", AttachmentKind::File, "text/markdown"),
     ("txt", AttachmentKind::File, "text/plain"),
     ("log", AttachmentKind::File, "text/plain"),
+    // A page the owner opens from the card (0.20.0): the apps render it
+    // in a sandbox, so it is checked as text like the others.
+    ("html", AttachmentKind::File, "text/html"),
+    ("htm", AttachmentKind::File, "text/html"),
 ];
 
 /// A file type the daemon takes.

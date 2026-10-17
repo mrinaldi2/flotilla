@@ -13,14 +13,19 @@ use serde_json::json;
 use tokio::sync::broadcast::error::RecvError;
 use tokio::sync::mpsc;
 
+use std::time::Duration;
+
 use super::{DEBOUNCE, REFRESH_EVERY};
 use crate::app::AppState;
+use crate::attention::STOPPED_AFTER;
 use crate::events::Push;
 
 /// Starts the watcher, the debounced pushes and the minute's refresh.
 pub fn spawn(app: Arc<AppState>) {
     let (marks, marked) = mpsc::unbounded_channel::<Mark>();
     tokio::spawn(debounce(app.clone(), marked));
+    // The bots down since the daemon started get their rows then.
+    mark_later(marks.clone(), Mark::All);
     tokio::spawn(watch_pushes(app.clone(), marks.clone()));
     tokio::spawn(watch_board(app.clone(), marks));
     tokio::spawn(tick(app));
@@ -52,11 +57,16 @@ async fn watch_pushes(app: Arc<AppState>, marks: mpsc::UnboundedSender<Mark>) {
                 state,
                 BotState::WaitingForUser | BotState::WaitingForApproval
             );
-            let since = waits.then(|| {
-                chrono::DateTime::parse_from_rfc3339(at)
-                    .map_or_else(|_| chrono::Utc::now(), |t| t.with_timezone(&chrono::Utc))
-            });
-            app.overview.set_waiting(bot_id, since);
+            let at = chrono::DateTime::parse_from_rfc3339(at)
+                .map_or_else(|_| chrono::Utc::now(), |t| t.with_timezone(&chrono::Utc));
+            app.overview.set_waiting(bot_id, waits.then_some(at));
+            // A bot that stays down this long gets its row (0.20.0): look
+            // again then.
+            if app.overview.saw_state(bot_id, *state, at) {
+                if let Some(Mark::Project(project_id)) = mark_of(&app, &push) {
+                    mark_later(marks.clone(), Mark::Project(project_id));
+                }
+            }
         }
         if let Some(mark) = mark_of(&app, &push) {
             if marks.send(mark).is_err() {
@@ -64,6 +74,15 @@ async fn watch_pushes(app: Arc<AppState>, marks: mpsc::UnboundedSender<Mark>) {
             }
         }
     }
+}
+
+/// Marks the project again once a bot that just went down has been down
+/// long enough for its row.
+fn mark_later(marks: mpsc::UnboundedSender<Mark>, mark: Mark) {
+    tokio::spawn(async move {
+        tokio::time::sleep(STOPPED_AFTER + Duration::from_secs(1)).await;
+        let _ = marks.send(mark);
+    });
 }
 
 /// The project a push changes the row of, if it changes one.

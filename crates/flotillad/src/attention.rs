@@ -18,12 +18,14 @@ mod keeper;
 mod legacy;
 mod prs;
 mod rows;
+mod stopped;
 #[cfg(test)]
 mod tests;
 mod waiting;
 
 pub(crate) use legacy::{needs_you, routines_without_card, NeedsYou};
 pub(crate) use rows::{is_home, rows, Scope};
+pub(crate) use stopped::STOPPED_AFTER;
 pub(crate) use waiting::waiting_bots;
 
 /// Each kind's weight in the score (H-128 §1). A product choice, kept in one
@@ -35,7 +37,11 @@ pub(crate) fn weight(kind: AttentionKind) -> u32 {
         | AttentionKind::MainMovedOutside
         | AttentionKind::OwnerAction
         | AttentionKind::PermissionPrompt => 3,
-        AttentionKind::P0Item
+        // A bot that stopped or can't run (0.20.0) is work halted, not a
+        // question: below what blocks a release or a prompt the owner must
+        // answer, above a bot politely waiting, as a stopped server is.
+        AttentionKind::BotStopped
+        | AttentionKind::P0Item
         | AttentionKind::ServingOff
         | AttentionKind::PrMergeStuck
         | AttentionKind::CheckUnroutable

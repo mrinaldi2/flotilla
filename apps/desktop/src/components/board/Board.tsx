@@ -185,6 +185,7 @@ function Side(p: Parts & { readonly moves: BoardMoves }): ReactElement {
       <BoardDrawer
         api={client}
         client={client}
+        projectId={project.id}
         openId={view.opened}
         shown={view.shown}
         drafts={model.drafts}

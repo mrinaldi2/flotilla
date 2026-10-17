@@ -16,7 +16,7 @@ use serde_json::Value;
 use super::boards::{default_board_id, free_key};
 use super::{parse_ts, ts, Db};
 use crate::kanban::defaults;
-use crate::kanban::presets::Preset;
+use crate::kanban::presets::{Preset, Start};
 
 /// A value-set member as stored.
 pub(super) fn to_text<T: TextValue>(value: &T) -> &'static str {
@@ -87,18 +87,23 @@ impl Db {
         home_daemon_id: &str,
         key: Option<&str>,
     ) -> anyhow::Result<BoardSettings> {
-        self.ensure_board_from(project_id, home_daemon_id, key, Preset::ReleaseGated)
+        self.ensure_board_from(
+            project_id,
+            home_daemon_id,
+            key,
+            &Start::of(Preset::ReleaseGated),
+        )
     }
 
     /// Enable the board for a project, or return the existing one unchanged.
-    /// A new board, "Main", gets the preset's columns and automations, the
+    /// A new board, "Main", gets the start's columns and automations, the
     /// item-type templates and the project's lead as its lead.
     pub fn ensure_board_from(
         &self,
         project_id: &str,
         home_daemon_id: &str,
         key: Option<&str>,
-        preset: Preset,
+        start: &Start,
     ) -> anyhow::Result<BoardSettings> {
         let mut conn = self.lock();
         if let Some(existing) = settings_in(&conn, project_id)? {
@@ -132,14 +137,14 @@ impl Db {
                 board_id,
                 project_id,
                 key,
-                to_text(&preset.flow()),
-                serde_json::to_string(&preset.automations())?,
+                to_text(&start.preset.flow()),
+                serde_json::to_string(&start.automations)?,
                 at
             ],
         )?;
         // A release-gated board's columns are its H-017 categories; every
         // other preset's are ruled by their own movers and rules.
-        super::board_flow::insert_columns(&tx, project_id, &board_id, preset, 0, &|k| k.clone())?;
+        super::board_flow::insert_columns(&tx, project_id, &board_id, start, 0, &|k| k.clone())?;
         for (item_type, body) in defaults::item_templates() {
             tx.execute(
                 "INSERT INTO template(project_id, kind, name, version, body, created_at)

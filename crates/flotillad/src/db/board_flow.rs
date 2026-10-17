@@ -12,7 +12,7 @@ use super::boards::{board_in, boards_in, free_key};
 use super::{ts, Actor, Db};
 use crate::kanban::flow::Mover;
 use crate::kanban::model::Board;
-use crate::kanban::presets::Preset;
+use crate::kanban::presets::{Preset, Start};
 
 impl BoardTx<'_> {
     pub fn board(&self, board_id: &str) -> anyhow::Result<Option<Board>> {
@@ -44,18 +44,17 @@ impl BoardTx<'_> {
     }
 }
 
-/// A preset's columns on board `board_id`, from `first_ord` on, each key
+/// A new board's columns on board `board_id`, from `first_ord` on, each key
 /// passed through `rename`.
 pub(super) fn insert_columns(
     tx: &rusqlite::Connection,
     project_id: &str,
     board_id: &str,
-    preset: Preset,
+    start: &Start,
     first_ord: u32,
     rename: &dyn Fn(&String) -> String,
 ) -> anyhow::Result<()> {
-    let columns = preset.columns();
-    for ((i, c), category) in columns.iter().enumerate().zip(preset.categories()) {
+    for ((i, c), category) in start.columns.iter().enumerate().zip(&start.categories) {
         let movers = (!c.policy.movers.is_empty())
             .then(|| serde_json::to_string::<Vec<Mover>>(&c.policy.movers))
             .transpose()?;
@@ -67,10 +66,10 @@ pub(super) fn insert_columns(
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
             params![
                 project_id,
-                rename(&c.key.to_string()),
+                rename(&c.key),
                 c.name,
                 first_ord + i as u32,
-                to_text(&category),
+                to_text(category),
                 c.wip_limit,
                 to_text(&c.wip_scope),
                 c.visible,
@@ -155,7 +154,7 @@ impl Db {
             params![project_id],
             |r| r.get(0),
         )?;
-        insert_columns(&tx, project_id, &id, preset, next_ord, &rename)?;
+        insert_columns(&tx, project_id, &id, &Start::of(preset), next_ord, &rename)?;
         let board = board_in(&tx, &id)?.expect("just inserted");
         tx.commit()?;
         Ok(board)
