@@ -29,7 +29,7 @@
     "apps/desktop/src-tauri/tauri.windows.conf.json": "29034678c72860e3897e7c1b7756eb0ec4fe0c6b4dc31092ba3ee32719c717a5",
     "scripts/prepare-sidecar.ps1": "1c0e3e6d4b1272bc2f1b9fe3cf5bbeb4a87abb5e1fdc01cd9b9e9663a74e356b",
     "apps/desktop/src-tauri/windows/installer-hooks.nsh": "f2dd239aff38cb8132aaf56334d58e63396933d9d5d790079a4281830fbbc3da",
-    ".github/workflows/windows.yml": "adb846a7c36301f3b89362c48625fa84d045b18ae6e05979762b462754d06dea",
+    ".github/workflows/windows.yml": "7f08c3084329b6c28032b8c1fd688999f5837db74aa3abfb597906a199fc7f53",
     "third-party/overrides/0322ceec0b8f15aa2d74a6173c07cc8c6f3764b3.txt": "f5c342c49f3ac804f3e8e7bb62a8040a44c50d47bb36902b1abd13f66a1adf8b",
     "third-party/overrides/0852eae3adf81df4a705737ec733a408a3e9ddc0.txt": "c04b4216f1cd4c5a4f7fb2f2a1b0ae70d847e9e0cac7c9dee9bf8cc03177c449",
     "third-party/overrides/11069edd79019f7dafbe3138841cf289209270dd.txt": "8173d5c29b4f956d532781d2b86e4e30f83e6b7878dce18c919451d6ba707c90",
