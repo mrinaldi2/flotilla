@@ -236,4 +236,9 @@ impl BoardTx<'_> {
         }
         Ok(spikes)
     }
+
+    /// The project's task template, for the cards an approval makes.
+    pub fn task_template(&self, project_id: &str) -> anyhow::Result<Option<serde_json::Value>> {
+        Ok(super::board::item_template(self.conn, project_id, "task")?)
+    }
 }

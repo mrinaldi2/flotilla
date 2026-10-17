@@ -147,7 +147,7 @@ export default function ProjectView(props: ProjectViewProps): ReactElement {
         api={client}
         projectId={project.id}
         plan={props.plan}
-        hasRepo={Boolean(project.repo)}
+        repo={project.repo}
         connected={connected}
         canControl={canControl}
       />

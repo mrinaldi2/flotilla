@@ -6,6 +6,7 @@
 import { useState } from "react";
 import type { ReactElement } from "react";
 import type { BoardApi } from "../../protocol/board";
+import type { ProjectRepo } from "../../protocol/entities";
 import { boardCall } from "../../protocol/board";
 import { errText } from "../../util";
 import type { UsePlan } from "./usePlan";
@@ -14,21 +15,28 @@ import { planOn } from "./usePlan";
 interface PlanningSettingsProps {
   readonly api: BoardApi;
   readonly projectId: string;
-  /** The project's plan; none hides the switch. */
+  /** The project's plan; none (or a daemon without it) hides the panel. */
   readonly plan?: UsePlan;
-  /** The project has a repository set. */
-  readonly hasRepo: boolean;
+  /** The project's repository, if set. */
+  readonly repo?: ProjectRepo | null;
   readonly connected: boolean;
   readonly canControl: boolean;
 }
 
 export default function PlanningSettings(props: PlanningSettingsProps): ReactElement | null {
-  const { api, projectId, plan, hasRepo, connected, canControl } = props;
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { plan } = props;
   if (plan === undefined || plan.status.kind === "unsupported") {
     return null;
   }
+  return <Panel {...props} plan={plan} hasRepo={props.repo !== null && props.repo !== undefined} />;
+}
+
+function Panel(
+  props: PlanningSettingsProps & { readonly plan: UsePlan; readonly hasRepo: boolean },
+): ReactElement {
+  const { api, projectId, plan, hasRepo, connected, canControl } = props;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const on = planOn(plan.status);
   const toggle = async (): Promise<void> => {
     setBusy(true);
