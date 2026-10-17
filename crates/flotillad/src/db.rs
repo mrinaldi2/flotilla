@@ -2,7 +2,6 @@ use std::path::Path;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use anyhow::Context;
-use bus::schema::MIGRATIONS;
 use bus::*;
 use chrono::{DateTime, Duration, Utc};
 use rusqlite::{params, Connection, OptionalExtension};
@@ -72,6 +71,9 @@ mod boards_migration_tests;
 mod bot_runtime;
 mod bots;
 mod card_questions;
+pub mod card_types;
+#[cfg(test)]
+mod card_types_tests;
 pub mod check_jobs;
 mod checks;
 #[cfg(test)]
@@ -93,6 +95,7 @@ mod guardrails;
 mod meetings;
 pub mod merge_queue;
 pub mod metrics;
+mod migrate;
 mod migrate_columns;
 mod overview;
 mod owner_actions;
@@ -266,22 +269,9 @@ impl Db {
     }
 
     fn migrate(&self) -> anyhow::Result<()> {
-        let mut conn = self.lock();
-        let tx = conn.transaction()?;
-        let mut version = schema_version(&tx)?;
-        while version < MIGRATIONS.len() {
-            let sql = migrate_columns::without_existing_columns(&tx, MIGRATIONS[version])?;
-            tx.execute_batch(&sql)
-                .with_context(|| format!("applying migration {}", version + 1))?;
-            version += 1;
-        }
-        tx.execute(
-            "INSERT INTO meta(key, value) VALUES ('schema_version', ?1)
-             ON CONFLICT(key) DO UPDATE SET value = ?1",
-            params![version.to_string()],
-        )?;
-        tx.commit()?;
-        Ok(())
+        migrate::migrate(&mut self.lock())?;
+        // What the 0.21 card types migration leaves to the daemon.
+        self.backfill_card_type_templates()
     }
 
     pub fn integrity_check(&self) -> anyhow::Result<bool> {

@@ -136,7 +136,7 @@ async fn a_series_meets_closes_and_its_actions_reach_the_board_and_dashboard() {
         .clone();
     let item_id = promoted["item_id"].as_str().expect("promoted").to_string();
     let item = bots[0].call("item_get", json!({ "id": item_id })).await["item"].clone();
-    assert_eq!(item["type"], "chore", "{item}");
+    assert_eq!(item["type"], "task", "{item}");
     let links = db.item_links(&item_id).unwrap();
     assert!(
         links.iter().any(|l| l.target == id),

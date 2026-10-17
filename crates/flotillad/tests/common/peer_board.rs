@@ -62,7 +62,7 @@ pub async fn board_on(mut p: Paired) -> Board {
             &NewItem {
                 project_id: &mac_app,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title: "Peer board",
                 description: "",
                 size: None,

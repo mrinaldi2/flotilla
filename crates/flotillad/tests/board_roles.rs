@@ -101,7 +101,7 @@ async fn a_bot_without_a_role_lists_the_reads_and_its_own_items_tools() {
     let raw = writer
         .call_raw(
             "item_create",
-            json!({"type": "chore", "title": "x", "platforms": ["daemon"]}),
+            json!({"type": "task", "title": "x", "platforms": ["daemon"]}),
         )
         .await;
     assert!(

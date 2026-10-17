@@ -40,7 +40,7 @@ fn item(in_column: &str) -> Item {
         id: "RB-1".into(),
         board_id: "b".into(),
         seq: 1,
-        item_type: ItemType::Feature,
+        item_type: ItemType::Task,
         title: "Tags".into(),
         description: String::new(),
         size: Some(Size::S),

@@ -97,7 +97,7 @@ async fn the_owner_undoes_a_bots_changes_to_a_draft_one_at_a_time() {
             &mut owner,
             Request::ItemCreate(c::ItemCreate {
                 project_id: project_id.clone(),
-                r#type: c::ItemType::Feature as i32,
+                r#type: c::ItemType::Task as i32,
                 title: "Unit conversion".into(),
                 board_id: Some(recipes.id.clone()),
                 draft: Some(true),
@@ -293,7 +293,7 @@ async fn undoing_an_attachment_takes_back_that_one_not_another_of_its_name() {
             &mut owner,
             Request::ItemCreate(c::ItemCreate {
                 project_id: project_id.clone(),
-                r#type: c::ItemType::Feature as i32,
+                r#type: c::ItemType::Task as i32,
                 title: "Screenshots".into(),
                 draft: Some(true),
                 ..Default::default()
@@ -371,7 +371,7 @@ async fn an_undo_of_no_such_revision_is_refused() {
             &mut owner,
             Request::ItemCreate(c::ItemCreate {
                 project_id: p.id.clone(),
-                r#type: c::ItemType::Feature as i32,
+                r#type: c::ItemType::Task as i32,
                 title: "Unit conversion".into(),
                 draft: Some(true),
                 ..Default::default()

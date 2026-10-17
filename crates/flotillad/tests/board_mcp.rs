@@ -63,13 +63,13 @@ async fn bots_work_an_item_through_the_board_over_mcp() {
         .unwrap();
     assert_eq!(
         create["inputSchema"]["properties"]["type"]["enum"],
-        json!(["epic", "feature", "bug", "spike", "chore"])
+        json!(["task", "design", "bug", "spike"])
     );
 
     let created = dev
         .call(
             "item_create",
-            json!({"type": "feature", "title": "Board tools", "labels": ["area:daemon"],
+            json!({"type": "task", "title": "Board tools", "labels": ["area:daemon"],
                    "size": "M", "acceptance_criteria": ["bots can move cards"]}),
         )
         .await;
@@ -77,7 +77,7 @@ async fn bots_work_an_item_through_the_board_over_mcp() {
     let id = item["id"].as_str().unwrap().to_string();
     assert_eq!(
         (item["type"].as_str(), item["category"].as_str()),
-        (Some("feature"), Some("inbox"))
+        (Some("task"), Some("inbox"))
     );
 
     // Only the lead assigns.
@@ -258,7 +258,7 @@ async fn bot_writes_over_mcp_reach_watching_boards() {
     let created = dev
         .call(
             "item_create",
-            json!({"type": "chore", "title": "Pushed", "platforms": ["infra"]}),
+            json!({"type": "task", "title": "Pushed", "platforms": ["infra"]}),
         )
         .await;
     let id = created["item"]["id"].as_str().unwrap().to_string();

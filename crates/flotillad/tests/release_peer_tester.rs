@@ -93,7 +93,7 @@ async fn a_tester_on_a_linked_computer_lists_and_records_release_tests() {
             &NewItem {
                 project_id: &mac_app,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title: "On the phone",
                 description: "",
                 size: None,

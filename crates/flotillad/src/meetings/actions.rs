@@ -175,7 +175,7 @@ pub fn promote(
             &NewItem {
                 project_id,
                 board_id: None,
-                item_type: ItemType::Chore,
+                item_type: ItemType::Task,
                 title: &title,
                 description: "",
                 size: None,

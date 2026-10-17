@@ -108,6 +108,15 @@ fn as_018(db: &Db, platforms: &[(&str, &str, &str)]) {
         )
         .unwrap();
     }
+    // 0.18 boards had feature templates, not task or design ones (0.21.0).
+    conn.execute_batch(
+        r#"DELETE FROM template WHERE name IN ('task', 'design');
+           INSERT INTO template(project_id, kind, name, version, body, created_at)
+               SELECT project_id, 'item_type', 'feature', 1,
+                   '{"sections":["User/problem"],"ready":[],"flow":"full"}', created_at
+               FROM board_settings;"#,
+    )
+    .unwrap();
     conn.execute_batch(
         r#"UPDATE template SET body = json_set(body, '$.ready', json(CASE name
                WHEN 'feature' THEN '["acceptance_criteria","platforms","size","spec_link_for_ui_or_daemon"]'
@@ -149,10 +158,10 @@ fn a_018_board_keeps_its_platforms_as_labels_and_its_rules() {
         .find(|r| r.role == Role::Lead)
         .unwrap()
         .bot_id;
-    let daemon = item(&db, &p, "Guards", ItemType::Feature, &[]);
-    let apps = item(&db, &p, "Both apps", ItemType::Feature, &["urgent"]);
-    let infra = item(&db, &p, "Backups", ItemType::Feature, &[]);
-    let none = item(&db, &p, "Somewhere", ItemType::Feature, &[]);
+    let daemon = item(&db, &p, "Guards", ItemType::Task, &[]);
+    let apps = item(&db, &p, "Both apps", ItemType::Task, &["urgent"]);
+    let infra = item(&db, &p, "Backups", ItemType::Task, &[]);
+    let none = item(&db, &p, "Somewhere", ItemType::Task, &[]);
     let twice = item(&db, &p, "Crash", ItemType::Bug, &["was:B1"]);
     db.board_tx(|t| crate::kanban::api::link(t, &apps, LinkKind::Branch, "feat", None, &OWNER))
         .unwrap();
@@ -237,15 +246,8 @@ fn a_018_board_keeps_its_platforms_as_labels_and_its_rules() {
             .body["ready"]
             .clone()
     };
-    assert_eq!(
-        ready("feature"),
-        json!([
-            "acceptance_criteria",
-            "label:platform",
-            "size",
-            "spec_link:platform:desktop,platform:ios,platform:daemon"
-        ])
-    );
+    // The feature and chore templates went with 0.21's card types; the bug
+    // template keeps what this migration gave it.
     assert_eq!(
         ready("bug"),
         json!([
@@ -255,7 +257,6 @@ fn a_018_board_keeps_its_platforms_as_labels_and_its_rules() {
             "label:platform"
         ])
     );
-    assert_eq!(ready("chore"), json!(["description", "label:platform"]));
 
     // No role is guessed any more, and none that was guessed is lost:
     // opening the board again leaves them as they were.
