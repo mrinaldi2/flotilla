@@ -135,10 +135,27 @@ async fn bots_work_an_item_through_the_board_over_mcp() {
         )
         .await;
     let task_id = sent["task_id"].as_str().unwrap().to_string();
+    // Starting is Research first (0.21.0): Doing wants the code research
+    // recorded, and says so.
+    let researching = dev
+        .call(
+            "item_move",
+            json!({"id": id, "to": "research", "expected_version": version(&assigned["item"])}),
+        )
+        .await;
+    assert_eq!(researching["item"]["category"], "research");
+    let raw = dev
+        .call_raw(
+            "item_move",
+            json!({"id": id, "to": "doing", "expected_version": version(&researching["item"])}),
+        )
+        .await;
+    assert!(error_text(&raw).contains("start.research"), "{raw}");
+    let recorded = common::board::record_research(dev, &id).await;
     let moved = dev
         .call(
             "item_move",
-            json!({"id": id, "to": "doing", "expected_version": version(&assigned["item"])}),
+            json!({"id": id, "to": "doing", "expected_version": version(&recorded["item"])}),
         )
         .await;
     assert_eq!(moved["item"]["category"], "doing");

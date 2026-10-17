@@ -48,6 +48,14 @@ pub const COLUMNS: &[DefaultColumn] = &[
         None,
         WipScope::Column,
     ),
+    // A task or bug's assignee reads the code here first (0.21.0).
+    column(
+        "research",
+        "Research",
+        ColumnCategory::Research,
+        None,
+        WipScope::Column,
+    ),
     column(
         "doing",
         "Doing",

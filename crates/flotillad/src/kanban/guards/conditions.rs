@@ -37,6 +37,9 @@ pub(super) fn conditions(
                     Some("Assign it first."),
                 ));
             }
+            if mv.to.category == Cat::Doing {
+                out.extend(super::research::unmet_research(item, ctx));
+            }
             if !ctx.has_link(&[LinkKind::Task]) {
                 out.push(unmet(
                     "start.task",

@@ -105,6 +105,12 @@ impl Fresh {
             .await
     }
 
+    /// Bot `i` records its code research on the item (0.21.0), so a task
+    /// or bug may move on from Research to Doing.
+    pub async fn research(&mut self, i: usize, id: &str) -> Value {
+        super::board::record_research(&mut self.bots[i], id).await
+    }
+
     /// Reads bot `i`'s inbox until a message holds `needle`; that message.
     pub async fn heard(&mut self, i: usize, needle: &str) -> String {
         inbox_until(&mut self.bots[i], needle)

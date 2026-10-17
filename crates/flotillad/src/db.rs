@@ -125,6 +125,9 @@ mod release_work;
 mod releases;
 #[cfg(test)]
 mod releases_tests;
+mod research_columns;
+#[cfg(test)]
+mod research_columns_tests;
 pub mod review_settings;
 pub mod reviews;
 mod revisions;
@@ -271,7 +274,8 @@ impl Db {
     fn migrate(&self) -> anyhow::Result<()> {
         migrate::migrate(&mut self.lock())?;
         // What the 0.21 card types migration leaves to the daemon.
-        self.backfill_card_type_templates()
+        self.backfill_card_type_templates()?;
+        self.backfill_research_columns()
     }
 
     pub fn integrity_check(&self) -> anyhow::Result<bool> {

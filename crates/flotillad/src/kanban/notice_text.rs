@@ -4,7 +4,7 @@
 //! caller reads the board.
 
 use super::facts::Fact;
-use super::model::{Board, BoardColumn, BoardFlow, ColumnKind, Item};
+use super::model::{Board, BoardColumn, BoardFlow, ColumnCategory, ColumnKind, Item};
 
 /// What happened to the card.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -30,6 +30,9 @@ pub struct Plan {
     /// Where a card that isn't ready goes back to: the last open column
     /// before `start`.
     pub back: Option<String>,
+    /// When `start` is a Research column (0.21.0): the column work moves to
+    /// once the code research is recorded.
+    pub then: Option<String>,
 }
 
 impl Plan {
@@ -47,7 +50,20 @@ impl Plan {
             .get(Fact::WorkStarted.name())
             .and_then(|key| cols.iter().find(|c| &c.key == key).copied());
         let start = mapped.or_else(|| cols.iter().find(|c| c.kind == ColumnKind::Active).copied());
-        let finish = start.and_then(|s| {
+        // Research comes before the work: finishing is after the column
+        // that follows it.
+        let then = start
+            .filter(|s| s.category == ColumnCategory::Research)
+            .and_then(|s| {
+                cols.iter()
+                    .find(|c| {
+                        c.ord > s.ord
+                            && c.kind == ColumnKind::Active
+                            && c.category != ColumnCategory::Research
+                    })
+                    .copied()
+            });
+        let finish = then.or(start).and_then(|s| {
             cols.iter()
                 .find(|c| c.ord > s.ord && c.kind != ColumnKind::Cancelled)
                 .map(|c| inline(&c.name, NAME_MAX))
@@ -62,6 +78,7 @@ impl Plan {
             start: start.map(|s| (inline(&s.name, NAME_MAX), mapped.is_some())),
             finish,
             back,
+            then: then.map(|c| inline(&c.name, NAME_MAX)),
         })
     }
 }
@@ -175,6 +192,13 @@ pub(crate) fn assigned_next(card: &Card<'_>) -> String {
         None => " When the work is done, comment the result on the card and link or attach \
                  what you made."
             .to_string(),
+    };
+    let finish = match &plan.then {
+        Some(then) => format!(
+            " First read the code it touches and write what you found under “Code research” \
+             (or link a research document); then move it to {then}.{finish}"
+        ),
+        None => finish,
     };
     let back = match &plan.back {
         Some(back) => format!("{ask}, after moving it back to {back}."),

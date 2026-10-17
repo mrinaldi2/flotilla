@@ -39,7 +39,7 @@ fn item(in_column: &str, assignee: Option<&str>) -> Item {
         seq: 1,
         item_type: ItemType::Task,
         title: "Buttons".into(),
-        description: String::new(),
+        description: "## Code research\n\nRead it.\n".into(),
         size: None,
         priority: Priority::P2,
         rank: "a".into(),

@@ -65,6 +65,7 @@ fn a_new_board_gets_columns_templates_and_its_lead_once() {
         [
             "inbox",
             "ready",
+            "research",
             "doing",
             "review",
             "verify",
@@ -74,8 +75,8 @@ fn a_new_board_gets_columns_templates_and_its_lead_once() {
             "cancelled"
         ]
     );
-    assert_eq!(columns[5].name, "Awaiting owner");
-    assert_eq!(columns[2].wip_scope, WipScope::PerAssignee);
+    assert_eq!(columns[6].name, "Awaiting owner");
+    assert_eq!(columns[3].wip_scope, WipScope::PerAssignee);
     assert_eq!(db.templates(&p, TemplateKind::ItemType).unwrap().len(), 4);
     let roles: Vec<Role> = db
         .project_roles(&p)
@@ -100,7 +101,7 @@ fn a_new_board_gets_columns_templates_and_its_lead_once() {
         (again.key.as_str(), again.home_daemon_id.as_str()),
         ("H", "d-mac")
     );
-    assert_eq!(db.board_columns(&p).unwrap().len(), 9);
+    assert_eq!(db.board_columns(&p).unwrap().len(), 10);
 }
 
 /// No role comes from a bot's name: the project's lead leads, and the owner

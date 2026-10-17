@@ -95,6 +95,7 @@ async fn the_owner_shapes_a_custom_board_over_websocket() {
         [
             "rs-inbox",
             "rs-ready",
+            "rs-research",
             "rs-doing",
             "rs-review",
             "qa",

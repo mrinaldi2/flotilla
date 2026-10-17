@@ -1,5 +1,5 @@
 //! The board keeper on a Simple + Review board (0.19.0), on the test's
-//! clock: a card quiet in Doing is asked about once, then flagged stale with
+//! clock: a card quiet in Doing (past Research, 0.21.0) is asked about once, then flagged stale with
 //! one Needs-you row; an untouched assignment is told again once; a card in
 //! Review waits for the owner; each resets when the card changes, survives
 //! a restart without a second note, and a long downtime brings no storm.
@@ -155,10 +155,13 @@ async fn an_untouched_assignment_is_told_again_once() {
         )),
         "{reminder}"
     );
-    assert!(
-        reminder.contains("Start now: read it with item_get, which moves it to Doing."),
-        "{reminder}"
-    );
+    for part in [
+        "Start now: read it with item_get, which moves it to Research.",
+        "write what you found under “Code research”",
+        "then move it to Doing.",
+    ] {
+        assert!(reminder.contains(part), "missing {part:?} in {reminder}");
+    }
     age(&app, &item.id, Duration::hours(5));
     step(&app, k);
     assert_eq!(notes(&app, &bot).len(), 1, "once");
@@ -176,7 +179,7 @@ async fn an_untouched_assignment_is_told_again_once() {
     let other = f.item("Footer").await;
     f.assign(&other.id, Some("Builder")).await;
     // Moved since the assignment, so the bot's read doesn't start it.
-    f.owner_move(&other.id, "doing", None).await;
+    f.owner_move(&other.id, "research", None).await;
     f.owner_move(&other.id, "todo", None).await;
     let read = f.bots[0].call("item_get", json!({"id": other.id})).await;
     assert_eq!(read["item"]["column_key"], "todo", "{read}");

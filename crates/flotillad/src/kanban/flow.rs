@@ -6,7 +6,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::guards::{over_limit, unmet, wip_unmet, Context, Move, Who};
-use super::model::{BoardColumn, ColumnKind, Item, LinkKind, Size, Unmet};
+use super::model::{BoardColumn, ColumnCategory, ColumnKind, Item, LinkKind, Size, Unmet};
 
 /// Who may move an item into a column; any one of a column's movers will do.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -121,7 +121,13 @@ pub fn evaluate(
             None,
         ));
     }
+    // Research is asked of a card starting, from an open column or from
+    // Research, never of one sent back for rework.
+    let starting = from.kind == ColumnKind::Open || from.category == ColumnCategory::Research;
     for rule in &policy.rules {
+        if *rule == EntryRule::ResearchRecorded && !starting {
+            continue;
+        }
         out.extend(check(rule, item, mv, who, ctx));
     }
     if !is_return(from, to) && over_limit(item, to, ctx).is_some() {

@@ -40,3 +40,22 @@ pub(crate) fn unmet_research(item: &Item, ctx: &Context) -> Option<Unmet> {
         ),
     ))
 }
+
+/// A card's type on the wire, before it is mapped: features and epics live
+/// in the plan and chores became tasks (0.21.0), so those are refused with a
+/// fix rather than as an unknown value.
+pub fn check_type(wire: i32) -> Vec<Unmet> {
+    use bus::contract::board::ItemType as Wire;
+    let retired = match Wire::try_from(wire) {
+        Ok(Wire::Epic | Wire::Feature) => {
+            "Features and epics are created in the plan, not as cards."
+        }
+        Ok(Wire::Chore) => "Chores are tasks now.",
+        _ => return Vec::new(),
+    };
+    vec![unmet(
+        "new.type_retired",
+        retired,
+        Some("Use task, design, bug or spike; propose a feature through plan_propose."),
+    )]
+}

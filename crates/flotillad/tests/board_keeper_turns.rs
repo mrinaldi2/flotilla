@@ -18,15 +18,20 @@ async fn a_turn_that_changed_a_card_and_moved_nothing_asks_once() {
     let app = f.d.app.clone();
     let bot = f.bot_ids[0].clone();
 
-    // The first turn reads the card, which starts it: it moved, so nothing
-    // to ask, though the bot also commented.
+    // The first turn reads the card, which starts it in Research, records
+    // its code research and moves it to Doing: it moved, so nothing to ask,
+    // though the bot also commented.
     let item = f.item("Buttons").await;
     f.assign(&item.id, Some("Builder")).await;
     f.turn_starts(0).await;
-    f.bots[0].call("item_get", json!({"id": item.id})).await;
+    let got = f.bots[0].call("item_get", json!({"id": item.id})).await;
+    assert_eq!(got["item"]["column_key"], "research", "{got}");
     f.bots[0]
         .call("item_comment", json!({"id": item.id, "body": "Starting."}))
         .await;
+    f.research(0, &item.id).await;
+    let doing = f.bot_move(0, &item.id, "doing").await;
+    assert_ne!(doing["isError"], json!(true), "{doing}");
     f.turn_ends(0).await;
     assert!(notes(&app, &bot).is_empty(), "{:?}", notes(&app, &bot));
 

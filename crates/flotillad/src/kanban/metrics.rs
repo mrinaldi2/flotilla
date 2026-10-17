@@ -94,7 +94,8 @@ pub struct Flow {
 fn in_progress(category: ColumnCategory) -> bool {
     matches!(
         category,
-        ColumnCategory::Doing
+        ColumnCategory::Research
+            | ColumnCategory::Doing
             | ColumnCategory::Review
             | ColumnCategory::Verify
             | ColumnCategory::Approval
@@ -103,7 +104,8 @@ fn in_progress(category: ColumnCategory) -> bool {
 }
 
 fn past_doing(category: ColumnCategory) -> bool {
-    (in_progress(category) && category != ColumnCategory::Doing) || category == ColumnCategory::Done
+    (in_progress(category) && !matches!(category, ColumnCategory::Research | ColumnCategory::Doing))
+        || category == ColumnCategory::Done
 }
 
 /// Nearest-rank percentile of sorted values.

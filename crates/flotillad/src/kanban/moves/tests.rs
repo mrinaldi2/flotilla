@@ -57,7 +57,7 @@ impl Board {
                     board_id: None,
                     item_type: ItemType::Task,
                     title,
-                    description: "",
+                    description: "## Code research\n\nRead the board code.\n",
                     size: Some(Size::M),
                     priority: Priority::P2,
                     labels: &["platform:daemon".to_string()],

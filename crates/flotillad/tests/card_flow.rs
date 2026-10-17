@@ -1,12 +1,14 @@
 //! How a card flows between the owner and a bot on a new project (0.19.0
 //! card flow, the owner's test of the installed build): the first board is
 //! Simple + Review, the first bot leads, an assignment tells the bot what
-//! to do, its first read moves the card to Doing, it moves the card to
-//! Review and the owner moves it to Done. A card that isn't ready goes back
+//! to do, its first read moves the card to Research, it records its code
+//! research and moves the card to Doing, then to Review, and the owner
+//! moves it to Done. A card that isn't ready goes back
 //! to To do with a question, and the bot's reads no longer start it.
 
 use crate::common;
 
+use common::board::CODE_RESEARCH;
 use common::cards::{column_names, fresh};
 use common::tasks::error_text;
 use serde_json::json;
@@ -26,11 +28,11 @@ async fn a_simple_project_flows_from_to_do_to_done() {
     assert_eq!(project.lead_bot_id.as_deref(), Some(bot_id.as_str()));
     assert_eq!(
         column_names(&s),
-        ["To do", "Doing", "Review", "Done", "Cancelled"]
+        ["To do", "Research", "Doing", "Review", "Done", "Cancelled"]
     );
     let main = s.boards.iter().find(|b| b.is_default).expect("Main");
     assert_eq!((main.name.as_str(), main.flow.as_str()), ("Main", "custom"));
-    assert_eq!(main.automations["work.started"], "doing");
+    assert_eq!(main.automations["work.started"], "research");
 
     // The owner creates a card and assigns it: the bot is told which card,
     // where it is and what to do.
@@ -44,7 +46,9 @@ async fn a_simple_project_flows_from_to_do_to_done() {
             item.id, item.id
         ),
         "It is in To do (not started).",
-        "Start now: read it with item_get, which moves it to Doing.",
+        "Start now: read it with item_get, which moves it to Research.",
+        "First read the code it touches and write what you found under “Code research” \
+         (or link a research document); then move it to Doing.",
         "move it to Review with item_move",
         "after moving it back to To do",
         &format!("message_owner (asks: true, item: {})", item.id),
@@ -52,20 +56,20 @@ async fn a_simple_project_flows_from_to_do_to_done() {
         assert!(told.contains(part), "missing {part:?} in {told}");
     }
 
-    // The bot reads it: the daemon moves it to Doing, as the fact.
+    // The bot reads it: the daemon moves it to Research, as the fact.
     let got = f.bots[0].call("item_get", json!({"id": item.id})).await;
-    assert_eq!(got["item"]["column_key"], "doing", "{got}");
+    assert_eq!(got["item"]["column_key"], "research", "{got}");
     assert!(
         got["started"]
             .as_str()
             .unwrap_or_default()
-            .contains("moved to Doing"),
+            .contains("moved to Research"),
         "{got}"
     );
     let history = f.d.app.db.item_events(&item.id).unwrap();
     let start = history.last().expect("the move");
     assert_eq!(start.actor, "daemon");
-    assert_eq!(start.to.as_deref(), Some("doing"));
+    assert_eq!(start.to.as_deref(), Some("research"));
     assert!(
         start
             .note
@@ -76,6 +80,13 @@ async fn a_simple_project_flows_from_to_do_to_done() {
     // Reading it again changes nothing.
     let again = f.bots[0].call("item_get", json!({"id": item.id})).await;
     assert!(again.get("started").is_none(), "{again}");
+
+    // Doing wants its code research first; once recorded, it moves there.
+    let early = f.bot_move(0, &item.id, "doing").await;
+    assert!(error_text(&early).contains("start.research"), "{early}");
+    f.research(0, &item.id).await;
+    let doing = f.bot_move(0, &item.id, "doing").await;
+    assert_ne!(doing["isError"], json!(true), "{doing}");
 
     // It finishes: a comment, a link, and Review. Done isn't its move.
     f.bots[0]
@@ -121,7 +132,7 @@ async fn a_card_that_isnt_ready_goes_back_to_to_do_with_a_question() {
     f.assign(&item.id, Some("Builder")).await;
     f.heard(0, "assigned").await;
     let got = f.bots[0].call("item_get", json!({"id": item.id})).await;
-    assert_eq!(got["item"]["column_key"], "doing");
+    assert_eq!(got["item"]["column_key"], "research");
 
     // Not ready: back to To do, and a question for the owner on the card.
     let back = f.bot_move(0, &item.id, "todo").await;
@@ -146,7 +157,7 @@ async fn a_card_that_isnt_ready_goes_back_to_to_do_with_a_question() {
         .call(
             "item_update",
             json!({"id": item.id, "expected_version": version,
-                   "description": "Stripe and PayPal."}),
+                   "description": format!("Stripe and PayPal.\n\n{CODE_RESEARCH}")}),
         )
         .await;
     assert!(edited.get("started").is_none(), "{edited}");
@@ -160,7 +171,7 @@ async fn a_card_that_isnt_ready_goes_back_to_to_do_with_a_question() {
     assert!(back.outcome.is_some());
     f.assign(&item.id, Some("Builder")).await;
     let read = f.bots[0].call("item_get", json!({"id": item.id})).await;
-    assert_eq!(read["item"]["column_key"], "doing", "{read}");
+    assert_eq!(read["item"]["column_key"], "research", "{read}");
 }
 
 #[tokio::test]

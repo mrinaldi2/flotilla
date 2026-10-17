@@ -97,8 +97,9 @@ pub fn marks(app: &AppState, project_id: &str, item_id: &str) -> Vec<String> {
 }
 
 impl Fresh {
-    /// The owner's card, assigned to bot `i` and started by its read: in
-    /// Doing.
+    /// The owner's card, assigned to bot `i`, started by its read (into
+    /// Research) and moved on to Doing once the bot recorded its code
+    /// research: in Doing.
     pub async fn started_card(&mut self, i: usize, title: &str) -> String {
         let item = self.item(title).await;
         let name = self
@@ -111,7 +112,11 @@ impl Fresh {
             .name;
         self.assign(&item.id, Some(&name)).await;
         let got = self.bots[i].call("item_get", json!({"id": item.id})).await;
-        assert_eq!(got["item"]["column_key"], "doing", "{got}");
+        assert_eq!(got["item"]["column_key"], "research", "{got}");
+        self.research(i, &item.id).await;
+        let moved = self.bot_move(i, &item.id, "doing").await;
+        assert_ne!(moved["isError"], json!(true), "Research → Doing: {moved}");
+        assert_eq!(self.now(&item.id).column_key, "doing");
         item.id
     }
 
