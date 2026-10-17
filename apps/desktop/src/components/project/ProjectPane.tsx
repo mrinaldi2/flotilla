@@ -1,7 +1,7 @@
 // A project's window (UX-024, H-133 U2): Overview (Needs you, From the team
-// and the dashboard), Board, Pull requests (when the service serves them,
-// H-276), Team, Releases and Meetings, with Conversations
-// and Settings under More. The project's overview row and the owner's threads
+// and the dashboard), Plan (when the project's plan is on, 0.21.0), Board,
+// Pull requests (when the service serves them, H-276), Team, Releases and
+// Meetings, with Conversations and Settings under More. The project's overview row and the owner's threads
 // are read once here and shared by the header, Overview and Team.
 
 import { useCallback } from "react";
@@ -20,6 +20,9 @@ import FromTheTeam from "../dashboard/FromTheTeam";
 import { useOwnerThreads } from "../home/useOwnerThreads";
 import { useProjectRow } from "../home/useProjectsOverview";
 import MeetingsView from "../meetings/MeetingsView";
+import PlanTab from "../plan/PlanTab";
+import type { UsePlan } from "../plan/usePlan";
+import { nodesWhenOn, planOn, usePlan } from "../plan/usePlan";
 import { useMeeting } from "../meetings/useMeetings";
 import type { MeetingSummary } from "../../protocol/meetings";
 import ProjectView from "../ProjectView";
@@ -75,6 +78,8 @@ interface TabContext extends ProjectPaneProps {
   readonly threads: readonly OwnerThread[];
   readonly summaryMeeting: MeetingSummary | null;
   readonly now: number;
+  /** The project's plan, live (0.21.0). */
+  readonly plan: UsePlan;
   readonly onSelectTab: (tab: ProjectTab) => void;
   /** Opens one PR, or its delta since your approval (Needs you, H-277). */
   readonly onOpenPr: (pr: number, recheck: boolean) => void;
@@ -98,6 +103,9 @@ function Overview({ ctx }: { readonly ctx: TabContext }): ReactElement {
       onOpenDecision={(decisionId) => select({ kind: "control", decisionId })}
       onReply={ctx.onReply}
       onOpenNeedsYou={() => select({ kind: "control" })}
+      onOpenPlanGate={(planNode) =>
+        select({ kind: "project", projectId: project.id, tab: "plan", planNode, gate: true })
+      }
       fromTheTeam={
         <FromTheTeam
           row={ctx.row}
@@ -208,31 +216,73 @@ function Releases({ ctx }: { readonly ctx: TabContext }): ReactElement {
   );
 }
 
+/** The card, board or settings a selection opens the Board tab on. */
+function boardOpening(at: Selection): {
+  readonly openItem?: string;
+  readonly openBoard?: string;
+  readonly initial?: { readonly settings: "columns" };
+} {
+  if (at.kind !== "project") {
+    return {};
+  }
+  return {
+    openItem: at.item,
+    openBoard: at.board,
+    initial: at.boardSettings === true ? { settings: "columns" } : undefined,
+  };
+}
+
+/** The Board tab, on the card or board a link asked for; new cards join the plan's nodes. */
+function Board({ ctx }: { readonly ctx: TabContext }): ReactElement {
+  const { client, daemon, project } = ctx;
+  return (
+    <BoardView
+      client={client}
+      project={project}
+      bots={ctx.bots}
+      connected={daemon.connected}
+      canControl={daemon.canControl}
+      addToast={ctx.addToast}
+      planNodes={nodesWhenOn(ctx.plan.status)}
+      {...boardOpening(daemon.selection)}
+    />
+  );
+}
+
+/** The Plan tab: a Needs you row opens a node on its gate; a card opens on its board. */
+function Plan({ ctx }: { readonly ctx: TabContext }): ReactElement {
+  const { client, daemon, project } = ctx;
+  const at = daemon.selection;
+  return (
+    <PlanTab
+      client={client}
+      project={project}
+      bots={ctx.bots}
+      connected={daemon.connected}
+      plan={ctx.plan}
+      openNode={at.kind === "project" ? at.planNode : undefined}
+      openGate={at.kind === "project" ? at.gate : undefined}
+      onOpenItem={(item) =>
+        daemon.select({ kind: "project", projectId: project.id, tab: "board", item })
+      }
+      onOpenBoard={(board) =>
+        daemon.select({ kind: "project", projectId: project.id, tab: "board", board })
+      }
+    />
+  );
+}
+
 /** The active tab's view. */
 function TabView({ ctx }: { readonly ctx: TabContext }): ReactElement {
   const { client, daemon, project, bots } = ctx;
-  const { connected, canControl } = daemon;
+  const { connected } = daemon;
   switch (ctx.tab) {
     case "overview":
       return <Overview ctx={ctx} />;
+    case "plan":
+      return <Plan ctx={ctx} />;
     case "board":
-      return (
-        <BoardView
-          client={client}
-          project={project}
-          bots={bots}
-          connected={connected}
-          canControl={canControl}
-          addToast={ctx.addToast}
-          openItem={daemon.selection.kind === "project" ? daemon.selection.item : undefined}
-          openBoard={daemon.selection.kind === "project" ? daemon.selection.board : undefined}
-          initial={
-            daemon.selection.kind === "project" && daemon.selection.boardSettings === true
-              ? { settings: "columns" }
-              : undefined
-          }
-        />
-      );
+      return <Board ctx={ctx} />;
     case "prs":
       return <Prs ctx={ctx} />;
     case "team":
@@ -268,6 +318,7 @@ export default function ProjectPane(props: ProjectPaneProps): ReactElement {
   const threads = useOwnerThreads(client, connected).filter((t) => t.projectId === project.id);
   const now = useNow();
   const summaryMeeting = useMeeting(client, project.id, row?.latestSummary?.meetingId, connected);
+  const plan = usePlan(client, project.id, connected);
   const onSelectTab = useCallback(
     (next: ProjectTab): void => {
       select({ kind: "project", projectId: project.id, tab: next });
@@ -288,11 +339,14 @@ export default function ProjectPane(props: ProjectPaneProps): ReactElement {
       botCount={bots.length}
       tab={tab}
       prs={client.capabilities.includes(PULL_REQUESTS)}
+      plan={planOn(plan.status)}
       row={row}
       onHome={() => select({ kind: "home" })}
       onSelectTab={onSelectTab}
     >
-      <TabView ctx={{ ...props, bots, row, threads, now, onSelectTab, onOpenPr, summaryMeeting }} />
+      <TabView
+        ctx={{ ...props, bots, row, threads, now, plan, onSelectTab, onOpenPr, summaryMeeting }}
+      />
     </ProjectWindow>
   );
 }

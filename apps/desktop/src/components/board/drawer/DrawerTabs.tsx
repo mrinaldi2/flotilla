@@ -94,6 +94,7 @@ export function Overview(props: {
 
 const LINK_GROUPS: readonly { readonly title: string; readonly kinds: readonly LinkKind[] }[] = [
   { title: "Tasks", kinds: [LinkKind.TASK] },
+  { title: "Designs", kinds: [LinkKind.DESIGN] },
   { title: "Decisions", kinds: [LinkKind.DECISION] },
   { title: "Artifacts", kinds: [LinkKind.ARTIFACT] },
   { title: "Branches", kinds: [LinkKind.BRANCH, LinkKind.PR] },

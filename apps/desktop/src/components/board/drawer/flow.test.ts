@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultColumns } from "../../../test/boardFixtures";
 import { mainColumns, recipeColumns } from "../../../test/boardsFixtures";
+import { initiativeColumns } from "../../../test/planFixtures";
 import { flowOf } from "./drawerText";
 
 describe("an item's path", () => {
@@ -20,5 +21,23 @@ describe("an item's path", () => {
     const legacy = defaultColumns();
     expect(flowOf(legacy, legacy[0]).steps[0]?.word).toBe("Inbox");
     expect(flowOf(legacy, undefined).reached).toBe(-1);
+  });
+
+  it("passes Research between Ready and Doing on a board that has it", () => {
+    const columns = initiativeColumns();
+    const research = columns.find((c) => c.key === "research");
+    const flow = flowOf(columns, research);
+    expect(flow.steps.map((s) => s.word)).toEqual([
+      "Inbox",
+      "Ready",
+      "Research",
+      "Doing",
+      "Review",
+      "Done",
+    ]);
+    expect(flow).toMatchObject({ reached: 2, next: { key: "doing" } });
+    expect(flowOf(mainColumns(), mainColumns()[0]).steps.map((s) => s.word)).not.toContain(
+      "Research",
+    );
   });
 });

@@ -75,14 +75,14 @@ describe("BoardView", () => {
     setup();
     const ready = await screen.findByRole("region", { name: /^Ready, 1 item, limit 10/ });
     expect(
-      within(ready).getByRole("article", { name: /^H-024, Feature, Releases tab, Ready/ }),
+      within(ready).getByRole("article", { name: /^H-024, Task, Releases tab, Ready/ }),
     ).toBeInTheDocument();
     expect(within(ready).getByText("1/10")).toBeInTheDocument();
     const doing = columnNamed(/^Doing, 1 item, limit 1 per bot, full/);
     expect(within(doing).getByText("Full")).toBeInTheDocument();
     expect(
       within(doing).getByRole("article", {
-        name: "H-017, Feature, Data model, Doing, Desktop Dev, blocked",
+        name: "H-017, Task, Data model, Doing, Desktop Dev, blocked",
       }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: /^Cancelled/ })).toBeNull();

@@ -17,6 +17,8 @@ export interface AttentionActions extends PrRowActions, CleanupRowActions {
   /** Opens Needs you, where permission prompts are answered. */
   readonly onOpenNeedsYou?: () => void;
   readonly onItem: (itemId: string, opener: HTMLElement) => void;
+  /** Opens a plan node on its gate, in the Plan tab (0.21.0). */
+  readonly onOpenPlanGate?: (nodeId: string) => void;
 }
 
 function botOf(r: AttentionRowJson): string | undefined {
@@ -124,6 +126,26 @@ function cardWaiting(r: AttentionRowJson, a: AttentionActions): RowViewProps {
   };
 }
 
+/** "Approve the HLD of Enemy attack telegraphing?": Review opens the node's gate. */
+function planGate(r: AttentionRowJson, a: AttentionActions): RowViewProps {
+  const node = r.plan_node_id;
+  const open = a.onOpenPlanGate;
+  return {
+    glyph: "✓",
+    tone: "you",
+    title: r.title,
+    meta: "A plan gate waits for your ruling",
+    action: node === undefined || node.length === 0 || open === undefined ? undefined : "Review",
+    label: `Review the gate of ${node ?? "the plan node"}`,
+    onAction: () => {
+      if (node !== undefined && node.length > 0) {
+        open?.(node);
+      }
+    },
+    verb: "Review",
+  };
+}
+
 /** The row for one of the newer kinds; undefined for one shown elsewhere. */
 export function attentionRow(r: AttentionRowJson, a: AttentionActions): RowViewProps | undefined {
   switch (r.kind) {
@@ -151,6 +173,8 @@ export function attentionRow(r: AttentionRowJson, a: AttentionActions): RowViewP
       return draftUpdated(r, a);
     case "card_waiting":
       return cardWaiting(r, a);
+    case "plan_gate":
+      return planGate(r, a);
     default:
       return prRow(r, a) ?? cleanupRow(r, a);
   }

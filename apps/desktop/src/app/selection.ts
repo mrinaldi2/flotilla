@@ -3,10 +3,12 @@ import type { BotTab } from "../components/bot/BotTabs";
 /**
  * The tabs of a project window (UX-024 §2, UX-051 §1): the first six are in
  * the tab bar on ⌘1…⌘6; the rest sit under More. Pull requests shows only when
- * the service serves them.
+ * the service serves them, and Plan (0.21.0) only on a project whose plan is
+ * on; with both, Meetings moves under More.
  */
 const PROJECT_TABS = [
   "overview",
+  "plan",
   "board",
   "prs",
   "team",
@@ -18,16 +20,30 @@ const PROJECT_TABS = [
 
 export type ProjectTab = (typeof PROJECT_TABS)[number];
 
-const WITH_PRS: readonly ProjectTab[] = PROJECT_TABS.slice(0, 6);
-const WITHOUT_PRS: readonly ProjectTab[] = WITH_PRS.filter((tab) => tab !== "prs");
+/** The tabs the bar can hold, in order; the rest are always under More. */
+const BAR_TABS: readonly ProjectTab[] = PROJECT_TABS.slice(0, 7);
+const ALWAYS_MORE: readonly ProjectTab[] = PROJECT_TABS.slice(7);
+const BAR_SIZE = 6;
 
-/** The tabs in the tab bar itself, in ⌘1… order; `prs` when the service serves pull requests. */
-export function primaryTabs(prs: boolean): readonly ProjectTab[] {
-  return prs ? WITH_PRS : WITHOUT_PRS;
+/** Which optional tabs show: Pull requests, and the Plan. */
+export interface TabsShown {
+  readonly prs: boolean;
+  readonly plan: boolean;
 }
 
-/** The tabs under More. */
-export const MORE_TABS = PROJECT_TABS.slice(6);
+function shownTabs(shown: TabsShown): readonly ProjectTab[] {
+  return BAR_TABS.filter((tab) => (tab !== "prs" || shown.prs) && (tab !== "plan" || shown.plan));
+}
+
+/** The tabs in the tab bar itself, in ⌘1… order. */
+export function primaryTabs(shown: TabsShown): readonly ProjectTab[] {
+  return shownTabs(shown).slice(0, BAR_SIZE);
+}
+
+/** The tabs under More: what the bar has no room for, then Conversations and Settings. */
+export function moreTabs(shown: TabsShown): readonly ProjectTab[] {
+  return [...shownTabs(shown).slice(BAR_SIZE), ...ALWAYS_MORE];
+}
 
 /** What the main pane is currently showing. */
 export type Selection =
@@ -66,6 +82,9 @@ export type Selection =
       readonly board?: string;
       /** With `board`: open its settings ("Change it…" on a lead's proposal). */
       readonly boardSettings?: boolean;
+      /** Plan: open this node (0.21.0); with `gate`, on its gate for the owner's ruling. */
+      readonly planNode?: string;
+      readonly gate?: boolean;
     }
   /**
    * The Control center. `decisionId` opens straight onto one record, which is

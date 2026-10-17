@@ -284,7 +284,7 @@ export function draftItem(over: MessageInitShape<typeof ItemSchema> = {}): Item 
   return create(ItemSchema, {
     id: "RB-20",
     seq: 20,
-    type: ItemType.FEATURE,
+    type: ItemType.TASK,
     title: "Unit conversion (cups ↔ grams)",
     description:
       "## User/problem\n\nThe import breaks on this site:\n\n![the error](attachment:att-shot)\n\n![first try](attachment:att-gone)",

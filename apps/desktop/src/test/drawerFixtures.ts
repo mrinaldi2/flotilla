@@ -28,7 +28,7 @@ export function itemDetail(): ItemDetail {
     item: create(ItemSchema, {
       id: "H-017",
       seq: 17,
-      type: ItemType.FEATURE,
+      type: ItemType.TASK,
       title: "Backlog and meetings data model in the DB",
       description: "## Why\n\nThe board needs a home.\n\n## Done when\n\nItems survive a restart.",
       labels: ["platform:desktop", "platform:daemon"],

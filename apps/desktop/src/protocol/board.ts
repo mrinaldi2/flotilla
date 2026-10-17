@@ -2,6 +2,7 @@
 // B4), sent through the socket's `BinaryChannel` (channel.ts).
 
 import type { MessageInitShape } from "@bufbuild/protobuf";
+import type { PlanChange } from "./gen/flotilla/board/v1/plan_pb";
 import type {
   BoardEvent,
   BoardRequestSchema,
@@ -26,10 +27,14 @@ type BoardReplies = { readonly [A in BoardReplyArm as A["case"]]: A["value"] };
 
 /** The board half of the daemon API; `DaemonClient` and the test fake both implement it. */
 export interface BoardApi {
+  /** What the daemon serves (`hello_ok.capabilities`): the 0.21 additions are gated on them. */
+  readonly capabilities: readonly string[];
   /** Sends one board request; an `Envelope.error` rejects with a `DaemonError`. */
   board(call: BoardCall): Promise<BoardReply>;
   /** Subscribes to board pushes for every watched project. */
   onBoardEvent(handler: (event: BoardEvent) => void): () => void;
+  /** Subscribes to plan node changes (0.21.0) for every watched project. */
+  onPlanChange(handler: (change: PlanChange) => void): () => void;
 }
 
 // A oneof is tagged by `case`, so the tag alone decides the value's type;
