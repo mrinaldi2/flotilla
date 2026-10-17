@@ -74,6 +74,8 @@ const ORDER: Readonly<Record<Shown["kind"], number>> = {
   draft_updated: 4,
   // The board keeper's: a card waiting on the owner, like a question.
   card_waiting: 4,
+  // A plan gate is the owner's ruling, weighed like a decision (0.21.0).
+  plan_gate: 1,
   cleanup_held: 6,
   routines_without_card: 7,
   // Sorted by the kind it carries (`orderOf`); this is the fallback.
@@ -326,11 +328,6 @@ function Overrides(props: {
   );
 }
 
-/** The relayed rulings this computer can confirm, as the daemon last read them. */
-function localRelayed(rows: readonly Shown[]): Relayed | undefined {
-  return rows.find((r): r is Relayed => r.kind === "relayed" && r.elsewhere === undefined);
-}
-
 export default function NeedsYou(props: NeedsYouProps): ReactElement {
   const [reviewing, setReviewing] = useState(false);
   // A daemon before 0.16.2 sends overrides as rows: they move below too.
@@ -341,7 +338,8 @@ export default function NeedsYou(props: NeedsYouProps): ReactElement {
   );
   // oxlint-disable-next-line unicorn/no-array-sort
   rows.sort((a, b) => orderOf(a) - orderOf(b));
-  const relayed = localRelayed(rows);
+  // The relayed rulings this computer can confirm, as the daemon last read them.
+  const relayed = rows.find((r): r is Relayed => r.kind === "relayed" && r.elsewhere === undefined);
   // Every ruling confirmed or answered meanwhile: nothing left to review,
   // and a later relay doesn't reopen the dialog by itself.
   if (reviewing && relayed === undefined) {

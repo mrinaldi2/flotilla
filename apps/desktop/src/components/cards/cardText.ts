@@ -30,6 +30,8 @@ const TYPES: Readonly<Partial<Record<ItemType, string>>> = {
   [ItemType.BUG]: "Bug",
   [ItemType.SPIKE]: "Spike",
   [ItemType.CHORE]: "Chore",
+  [ItemType.TASK]: "Task",
+  [ItemType.DESIGN]: "Design",
 };
 
 /** Only the urgent priorities are worth the space. */

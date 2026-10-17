@@ -120,7 +120,12 @@ export interface AttentionRowJson {
      * happened on it for hours, or its move is refused. The id ends with
      * `:review`, `:quiet` or `:blocked`.
      */
-    | "card_waiting";
+    | "card_waiting"
+    /**
+     * A plan node waits for the owner (0.21.0, `attention_plan`): a gate, a
+     * proposed initiative or a request to skip research; `plan_node_id`.
+     */
+    | "plan_gate";
   readonly id: string;
   /** One line, set by the daemon. */
   readonly title: string;
@@ -138,6 +143,8 @@ export interface AttentionRowJson {
   readonly cleanup_job_id?: string;
   /** The computer low on disk (`cleanup_now`, `disk_report`). */
   readonly machine?: string;
+  /** The plan node whose gate waits (`plan_node_get`, `plan_rule`). */
+  readonly plan_node_id?: string;
   /** A held or failed cleanup, in fields the app words (UX-055). */
   readonly cleanup?: CleanupFields;
 }

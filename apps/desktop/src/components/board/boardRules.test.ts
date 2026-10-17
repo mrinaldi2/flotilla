@@ -78,9 +78,7 @@ describe("filters", () => {
     expect(matchesFilters(item, labels("platform:ios", "area:daemon"))).toBe(true);
     expect(matchesFilters(item, labels("platform:ios", "area:web"))).toBe(false);
     expect(matchesFilters(item, labels("urgent"))).toBe(true);
-    expect(matchesFilters(item, { bots: ["b1"], labels: [], types: [ItemType.FEATURE] })).toBe(
-      false,
-    );
+    expect(matchesFilters(item, { bots: ["b1"], labels: [], types: [ItemType.SPIKE] })).toBe(false);
   });
 
   it("toggles values in and out", () => {

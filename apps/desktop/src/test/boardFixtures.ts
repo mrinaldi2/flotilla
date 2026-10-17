@@ -57,7 +57,7 @@ export function defaultColumns(): BoardColumn[] {
 export function card(over: MessageInitShape<typeof ItemCardSchema> = {}): ItemCard {
   return create(ItemCardSchema, {
     id: "H-001",
-    type: ItemType.FEATURE,
+    type: ItemType.TASK,
     title: "An item",
     priority: Priority.P2,
     rank: "a0",
