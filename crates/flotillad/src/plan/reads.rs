@@ -100,9 +100,13 @@ impl Planner<'_> {
             .is_some_and(|s| s.enabled))
     }
 
-    /// Record research its spikes closed since the plan was last read.
-    fn settle(&self, project_id: &str) -> anyhow::Result<()> {
-        self.run(|t, wrote| research::settle(t, wrote, project_id))?;
+    /// Record research its spikes closed, and nodes whose work shipped,
+    /// since the plan was last read.
+    pub fn settle(&self, project_id: &str) -> anyhow::Result<()> {
+        self.run(|t, wrote| {
+            research::settle(t, wrote, project_id)?;
+            super::closure::settle(t, wrote, project_id)
+        })?;
         Ok(())
     }
 }

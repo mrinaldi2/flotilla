@@ -33,6 +33,12 @@ keeps its boards, and cards still have the four 0.21 types.
   (`plan_research_skip`).
 - **Boards.** Each initiative gets its own board, and the cards of its
   subtree go there with `plan_node_id`.
+- **Closing.** A feature in build is released once every card of it is done
+  (a cancelled card aside). On a release-gated board, Done means shipped. An
+  epic is done once its features are released, and an initiative once its
+  epics are done. A goal is the owner's to mark met.
+- **Turning planning on or off** rewrites every bot's prompt and tells each
+  bot once.
 - **Guidelines** in `docs/guidelines/` are listed with the plan, and every
   bot is told to read them before it works.
 

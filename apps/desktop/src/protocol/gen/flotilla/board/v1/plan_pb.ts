@@ -223,7 +223,8 @@ export type PlanGate = Message<"flotilla.board.v1.PlanGate"> & {
   children: PlanChild[];
 
   /**
-   * The decision it is raised as, for Needs you.
+   * Unused, always unset: a gate waits in Needs you as its own row
+   * (`AttentionKind.PLAN_GATE`, targeting the node), not as a decision.
    *
    * @generated from field: optional string decision_id = 9;
    */

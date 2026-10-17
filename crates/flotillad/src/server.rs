@@ -134,6 +134,7 @@ pub fn spawn_workers(app: &Arc<AppState>) {
     crate::peer::spawn_board_relay(app.clone());
     crate::kanban::keeper::spawn(app.clone());
     crate::kanban::retired::spawn(app.clone());
+    crate::plan::watch::spawn(app.clone());
     crate::kanban::activity::spawn(app.clone());
     tracing::info!("{}", app.cfg.push.status());
     crate::peer::spawn_pr_relay(app.clone());

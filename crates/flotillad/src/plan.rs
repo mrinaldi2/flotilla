@@ -2,16 +2,17 @@
 //! and features, each with its stage and its documents in the project's
 //! repository. Board cards belong to a node through `plan_node_id`.
 //!
-//! The service (`Planner`) answers the owner over WebSocket and, from a
-//! later step, the project's bots over MCP: each operation takes the actor
+//! The service (`Planner`) answers the owner over WebSocket and the
+//! project's bots over MCP (`mcp::plan`): each operation takes the actor
 //! and comes to `Done`, `Refused` with what is not met, or `Conflict` with
 //! the node as it is. Every change runs in one board transaction with the
 //! children, boards and cards it makes, and is pushed once it has
 //! committed (`plan_change`).
 //!
 //! Research closes on facts, read lazily (`research`): a node's spikes all
-//! done with a document. A feature's move from build to released, when its
-//! release ships, is a later step's.
+//! done with a document. So do nodes whose work shipped (`closure`): a
+//! feature once its cards are done, then its epic and initiative; a card
+//! reaching Done settles them at once (`watch`).
 
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -23,6 +24,7 @@ use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 use crate::kanban::guards::unmet;
 use crate::kanban::model::Unmet;
 
+mod closure;
 pub mod contract;
 mod create;
 pub mod docs;
@@ -31,6 +33,7 @@ pub mod model;
 mod reads;
 mod research;
 mod rule;
+pub mod watch;
 
 use model::{Node, Stage};
 pub use reads::{Detail, Tree};
