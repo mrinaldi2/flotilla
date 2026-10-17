@@ -34,6 +34,7 @@ pub(super) fn friendly(mut value: Value) -> Value {
     let short = SHORT.get_or_init(|| {
         all_spellings()
             .into_iter()
+            .chain(crate::plan::contract::spellings())
             .map(|(short, wire)| (wire, short))
             .collect()
     });

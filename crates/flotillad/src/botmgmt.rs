@@ -119,6 +119,12 @@ pub(super) fn provision_spec<'a>(
         user_chrome: bot.user_chrome,
         task_limits: app.cfg.tasks.for_project(&project.name),
         pull_requests: app.cfg.pr_flow(&project.name),
+        planning: app
+            .db
+            .board_read(|t| t.plan_settings(&project.id))
+            .ok()
+            .flatten()
+            .is_some_and(|s| s.enabled),
     }
 }
 

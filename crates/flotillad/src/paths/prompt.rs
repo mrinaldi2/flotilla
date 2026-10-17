@@ -30,6 +30,7 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
         user_chrome,
         task_limits,
         pull_requests,
+        planning,
         ..
     } = spec;
     // The caps are interpolated from the enforcing constants so the prompt can
@@ -63,7 +64,12 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
     let bus = crate::brand::ACTIVE_MCP_SERVER;
     let shared_section = super::prompt_sections::shared_computer();
     let owner_section = super::prompt_sections::owner_reporting();
-    let board_section = super::prompt_sections::board_work(task_limits);
+    let board_section = format!(
+        "{}{}{}",
+        super::prompt_sections::board_work(task_limits),
+        super::prompt_plan::CARD_TYPES,
+        super::prompt_plan::plan(*planning)
+    );
     let pr_section = super::prompt_sections::pull_requests(*pull_requests);
     format!(
         "# {name}\n\n{description}\n\n{worker_section}{project_section}{repo_section}\

@@ -29,6 +29,7 @@ fn spec<'a>(name: &'a str, instructions: &'a str) -> BotProvision<'a> {
         user_chrome: false,
         task_limits: Default::default(),
         pull_requests: false,
+        planning: false,
     }
 }
 

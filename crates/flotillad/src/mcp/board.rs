@@ -103,6 +103,7 @@ pub(super) fn call(
         release if super::releases::handles(release) => {
             super::releases::call(app, &me.bot, roles, release, args)
         }
+        plan if super::plan::handles(plan) => super::plan::call(app, &me.bot, plan, args),
         pr if super::prs::handles(pr) => super::prs::call(app, &me.bot, &roles, pr, args),
         "board_import" => {
             super::board_import::call(app, &me, decode("BoardImport", args, project)?)
