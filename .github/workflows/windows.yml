@@ -39,7 +39,7 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ (github.ref == 'refs/heads/main' || github.head_ref == 'ci/windows-faster') }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-on-failure: true
       - name: Lint daemon
         run: |
@@ -61,7 +61,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           # The shards build the same thing; one saving is enough.
-          save-if: ${{ (github.ref == 'refs/heads/main' || github.head_ref == 'ci/windows-faster') && matrix.shard == 1 }}
+          save-if: ${{ github.ref == 'refs/heads/main' && matrix.shard == 1 }}
           cache-on-failure: true
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
@@ -81,7 +81,7 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ (github.ref == 'refs/heads/main' || github.head_ref == 'ci/windows-faster') }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-on-failure: true
           workspaces: apps/desktop/src-tauri -> target
       # tauri-build only needs the sidecar to exist; the shell's tests never
