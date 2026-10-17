@@ -9,6 +9,7 @@ import type { DaemonApi } from "../../protocol/api";
 import type { BoardApi } from "../../protocol/board";
 import type { Bot } from "../../protocol/entities";
 import type { BoardColumn, ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { ColumnKind, ItemType } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import ItemDrawer from "./drawer/ItemDrawer";
 import type { Anchor } from "./useBoardMoves";
 
@@ -21,6 +22,8 @@ interface BoardDrawerProps {
   readonly openId: string | null;
   /** The cards the board shows, in board order. */
   readonly shown: readonly ItemCard[];
+  /** Every card of the board, filtered or not: a done design attaches to any of its tasks. */
+  readonly cards?: readonly ItemCard[];
   /** The owner's drafts, which no column shows. */
   readonly drafts?: ReadonlyMap<string, ItemCard>;
   readonly columns: readonly BoardColumn[];
@@ -62,6 +65,10 @@ export default function BoardDrawer(props: BoardDrawerProps): ReactElement | nul
     }
   };
   const move = props.onMove;
+  const done = new Set(props.columns.filter((c) => c.kind === ColumnKind.DONE).map((c) => c.key));
+  const tasks = (props.cards ?? shown).filter(
+    (c) => c.type === ItemType.TASK && !done.has(c.columnKey),
+  );
   return (
     <ItemDrawer
       key={openId}
@@ -85,6 +92,8 @@ export default function BoardDrawer(props: BoardDrawerProps): ReactElement | nul
       onDraftDone={props.onDraftDone}
       now={props.now === undefined ? undefined : () => props.now ?? 0}
       initialDiscuss={props.initialDiscuss}
+      onOpenItem={props.onOpen}
+      designTasks={tasks}
     >
       {props.children}
     </ItemDrawer>

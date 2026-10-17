@@ -21,6 +21,8 @@ interface BoardViewProps {
   readonly openItem?: string;
   /** The board to show, from a link (0.19.0); the item's own board wins. */
   readonly openBoard?: string;
+  /** The project's plan nodes while planning is on (0.21.0): new cards belong to one. */
+  readonly planNodes?: BoardProps["planNodes"];
   /** Stories: open with a panel or sheet showing, at a pinned "now". */
   readonly initial?: BoardProps["initial"];
   readonly now?: number;

@@ -44,6 +44,8 @@ export interface DashboardViewProps {
   readonly onReply?: (botId: string, quote: string) => void;
   /** Opens Needs you, where permission prompts are answered. */
   readonly onOpenNeedsYou?: () => void;
+  /** Opens a plan node on its gate (0.21.0). */
+  readonly onOpenPlanGate?: (nodeId: string) => void;
   /** Opens a pull request, or its delta since your approval; absent without PRs. */
   readonly onOpenPr?: (pr: number, recheck: boolean) => void;
   /** "From the team", shown right after Needs you on the Overview. */
@@ -174,6 +176,7 @@ export default function DashboardView(props: DashboardViewProps): ReactElement {
             onOpenBot={props.onOpenBot}
             onReply={props.onReply}
             onOpenNeedsYou={props.onOpenNeedsYou}
+            onOpenPlanGate={props.onOpenPlanGate}
             prs={prs}
             onOpenPr={props.onOpenPr}
             {...cleanupRowActions(cleanup, connected)}

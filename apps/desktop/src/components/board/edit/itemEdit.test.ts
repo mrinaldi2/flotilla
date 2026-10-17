@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { ItemType, Priority, Size } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { draftDetail } from "../../../test/boardsFixtures";
-import { formOf, formProblem, updateFor } from "./itemEdit";
+import { ITEM_TYPES_V2 } from "../../../protocol/plan";
+import { editTypes, formOf, formProblem, typesFor, updateFor } from "./itemEdit";
 
 const item = draftDetail().item;
 if (item === undefined) {
@@ -43,5 +44,17 @@ describe("the owner's edit of an item", () => {
     expect(formProblem({ ...formOf(item), title: " " })).toMatch(/title/);
     expect(formProblem({ ...formOf(item), criteria: "A\nA" })).toMatch(/same/);
     expect(formProblem(formOf(item))).toBeNull();
+  });
+
+  it("offers the card types of 0.21, and keeps a retired type an item already has", () => {
+    expect(typesFor([ITEM_TYPES_V2])).toEqual([
+      ItemType.TASK,
+      ItemType.DESIGN,
+      ItemType.BUG,
+      ItemType.SPIKE,
+    ]);
+    expect(typesFor([])[0]).toBe(ItemType.FEATURE);
+    expect(editTypes([ITEM_TYPES_V2], ItemType.CHORE)).toContain(ItemType.CHORE);
+    expect(editTypes([ITEM_TYPES_V2], ItemType.BUG)).toHaveLength(4);
   });
 });

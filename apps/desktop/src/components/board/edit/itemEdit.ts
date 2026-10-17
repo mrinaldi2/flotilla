@@ -6,6 +6,7 @@ import type { MessageInitShape } from "@bufbuild/protobuf";
 import type { Item } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { ItemType, Priority, Size } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import type { ItemUpdateSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
+import { ITEM_TYPES_V2 } from "../../../protocol/plan";
 
 export interface ItemForm {
   readonly title: string;
@@ -84,12 +85,30 @@ export function updateFor(
   return { id: item.id, expectedVersion: item.version, ...changes };
 }
 
-export const TYPES: readonly ItemType[] = [
+/**
+ * The card types (0.21.0, #43), Task first: features and epics are created
+ * in the Plan, and chores became tasks.
+ */
+const TYPES: readonly ItemType[] = [ItemType.TASK, ItemType.DESIGN, ItemType.BUG, ItemType.SPIKE];
+
+/** What a Flotilla service before 0.21 takes; it refuses Task and Design. */
+const OLDER_TYPES: readonly ItemType[] = [
   ItemType.FEATURE,
   ItemType.BUG,
   ItemType.CHORE,
   ItemType.SPIKE,
   ItemType.EPIC,
 ];
+
+/** The types a new card can take on this service; the first is the default. */
+export function typesFor(capabilities: readonly string[]): readonly ItemType[] {
+  return capabilities.includes(ITEM_TYPES_V2) ? TYPES : OLDER_TYPES;
+}
+
+/** The edit form's types: the service's, and the card's own when it is a retired one. */
+export function editTypes(capabilities: readonly string[], current: ItemType): readonly ItemType[] {
+  const types = typesFor(capabilities);
+  return types.includes(current) ? types : [...types, current];
+}
 export const PRIORITIES: readonly Priority[] = [Priority.P0, Priority.P1, Priority.P2, Priority.P3];
 export const SIZES: readonly Size[] = [Size.S, Size.M, Size.L];

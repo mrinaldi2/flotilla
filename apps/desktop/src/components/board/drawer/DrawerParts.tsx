@@ -3,7 +3,7 @@
 
 import { Pencil, X } from "lucide-react";
 import type { ReactElement } from "react";
-import type { BoardColumn, Item } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { BoardColumn, Item, Unmet } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { Priority, Size } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { typeLabel } from "../labels";
 import type { Anchor } from "../useBoardMoves";
@@ -129,6 +129,23 @@ export function MetaLine(props: {
   );
 }
 
+/** The guard that holds a task or bug in Research until its code research is written (0.21.0). */
+const RESEARCH_GUARD = "start.research";
+
+/** "Can't move to Doing yet": the research a task or bug still owes, with the guard's code. */
+function ResearchHeld(props: { readonly to: BoardColumn; readonly unmet: Unmet }): ReactElement {
+  const { unmet } = props;
+  return (
+    <div className="drawer-held" role="alert">
+      <strong>Can&apos;t move to {props.to.name} yet</strong>
+      <span>
+        {unmet.text}
+        {unmet.fix ? ` ${unmet.fix}` : ""} <span className="mono drawer-dim">{unmet.code}</span>
+      </span>
+    </div>
+  );
+}
+
 /** The guard check for the next forward move, as guidance (§3.6). */
 export function NextStepView(props: {
   readonly step: NextStep;
@@ -138,26 +155,33 @@ export function NextStepView(props: {
   if (to === undefined) {
     return null;
   }
+  const research = unmet.find((u) => u.code === RESEARCH_GUARD);
+  const rest = unmet.filter((u) => u !== research);
   return (
-    <section className="drawer-next" aria-label="Next step">
-      {unmet.length === 0 ? (
-        <p>
-          Ready to move to {to.name}
-          {props.assignee ? ` — waiting on ${props.assignee}` : ""}
-        </p>
-      ) : (
-        <>
-          <p>To reach {to.name}:</p>
-          <ul>
-            {unmet.map((u) => (
-              <li key={u.code}>
-                <span aria-hidden="true">✗</span> {u.text}
-                {u.fix ? <span className="drawer-dim"> {u.fix}</span> : null}
-              </li>
-            ))}
-          </ul>
-        </>
+    <>
+      {research === undefined ? null : <ResearchHeld to={to} unmet={research} />}
+      {research !== undefined && rest.length === 0 ? null : (
+        <section className="drawer-next" aria-label="Next step">
+          {rest.length === 0 ? (
+            <p>
+              Ready to move to {to.name}
+              {props.assignee ? ` — waiting on ${props.assignee}` : ""}
+            </p>
+          ) : (
+            <>
+              <p>To reach {to.name}:</p>
+              <ul>
+                {rest.map((u) => (
+                  <li key={u.code}>
+                    <span aria-hidden="true">✗</span> {u.text}
+                    {u.fix ? <span className="drawer-dim"> {u.fix}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
       )}
-    </section>
+    </>
   );
 }

@@ -1,0 +1,110 @@
+/* The board's 0.21 additions (#43): the card types with what each is for,
+   the Research column, the start.research refusal and a task's design. */
+
+.new-item-type {
+  align-items: flex-start;
+  flex: 1 1 200px;
+}
+
+.new-item-type .field-hint {
+  display: block;
+  margin-top: 2px;
+}
+
+.new-item-note {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-raised));
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* The Research column: its hint line, and an edge that sets it apart. */
+.board-column-research {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.board-column-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--accent);
+}
+
+/* A task or bug held in Research (start.research). */
+.drawer-held {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  border: 1px solid color-mix(in srgb, var(--amber) 45%, var(--border));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--amber) 8%, var(--bg-raised));
+}
+
+.drawer-held strong {
+  color: var(--amber);
+}
+
+/* A task's design cards, and a done design's "Attach design to a task…". */
+.drawer-designs ul {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.drawer-design {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-raised);
+}
+
+.drawer-design + .drawer-design {
+  margin-top: 6px;
+}
+
+.drawer-design-glyph {
+  flex: 0 0 auto;
+  font-size: 16px;
+  color: var(--text-strong);
+}
+
+.drawer-design-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.drawer-design-title {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.drawer-attach-design {
+  margin-bottom: 12px;
+}
+
+.drawer-attach-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.drawer-attach-row .field {
+  flex: 1 1 220px;
+  margin: 0;
+}

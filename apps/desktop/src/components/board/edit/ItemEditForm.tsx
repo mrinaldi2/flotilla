@@ -15,7 +15,7 @@ import type { EditResult } from "../../../protocol/gen/flotilla/board/v1/request
 import { errText } from "../../../util";
 import { typeLabel } from "../labels";
 import type { ItemForm } from "./itemEdit";
-import { formOf, formProblem, PRIORITIES, SIZES, TYPES, updateFor } from "./itemEdit";
+import { editTypes, formOf, formProblem, PRIORITIES, SIZES, updateFor } from "./itemEdit";
 
 interface ItemEditFormProps {
   readonly api: BoardApi;
@@ -140,7 +140,7 @@ export default function ItemEditForm(props: ItemEditFormProps): ReactElement {
         <label className="field">
           <span className="field-label">Type</span>
           <select value={form.type} onChange={(e) => set({ type: Number(e.target.value) })}>
-            {TYPES.map((t) => (
+            {editTypes(props.api.capabilities, item.type).map((t) => (
               <option key={t} value={t}>{`${typeLabel(t).glyph} ${typeLabel(t).word}`}</option>
             ))}
           </select>

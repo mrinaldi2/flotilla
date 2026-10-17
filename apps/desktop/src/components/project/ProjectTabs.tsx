@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import type { KeyboardEvent, ReactElement } from "react";
-import { MORE_TABS } from "../../app/selection";
 import type { ProjectTab } from "../../app/selection";
 
 const PROJECT_TAB_LABEL: Readonly<Record<ProjectTab, string>> = {
   overview: "Overview",
+  plan: "Plan",
   board: "Board",
   prs: "Pull requests",
   team: "Team",
@@ -17,8 +17,8 @@ const PROJECT_TAB_LABEL: Readonly<Record<ProjectTab, string>> = {
 const MORE_ID = "project-tab-more";
 
 /** The id of the control that labels a tab's panel: its tab, or More for the tabs under it. */
-export function projectTabId(tab: ProjectTab): string {
-  return MORE_TABS.some((more) => more === tab) ? MORE_ID : `project-tab-${tab}`;
+export function projectTabId(tab: ProjectTab, more: readonly ProjectTab[]): string {
+  return more.some((under) => under === tab) ? MORE_ID : `project-tab-${tab}`;
 }
 
 export const PROJECT_PANEL_ID = "project-panel";
@@ -26,6 +26,8 @@ export const PROJECT_PANEL_ID = "project-panel";
 interface MoreMenuProps {
   readonly active: ProjectTab;
   readonly onSelect: (tab: ProjectTab) => void;
+  /** The tabs under More. */
+  readonly more: readonly ProjectTab[];
 }
 
 interface ProjectTabsProps extends MoreMenuProps {
@@ -51,9 +53,9 @@ function targetIndex(key: string, index: number, count: number): number | null {
 }
 
 /** More ▾: the project's secondary views (UX-024 §2), as a small menu. */
-function MoreMenu({ active, onSelect }: MoreMenuProps): ReactElement {
+function MoreMenu({ active, onSelect, more }: MoreMenuProps): ReactElement {
   const [open, setOpen] = useState(false);
-  const current = MORE_TABS.find((tab) => tab === active);
+  const current = more.find((tab) => tab === active);
   return (
     <div className="project-more">
       <button
@@ -70,7 +72,7 @@ function MoreMenu({ active, onSelect }: MoreMenuProps): ReactElement {
       </button>
       {open ? (
         <div className="project-more-menu" role="menu" aria-label="More">
-          {MORE_TABS.map((tab) => (
+          {more.map((tab) => (
             <button
               key={tab}
               type="button"
@@ -95,7 +97,12 @@ function MoreMenu({ active, onSelect }: MoreMenuProps): ReactElement {
  * with one tab stop, where the arrow keys, Home and End move between them and
  * select as they go; then More for the rest.
  */
-export default function ProjectTabs({ tabs, active, onSelect }: ProjectTabsProps): ReactElement {
+export default function ProjectTabs({
+  tabs,
+  more,
+  active,
+  onSelect,
+}: ProjectTabsProps): ReactElement {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const primary = tabs.some((tab) => tab === active);
 
@@ -121,7 +128,7 @@ export default function ProjectTabs({ tabs, active, onSelect }: ProjectTabsProps
               ref={(node) => {
                 buttons.current[index] = node;
               }}
-              id={projectTabId(tab)}
+              id={projectTabId(tab, more)}
               type="button"
               role="tab"
               className={`tab ${selected ? "tab-active" : ""}`}
@@ -142,7 +149,7 @@ export default function ProjectTabs({ tabs, active, onSelect }: ProjectTabsProps
           );
         })}
       </div>
-      <MoreMenu active={active} onSelect={onSelect} />
+      <MoreMenu active={active} onSelect={onSelect} more={more} />
     </div>
   );
 }

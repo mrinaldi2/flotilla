@@ -231,4 +231,29 @@ describe("DaemonClient pull request surface (H-273)", () => {
     expect(prs).toEqual(["checkUpdated"]);
     expect(boards).toEqual([]);
   });
+
+  it("hands plan changes to their subscribers, not the board's", async () => {
+    const socket = await connectWith(client, harness, ["proto"]);
+    const plans: string[] = [];
+    const boards: bigint[] = [];
+    const off = client.onPlanChange((change) => {
+      plans.push(change.node?.id ?? "");
+    });
+    client.onBoardEvent((event) => {
+      boards.push(event.seq);
+    });
+    const push = (id: string): void => {
+      deliver(socket, {
+        body: {
+          case: "boardPush",
+          value: { push: { case: "planChange", value: { projectId: "p1", node: { id } } } },
+        },
+      });
+    };
+    push("PL-1");
+    off();
+    push("PL-2");
+    expect(plans).toEqual(["PL-1"]);
+    expect(boards).toEqual([]);
+  });
 });

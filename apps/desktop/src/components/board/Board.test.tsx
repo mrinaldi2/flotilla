@@ -60,7 +60,7 @@ describe("a project with several boards", () => {
     render(<BoardWindow openBoard={RECIPES_ID} />);
     await user.click(await screen.findByRole("button", { name: /2 drafts/ }));
     // Its type in a glyph and a word, never the glyph alone.
-    const entry = await screen.findByRole("menuitem", { name: /Feature · RB-20/ });
+    const entry = await screen.findByRole("menuitem", { name: /Task · RB-20/ });
     expect(await within(entry).findByText("Discussing with Team Lead")).toBeInTheDocument();
     await user.click(entry);
     expect(await screen.findByRole("complementary", { name: "Draft RB-20" })).toBeInTheDocument();
