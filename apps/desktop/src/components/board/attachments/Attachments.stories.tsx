@@ -77,13 +77,76 @@ export const Viewer: Story = () => {
 };
 
 /** A linked document's details. */
+/** A linked spec, read from the project's artifacts as formatted text (0.20.0). */
+const SPEC = `# RB-20 · Import recipes from a link
+
+The owner pastes a recipe page's address; the bot makes the card's recipe.
+
+## Acceptance
+
+- The title, the ingredients and the steps come from the page.
+- A page it can't read says why, and nothing is created.
+`;
+
+/** A linked report: its page and the stylesheet beside it. */
+const REPORT: Record<string, { readonly mime: string; readonly text: string }> = {
+  "reports/import/index.html": {
+    mime: "text/html",
+    text: '<link rel="stylesheet" href="report.css"><h1>Import benchmark</h1><p>12 of 12 recipes imported.</p>',
+  },
+  "reports/import/report.css": {
+    mime: "text/css",
+    text: "body{font:15px sans-serif;margin:24px;color:#14161c}h1{color:#2a6f68}",
+  },
+};
+
+const readArtifact = async (
+  path: string,
+): Promise<{ readonly mime: string; readonly text: string }> => {
+  if (path === "specs/RB-20-spec.md") {
+    return { mime: "text/markdown", text: SPEC };
+  }
+  const file = REPORT[path];
+  if (file === undefined) {
+    throw new Error(`no artifact ${path}`);
+  }
+  return file;
+};
+
 export const DocumentDetails: Story = () => {
   const spec = attachments.find((a) => a.id === "att-spec");
   return spec === undefined ? (
     <p />
   ) : (
     <div style={{ height: 600 }}>
-      <AttachmentViewer api={boardsClient()} attachment={spec} onClose={noop} />
+      <AttachmentViewer
+        api={boardsClient()}
+        attachment={spec}
+        readArtifact={readArtifact}
+        onClose={noop}
+      />
+    </div>
+  );
+};
+
+/** A linked HTML report in its sandbox, its stylesheet read beside it (0.20.0). */
+export const DocumentPage: Story = () => {
+  const spec = attachments.find((a) => a.id === "att-spec");
+  return spec === undefined ? (
+    <p />
+  ) : (
+    <div style={{ height: 600 }}>
+      <AttachmentViewer
+        api={boardsClient()}
+        attachment={{
+          ...spec,
+          id: "att-report",
+          name: "Import benchmark",
+          path: "reports/import/index.html",
+        }}
+        readArtifact={readArtifact}
+        onClose={noop}
+      />
     </div>
   );
 };
