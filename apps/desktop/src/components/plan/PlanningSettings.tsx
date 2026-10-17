@@ -14,7 +14,8 @@ import { planOn } from "./usePlan";
 interface PlanningSettingsProps {
   readonly api: BoardApi;
   readonly projectId: string;
-  readonly plan: UsePlan;
+  /** The project's plan; none hides the switch. */
+  readonly plan?: UsePlan;
   /** The project has a repository set. */
   readonly hasRepo: boolean;
   readonly connected: boolean;
@@ -25,7 +26,7 @@ export default function PlanningSettings(props: PlanningSettingsProps): ReactEle
   const { api, projectId, plan, hasRepo, connected, canControl } = props;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  if (plan.status.kind === "unsupported") {
+  if (plan === undefined || plan.status.kind === "unsupported") {
     return null;
   }
   const on = planOn(plan.status);

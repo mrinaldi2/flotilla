@@ -7,11 +7,13 @@ import { useState } from "react";
 import type { ReactElement } from "react";
 import type { Bot } from "../../protocol/entities";
 import type { BoardColumn, ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import type { PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import { ColumnCategory, ColumnKind } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import BoardCard from "./BoardCard";
 import BoardColumnView, { InboxRail } from "./BoardColumnView";
 import type { DropState } from "./BoardColumnView";
 import type { BoardPrefs } from "./boardPrefs";
+import type { NodeScope } from "./filters";
 import { matchesFilters } from "./filters";
 import type { ColumnChecks } from "./moves";
 import { planMove, reasonChip } from "./moves";
@@ -35,6 +37,10 @@ interface BoardColumnsProps {
   readonly onNewItem?: () => void;
   /** The label groups whose labels show on the cards. */
   readonly chipGroups?: ReadonlySet<string>;
+  /** The plan (0.21.0): each node and those under it, for the node filter. */
+  readonly scope?: NodeScope;
+  /** The plan's nodes, for each card's node chip. */
+  readonly nodesById?: ReadonlyMap<string, PlanNode>;
 }
 
 interface Drag {
@@ -90,7 +96,9 @@ export default function BoardColumns(props: BoardColumnsProps): ReactElement {
       <div className={`board-columns${drag === null ? "" : " board-dragging"}`}>
         {columns.map((column) => {
           const inColumn = cards.filter((card) => card.columnKey === column.key);
-          const visible = inColumn.filter((card) => matchesFilters(card, prefs.filters));
+          const visible = inColumn.filter((card) =>
+            matchesFilters(card, prefs.filters, props.scope),
+          );
           const summary = wipSummary(column, inColumn, visible.length);
           const drop = dropStateFor(column, drag);
           const handlers = {
@@ -142,6 +150,11 @@ export default function BoardColumns(props: BoardColumnsProps): ReactElement {
                   dragging={drag?.card.id === card.id}
                   chipGroups={props.chipGroups}
                   columnNameOf={columnNameOf}
+                  node={
+                    card.planNodeId === undefined
+                      ? undefined
+                      : props.nodesById?.get(card.planNodeId)
+                  }
                 />
               ))}
             </BoardColumnView>

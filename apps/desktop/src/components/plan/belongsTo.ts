@@ -1,6 +1,8 @@
-// "Belongs to" (0.21.0): the plan node a new card joins on an initiative's
-// board. Tasks and bugs belong to a feature in Build; spikes and design
-// tickets to an epic or initiative in research.
+// The plan on an initiative's board (0.21.0): "Belongs to", the node a new
+// card joins (tasks and bugs a feature in Build; spikes and design tickets
+// an epic or initiative in research); the node chip on each card; and the
+// filter by epic or feature, which keeps the cards of a node and of every
+// node under it.
 
 import { ItemType } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import type { PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
@@ -40,4 +42,37 @@ export function preferredNode(options: readonly PlanNode[], type: ItemType): str
       : n.kind === PlanKind.FEATURE && n.stage === PlanStage.BUILD,
   );
   return (fits ?? options[0])?.id;
+}
+
+/** The epics and features the board's filter offers: live ones on `boardId`. */
+export function filterNodes(
+  nodes: readonly PlanNode[],
+  boardId: string | undefined,
+): readonly PlanNode[] {
+  return nodeOptions(nodes, boardId).filter(
+    (n) => n.kind === PlanKind.EPIC || n.kind === PlanKind.FEATURE,
+  );
+}
+
+/** For each node, itself and every node under it, by id. */
+export function subtrees(nodes: readonly PlanNode[]): ReadonlyMap<string, ReadonlySet<string>> {
+  const children = new Map<string, string[]>();
+  for (const node of nodes) {
+    if (node.parentId !== undefined) {
+      children.set(node.parentId, [...(children.get(node.parentId) ?? []), node.id]);
+    }
+  }
+  const scope = new Map<string, ReadonlySet<string>>();
+  for (const node of nodes) {
+    const under = new Set<string>();
+    const queue = [node.id];
+    for (let id = queue.pop(); id !== undefined; id = queue.pop()) {
+      if (!under.has(id)) {
+        under.add(id);
+        queue.push(...(children.get(id) ?? []));
+      }
+    }
+    scope.set(node.id, under);
+  }
+  return scope;
 }

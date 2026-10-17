@@ -5,7 +5,15 @@
 import type { ReactElement } from "react";
 import type { PlanDoc, PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import type { TreeFilter } from "./planText";
-import { fileName, filteredRows, isFinished, kindWords, nodeMeta, stageChip } from "./planText";
+import {
+  fileName,
+  filteredRows,
+  isFinished,
+  kindWords,
+  nodeMeta,
+  stageChip,
+  stageWord,
+} from "./planText";
 import type { CreateKind } from "./PlanCreateDialog";
 
 interface PlanTreePaneProps {
@@ -46,6 +54,16 @@ function FilterButton(props: {
   );
 }
 
+/** "Epic: Enemy attack telegraphing, Design", "…, HLD waiting for you": a row's name. */
+function rowName(node: PlanNode): string {
+  const stage =
+    node.gate === undefined
+      ? stageWord(node.stage)
+      : `${stageWord(node.gate.stage)} waiting for you`;
+  const meta = nodeMeta(node);
+  return `${kindWords(node.kind).word}: ${node.title}, ${stage}${meta === "" ? "" : `, ${meta}`}`;
+}
+
 function Row(props: {
   readonly node: PlanNode;
   readonly depth: number;
@@ -62,12 +80,12 @@ function Row(props: {
         type="button"
         className={`plan-row plan-depth-${Math.min(props.depth, 3)}${props.selected ? " plan-row-on" : ""}${isFinished(node) ? " plan-row-finished" : ""}`}
         aria-current={props.selected ? "true" : undefined}
+        aria-label={rowName(node)}
         onClick={() => props.onSelect(node.id)}
       >
         <span className={`plan-glyph plan-glyph-${kind.word.toLowerCase()}`} aria-hidden="true">
           {kind.glyph}
         </span>
-        <span className="visually-hidden">{`${kind.word}: `}</span>
         <span className="plan-row-title">{node.title}</span>
         {meta === "" ? null : <span className="plan-row-meta">{meta}</span>}
         <span className={`plan-chip plan-chip-${chip.tone}`}>{chip.text}</span>
