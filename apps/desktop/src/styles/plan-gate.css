@@ -311,3 +311,31 @@
   width: 100%;
   height: 70vh;
 }
+
+/* A node's own actions: a goal's next stage, Edit and Drop…, and the edit form. */
+.plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-actions .field-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.plan-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 640px;
+  padding: 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.plan-edit textarea {
+  font-family: inherit;
+}

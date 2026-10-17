@@ -133,6 +133,9 @@ function Right(props: PlanViewProps & ReturnType<typeof useOpened>): ReactElemen
       ancestors={ancestors}
       who={who}
       canRule={props.canRule}
+      canEdit={props.canCreate}
+      bots={props.bots}
+      leadName={props.leadName}
       onOpenNode={(id) => props.open(id)}
       onOpenGate={() => props.setPane({ kind: "gate" })}
       onOpenDoc={(doc) => props.setPane({ kind: "doc", doc })}

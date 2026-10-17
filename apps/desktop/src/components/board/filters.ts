@@ -1,4 +1,5 @@
-// The board's filter bar: bot, type and the board's label groups.
+// The board's filter bar: bot, type, the board's label groups and, on an
+// initiative's board (0.21.0), its epics and features.
 // Filtered-out cards are hidden, but column counts still read "2 of 5".
 
 import type { ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
@@ -11,12 +12,28 @@ export interface BoardFilters {
   /** Whole labels (`platform:ios`). */
   readonly labels: readonly string[];
   readonly types: readonly ItemType[];
+  /** Plan nodes: a card of one of them, or of a node under it (0.21.0). */
+  readonly nodes: readonly string[];
 }
 
-export const NO_FILTERS: BoardFilters = { bots: [], labels: [], types: [] };
+export const NO_FILTERS: BoardFilters = { bots: [], labels: [], types: [], nodes: [] };
+
+/** For each plan node, itself and the nodes under it. */
+export type NodeScope = ReadonlyMap<string, ReadonlySet<string>>;
 
 export function isFiltering(filters: BoardFilters): boolean {
-  return filters.bots.length + filters.labels.length + filters.types.length > 0;
+  return (
+    filters.bots.length + filters.labels.length + filters.types.length + filters.nodes.length > 0
+  );
+}
+
+/** Whether the card belongs to a picked node or one under it; any card without a plan to ask. */
+function matchesNodes(card: ItemCard, nodes: readonly string[], scope?: NodeScope): boolean {
+  if (nodes.length === 0 || scope === undefined) {
+    return true;
+  }
+  const id = card.planNodeId;
+  return id !== undefined && nodes.some((node) => scope.get(node)?.has(id) === true);
 }
 
 /** Each label group filtered on needs one of its labels picked on the card. */
@@ -27,15 +44,18 @@ function matchesLabels(labels: readonly string[], wanted: readonly string[]): bo
   );
 }
 
-/** Every set filter must match; labels match on any overlap within a group. */
-export function matchesFilters(card: ItemCard, filters: BoardFilters): boolean {
+/**
+ * Every set filter must match; labels match on any overlap within a group.
+ * The node filter needs the plan's `scope`; without it, it lets cards by.
+ */
+export function matchesFilters(card: ItemCard, filters: BoardFilters, scope?: NodeScope): boolean {
   if (
     filters.bots.length > 0 &&
     (card.assignee === undefined || !filters.bots.includes(card.assignee))
   ) {
     return false;
   }
-  if (!matchesLabels(card.labels, filters.labels)) {
+  if (!matchesLabels(card.labels, filters.labels) || !matchesNodes(card, filters.nodes, scope)) {
     return false;
   }
   return filters.types.length === 0 || filters.types.includes(card.type);
@@ -70,5 +90,6 @@ export function parseFilters(value: unknown): BoardFilters {
     bots: stringsIn(value["bots"]),
     labels: stringsIn(value["labels"]),
     types: numbersIn(value["types"], isItemType),
+    nodes: stringsIn(value["nodes"]),
   };
 }

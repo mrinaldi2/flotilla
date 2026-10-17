@@ -17,10 +17,10 @@ describe("the Plan tab", () => {
     render(<PlanWindow />);
     const tree = await screen.findByRole("complementary", { name: "Plan tree" });
     expect(
-      within(tree).getByRole("button", { name: /Combat HUD clarity.*HLD · you/ }),
+      within(tree).getByRole("button", { name: "Epic: Combat HUD clarity, HLD waiting for you" }),
     ).toBeVisible();
     expect(
-      within(tree).getByRole("button", { name: /Hitstop on heavy hits.*3\/5.*Build/ }),
+      within(tree).getByRole("button", { name: "Feature: Hitstop on heavy hits, Build, 3/5" }),
     ).toBeVisible();
     await user.click(within(tree).getByRole("button", { name: "Needs you 1" }));
     expect(within(tree).getAllByRole("listitem")).toHaveLength(3);
@@ -32,7 +32,9 @@ describe("the Plan tab", () => {
     const user = userEvent.setup();
     const opened = vi.fn<(id: string) => void>();
     render(<PlanWindow onOpenItem={opened} />);
-    await user.click(await screen.findByRole("button", { name: /Enemy attack telegraphing/ }));
+    await user.click(
+      await screen.findByRole("button", { name: "Epic: Enemy attack telegraphing, Design" }),
+    );
     const main = await screen.findByRole("main", { name: "Enemy attack telegraphing" });
     const stages = within(main).getByRole("list", { name: "Stages" });
     expect(within(stages).getByText("Closed · 3 spikes")).toBeVisible();
@@ -113,7 +115,9 @@ describe("the Plan tab", () => {
   it("shows a changed document's changes since approval", async () => {
     const user = userEvent.setup();
     render(<PlanWindow />);
-    await user.click(await screen.findByRole("button", { name: /Combat readability/ }));
+    await user.click(
+      await screen.findByRole("button", { name: /^Initiative: Combat readability/ }),
+    );
     await user.click(await screen.findByRole("button", { name: "prd.md" }));
     await user.click(screen.getByRole("tab", { name: "Changes since approval" }));
     expect(await screen.findByLabelText("Changes to prd.md since approval")).toHaveTextContent(
@@ -130,7 +134,7 @@ describe("the Plan tab", () => {
       value: planned(hudEpic()),
     }));
     render(<PlanWindow client={fake} />);
-    await user.click(await screen.findByRole("button", { name: /Combat onboarding/ }));
+    await user.click(await screen.findByRole("button", { name: /^Initiative: Combat onboarding/ }));
     await user.click(await screen.findByRole("button", { name: "Skip research…" }));
     await user.type(
       screen.getByRole("textbox", { name: /Why no research is needed/ }),
