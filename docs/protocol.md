@@ -1231,7 +1231,12 @@ capability.
   `expected_version`). Pushes: `plan_change` to connections watching the
   project. Items, cards, `item_create`, `item_update` and `item_query` carry
   `plan_node_id`. A daemon without `plan_v1` answers the requests with the
-  envelope error `unsupported`.
+  envelope error `unsupported`. A refused `plan_enable` is the envelope
+  error `plan.no_repo`, `plan.no_board` or `forbidden`; a project whose
+  board lives on a peer answers `no_board`. Bots use the same requests as
+  MCP tools: `plan_get`, `plan_node_get`, `plan_doc_read`, and the lead's
+  `plan_propose`, `plan_submit` and `plan_research_skip`. See
+  [planning](planning.md).
 - **Card types (`item_types_v2`).** `ItemType` `TASK` (6) and `DESIGN` (7).
   Such a daemon refuses creating or retyping a card to `EPIC`, `FEATURE` or
   `CHORE` (`new.type_retired`); the values stay for older peers. Before it, a
