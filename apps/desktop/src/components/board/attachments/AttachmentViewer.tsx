@@ -20,6 +20,27 @@ interface AttachmentViewerProps {
   readonly onClose: () => void;
 }
 
+/** A file, or a document linked to an artifact: read in place (0.20.0). */
+function readable(a: ItemAttachment): boolean {
+  return !a.removed && (a.kind === "file" || (a.kind === "doc" && a.path !== ""));
+}
+
+/** What isn't read in place: a web address, or a removed file. */
+function Details(props: { readonly attachment: ItemAttachment }): ReactElement {
+  const { attachment: a } = props;
+  return (
+    <div className="attachment-details">
+      {a.caption ? <p>{a.caption}</p> : null}
+      <p className="mono">{a.url || a.path}</p>
+      <p className="drawer-dim">
+        {a.kind === "doc"
+          ? "A linked document: bots read it from the project's artifacts or its address."
+          : "Kept in the project's artifacts on the board's home; bots read it there."}
+      </p>
+    </div>
+  );
+}
+
 function Stage(props: {
   readonly api: BoardApi;
   readonly attachment: ItemAttachment;
@@ -27,21 +48,11 @@ function Stage(props: {
 }): ReactElement {
   const { attachment: a } = props;
   const image = useAttachmentImage(props.api, a.kind === "image" && !a.removed ? a.id : null);
-  const readable = !a.removed && (a.kind === "file" || (a.kind === "doc" && a.path !== ""));
-  if (a.kind !== "image" && readable) {
-    return <DocumentPreview api={props.api} attachment={a} readArtifact={props.readArtifact} />;
-  }
   if (a.kind !== "image") {
-    return (
-      <div className="attachment-details">
-        {a.caption ? <p>{a.caption}</p> : null}
-        <p className="mono">{a.url || a.path}</p>
-        <p className="drawer-dim">
-          {a.kind === "doc"
-            ? "A linked document: bots read it from the project's artifacts or its address."
-            : "Kept in the project's artifacts on the board's home; bots read it there."}
-        </p>
-      </div>
+    return readable(a) ? (
+      <DocumentPreview api={props.api} attachment={a} readArtifact={props.readArtifact} />
+    ) : (
+      <Details attachment={a} />
     );
   }
   if (image.kind !== "ready") {

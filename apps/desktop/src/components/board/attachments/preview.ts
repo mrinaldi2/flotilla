@@ -32,7 +32,10 @@ export const PAGE_POLICY =
   "style-src 'unsafe-inline'; script-src 'unsafe-inline'";
 
 /** The kind a MIME type or a name reads as. */
-export function kindOf(mime: string, name: string): "markdown" | "html" | "text" | "pdf" | "image" | null {
+export function kindOf(
+  mime: string,
+  name: string,
+): "markdown" | "html" | "text" | "pdf" | "image" | null {
   const lower = name.toLowerCase();
   if (mime === "text/markdown" || lower.endsWith(".md") || lower.endsWith(".markdown")) {
     return "markdown";
@@ -65,32 +68,37 @@ export function folderOf(path: string): string {
  */
 export function resolve(folder: string, ref: string): string | null {
   const href = ref.trim().split(/[?#]/u)[0] ?? "";
-  if (href === "" || /^[a-z][a-z0-9+.-]*:/iu.test(href) || href.startsWith("//")) {
-    return null;
-  }
   // A folder on disk (a bot's file) keeps its root; there `/x` isn't beside the page.
   const absolute = folder.startsWith("/");
-  if (absolute && href.startsWith("/")) {
+  if (!isBeside(href) || (absolute && href.startsWith("/"))) {
     return null;
   }
-  const parts = href.startsWith("/") ? [] : folder.split("/").filter((p) => p !== "");
-  for (const part of href.split("/")) {
-    if (part === "" || part === ".") {
-      continue;
-    }
-    if (part === "..") {
-      if (parts.length === 0) {
-        return null;
-      }
-      parts.pop();
-    } else {
-      parts.push(decodeURIComponentSafe(part));
-    }
-  }
-  if (parts.length === 0) {
+  const start = href.startsWith("/") ? [] : folder.split("/").filter((p) => p !== "");
+  const parts = walk(start, href.split("/"));
+  if (parts === null || parts.length === 0) {
     return null;
   }
   return `${absolute ? "/" : ""}${parts.join("/")}`;
+}
+
+/** Not a scheme, `//host`, a fragment or empty: a path. */
+function isBeside(href: string): boolean {
+  return href !== "" && !/^[a-z][a-z0-9+.-]*:/iu.test(href) && !href.startsWith("//");
+}
+
+/** `parts` after stepping through `steps`; null when `..` leaves the root. */
+function walk(parts: readonly string[], steps: readonly string[]): string[] | null {
+  const out = [...parts];
+  for (const step of steps) {
+    if (step === "..") {
+      if (out.pop() === undefined) {
+        return null;
+      }
+    } else if (step !== "" && step !== ".") {
+      out.push(decodeURIComponentSafe(step));
+    }
+  }
+  return out;
 }
 
 function decodeURIComponentSafe(part: string): string {
@@ -102,7 +110,7 @@ function decodeURIComponentSafe(part: string): string {
 }
 
 /** A file as a `data:` URL. */
-export function asDataUrl(file: ReadFile): string {
+function asDataUrl(file: ReadFile): string {
   if (file.base64 !== undefined) {
     return `data:${file.mime || "application/octet-stream"};base64,${file.base64}`;
   }
@@ -110,7 +118,7 @@ export function asDataUrl(file: ReadFile): string {
 }
 
 /** Puts the page's policy first in its head. */
-export function withPolicy(doc: Document): void {
+function withPolicy(doc: Document): void {
   const meta = doc.createElement("meta");
   meta.setAttribute("http-equiv", "Content-Security-Policy");
   meta.setAttribute("content", PAGE_POLICY);
@@ -141,41 +149,37 @@ export async function inlinePage(html: string, path: string, read: Reader | null
     }
     return pending;
   };
-  const work: Promise<void>[] = [];
-  for (const link of Array.from(doc.querySelectorAll("link[href]"))) {
-    const rel = (link.getAttribute("rel") ?? "").toLowerCase();
-    if (!rel.split(/\s+/u).includes("stylesheet")) {
-      continue;
+  const inlineStyle = async (link: Element): Promise<void> => {
+    const file = await fetchFile(link.getAttribute("href"));
+    if (file?.text === undefined) {
+      link.remove();
+      return;
     }
-    work.push(
-      fetchFile(link.getAttribute("href")).then((file) => {
-        if (file?.text === undefined) {
-          link.remove();
-          return;
-        }
-        const style = doc.createElement("style");
-        style.textContent = file.text;
-        link.replaceWith(style);
-      }),
-    );
-  }
-  for (const script of Array.from(doc.querySelectorAll("script[src]"))) {
-    work.push(
-      fetchFile(script.getAttribute("src")).then((file) => {
-        script.removeAttribute("src");
-        script.textContent = file?.text ?? "";
-      }),
-    );
-  }
-  for (const media of Array.from(doc.querySelectorAll("img[src], source[src], video[src], audio[src]"))) {
-    work.push(
-      fetchFile(media.getAttribute("src")).then((file) => {
-        if (file !== null) {
-          media.setAttribute("src", asDataUrl(file));
-        }
-      }),
-    );
-  }
+    const style = doc.createElement("style");
+    style.textContent = file.text;
+    link.replaceWith(style);
+  };
+  const inlineScript = async (script: Element): Promise<void> => {
+    const file = await fetchFile(script.getAttribute("src"));
+    script.removeAttribute("src");
+    script.textContent = file?.text ?? "";
+  };
+  const inlineMedia = async (media: Element): Promise<void> => {
+    const file = await fetchFile(media.getAttribute("src"));
+    if (file !== null) {
+      media.setAttribute("src", asDataUrl(file));
+    }
+  };
+  const stylesheets = Array.from(doc.querySelectorAll("link[href]")).filter((link) =>
+    (link.getAttribute("rel") ?? "").toLowerCase().split(/\s+/u).includes("stylesheet"),
+  );
+  const work: Promise<void>[] = [
+    ...stylesheets.map(inlineStyle),
+    ...Array.from(doc.querySelectorAll("script[src]")).map(inlineScript),
+    ...Array.from(doc.querySelectorAll("img[src], source[src], video[src], audio[src]")).map(
+      inlineMedia,
+    ),
+  ];
   await Promise.all(work);
   withPolicy(doc);
   return `<!doctype html>\n${doc.documentElement.outerHTML}`;

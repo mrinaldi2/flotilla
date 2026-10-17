@@ -22,7 +22,13 @@ describe("a card's documents", () => {
     expect(resolve("", "../escape.css")).toBeNull();
     expect(resolve("/home/a/bot/workspace", "out/s.css")).toBe("/home/a/bot/workspace/out/s.css");
     expect(resolve("/home/a/bot", "/etc/passwd")).toBeNull();
-    for (const outside of ["https://cdn.example/x.js", "//cdn.example/x.js", "data:image/png;base64,AA", "#top", ""]) {
+    for (const outside of [
+      "https://cdn.example/x.js",
+      "//cdn.example/x.js",
+      "data:image/png;base64,AA",
+      "#top",
+      "",
+    ]) {
       expect(resolve("r", outside)).toBeNull();
     }
   });

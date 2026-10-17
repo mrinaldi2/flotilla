@@ -91,16 +91,22 @@ function PageView(props: {
     let live = true;
     const read = async (at: string): Promise<FileBody> =>
       (await client.request({ type: "read_file", bot_id: botId, path: at }, "file")).file;
-    void inlinePage(file.text ?? "", path, read).then((next) => {
+    const load = async (): Promise<void> => {
+      const next = await inlinePage(file.text ?? "", path, read);
       if (live) {
         setPage(next);
       }
-    });
+    };
+    void load();
     return () => {
       live = false;
     };
   }, [file, client, botId, path]);
-  return page === null ? <div className="files-empty">Loading…</div> : <SandboxedPage page={page} title={file.name} />;
+  return page === null ? (
+    <div className="files-empty">Loading…</div>
+  ) : (
+    <SandboxedPage page={page} title={file.name} />
+  );
 }
 
 function FileBodyView({

@@ -12,13 +12,23 @@ function attached(name: string, mime: string, text: string) {
     case: "attachment",
     value: create(AttachmentChunkSchema, { offset: 0n, data, total: BigInt(data.length), mime }),
   }));
-  const attachment = create(ItemAttachmentSchema, { id: "at-1", kind: "file", name, mime, bytes: BigInt(data.length) });
+  const attachment = create(ItemAttachmentSchema, {
+    id: "at-1",
+    kind: "file",
+    name,
+    mime,
+    bytes: BigInt(data.length),
+  });
   return { client, attachment };
 }
 
 describe("a card's documents in the viewer (0.20.0)", () => {
   it("reads an attached Markdown file as formatted text", async () => {
-    const { client, attachment } = attached("SPEC.md", "text/markdown", "# The spec\n\nIt **works**.");
+    const { client, attachment } = attached(
+      "SPEC.md",
+      "text/markdown",
+      "# The spec\n\nIt **works**.",
+    );
     render(<AttachmentViewer api={client} attachment={attachment} onClose={vi.fn<() => void>()} />);
     expect(await screen.findByRole("heading", { name: "The spec" })).toBeInTheDocument();
   });
@@ -35,19 +45,34 @@ describe("a card's documents in the viewer (0.20.0)", () => {
 
   it("reads a linked artifact page with its stylesheet beside it", async () => {
     const files: Record<string, { mime: string; text: string }> = {
-      "reports/run/index.html": { mime: "text/html", text: '<link rel="stylesheet" href="s.css"><p>Run</p>' },
+      "reports/run/index.html": {
+        mime: "text/html",
+        text: '<link rel="stylesheet" href="s.css"><p>Run</p>',
+      },
       "reports/run/s.css": { mime: "text/css", text: "p{color:teal}" },
     };
-    const readArtifact = vi.fn(async (path: string) => {
-      const file = files[path];
-      if (file === undefined) {
-        throw new Error(path);
-      }
-      return file;
+    const readArtifact = vi.fn<(path: string) => Promise<{ mime: string; text: string }>>(
+      async (path) => {
+        const file = files[path];
+        if (file === undefined) {
+          throw new Error(path);
+        }
+        return file;
+      },
+    );
+    const attachment = create(ItemAttachmentSchema, {
+      id: "at-2",
+      kind: "doc",
+      name: "Run report",
+      path: "reports/run/index.html",
     });
-    const attachment = create(ItemAttachmentSchema, { id: "at-2", kind: "doc", name: "Run report", path: "reports/run/index.html" });
     render(
-      <AttachmentViewer api={boardsClient()} attachment={attachment} readArtifact={readArtifact} onClose={vi.fn<() => void>()} />,
+      <AttachmentViewer
+        api={boardsClient()}
+        attachment={attachment}
+        readArtifact={readArtifact}
+        onClose={vi.fn<() => void>()}
+      />,
     );
     const frame = await screen.findByTitle("Run report");
     expect(frame.getAttribute("srcdoc")).toContain("p{color:teal}");
@@ -55,8 +80,19 @@ describe("a card's documents in the viewer (0.20.0)", () => {
   });
 
   it("says where to read a linked document it can't reach", async () => {
-    const attachment = create(ItemAttachmentSchema, { id: "at-3", kind: "doc", name: "Spec", path: "specs/a.md" });
-    render(<AttachmentViewer api={boardsClient()} attachment={attachment} onClose={vi.fn<() => void>()} />);
+    const attachment = create(ItemAttachmentSchema, {
+      id: "at-3",
+      kind: "doc",
+      name: "Spec",
+      path: "specs/a.md",
+    });
+    render(
+      <AttachmentViewer
+        api={boardsClient()}
+        attachment={attachment}
+        onClose={vi.fn<() => void>()}
+      />,
+    );
     expect(await screen.findByText(/computer that keeps its board/)).toBeInTheDocument();
   });
 });
