@@ -76,5 +76,6 @@ describe("+ New item", () => {
     dialog(new FakeDaemon(), false);
     expect(screen.getByRole("radio", { name: /Feature/ })).toBeChecked();
     expect(screen.queryByText(/created in the Plan/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Passes Research first/)).not.toBeInTheDocument();
   });
 });

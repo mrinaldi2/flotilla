@@ -30,9 +30,10 @@ interface NewItemDialogProps {
   readonly onCancel: () => void;
 }
 
-/** The card types, each with what it is for. */
+/** The card types, each with what it is for on a 0.21 service. */
 function TypeChoices(props: {
   readonly types: readonly ItemType[];
+  readonly hints: boolean;
   readonly type: ItemType;
   readonly onType: (type: ItemType) => void;
 }): ReactElement {
@@ -40,7 +41,7 @@ function TypeChoices(props: {
     <fieldset className="new-item-types">
       <legend className="field-label">Type</legend>
       {props.types.map((t) => (
-        <label key={t} className="settings-radio new-item-type">
+        <label key={t} className={props.hints ? "settings-radio new-item-type" : "settings-radio"}>
           <input
             type="radio"
             name="new-item-type"
@@ -49,7 +50,7 @@ function TypeChoices(props: {
           />
           <span>
             {`${typeLabel(t).glyph} ${typeLabel(t).word}`}
-            {typeHint(t) === "" ? null : <span className="field-hint">{typeHint(t)}</span>}
+            {props.hints ? <span className="field-hint">{typeHint(t)}</span> : null}
           </span>
         </label>
       ))}
@@ -86,6 +87,7 @@ function BelongsTo(props: {
 
 export default function NewItemDialog(props: NewItemDialogProps): ReactElement {
   const [title, setTitle] = useState("");
+  const v2 = props.api.capabilities.includes(ITEM_TYPES_V2);
   const types = typesFor(props.api.capabilities);
   const [type, setType] = useState<ItemType>(types[0] ?? ItemType.TASK);
   const options = nodeOptions(props.planNodes ?? [], props.board?.id);
@@ -138,9 +140,9 @@ export default function NewItemDialog(props: NewItemDialogProps): ReactElement {
           <span className="field-label">Title</span>
           <input type="text" value={title} autoFocus onChange={(e) => setTitle(e.target.value)} />
         </label>
-        <TypeChoices types={types} type={type} onType={setType} />
+        <TypeChoices types={types} hints={v2} type={type} onType={setType} />
         <BelongsTo options={options} node={node} onNode={setPicked} />
-        {props.api.capabilities.includes(ITEM_TYPES_V2) ? (
+        {v2 ? (
           <p className="new-item-note">
             Looking for Feature or Epic? Features and epics are created in the Plan, through their
             parent&apos;s approved document.
