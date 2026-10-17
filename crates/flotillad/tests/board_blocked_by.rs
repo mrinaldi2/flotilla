@@ -28,6 +28,7 @@ async fn a_card_stacked_on_one_in_verify_goes_to_ready() {
                 labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &["it works".to_string()],
+                plan_node_id: None,
             },
             &Actor::User,
         )

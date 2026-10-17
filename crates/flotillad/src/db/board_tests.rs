@@ -45,6 +45,7 @@ pub(super) fn new_item<'a>(project_id: &'a str, title: &'a str) -> NewItem<'a> {
         labels: &[],
         parent_id: None,
         acceptance_criteria: &[],
+        plan_node_id: None,
     }
 }
 
@@ -153,6 +154,7 @@ fn items_take_sequential_ids_and_rank_last_in_the_inbox() {
         .create_item(
             &NewItem {
                 acceptance_criteria: &criteria,
+                plan_node_id: None,
                 ..new_item(&p, "Board")
             },
             &OWNER,
@@ -333,6 +335,7 @@ fn cards_flag_blocked_and_count_criteria() {
         .create_item(
             &NewItem {
                 acceptance_criteria: &criteria,
+                plan_node_id: None,
                 ..new_item(&p, "Board")
             },
             &OWNER,

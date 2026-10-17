@@ -38,6 +38,8 @@ pub struct NewItem<'a> {
     pub labels: &'a [String],
     pub parent_id: Option<&'a str>,
     pub acceptance_criteria: &'a [String],
+    /// The plan node it belongs to (0.21.0).
+    pub plan_node_id: Option<&'a str>,
 }
 
 /// One history entry, written inside the caller's transaction.
@@ -75,7 +77,7 @@ pub(super) fn record(
 const ITEM_COLUMNS: &str = "id, seq, type, title, description, size, priority, rank, \
      column_key, category, blocked_by, blocked_reason, blocked_since, assignee, parent_id, \
      release_id, labels, created_by, created_at, updated_at, state_entered_at, done_at, version, \
-     board_id, state";
+     board_id, state, plan_node_id";
 
 pub(super) fn item_in(conn: &Connection, id: &str) -> rusqlite::Result<Option<Item>> {
     let Some(mut item) = conn
@@ -116,6 +118,7 @@ pub(super) fn item_in(conn: &Connection, id: &str) -> rusqlite::Result<Option<It
                     done_at: r.get::<_, Option<String>>(21)?.map(parse_at),
                     version: r.get(22)?,
                     state: from_text(r.get(24)?)?,
+                    plan_node_id: r.get(25)?,
                     acceptance_criteria: Vec::new(),
                     people: Vec::new(),
                     verifications: Vec::new(),
@@ -229,9 +232,9 @@ impl BoardTx<'_> {
                 "INSERT INTO item(id, project_id, seq, type, title, description, size,
                                   priority, rank, column_key, category, labels, parent_id,
                                   created_by, created_at, updated_at, state_entered_at, board_id,
-                                  state)
+                                  state, plan_node_id)
                  VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, '{}', ?11, ?12, ?13, ?14, ?14, ?14,
-                         ?15, ?16)",
+                         ?15, ?16, ?17)",
                 to_text(&ColumnCategory::Inbox)
             ),
             params![
@@ -250,7 +253,8 @@ impl BoardTx<'_> {
                 actor.as_stored(),
                 at,
                 board.id,
-                if draft { "draft" } else { "live" }
+                if draft { "draft" } else { "live" },
+                new.plan_node_id
             ],
         )?;
         for (idx, text) in new.acceptance_criteria.iter().enumerate() {

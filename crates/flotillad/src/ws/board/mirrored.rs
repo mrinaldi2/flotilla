@@ -51,7 +51,14 @@ impl Conn {
             })
             .filter_map(|card| m::ItemCard::try_from(card).ok())
             .collect();
-        Some(query_cards(r, cards))
+        // The mirror holds no plan: the nodes asked for, as they are.
+        let nodes = (!r.plan_node_ids.is_empty()).then(|| {
+            r.plan_node_ids
+                .iter()
+                .cloned()
+                .collect::<std::collections::HashSet<_>>()
+        });
+        Some(query_cards(r, cards, nodes.as_ref()))
     }
 
     /// The project and home of the mirrored board a request about one item

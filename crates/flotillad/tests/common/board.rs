@@ -169,6 +169,7 @@ pub fn new_item(db: &Db, project: &str, title: &str, priority: Priority) -> (Str
                 labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &Actor::User,
         )

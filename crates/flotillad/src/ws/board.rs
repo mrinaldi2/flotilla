@@ -25,6 +25,7 @@ mod enable;
 mod forward;
 mod item_edits;
 mod mirrored;
+mod plan;
 mod reads;
 mod structure;
 
@@ -195,9 +196,8 @@ impl Conn {
             | Request::ItemDiscard(_)
             | Request::ItemDraftChanges(_)
             | Request::ItemDraftUndo(_)) => self.draft_request(req)?,
-            // The plan (0.21.0 #43): the contract is here, the daemon serves
-            // it from a later step, advertised as `plan_v1`.
-            Request::PlanGet(_)
+            // The plan (0.21.0 #43, `plan_v1`).
+            req @ (Request::PlanGet(_)
             | Request::PlanNodeGet(_)
             | Request::PlanEnable(_)
             | Request::PlanCreate(_)
@@ -207,12 +207,7 @@ impl Conn {
             | Request::PlanRule(_)
             | Request::PlanResearchSkip(_)
             | Request::PlanDrop(_)
-            | Request::PlanDocRead(_) => {
-                return Err(refuse(
-                    "unsupported",
-                    "this daemon does not serve the plan yet (capability plan_v1)",
-                ))
-            }
+            | Request::PlanDocRead(_)) => self.plan_request(req)?,
         }))
     }
 
@@ -294,6 +289,15 @@ async fn forward(
 }
 
 fn push(change: &BoardChange) -> c::BoardPush {
+    if let Some(node) = change.plan.as_deref() {
+        return c::BoardPush {
+            push: Some(c::board_push::Push::PlanChange(c::PlanChange {
+                project_id: change.project_id.clone(),
+                node: Some(node.clone().into()),
+                actor: change.actor.clone(),
+            })),
+        };
+    }
     let kind = match change.kind {
         ChangeKind::ItemUpserted => c::BoardEventKind::ItemUpserted,
         ChangeKind::ItemMoved => c::BoardEventKind::ItemMoved,
@@ -301,6 +305,8 @@ fn push(change: &BoardChange) -> c::BoardPush {
         ChangeKind::ColumnsChanged => c::BoardEventKind::ColumnsChanged,
         ChangeKind::SettingsChanged => c::BoardEventKind::SettingsChanged,
         ChangeKind::DraftChanged => c::BoardEventKind::DraftChanged,
+        // Carries its node, so it went out above.
+        ChangeKind::PlanChanged => c::BoardEventKind::SettingsChanged,
     };
     event(c::BoardEvent {
         project_id: change.project_id.clone(),

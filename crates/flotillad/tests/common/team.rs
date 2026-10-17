@@ -39,6 +39,7 @@ pub fn item(pair: &Pair, project: &str, column: &str, assignee: Option<&str>) ->
                 labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &OWNER,
         )

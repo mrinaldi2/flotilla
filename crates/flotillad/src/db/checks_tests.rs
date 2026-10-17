@@ -126,6 +126,7 @@ fn only_a_heads_author_or_pusher_wrote_it() {
                 labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &Actor::User,
         )

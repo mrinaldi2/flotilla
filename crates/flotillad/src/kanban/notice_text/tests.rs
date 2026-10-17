@@ -78,6 +78,7 @@ fn item(column: &BoardColumn) -> Item {
         done_at: None,
         version: 1,
         state: ItemState::Live,
+        plan_node_id: None,
     }
 }
 

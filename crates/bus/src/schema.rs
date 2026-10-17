@@ -30,6 +30,7 @@ mod owner_actions;
 mod owner_messages;
 mod peers;
 mod permissions;
+mod plan;
 mod platform_labels;
 mod prs;
 mod quiesce;
@@ -75,6 +76,7 @@ use permissions::{
     MIGRATION_PERMISSIONS, MIGRATION_PERMISSION_EXTRAS_PR_MERGE,
     MIGRATION_PERMISSION_EXTRAS_QUIESCE, MIGRATION_PERMISSION_EXTRAS_RELEASE_MAIN,
 };
+use plan::MIGRATION_PLAN;
 use platform_labels::MIGRATION_PLATFORM_LABELS;
 use prs::MIGRATION_PR_CORE;
 use quiesce::MIGRATION_QUIESCE;
@@ -165,6 +167,7 @@ pub const MIGRATIONS: &[&str] = &[
     // What a project is for, in the owner's words (0.20.0): told to its bots.
     "ALTER TABLE project ADD COLUMN description TEXT NOT NULL DEFAULT '';",
     MIGRATION_CARD_TYPES,
+    MIGRATION_PLAN,
 ];
 
 #[cfg(test)]

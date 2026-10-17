@@ -47,6 +47,7 @@ pub mod owner_threads;
 pub mod paths;
 pub mod peer;
 mod permissions;
+pub mod plan;
 pub mod pr_cli;
 pub mod project_roles;
 pub mod project_trash;

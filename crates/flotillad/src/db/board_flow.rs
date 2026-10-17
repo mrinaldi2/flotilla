@@ -98,65 +98,89 @@ impl Db {
     ) -> anyhow::Result<Board> {
         let mut conn = self.lock();
         let tx = conn.transaction()?;
-        anyhow::ensure!(
-            !boards_in(&tx, project_id)?.is_empty(),
-            "this project has no board yet"
-        );
-        let key = free_key(&tx, key)?;
-        let id = uuid::Uuid::new_v4().to_string();
-        let at = ts(now());
-        let columns = preset.columns();
-        let taken = |k: &str| -> rusqlite::Result<bool> {
-            tx.query_row(
-                "SELECT EXISTS(SELECT 1 FROM board_column WHERE project_id = ?1 AND key = ?2)",
-                params![project_id, k],
-                |r| r.get(0),
-            )
-        };
-        let mut keys = BTreeMap::new();
-        for c in &columns {
-            let plain = c.key.to_string();
-            let mapped = if taken(&plain)? {
-                format!("{}-{plain}", key.to_lowercase())
-            } else {
-                plain.clone()
-            };
-            keys.insert(plain, mapped);
-        }
-        let rename = |k: &String| keys.get(k).cloned().unwrap_or_else(|| k.clone());
-        let automations: BTreeMap<String, String> = preset
-            .automations()
-            .iter()
-            .map(|(fact, col)| (fact.clone(), rename(col)))
-            .collect();
-        let ord: u32 = tx.query_row(
-            "SELECT coalesce(max(ord), 0) + 1 FROM board WHERE project_id = ?1",
-            params![project_id],
-            |r| r.get(0),
-        )?;
-        tx.execute(
-            "INSERT INTO board(id, project_id, name, key, ord, flow, automations, created_at,
-                               updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)",
-            params![
-                id,
-                project_id,
-                name,
-                key,
-                ord,
-                to_text(&preset.flow()),
-                serde_json::to_string(&automations)?,
-                at
-            ],
-        )?;
-        let next_ord: u32 = tx.query_row(
-            "SELECT coalesce(max(ord), 0) + 1 FROM board_column WHERE project_id = ?1",
-            params![project_id],
-            |r| r.get(0),
-        )?;
-        insert_columns(&tx, project_id, &id, &Start::of(preset), next_ord, &rename)?;
-        let board = board_in(&tx, &id)?.expect("just inserted");
+        let board = create_board_in(&tx, project_id, name, key, preset)?;
         tx.commit()?;
         Ok(board)
     }
+}
+
+impl BoardTx<'_> {
+    /// [`Db::create_board`] inside this transaction: an initiative's board
+    /// is made with its plan node (0.21.0).
+    pub fn create_board(
+        &self,
+        project_id: &str,
+        name: &str,
+        key: &str,
+        preset: Preset,
+    ) -> anyhow::Result<Board> {
+        create_board_in(self.conn, project_id, name, key, preset)
+    }
+}
+
+fn create_board_in(
+    tx: &rusqlite::Connection,
+    project_id: &str,
+    name: &str,
+    key: &str,
+    preset: Preset,
+) -> anyhow::Result<Board> {
+    anyhow::ensure!(
+        !boards_in(tx, project_id)?.is_empty(),
+        "this project has no board yet"
+    );
+    let key = free_key(tx, key)?;
+    let id = uuid::Uuid::new_v4().to_string();
+    let at = ts(now());
+    let columns = preset.columns();
+    let taken = |k: &str| -> rusqlite::Result<bool> {
+        tx.query_row(
+            "SELECT EXISTS(SELECT 1 FROM board_column WHERE project_id = ?1 AND key = ?2)",
+            params![project_id, k],
+            |r| r.get(0),
+        )
+    };
+    let mut keys = BTreeMap::new();
+    for c in &columns {
+        let plain = c.key.to_string();
+        let mapped = if taken(&plain)? {
+            format!("{}-{plain}", key.to_lowercase())
+        } else {
+            plain.clone()
+        };
+        keys.insert(plain, mapped);
+    }
+    let rename = |k: &String| keys.get(k).cloned().unwrap_or_else(|| k.clone());
+    let automations: BTreeMap<String, String> = preset
+        .automations()
+        .iter()
+        .map(|(fact, col)| (fact.clone(), rename(col)))
+        .collect();
+    let ord: u32 = tx.query_row(
+        "SELECT coalesce(max(ord), 0) + 1 FROM board WHERE project_id = ?1",
+        params![project_id],
+        |r| r.get(0),
+    )?;
+    tx.execute(
+        "INSERT INTO board(id, project_id, name, key, ord, flow, automations, created_at,
+                           updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)",
+        params![
+            id,
+            project_id,
+            name,
+            key,
+            ord,
+            to_text(&preset.flow()),
+            serde_json::to_string(&automations)?,
+            at
+        ],
+    )?;
+    let next_ord: u32 = tx.query_row(
+        "SELECT coalesce(max(ord), 0) + 1 FROM board_column WHERE project_id = ?1",
+        params![project_id],
+        |r| r.get(0),
+    )?;
+    insert_columns(tx, project_id, &id, &Start::of(preset), next_ord, &rename)?;
+    Ok(board_in(tx, &id)?.expect("just inserted"))
 }

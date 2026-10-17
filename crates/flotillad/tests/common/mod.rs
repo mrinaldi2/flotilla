@@ -31,6 +31,7 @@ pub mod keeper;
 pub mod peer_board;
 pub mod peer_files;
 pub mod peers;
+pub mod plan;
 pub mod pr_wire;
 pub mod proxy;
 pub mod prs;

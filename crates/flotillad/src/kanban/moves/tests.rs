@@ -63,6 +63,7 @@ impl Board {
                     labels: &["platform:daemon".to_string()],
                     parent_id: None,
                     acceptance_criteria: &ac,
+                    plan_node_id: None,
                 },
                 &Actor::User,
             )

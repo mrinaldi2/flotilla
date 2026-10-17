@@ -26,6 +26,7 @@ pub use overview::LatestSummary;
 pub use owner_messages::{OwnerProof, OwnerVia};
 pub use owner_threads::{Asked, OwnerQuestion};
 pub use peer_grants::{GrantEnd, GrantRuling, PeerGrant};
+pub use plan_gates::Spike;
 pub use quiesce::{NewQuiesce, Quiesce};
 pub use release_cut::{LeaveOut, NewCut};
 pub use release_life::NewReleaseTest;
@@ -107,6 +108,10 @@ mod owner_threads_tests;
 mod peer_grants;
 mod peers;
 mod permissions;
+mod plan;
+mod plan_gates;
+#[cfg(test)]
+mod plan_tests;
 #[cfg(test)]
 mod platform_labels_migration_tests;
 mod pr_changes;

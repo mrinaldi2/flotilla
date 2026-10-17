@@ -69,6 +69,7 @@ fn item(db: &Db, p: &str, title: &str, item_type: ItemType, labels: &[&str]) -> 
             labels: &labels,
             parent_id: None,
             acceptance_criteria: &ac,
+            plan_node_id: None,
         },
         &OWNER,
     )
