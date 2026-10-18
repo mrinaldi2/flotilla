@@ -14,14 +14,14 @@ use flotillad::db::NewAttachment;
 use flotillad::kanban::model::{AttachmentKind, LinkKind, Priority};
 use serde_json::{json, Value};
 
-struct Setup {
-    d: TestDaemon,
-    c: WsClient,
-    project_id: String,
-    artifacts: PathBuf,
+pub(crate) struct Setup {
+    pub d: TestDaemon,
+    pub c: WsClient,
+    pub project_id: String,
+    pub artifacts: PathBuf,
 }
 
-async fn setup() -> Setup {
+pub(crate) async fn setup() -> Setup {
     let d = spawn_daemon().await;
     let mut c = WsClient::connect(&d).await;
     let created = c
@@ -41,7 +41,7 @@ async fn setup() -> Setup {
     }
 }
 
-fn write(artifacts: &Path, rel: &str) {
+pub(crate) fn write(artifacts: &Path, rel: &str) {
     let path = rel
         .split('/')
         .fold(artifacts.to_path_buf(), |p, s| p.join(s));
@@ -50,7 +50,7 @@ fn write(artifacts: &Path, rel: &str) {
 }
 
 /// Attaches the artifact at `rel` to `item` as a doc, as `item_attach` does.
-fn attach_doc(s: &Setup, item: &str, rel: &str) -> String {
+pub(crate) fn attach_doc(s: &Setup, item: &str, rel: &str) -> String {
     let new = NewAttachment {
         item_id: item,
         kind: AttachmentKind::Doc,
@@ -75,7 +75,7 @@ fn link(s: &Setup, item: &str, target: &str, label: Option<&str>) {
         .unwrap();
 }
 
-async fn list(s: &mut Setup, group: Option<&str>) -> Vec<Value> {
+pub(crate) async fn list(s: &mut Setup, group: Option<&str>) -> Vec<Value> {
     let mut req = json!({"type": "list_artifacts", "project_id": s.project_id});
     if let Some(group) = group {
         req["group"] = json!(group);
@@ -87,7 +87,7 @@ async fn list(s: &mut Setup, group: Option<&str>) -> Vec<Value> {
     files
 }
 
-fn rels(files: &[Value]) -> Vec<&str> {
+pub(crate) fn rels(files: &[Value]) -> Vec<&str> {
     files.iter().map(|a| a["rel"].as_str().unwrap()).collect()
 }
 

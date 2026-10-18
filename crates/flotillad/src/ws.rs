@@ -19,6 +19,7 @@ use crate::app::{AppState, DAEMON_VERSION, PROTOCOL_VERSION};
 use crate::browser::view::Viewer;
 
 mod admin;
+mod artifacts;
 mod binary;
 mod board;
 pub(crate) use board::{home_snapshot, peer_read};

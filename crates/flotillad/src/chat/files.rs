@@ -36,6 +36,8 @@ pub struct Artifact {
     pub group: &'static str,
     /// The live cards that attach or link it; see `super::artifact_groups`.
     pub used_by: Vec<String>,
+    /// The owner kept it (`artifact_keep`): it leaves the tidy-up list.
+    pub kept: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -142,26 +144,38 @@ fn walk(root: &Path, dir: &Path, depth: usize, group: Option<Group>, out: &mut V
             .strip_prefix(root)
             .map(|r| r.to_string_lossy().replace('\\', "/"))
             .unwrap_or_else(|_| name.clone());
-        let in_group = Group::of(&rel);
-        if group.is_some_and(|g| g != in_group) {
+        if group.is_some_and(|g| g != Group::of(&rel)) {
             continue;
         }
-        let mime = mime_for(&name);
-        out.push(Artifact {
-            path: path.display().to_string(),
-            rel,
-            title: (mime == "text/markdown").then(|| heading(&path)).flatten(),
-            created_by: None,
-            group: in_group.as_str(),
-            used_by: Vec::new(),
-            name,
-            size: meta.len(),
-            modified: meta
-                .modified()
-                .ok()
-                .map(|t| chrono::DateTime::<chrono::Utc>::from(t).to_rfc3339()),
-            mime,
-        });
+        out.push(artifact(&path, rel, name, &meta));
+    }
+}
+
+/// The file at `rel` in the artifacts folder `root`, as a listing shows it.
+pub fn artifact_at(root: &Path, rel: &str) -> Option<Artifact> {
+    let path = rel.split('/').fold(root.to_path_buf(), |p, s| p.join(s));
+    let meta = path.metadata().ok().filter(|m| m.is_file())?;
+    let name = rel.rsplit('/').next().unwrap_or(rel).to_string();
+    Some(artifact(&path, rel.to_string(), name, &meta))
+}
+
+fn artifact(path: &Path, rel: String, name: String, meta: &std::fs::Metadata) -> Artifact {
+    let mime = mime_for(&name);
+    Artifact {
+        path: path.display().to_string(),
+        title: (mime == "text/markdown").then(|| heading(path)).flatten(),
+        created_by: None,
+        group: Group::of(&rel).as_str(),
+        rel,
+        used_by: Vec::new(),
+        kept: false,
+        name,
+        size: meta.len(),
+        modified: meta
+            .modified()
+            .ok()
+            .map(|t| chrono::DateTime::<chrono::Utc>::from(t).to_rfc3339()),
+        mime,
     }
 }
 

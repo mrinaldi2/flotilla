@@ -116,7 +116,7 @@ impl Conn {
             let listing = files::list_artifacts(app, &project, group);
             let mut page = files::page(listing, before.as_deref(), limit);
             crate::chat::authors::attribute(app, &project, &mut page.artifacts);
-            artifact_groups::fill_used_by(app, &project, &mut page.artifacts);
+            artifact_groups::fill_uses(app, &project, &mut page.artifacts);
             Ok(json!({
                 "type": "artifacts", "project_id": project_id, "artifacts": page.artifacts,
                 "has_more": page.next_before.is_some(), "next_before": page.next_before
@@ -250,7 +250,7 @@ fn live_bot(app: &AppState, bot_id: &str) -> anyhow::Result<bus::Bot> {
         .ok_or_else(|| anyhow::anyhow!("bot not found"))
 }
 
-fn live_project(app: &AppState, project_id: &str) -> anyhow::Result<bus::Project> {
+pub(super) fn live_project(app: &AppState, project_id: &str) -> anyhow::Result<bus::Project> {
     app.db
         .get_project(project_id)?
         .filter(|p| p.deleted_at.is_none())

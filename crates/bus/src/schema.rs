@@ -9,6 +9,7 @@
 //! one-line move. `MIGRATIONS.lock` records each entry's hash, and a test
 //! fails if a merged entry changes, disappears or is empty.
 
+mod artifacts;
 mod base;
 mod board;
 mod board_flow;
@@ -42,6 +43,7 @@ mod roles;
 mod trash;
 mod workers;
 
+use artifacts::MIGRATION_ARTIFACT_KEEP;
 use base::MIGRATION_1;
 use board::MIGRATION_BOARD_CORE;
 use board_flow::MIGRATION_BOARD_FLOW;
@@ -168,6 +170,7 @@ pub const MIGRATIONS: &[&str] = &[
     "ALTER TABLE project ADD COLUMN description TEXT NOT NULL DEFAULT '';",
     MIGRATION_CARD_TYPES,
     MIGRATION_PLAN,
+    MIGRATION_ARTIFACT_KEEP,
 ];
 
 #[cfg(test)]

@@ -114,16 +114,38 @@ pub fn used_by(app: &AppState, project: &Project) -> anyhow::Result<BTreeMap<Str
     Ok(by_path)
 }
 
-/// Fills each artifact's `used_by`. A listing still answers when the board
-/// can't be read: its files just show no cards.
-pub fn fill_used_by(app: &AppState, project: &Project, artifacts: &mut [Artifact]) {
+/// Fills each artifact's `used_by` and `kept`. A listing still answers when
+/// the board can't be read: its files just show no cards.
+pub fn fill_uses(app: &AppState, project: &Project, artifacts: &mut [Artifact]) {
     let by_path = used_by(app, project).unwrap_or_else(|e| {
         tracing::warn!(project = %project.id, "artifact uses: {e:#}");
         BTreeMap::new()
     });
+    let kept = app.db.kept_artifacts(&project.id).unwrap_or_else(|e| {
+        tracing::warn!(project = %project.id, "kept artifacts: {e:#}");
+        Default::default()
+    });
     for artifact in artifacts {
         artifact.used_by = by_path.get(&artifact.rel).cloned().unwrap_or_default();
+        artifact.kept = kept.contains(&artifact.rel);
     }
+}
+
+/// An owner request's artifact path, `/`-separated: relative to the
+/// artifacts folder, in a folder a listing shows (not `items/` or a dot
+/// folder) and never climbing out of it.
+pub fn listed_rel(path: &str) -> anyhow::Result<String> {
+    let rel = rel_in(&[], path)
+        .filter(|rel| {
+            !rel.split('/').any(|p| p.starts_with('.'))
+                && rel.split_once('/').is_none_or(|(top, _)| top != ITEMS_DIR)
+        })
+        .ok_or_else(|| {
+            crate::decisions::invalid(format!(
+                "{path} is not a listed artifact: name it by its path in the artifacts folder"
+            ))
+        })?;
+    Ok(rel)
 }
 
 #[cfg(test)]

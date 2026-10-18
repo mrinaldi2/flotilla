@@ -231,7 +231,9 @@ Codes: `auth_failed`, `unsupported_version`, `not_found`, `invalid_request`,
 | `list_chat` | `bot_id, before?` (a turn id), `limit?` (default 30, max 200) | `chat` (`turns` oldest first, `has_more`) |
 | `get_chat_step` | `bot_id, item_id` | `chat_step` (`detail`: `input?, command?, output?, diff?, content?`) |
 | `get_chat_image` | `bot_id, image_id` | `file` |
-| `list_artifacts` | `project_id, group?` (`shared`, `uploads` or `checks`; 0.22.0, `artifacts_v2`), `limit?` (default: every file; max 500), `before?` | `artifacts` (newest first, then by path), `has_more`, `next_before`. Card attachments' storage (`items/`) and dot folders are never listed. Each artifact carries `group` and `used_by` (0.22.0; see [artifacts by kind](#questions-and-artifacts-0220)). Each artifact may carry `created_by: { bot_id?, name, avatar, machine?, via }`, who made the file: `wrote`/`edited` (the first bot whose file tools touched it, by its transcript), `command` (the first bot whose command named its path), `upload` (the owner, from the app; no `bot_id`), or `sent` (a bot on another machine, with a result). Absent when it cannot be told. Pass a page's `next_before` as `before` for the next page; it is `null` once `has_more` is false. The cursor is the last file's modified time and path, so a file edited between pages moves to the top rather than shifting the rest. Without `limit` every file comes back, as older clients expect. |
+| `list_artifacts` | `project_id, group?` (`shared`, `uploads` or `checks`; 0.22.0, `artifacts_v2`), `limit?` (default: every file; max 500), `before?` | `artifacts` (newest first, then by path), `has_more`, `next_before`. Card attachments' storage (`items/`) and dot folders are never listed. Each artifact carries `group`, `used_by` and `kept` (0.22.0; see [artifacts by kind](#questions-and-artifacts-0220)). Each artifact may carry `created_by: { bot_id?, name, avatar, machine?, via }`, who made the file: `wrote`/`edited` (the first bot whose file tools touched it, by its transcript), `command` (the first bot whose command named its path), `upload` (the owner, from the app; no `bot_id`), or `sent` (a bot on another machine, with a result). Absent when it cannot be told. Pass a page's `next_before` as `before` for the next page; it is `null` once `has_more` is false. The cursor is the last file's modified time and path, so a file edited between pages moves to the top rather than shifting the rest. Without `limit` every file comes back, as older clients expect. |
+| `artifact_keep` | `project_id, path, keep` (0.22.0, `artifacts_v2`) | `artifact_kept`: `project_id` and `artifact` (as listed, with `kept`); `approve` grant. See [artifacts by kind](#questions-and-artifacts-0220) |
+| `artifact_trash` | `project_id, path` (0.22.0, `artifacts_v2`) | `artifact_trashed`: `project_id`, `path`, `bin` (`os` or `folder`); `approve` grant. A file a live card uses is refused (`conflict`). See [artifacts by kind](#questions-and-artifacts-0220) |
 | `write_artifact` | `project_id, name, base64` (one chunk, up to ~512 KB), `upload_id?` (from the first chunk's reply), `last` | `upload` (`upload_id`, and `path` once the last chunk is in); `control` grant. Files land in the project's `artifacts/uploads/`, up to 16 MB |
 | `list_tasks` | `bot_id, state?` (`open` \| `closed`), `limit?` (default 100) | `tasks`: newest first, only open or only closed (`done`, `cancelled`, `expired`) ones when `state` says which, so a client can load every open task and a page of closed ones; each with `state`, `role` (`assigned` \| `delegated`), `other` (`name`, `machine?`), `request` and `result?` as previews (`request_truncated`, `result_truncated` say when they were cut), `deadline_at?`, `closed_at?` |
 | `get_task` | `bot_id, task_id` | `task`: the same shape with the whole request and result |
@@ -1317,6 +1319,21 @@ advertises its capability.
     `item_detach`), its `name` the link's label or the file's name,
     `added_by` and `at` the link's. Only a link to a file in the artifacts
     folder is shown, and one already attached as a doc is shown once.
+  - **Tidy-up.** The tidy-up list is the `shared` files with no `used_by`
+    that aren't `kept`, the same on every client. The owner keeps, attaches
+    or removes each; nothing is removed on its own. Both requests take
+    `path` relative to the artifacts folder, need the `approve` grant, and
+    refuse (`invalid_request`) a path in `items/`, a dot folder, or outside
+    the folder; a missing file is `not_found`.
+    - `artifact_keep {project_id, path, keep}` marks the file kept (or
+      takes the mark off), stored on the daemon, and answers
+      `artifact_kept {project_id, artifact}`. Each listed artifact carries
+      `kept`.
+    - `artifact_trash {project_id, path}` moves the file to the OS trash
+      (the trash folder in the daemon's home where there is none) and
+      answers `artifact_trashed {project_id, path, bin}`. A file a live
+      card still attaches or links is refused with `conflict`, naming the
+      cards.
   - **Older daemons.** Without `artifacts_v2`, `group` is ignored and
     everything is listed, as before.
 

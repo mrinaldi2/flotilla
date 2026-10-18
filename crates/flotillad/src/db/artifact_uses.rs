@@ -1,9 +1,14 @@
 //! Which live cards use which artifacts (0.22.0): attachments kept in the
-//! artifacts folder and `artifact` links, as stored.
+//! artifacts folder and `artifact` links, as stored; and the loose artifacts
+//! the owner kept.
 
+use std::collections::HashSet;
+
+use bus::now;
 use rusqlite::params;
 
 use super::board_tx::BoardTx;
+use super::{ts, Db};
 
 impl BoardTx<'_> {
     /// `(card, artifact)` for each artifact a live card of the project
@@ -25,6 +30,40 @@ impl BoardTx<'_> {
                  ORDER BY 1",
             )?
             .query_map(params![project_id], |r| Ok((r.get(1)?, r.get(2)?)))?
+            .collect::<Result<_, _>>()?;
+        Ok(rows)
+    }
+}
+
+impl Db {
+    /// Marks the artifact at `path` kept (`keep`) or not; true when that
+    /// changed anything.
+    pub fn set_artifact_kept(
+        &self,
+        project_id: &str,
+        path: &str,
+        keep: bool,
+    ) -> anyhow::Result<bool> {
+        let changed = if keep {
+            self.lock().execute(
+                "INSERT OR IGNORE INTO artifact_keep(project_id, path, kept_at) VALUES (?1, ?2, ?3)",
+                params![project_id, path, ts(now())],
+            )?
+        } else {
+            self.lock().execute(
+                "DELETE FROM artifact_keep WHERE project_id = ?1 AND path = ?2",
+                params![project_id, path],
+            )?
+        };
+        Ok(changed > 0)
+    }
+
+    /// The paths of the project's artifacts the owner kept.
+    pub fn kept_artifacts(&self, project_id: &str) -> anyhow::Result<HashSet<String>> {
+        let conn = self.lock();
+        let rows = conn
+            .prepare("SELECT path FROM artifact_keep WHERE project_id = ?1")?
+            .query_map(params![project_id], |r| r.get(0))?
             .collect::<Result<_, _>>()?;
         Ok(rows)
     }

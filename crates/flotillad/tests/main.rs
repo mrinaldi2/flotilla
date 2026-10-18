@@ -16,6 +16,7 @@ mod agent_browser;
 mod agent_conversations;
 mod approval_rows;
 mod artifact_groups;
+mod artifact_tidy;
 mod board_ac;
 mod board_activity;
 mod board_attachment_store;
