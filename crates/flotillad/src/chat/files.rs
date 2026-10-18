@@ -9,6 +9,7 @@ use base64::Engine;
 use bus::{Bot, Project};
 use serde::Serialize;
 
+use super::artifact_groups::{Group, ITEMS_DIR};
 use crate::app::AppState;
 
 /// Largest file `read_file` returns whole.
@@ -31,6 +32,10 @@ pub struct Artifact {
     /// Who made the file, when that can be told; see `super::authors`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created_by: Option<super::authors::Creator>,
+    /// What kind of file it is (0.22.0, `artifacts_v2`).
+    pub group: &'static str,
+    /// The live cards that attach or link it; see `super::artifact_groups`.
+    pub used_by: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -56,10 +61,12 @@ pub fn artifacts_dir(app: &AppState, project: &Project) -> PathBuf {
     crate::paths::artifacts_dir(&app.cfg, &project.dir_name)
 }
 
-pub fn list_artifacts(app: &AppState, project: &Project) -> Vec<Artifact> {
+/// The project's artifacts, only `group`'s when one is named. Card
+/// attachments' storage (`items/`) and dot folders are never listed.
+pub fn list_artifacts(app: &AppState, project: &Project, group: Option<Group>) -> Vec<Artifact> {
     let root = artifacts_dir(app, project);
     let mut out = Vec::new();
-    walk(&root, &root, 0, &mut out);
+    walk(&root, &root, 0, group, &mut out);
     out.sort_by(|a, b| order(a).cmp(&order(b)));
     out
 }
@@ -107,7 +114,7 @@ pub fn page(listing: Vec<Artifact>, before: Option<&str>, limit: Option<usize>) 
     }
 }
 
-fn walk(root: &Path, dir: &Path, depth: usize, out: &mut Vec<Artifact>) {
+fn walk(root: &Path, dir: &Path, depth: usize, group: Option<Group>, out: &mut Vec<Artifact>) {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
     };
@@ -124,8 +131,10 @@ fn walk(root: &Path, dir: &Path, depth: usize, out: &mut Vec<Artifact>) {
             continue;
         };
         if meta.is_dir() {
-            if depth < MAX_DEPTH {
-                walk(root, &path, depth + 1, out);
+            let skipped =
+                depth == 0 && (name == ITEMS_DIR || group.is_some_and(|g| !g.in_folder(&name)));
+            if depth < MAX_DEPTH && !skipped {
+                walk(root, &path, depth + 1, group, out);
             }
             continue;
         }
@@ -133,12 +142,18 @@ fn walk(root: &Path, dir: &Path, depth: usize, out: &mut Vec<Artifact>) {
             .strip_prefix(root)
             .map(|r| r.to_string_lossy().replace('\\', "/"))
             .unwrap_or_else(|_| name.clone());
+        let in_group = Group::of(&rel);
+        if group.is_some_and(|g| g != in_group) {
+            continue;
+        }
         let mime = mime_for(&name);
         out.push(Artifact {
             path: path.display().to_string(),
             rel,
             title: (mime == "text/markdown").then(|| heading(&path)).flatten(),
             created_by: None,
+            group: in_group.as_str(),
+            used_by: Vec::new(),
             name,
             size: meta.len(),
             modified: meta

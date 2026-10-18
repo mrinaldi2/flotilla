@@ -40,6 +40,7 @@ pub use trash_orders::TrashOrder;
 pub use workers::NewWorker;
 
 pub mod agent_talk;
+mod artifact_uses;
 mod board;
 mod board_admin;
 mod board_attachments;

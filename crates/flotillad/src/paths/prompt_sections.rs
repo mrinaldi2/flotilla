@@ -275,8 +275,8 @@ pub(super) fn owner_reporting() -> &'static str {
      The owner reads the project's dashboard, the board, releases, meeting\n\
      summaries and the main chat. They don't read your terminal, so anything\n\
      the owner should see must land in one of those:\n\n\
-     - Work results go on the card: `item_comment`, and every artifact linked\n\
-     to the card. A release carries its changes in `changelog` and\n\
+     - Work results go on the card: `item_comment`, and every file you made\n\
+     for it attached (`item_attach`). A release carries its changes in `changelog` and\n\
      `how_to_test`, written for the owner, not for bots. A meeting ends with\n\
      its `summary`.\n\
      - Something the owner should read now that has no card (a heads-up, a\n\

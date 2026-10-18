@@ -7,7 +7,6 @@ use bus::Capability;
 
 use super::{not_found, refuse, Refusal};
 use crate::app::AppState;
-use crate::kanban::attachments::to_wire;
 use crate::kanban::contract::MapError;
 use crate::kanban::model as m;
 use crate::kanban::moves;
@@ -162,11 +161,7 @@ pub(super) fn item_detail(app: &AppState, id: &str) -> Result<c::ItemDetail, Ref
                 comments: t.item_comments(id)?.into_iter().map(Into::into).collect(),
                 history: history.into_iter().map(Into::into).collect(),
                 history_next: next,
-                attachments: t
-                    .attachments(id)?
-                    .into_iter()
-                    .map(|a| to_wire(a, &artifacts))
-                    .collect(),
+                attachments: crate::kanban::linked_docs::documents(t, id, &artifacts)?,
                 invited: t.invited(id)?,
                 // Filled with the questions (0.22.0, step 2).
                 questions: Vec::new(),

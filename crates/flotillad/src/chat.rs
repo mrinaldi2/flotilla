@@ -8,6 +8,7 @@ use crate::app::AppState;
 use crate::events::Push;
 
 mod answers;
+pub mod artifact_groups;
 pub mod authors;
 mod browser_steps;
 mod builder;
