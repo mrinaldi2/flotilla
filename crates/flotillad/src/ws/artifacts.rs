@@ -70,7 +70,10 @@ impl Conn {
             crate::chat::authors::attribute(app, &project, &mut one);
             artifact_groups::fill_uses(app, &project, &mut one);
             let [artifact] = one;
-            Ok(json!({ "type": "artifact_kept", "project_id": project_id, "artifact": artifact }))
+            Ok(json!({
+                "type": "artifact_kept", "project_id": project_id, "path": rel, "kept": keep,
+                "artifact": artifact
+            }))
         });
         Ok(())
     }

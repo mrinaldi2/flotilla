@@ -31,6 +31,8 @@ async fn the_owner_keeps_a_loose_artifact_and_takes_the_mark_off() {
     .await;
     assert_eq!(reply["type"], "artifact_kept", "{reply}");
     assert_eq!(reply["project_id"], json!(project_id));
+    assert_eq!(reply["path"], "notes.md");
+    assert_eq!(reply["kept"], true);
     assert_eq!(reply["artifact"]["rel"], "notes.md");
     assert_eq!(reply["artifact"]["kept"], true);
     assert_eq!(reply["artifact"]["group"], "shared");
