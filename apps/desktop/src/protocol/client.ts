@@ -32,9 +32,8 @@ const MIN_BACKOFF_MS = 500;
 const MAX_BACKOFF_MS = 15_000;
 
 /**
- * Handshake rejections a retry cannot clear, mapped to the status that says
- * what has to change instead. The app keeps reconnecting so it heals the
- * moment compatible credentials or versions are installed.
+ * Handshake rejections a retry cannot clear, mapped to the status that says what has to
+ * change. The app keeps reconnecting so it heals once compatible ones are installed.
  */
 const HANDSHAKE_VERDICTS: Readonly<Record<string, ConnectionStatus>> = {
   auth_failed: "auth_failed",
@@ -66,6 +65,7 @@ export class DaemonClient implements DaemonApi {
   private readonly pending = new Map<string, PendingRequest>();
   private readonly binary = new BinaryChannel();
   readonly onPlanChange: BinaryChannel["onPlan"] = (handler) => this.binary.onPlan(handler);
+  readonly onQuestionChange: BinaryChannel["onQuestion"] = (h) => this.binary.onQuestion(h);
   private readonly cursors = new Map<string, number>();
   private readonly statusListeners = new Set<(status: ConnectionStatus) => void>();
   private readonly handlers: PushHandlerSets = emptyHandlers();

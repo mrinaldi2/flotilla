@@ -11,6 +11,7 @@ import {
   isFinished,
   kindWords,
   nodeMeta,
+  questionsMeta,
   stageChip,
   stageWord,
 } from "./planText";
@@ -61,7 +62,8 @@ function rowName(node: PlanNode): string {
       ? stageWord(node.stage)
       : `${stageWord(node.gate.stage)} waiting for you`;
   const meta = nodeMeta(node);
-  return `${kindWords(node.kind).word}: ${node.title}, ${stage}${meta === "" ? "" : `, ${meta}`}`;
+  const asks = questionsMeta(node);
+  return `${kindWords(node.kind).word}: ${node.title}, ${stage}${meta === "" ? "" : `, ${meta}`}${asks === "" ? "" : `, ${asks}`}`;
 }
 
 function Row(props: {
@@ -88,6 +90,14 @@ function Row(props: {
         </span>
         <span className="plan-row-title">{node.title}</span>
         {meta === "" ? null : <span className="plan-row-meta">{meta}</span>}
+        {node.questionsOpen > 0 ? (
+          <span
+            className={`plan-row-questions${node.questionsBlocking > 0 ? " plan-row-questions-blocking" : ""}`}
+            aria-hidden="true"
+          >
+            ?{node.questionsOpen}
+          </span>
+        ) : null}
         <span className={`plan-chip plan-chip-${chip.tone}`}>{chip.text}</span>
       </button>
     </li>

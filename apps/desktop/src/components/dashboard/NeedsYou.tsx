@@ -6,8 +6,8 @@
 // call, so they sit below, folded away, each opening its item too. Off the
 // board's home, the home's rows say what to do there.
 
-import { useCallback, useId, useState } from "react";
-import type { MouseEvent, ReactElement } from "react";
+import { useCallback, useState } from "react";
+import type { ReactElement } from "react";
 import type { NeedsYou as Row, WipOverride } from "../../protocol/dashboard";
 import type { Release } from "../../protocol/releases";
 import CardLink from "../cards/CardLink";
@@ -19,6 +19,8 @@ import type { ConfirmOutcome } from "./useConfirmRelayed";
 import { attentionRow } from "./attentionRows";
 import type { AttentionActions } from "./attentionRows";
 import { elsewhereKind, elsewhereRow } from "./elsewhereRows";
+import type { RowViewProps } from "./DashRow";
+import RowView from "./DashRow";
 
 interface NeedsYouActions extends AttentionActions {
   readonly onReview: (release: Release) => void;
@@ -76,6 +78,8 @@ const ORDER: Readonly<Record<Shown["kind"], number>> = {
   card_waiting: 4,
   // A plan gate is the owner's ruling, weighed like a decision (0.21.0).
   plan_gate: 1,
+  // A bot's question (0.22.0); a blocking one ranks as a gate (`orderOf`).
+  question: 4,
   cleanup_held: 6,
   routines_without_card: 7,
   // Sorted by the kind it carries (`orderOf`); this is the fallback.
@@ -84,6 +88,9 @@ const ORDER: Readonly<Record<Shown["kind"], number>> = {
 
 /** A row's place; another computer's row sorts as the kind it carries. */
 function orderOf(r: Shown): number {
+  if (r.kind === "question" && r.question_blocking === true) {
+    return ORDER.plan_gate;
+  }
   if (r.kind !== "elsewhere") {
     return ORDER[r.kind];
   }
@@ -97,61 +104,6 @@ function actorName(actor: string, botName: (id: string) => string): string {
     return botName(actor.slice(4));
   }
   return "You";
-}
-
-export interface RowViewProps {
-  readonly glyph: string;
-  readonly tone?: "bad" | "you";
-  readonly title: ReactElement | string;
-  readonly meta: string;
-  /** None for a row that only informs: its fix is outside the app. */
-  readonly action?: string;
-  /** Starts with `action`, then says what it acts on (UX-010). */
-  readonly label?: string;
-  readonly onAction?: (event: MouseEvent<HTMLButtonElement>) => void;
-  readonly disabled?: boolean;
-  /** Why the action is unavailable, as its tooltip. */
-  readonly why?: string;
-  /** What to do on the computer that holds it: "Review", "Answer", "Confirm". */
-  readonly verb: string;
-  /** Off-home: the computer to act on it, in place of the button. */
-  readonly elsewhere?: string;
-}
-
-function RowView(props: RowViewProps): ReactElement {
-  const there = useId();
-  const away = props.elsewhere !== undefined;
-  return (
-    <li className="dash-row" aria-describedby={away ? there : undefined}>
-      <span className={`dash-glyph dash-tone-${props.tone ?? "plain"}`} aria-hidden="true">
-        {props.glyph}
-      </span>
-      <div className="dash-row-text">
-        <div className="dash-row-title">
-          {typeof props.title === "string" ? <LinkedText text={props.title} /> : props.title}
-        </div>
-        <div className="dash-row-meta">
-          <LinkedText text={props.meta} />
-        </div>
-      </div>
-      {away ? (
-        <span id={there} className="dash-elsewhere">
-          {props.verb} on {props.elsewhere}
-        </span>
-      ) : props.action === undefined ? null : (
-        <button
-          type="button"
-          className="btn btn-small"
-          aria-label={props.label}
-          title={props.why}
-          disabled={props.disabled}
-          onClick={props.onAction}
-        >
-          {props.action}
-        </button>
-      )}
-    </li>
-  );
 }
 
 function releaseRow(

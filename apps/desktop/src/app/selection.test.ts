@@ -28,4 +28,14 @@ describe("a project window's tabs", () => {
     expect(moreTabs({ prs: false, plan: true })).toEqual(["conversations", "settings"]);
     expect(isProjectTab("plan")).toBe(true);
   });
+
+  it("puts Questions under More once the service serves them", () => {
+    expect(moreTabs({ prs: true, plan: true, questions: true })).toEqual([
+      "meetings",
+      "questions",
+      "conversations",
+      "settings",
+    ]);
+    expect(primaryTabs({ prs: true, plan: true, questions: true })).not.toContain("questions");
+  });
 });

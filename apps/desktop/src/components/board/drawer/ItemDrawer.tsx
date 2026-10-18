@@ -10,7 +10,7 @@
 // draft is headed "Draft · not on the board yet", with Discuss with a bot,
 // its changes to review, and Discard / Finalize at the foot.
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { escapeIsTheDrawers } from "../../../hooks/useDrawerEscape";
 import type { DaemonApi } from "../../../protocol/api";
@@ -23,9 +23,15 @@ import type {
   ItemCard,
 } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { ColumnKind, ItemType } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { Question } from "../../../protocol/gen/flotilla/board/v1/questions_pb";
 import type { ItemDetail } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
+import { ARTIFACTS_V2 } from "../../../protocol/chat";
 import { COLUMN_RESEARCH } from "../../../protocol/plan";
+import { questionsOn } from "../../../protocol/questions";
+import QuestionsSection from "../../questions/QuestionsSection";
+import { useLiveQuestions } from "../../questions/useLiveQuestions";
 import AttachmentsSection from "../attachments/AttachmentsSection";
+import { documentsOf } from "../attachments/attachments";
 import AttachmentViewer from "../attachments/AttachmentViewer";
 import { useArtifactReader } from "../attachments/DocumentPreview";
 import ItemMarkdown from "../attachments/ItemMarkdown";
@@ -51,6 +57,8 @@ export interface ItemDrawerProps {
   readonly canComment: boolean;
   /** Whether it may edit the item and its attachments; as `canComment` when unset. */
   readonly canEdit?: boolean;
+  /** Whether it may answer the card's questions (the approve grant, 0.22.0). */
+  readonly canAnswer?: boolean;
   readonly onClose: () => void;
   /** Opens "Move to…" below the button; absent where moves aren't offered. */
   readonly onMove?: (anchor: Anchor) => void;
@@ -192,6 +200,28 @@ function DesignParts(props: {
   );
 }
 
+const NO_QUESTIONS: readonly Question[] = [];
+
+/** The card's questions for the owner (0.22.0), kept live by the project's pushes. */
+function CardQuestions(props: {
+  readonly api: BoardApi;
+  readonly itemId: string;
+  readonly questions: readonly Question[];
+  readonly canAnswer: boolean;
+}): ReactElement | null {
+  const { itemId } = props;
+  const belongs = useCallback((q: Question): boolean => q.itemId === itemId, [itemId]);
+  const live = useLiveQuestions(props.api, props.questions, belongs);
+  return (
+    <QuestionsSection
+      api={props.api}
+      questions={live.questions}
+      canAnswer={props.canAnswer}
+      onChanged={live.apply}
+    />
+  );
+}
+
 /** The item's attachments under its description, and a draft's "Discuss with a bot". */
 function OverviewAfter(props: {
   readonly api: BoardApi;
@@ -200,6 +230,8 @@ function OverviewAfter(props: {
   readonly attachments: readonly ItemAttachment[];
   readonly files: ReturnType<typeof useDrawerAttachments>;
   readonly editable: boolean;
+  /** With `artifacts_v2`: its attachments and artifact links as one Documents list. */
+  readonly documents: boolean;
   readonly onOpen: (attachment: ItemAttachment) => void;
 }): ReactElement {
   return (
@@ -208,7 +240,8 @@ function OverviewAfter(props: {
       {props.design}
       <AttachmentsSection
         api={props.api}
-        attachments={props.attachments}
+        attachments={props.documents ? documentsOf(props.attachments) : props.attachments}
+        title={props.documents ? "Documents" : undefined}
         uploads={props.files.uploads}
         actions={props.editable ? props.files.actions : undefined}
         onOpen={props.onOpen}
@@ -231,6 +264,7 @@ function DrawerMain(props: { readonly p: ItemDrawerProps; readonly d: DrawerStat
       </p>
     );
   }
+  const documents = p.api.capabilities.includes(ARTIFACTS_V2);
   const overview = {
     description: (
       <ItemMarkdown
@@ -248,6 +282,7 @@ function DrawerMain(props: { readonly p: ItemDrawerProps; readonly d: DrawerStat
         attachments={detail.attachments}
         files={d.files}
         editable={d.editable}
+        documents={documents}
         onOpen={d.setViewing}
       />
     ),
@@ -273,6 +308,17 @@ function DrawerMain(props: { readonly p: ItemDrawerProps; readonly d: DrawerStat
       onPasteImage={d.files.pasteImage}
       onComment={p.canComment ? d.state.comment : undefined}
       initialTab={p.initialTab}
+      documents={documents}
+      questions={
+        questionsOn(p.api) ? (
+          <CardQuestions
+            api={p.api}
+            itemId={p.itemId}
+            questions={detail.questions.length === 0 ? NO_QUESTIONS : detail.questions}
+            canAnswer={p.canAnswer ?? p.canComment}
+          />
+        ) : null
+      }
     >
       {p.children}
     </DrawerBody>

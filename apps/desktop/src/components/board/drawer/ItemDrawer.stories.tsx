@@ -5,6 +5,10 @@ import { DASH_BOTS } from "../../../test/dashboardFixtures";
 import { DRAWER_NOW, drawerCheck, itemDetail } from "../../../test/drawerFixtures";
 import { FakeDaemon } from "../../../test/fakeDaemon";
 import { bot } from "../../../test/fixtures";
+import { create } from "@bufbuild/protobuf";
+import { ARTIFACTS_V2 } from "../../../protocol/chat";
+import { ItemAttachmentSchema } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { licensingQuestion, questionsClient, saintsQuestion } from "../../../test/questionFixtures";
 import ItemDrawer from "./ItemDrawer";
 
 const BOTS = [...DASH_BOTS, bot({ id: "lead", name: "Team Lead" })];
@@ -37,3 +41,39 @@ export const Overview: Story = () => <Drawer tab="overview" />;
 export const Links: Story = () => <Drawer tab="links" />;
 /** Comments and moves as one timeline, with the owner's composer. */
 export const Activity: Story = () => <Drawer tab="activity" />;
+
+function QuestionsDrawer(): ReactElement {
+  const detail = itemDetail();
+  detail.questions = [saintsQuestion({ itemId: "H-017" }), licensingQuestion()];
+  detail.attachments = [
+    create(ItemAttachmentSchema, {
+      id: "link:H-017-change.md",
+      itemId: "H-017",
+      kind: "doc",
+      name: "change note",
+      path: "H-017-change.md",
+    }),
+  ];
+  const client = questionsClient()
+    .onBoard("itemGet", () => ({ case: "item", value: detail }))
+    .onBoard("itemMoveCheck", () => ({ case: "moveCheck", value: drawerCheck() }));
+  client.capabilities = [...client.capabilities, ARTIFACTS_V2];
+  return (
+    <div className="board-view" style={{ height: 1100 }}>
+      <ItemDrawer
+        api={client}
+        itemId="H-017"
+        columns={defaultColumns()}
+        bots={BOTS}
+        canComment
+        canAnswer
+        onClose={noop}
+        onMove={noop}
+        now={() => DRAWER_NOW}
+      />
+    </div>
+  );
+}
+
+/** The card's questions above its tabs (0.22.0), and its artifact link as a document. */
+export const Questions: Story = () => <QuestionsDrawer />;

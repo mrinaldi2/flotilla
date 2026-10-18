@@ -51,6 +51,11 @@ function assigneeName(card: ItemCard, assignee: Bot | undefined): string | null 
 }
 
 /** "H-017, Feature, Board and dashboard, Doing, Desktop Dev, blocked, stale" (H-018 §3.2). */
+/** "1 question for you", "3 questions for you" (0.22.0). */
+function questionsWord(open: number): string {
+  return `${open} ${open === 1 ? "question" : "questions"} for you`;
+}
+
 function cardAccessibleName(
   card: ItemCard,
   columnName: string,
@@ -71,6 +76,9 @@ function cardAccessibleName(
   }
   if (stuck !== null) {
     parts.push(stuck);
+  }
+  if (card.questionsOpen > 0) {
+    parts.push(questionsWord(card.questionsOpen));
   }
   return parts.join(", ");
 }
@@ -110,6 +118,11 @@ function CardLines({
           <span aria-hidden="true">⚠</span> {stuck}
         </div>
       )}
+      {card.questionsOpen > 0 ? (
+        <div className="board-card-line board-card-questions">
+          <span aria-hidden="true">?</span> {questionsWord(card.questionsOpen)}
+        </div>
+      ) : null}
       {card.acTotal > 0 ? (
         <div className="board-card-line board-card-meta">
           <span aria-hidden="true">☑</span> {card.acChecked}/{card.acTotal} AC

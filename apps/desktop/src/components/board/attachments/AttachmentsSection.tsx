@@ -23,6 +23,8 @@ export interface AttachmentActions {
 interface AttachmentsSectionProps {
   readonly api: BoardApi;
   readonly attachments: readonly ItemAttachment[];
+  /** "Attachments" unless the section is the card's one Documents list (0.22.0). */
+  readonly title?: string;
   readonly uploads: readonly UploadState[];
   /** Absent for a connection that can't change the item. */
   readonly actions?: AttachmentActions;
@@ -131,8 +133,10 @@ export default function AttachmentsSection(props: AttachmentsSectionProps): Reac
   const attached = attachments.filter((a) => !a.removed);
   const detached = attachments.filter((a) => a.removed);
   return (
-    <section className="drawer-attachments" aria-label="Attachments">
-      <h4>Attachments {attached.length > 0 ? attached.length : ""}</h4>
+    <section className="drawer-attachments" aria-label={props.title ?? "Attachments"}>
+      <h4>
+        {props.title ?? "Attachments"} {attached.length > 0 ? attached.length : ""}
+      </h4>
       {attached.length === 0 && uploads.length === 0 ? (
         <p className="drawer-empty">
           {actions === undefined ? "None." : "None yet. Drop a file on the drawer, or add one."}

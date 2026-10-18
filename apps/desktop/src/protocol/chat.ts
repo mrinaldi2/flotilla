@@ -131,6 +131,9 @@ export interface Artifact {
   readonly used_by?: readonly string[];
 }
 
+/** Artifacts by kind (0.22.0): `group` and `used_by`, and a card's artifact links as documents. */
+export const ARTIFACTS_V2 = "artifacts_v2";
+
 /** `shared`: no single card owns it; `uploads`: the owner's; `checks`: check logs. */
 export type ArtifactGroup = "shared" | "uploads" | "checks";
 

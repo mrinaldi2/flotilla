@@ -6,9 +6,11 @@
 import type { AttentionRowJson } from "../../protocol/dashboard";
 import type { CleanupRowActions } from "./cleanupRows";
 import { cleanupRow } from "./cleanupRows";
-import type { RowViewProps } from "./NeedsYou";
+import type { RowViewProps } from "./DashRow";
 import type { PrRowActions } from "./prRows";
 import { prRow } from "./prRows";
+import type { QuestionAnswering } from "./questionRows";
+import { questionRow } from "./questionRows";
 
 export interface AttentionActions extends PrRowActions, CleanupRowActions {
   readonly onOpenBot?: (botId: string) => void;
@@ -19,6 +21,8 @@ export interface AttentionActions extends PrRowActions, CleanupRowActions {
   readonly onItem: (itemId: string, opener: HTMLElement) => void;
   /** Opens a plan node on its gate, in the Plan tab (0.21.0). */
   readonly onOpenPlanGate?: (nodeId: string) => void;
+  /** Answers a question row in place (0.22.0); absent without `questions_v1`. */
+  readonly questions?: QuestionAnswering;
 }
 
 function botOf(r: AttentionRowJson): string | undefined {
@@ -175,6 +179,8 @@ export function attentionRow(r: AttentionRowJson, a: AttentionActions): RowViewP
       return cardWaiting(r, a);
     case "plan_gate":
       return planGate(r, a);
+    case "question":
+      return questionRow(r, a.questions);
     default:
       return prRow(r, a) ?? cleanupRow(r, a);
   }

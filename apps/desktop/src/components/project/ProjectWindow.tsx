@@ -16,6 +16,8 @@ interface ProjectWindowProps {
   readonly prs?: boolean;
   /** Whether the project's plan is on (0.21.0): the Plan tab shows only then. */
   readonly plan?: boolean;
+  /** Whether the service serves questions (0.22.0): Questions shows under More. */
+  readonly questions?: boolean;
   /** The project's overview row, for what needs the owner and its release. */
   readonly row?: ProjectRow | null;
   /** Back to the projects home; the crumb is hidden without it. */
@@ -70,7 +72,11 @@ function Pills(props: {
  */
 export default function ProjectWindow(props: ProjectWindowProps): ReactElement {
   const { project, botCount, tab, onSelectTab, row } = props;
-  const shown = { prs: props.prs ?? false, plan: props.plan ?? false };
+  const shown = {
+    prs: props.prs ?? false,
+    plan: props.plan ?? false,
+    questions: props.questions ?? false,
+  };
   const tabs = primaryTabs(shown);
   const more = moreTabs(shown);
   useProjectKeys(tabs, onSelectTab);

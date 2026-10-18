@@ -8,6 +8,7 @@ import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
 import type { BoardCall, BoardReply } from "./board";
 import { DaemonError } from "./connection";
 import type { PlanChange } from "./gen/flotilla/board/v1/plan_pb";
+import type { QuestionChange } from "./gen/flotilla/board/v1/questions_pb";
 import type { BoardEvent, BoardPush } from "./gen/flotilla/board/v1/requests_pb";
 import { BoardRequestSchema } from "./gen/flotilla/board/v1/requests_pb";
 import type { PrPush } from "./gen/flotilla/pr/v1/pr_pb";
@@ -40,6 +41,7 @@ export class BinaryChannel {
   private readonly pending = new Map<bigint, Pending>();
   private readonly boardHandlers = new Set<(event: BoardEvent) => void>();
   private readonly planHandlers = new Set<(change: PlanChange) => void>();
+  private readonly questionHandlers = new Set<(change: QuestionChange) => void>();
   private readonly prHandlers = new Set<(push: PrPush) => void>();
 
   async board(ws: WebSocket, reqId: bigint, call: BoardCall): Promise<BoardReply> {
@@ -75,6 +77,13 @@ export class BinaryChannel {
     this.planHandlers.add(handler);
     return () => {
       this.planHandlers.delete(handler);
+    };
+  }
+
+  onQuestion(handler: (change: QuestionChange) => void): () => void {
+    this.questionHandlers.add(handler);
+    return () => {
+      this.questionHandlers.delete(handler);
     };
   }
 
@@ -121,6 +130,10 @@ export class BinaryChannel {
       }
     } else if (push.case === "planChange") {
       for (const handler of this.planHandlers) {
+        handler(push.value);
+      }
+    } else if (push.case === "questionChange") {
+      for (const handler of this.questionHandlers) {
         handler(push.value);
       }
     }

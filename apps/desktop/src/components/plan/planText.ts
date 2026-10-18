@@ -132,6 +132,19 @@ export function nodeMeta(node: PlanNode): string {
   return "";
 }
 
+/** "2 questions for you, 1 holds the gate" (0.22.0); nothing when none is open. */
+export function questionsMeta(node: PlanNode): string {
+  const open = node.questionsOpen;
+  if (open === 0) {
+    return "";
+  }
+  const words = `${open} ${open === 1 ? "question" : "questions"} for you`;
+  const blocking = node.questionsBlocking;
+  return blocking === 0
+    ? words
+    : `${words}, ${blocking} ${blocking === 1 ? "holds" : "hold"} the gate`;
+}
+
 const DOC: Readonly<Record<PlanDocKind, string>> = {
   [PlanDocKind.UNSPECIFIED]: "Document",
   [PlanDocKind.GOAL]: "Goal",

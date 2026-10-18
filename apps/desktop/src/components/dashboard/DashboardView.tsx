@@ -20,6 +20,8 @@ import DashboardItem from "./DashboardItem";
 import DiskWidget from "./DiskWidget";
 import FlowWidget from "./FlowWidget";
 import NeedsYou from "./NeedsYou";
+import { questionsOn } from "../../protocol/questions";
+import type { QuestionAnswering } from "./questionRows";
 import { useConfirmRelayed } from "./useConfirmRelayed";
 import { useDashboard } from "./useDashboard";
 import { useDashboardDrawers } from "./useDashboardDrawers";
@@ -123,6 +125,29 @@ function Loading(props: { readonly error: string | null; readonly onRetry: () =>
   );
 }
 
+/** Questions are the owner's to answer: the approve grant, while connected (0.22.0). */
+function mayAnswer(client: DaemonApi, connected: boolean): boolean {
+  return connected && client.hasGrant("approve");
+}
+
+/** Needs you answers questions in place with `questions_v1` (0.22.0). */
+function questionAnswering(
+  client: DaemonApi,
+  projectId: string,
+  connected: boolean,
+  refresh: () => Promise<void>,
+): QuestionAnswering | undefined {
+  if (!questionsOn(client)) {
+    return undefined;
+  }
+  return {
+    api: client,
+    projectId,
+    canAnswer: mayAnswer(client, connected),
+    onAnswered: () => void refresh(),
+  };
+}
+
 export default function DashboardView(props: DashboardViewProps): ReactElement {
   const { client, project, bots, connected } = props;
   const { dashboard, error, refresh } = useDashboard(client, project.id, connected);
@@ -177,6 +202,7 @@ export default function DashboardView(props: DashboardViewProps): ReactElement {
             onReply={props.onReply}
             onOpenNeedsYou={props.onOpenNeedsYou}
             onOpenPlanGate={props.onOpenPlanGate}
+            questions={questionAnswering(client, project.id, connected, refresh)}
             prs={prs}
             onOpenPr={props.onOpenPr}
             {...cleanupRowActions(cleanup, connected)}
@@ -242,6 +268,7 @@ export default function DashboardView(props: DashboardViewProps): ReactElement {
           itemId={openItem}
           bots={bots}
           canComment={props.canControl}
+          canAnswer={mayAnswer(client, connected)}
           onClose={closeDrawer}
         >
           <OwnerActionList

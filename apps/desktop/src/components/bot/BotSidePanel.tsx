@@ -81,6 +81,7 @@ export default function BotSidePanel(props: BotSidePanelProps): ReactElement {
           connected={connected}
           selected={props.openFile}
           onSelect={props.onOpenFile}
+          canControl={props.canControl}
         />
       ) : null}
     </>
