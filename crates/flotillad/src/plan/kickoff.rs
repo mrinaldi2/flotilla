@@ -102,6 +102,10 @@ fn wanted(t: &BoardTx<'_>, node: &Node) -> anyhow::Result<Option<Card>> {
                 .as_ref()
                 .is_some_and(|r| r.state == super::model::ResearchState::Open) =>
         {
+            let doc = match node.kind {
+                Kind::Initiative => "PRD",
+                _ => "design",
+            };
             Card {
                 item_type: ItemType::Spike,
                 title: format!("Research: {title}"),
@@ -110,20 +114,17 @@ fn wanted(t: &BoardTx<'_>, node: &Node) -> anyhow::Result<Option<Card>> {
                      (playtests, telemetry, references, the code), write the findings as a \
                      Markdown file with \"research\" in its name and attach it to this card \
                      (item_attach with file), so the owner reads it on the card. A copy kept \
-                     in the repository goes under {}. More spikes for {id} (plan_node_id) split the work. Research \
-                     closes once every spike of {id}, this one included, is done with a \
-                     document; then write the {} and submit it.",
-                    if node.kind == Kind::Initiative {
-                        "PRD"
-                    } else {
-                        "design"
-                    },
+                     in the repository goes under {}. More spikes for {id} (plan_node_id) split \
+                     the work. Ask the owner what only they can answer with ask_owner (item_id \
+                     this card, one entry per question, `blocking` for what the {} can't be \
+                     written without); each answer is added to your research document. \
+                     Research closes once every spike of {id}, this one included, is done \
+                     with a document and no blocking question is open; then write the {} and \
+                     submit it.",
+                    doc,
                     path(t, node, Stage::Research)?,
-                    if node.kind == Kind::Initiative {
-                        "PRD"
-                    } else {
-                        "design"
-                    },
+                    doc,
+                    doc,
                 ),
             }
         }

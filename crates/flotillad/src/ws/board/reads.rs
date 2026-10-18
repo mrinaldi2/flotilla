@@ -163,10 +163,13 @@ pub(super) fn item_detail(app: &AppState, id: &str) -> Result<c::ItemDetail, Ref
                 history_next: next,
                 attachments: crate::kanban::linked_docs::documents(t, id, &artifacts)?,
                 invited: t.invited(id)?,
-                // Filled with the questions (0.22.0, step 2).
                 questions: Vec::new(),
             }))
         })?
+        .map(|mut detail| {
+            detail.questions = crate::questions::on(app, Some(id), None).unwrap_or_default();
+            detail
+        })
         .ok_or_else(|| not_found(id))
 }
 

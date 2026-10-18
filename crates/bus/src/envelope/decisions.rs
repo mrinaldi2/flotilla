@@ -186,6 +186,9 @@ mod tests {
             notifications: Vec::new(),
             edited_at: None,
             created_at: now(),
+            item_id: None,
+            plan_node_id: None,
+            blocking: false,
         }
     }
 

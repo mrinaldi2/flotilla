@@ -197,9 +197,8 @@ impl From<m::Node> for c::PlanNode {
             updated_at: stamp(v.updated_at),
             version: v.version,
             rank: v.rank,
-            // Counted with the questions (0.22.0, step 2).
-            questions_open: 0,
-            questions_blocking: 0,
+            questions_open: v.questions_open,
+            questions_blocking: v.questions_blocking,
         }
     }
 }
@@ -283,6 +282,8 @@ impl TryFrom<c::PlanNode> for m::Node {
             gate: v.gate.map(TryInto::try_into).transpose()?,
             cards_total: v.cards_total,
             cards_done: v.cards_done,
+            questions_open: v.questions_open,
+            questions_blocking: v.questions_blocking,
             created_by: v.created_by,
             created_at: at(v.created_at, "PlanNode.created_at")?,
             updated_at: at(v.updated_at, "PlanNode.updated_at")?,
@@ -310,8 +311,7 @@ impl From<super::Detail> for c::PlanNodeDetail {
             node: Some(v.node.into()),
             history: v.history.into_iter().map(Into::into).collect(),
             cards: v.cards.into_iter().map(Into::into).collect(),
-            // Filled with the questions (0.22.0, step 2).
-            questions: Vec::new(),
+            questions: v.questions,
         }
     }
 }

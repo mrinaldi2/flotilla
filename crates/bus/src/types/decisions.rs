@@ -192,6 +192,14 @@ pub struct DecisionView {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub edited_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
+    /// The card and plan node it is about (0.22.0).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub item_id: Option<Id>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub plan_node_id: Option<Id>,
+    /// A question that holds its node's research and gate (0.22.0).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub blocking: bool,
 }
 
 /// Who raised a decision, named rather than just identified — the owner should

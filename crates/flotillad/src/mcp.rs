@@ -33,6 +33,7 @@ mod owner_actions;
 mod owner_threads;
 mod plan;
 mod prs;
+mod questions;
 #[cfg(test)]
 pub(crate) use prs::tool_names as pr_tool_names;
 mod releases;

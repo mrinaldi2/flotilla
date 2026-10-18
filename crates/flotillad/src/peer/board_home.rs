@@ -227,7 +227,7 @@ fn relay(app: &AppState, change: &BoardChange) {
     // the plan (0.21.0), which a linked computer doesn't mirror.
     if matches!(
         change.kind,
-        ChangeKind::DraftChanged | ChangeKind::PlanChanged
+        ChangeKind::DraftChanged | ChangeKind::PlanChanged | ChangeKind::QuestionChanged
     ) {
         return;
     }
@@ -313,6 +313,7 @@ pub(super) fn kind_name(kind: ChangeKind) -> &'static str {
         ChangeKind::SettingsChanged => "settings_changed",
         ChangeKind::DraftChanged => "draft_changed",
         ChangeKind::PlanChanged => "plan_changed",
+        ChangeKind::QuestionChanged => "question_changed",
     }
 }
 

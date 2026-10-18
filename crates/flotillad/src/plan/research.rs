@@ -58,6 +58,10 @@ pub(super) fn close_if_done(
     if still_open(&spikes).is_some() {
         return Ok(false);
     }
+    // A blocking question holds it open until the owner answers (0.22.0).
+    if !t.blocking_questions(&node.id)?.is_empty() {
+        return Ok(false);
+    }
     for spike in &spikes {
         for doc in &spike.docs {
             t.upsert_plan_doc(&node.id, DocKind::Research, doc, Some(&spike.id))?;

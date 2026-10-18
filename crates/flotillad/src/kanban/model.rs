@@ -292,6 +292,8 @@ pub struct ItemCard {
     pub move_block: Option<MoveBlock>,
     /// The plan node it belongs to (0.21.0).
     pub plan_node_id: Option<String>,
+    /// Its open questions for the owner (0.22.0).
+    pub questions_open: u32,
 }
 
 /// What stops a card: its last refused move, or the next column's rules.

@@ -48,6 +48,8 @@ fn node_from_row(r: &rusqlite::Row<'_>) -> rusqlite::Result<Node> {
         gate: None,
         cards_total: 0,
         cards_done: 0,
+        questions_open: 0,
+        questions_blocking: 0,
         rank: r.get(13)?,
         created_by: r.get(14)?,
         created_at: parse_at(r.get(15)?),
@@ -99,6 +101,8 @@ fn fill(conn: &Connection, node: &mut Node) -> anyhow::Result<()> {
         |r| Ok((r.get(0)?, r.get(1)?)),
     )?;
     (node.cards_total, node.cards_done) = (total, done);
+    (node.questions_open, node.questions_blocking) =
+        super::questions::open_on_node(conn, &node.id)?;
     Ok(())
 }
 

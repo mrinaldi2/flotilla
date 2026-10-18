@@ -168,6 +168,8 @@ mod projects_home;
 mod projects_home_peer;
 mod prs;
 mod prs_git_hardening;
+mod questions;
+mod questions_wire;
 mod quiesce;
 mod quiesce_card;
 mod quiesce_install;

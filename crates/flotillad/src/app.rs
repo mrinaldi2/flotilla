@@ -74,6 +74,8 @@ pub const CAPABILITIES: &[&str] = &[
     // in Needs you.
     bus::contract::capability::PLAN_V1,
     bus::contract::capability::ATTENTION_PLAN,
+    // Questions for the owner (0.22.0).
+    bus::contract::capability::QUESTIONS_V1,
     // Artifacts by kind (0.22.0): `list_artifacts` groups and `used_by`,
     // and a card's linked artifacts among its documents.
     bus::contract::capability::ARTIFACTS_V2,
@@ -236,9 +238,9 @@ mod capability_tests {
     use bus::contract::capability;
 
     /// Contract strings the daemon doesn't serve yet: each joins the list
-    /// once it does. Every 0.21 string is served from #43's step 3.
-    /// Contracted for 0.22.0 and served once its daemon steps land.
-    const NOT_SERVED_YET: &[&str] = &[bus::contract::capability::QUESTIONS_V1];
+    /// once it does. Every 0.21 string is served from #43's step 3, and
+    /// every 0.22 one from its daemon steps.
+    const NOT_SERVED_YET: &[&str] = &[];
 
     /// The 0.19, 0.20 and 0.21 board and home additions are all served.
     #[test]

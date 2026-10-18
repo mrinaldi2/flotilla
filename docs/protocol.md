@@ -1283,15 +1283,17 @@ advertises its capability.
     the project. `ItemDetail.questions` and `PlanNodeDetail.questions` (a
     node's own and its cards') list them, open ones first. `ItemCard` and
     `PlanNode` count them in `questions_open`, and `PlanNode` counts the
-    blocking ones in `questions_blocking`.
+    blocking ones in `questions_blocking`. A change pushes the question and
+    its node (`plan_change`), not the card: apps update a card's count from
+    `question_change`.
   - **The plan.** While a blocking question of a node is open, its research
     doesn't close and `plan_submit` is refused with `plan.question_open`.
     An answer on a research spike is written into the spike's research
     document (`written_to`), and a gate submission lists the node's answered
     questions.
   - **Needs you.** `AttentionKind` `QUESTION` (21, weight 1; 3 when
-    blocking), one row per open question, targeting `decision_id` with
-    `item_id` its card, and `question_blocking`. `OWNER_QUESTION` rows stay
+    blocking), one row per open question, targeting `decision_id` (the
+    question's id), with `question_blocking`. `OWNER_QUESTION` rows stay
     for questions asked the older ways (`item_comment {asks_owner}`,
     `message_owner {asks}`).
   - **Older clients.** Older clients see the questions as decisions of kind
