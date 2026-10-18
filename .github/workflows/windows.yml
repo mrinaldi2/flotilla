@@ -11,19 +11,27 @@ permissions:
 
 concurrency:
   group: windows-${{ github.ref }}
-  cancel-in-progress: true
+  # A newer push to a PR supersedes its run; main runs finish, since they
+  # save the caches every PR restores.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+  # Tests tag, commit and revert in throwaway repositories, which needs
+  # an identity; a developer's machine has one, a runner doesn't.
+  GIT_AUTHOR_NAME: CI
+  GIT_AUTHOR_EMAIL: ci@example.invalid
+  GIT_COMMITTER_NAME: CI
+  GIT_COMMITTER_EMAIL: ci@example.invalid
+
+# The jobs run side by side, and the daemon's tests, most of the time, are
+# split across runners. rust-cache keys each job's cache on the job, and only
+# main saves: every PR restores main's, and PR-scoped copies would only crowd
+# it out of the repo's cache quota. A failed test or lint must not throw away
+# the compiled dependencies, so a failed main run saves too.
 jobs:
-  check:
+  lint:
+    name: daemon (fmt, clippy)
     runs-on: windows-2022
-    env:
-      CARGO_BUILD_JOBS: 2
-      # Tests tag, commit and revert in throwaway repositories, which needs
-      # an identity; a developer's machine has one, a runner doesn't.
-      GIT_AUTHOR_NAME: CI
-      GIT_AUTHOR_EMAIL: ci@example.invalid
-      GIT_COMMITTER_NAME: CI
-      GIT_COMMITTER_EMAIL: ci@example.invalid
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -31,26 +39,57 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          # Only main saves: every PR restores main's cache, and PR-scoped
-          # copies would only crowd it out of the repo's cache quota.
           save-if: ${{ github.ref == 'refs/heads/main' }}
-          # A failed test must not throw away the compiled dependencies.
           cache-on-failure: true
-          workspaces: |
-            . -> target
-            apps/desktop/src-tauri -> target
-      - name: Check daemon
+      - name: Lint daemon
         run: |
           cargo fmt --all --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cargo clippy --locked --workspace --all-targets -- -D warnings
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          cargo test --locked --workspace --all-targets --no-fail-fast
-      # tauri-build only needs the sidecar to exist; the shell's tests never run it.
-      - name: Stage debug daemon sidecar
+
+  test:
+    name: daemon tests (${{ matrix.shard }}/${{ strategy.job-total }})
+    runs-on: windows-2022
+    strategy:
+      # One shard's failure must not hide another's.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # The shards build the same thing; one saving is enough.
+          save-if: ${{ github.ref == 'refs/heads/main' && matrix.shard == 1 }}
+          cache-on-failure: true
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-nextest@0.9.146
+      # Every shard builds every test target, as `cargo test --all-targets`
+      # does, and runs a round-robin share of each target's tests.
+      - name: Test daemon
+        run: cargo nextest run --locked --workspace --all-targets --no-fail-fast --partition count:${{ matrix.shard }}/${{ strategy.job-total }}
+
+  shell:
+    name: native shell
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+          cache-on-failure: true
+          workspaces: apps/desktop/src-tauri -> target
+      # tauri-build only needs the sidecar to exist; the shell's tests never
+      # run it, so an empty file stands in for a daemon this job doesn't build.
+      - name: Stage placeholder daemon sidecar
         run: |
           New-Item -ItemType Directory -Force -Path apps/desktop/src-tauri/binaries | Out-Null
-          Copy-Item -LiteralPath target/debug/flotillad.exe -Destination apps/desktop/src-tauri/binaries/flotillad-x86_64-pc-windows-msvc.exe
+          New-Item -ItemType File -Force -Path apps/desktop/src-tauri/binaries/flotillad-x86_64-pc-windows-msvc.exe | Out-Null
       - name: Check native shell
         run: |
           cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --check
