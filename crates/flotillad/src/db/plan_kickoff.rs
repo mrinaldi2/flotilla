@@ -46,6 +46,15 @@ impl BoardTx<'_> {
             .optional()?)
     }
 
+    /// The projects with planning on.
+    pub fn planned_projects(&self) -> anyhow::Result<Vec<String>> {
+        Ok(self
+            .conn
+            .prepare("SELECT project_id FROM plan_settings WHERE enabled = 1")?
+            .query_map([], |r| r.get(0))?
+            .collect::<Result<_, _>>()?)
+    }
+
     /// The node's live cards.
     pub fn plan_node_cards(&self, node_id: &str) -> anyhow::Result<Vec<NodeCard>> {
         let cards = self

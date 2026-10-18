@@ -115,7 +115,11 @@ async fn a_goal_active_before_its_lead_gets_the_card_on_the_next_read() {
         .db
         .set_project_lead(&plan.pid, Some(&plan.lead))
         .unwrap();
-    plan.owner().tree(&plan.pid).unwrap();
+    // The daemon settles every planned project when it starts, as a read
+    // of the plan does.
+    let planned = db.board_read(|t| t.planned_projects()).unwrap();
+    assert_eq!(planned, std::slice::from_ref(&plan.pid));
+    plan.owner().settle(&plan.pid).unwrap();
     let card = plan.kickoff(&goal.id, "Propose ").expect("the kickoff");
     assert_eq!(
         item(&plan, &card).assignee.as_deref(),
