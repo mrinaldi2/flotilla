@@ -124,19 +124,85 @@ describe("artifacts by kind", () => {
   });
 });
 
+function owner(fake: FakeDaemon): FakeDaemon {
+  fake.grants = ["read", "control", "approve"];
+  return fake
+    .onRequest("artifact_keep", (body) => ({
+      type: "artifact_kept",
+      req_id: "2",
+      project_id: "p1",
+      path: body.type === "artifact_keep" ? body.path : "",
+      kept: true,
+    }))
+    .onRequest("artifact_trash", (body) => ({
+      type: "artifact_trashed",
+      req_id: "3",
+      project_id: "p1",
+      path: body.type === "artifact_trash" ? body.path : "",
+    }));
+}
+
+async function openTidy(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await user.click(await screen.findByRole("tab", { name: "Tidy up" }));
+  const row = (await screen.findByText(name)).closest("li");
+  return within(row ?? document.body);
+}
+
 describe("tidy up", () => {
-  it("lists the shared files no card uses, and keeps one on this computer", async () => {
+  it("lists the shared files no card uses and nobody kept, and keeps one", async () => {
     const user = userEvent.setup();
-    show(grouped());
-    await user.click(await screen.findByRole("tab", { name: "Tidy up" }));
-    const loose = await screen.findByText("notes-0917.md");
+    const fake = owner(grouped());
+    show(fake);
+    const row = await openTidy(user, "notes-0917.md");
     expect(screen.queryByText("Saints dataset")).toBeNull();
+    expect(screen.queryByText("style-guide.md")).toBeNull();
     expect(screen.getByText("frames-run3.csv")).toBeInTheDocument();
-    const row = loose.closest("li");
-    await user.click(within(row ?? document.body).getByRole("button", { name: "Keep" }));
-    expect(screen.getByRole("status")).toHaveTextContent("Kept notes-0917.md.");
+    await user.click(row.getByRole("button", { name: "Keep" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Kept notes-0917.md.");
     expect(screen.queryByText("notes-0917.md")).toBeNull();
-    expect(localStorage.getItem("flotilla.artifacts.kept.p1")).toBe('["notes-0917.md"]');
+    expect(fake.requests.map((r) => r.body)).toContainEqual({
+      type: "artifact_keep",
+      project_id: "p1",
+      path: "notes-0917.md",
+      keep: true,
+    });
+    await waitFor(() => expect(lists(fake).length).toBeGreaterThan(1));
+  });
+
+  it("removes a file to the trash only once confirmed", async () => {
+    const user = userEvent.setup();
+    const fake = owner(grouped());
+    show(fake);
+    const row = await openTidy(user, "frames-run3.csv");
+    await user.click(row.getByRole("button", { name: "Remove…" }));
+    const dialog = screen.getByRole("dialog", { name: "Remove frames-run3.csv?" });
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(fake.requests.some((r) => r.body.type === "artifact_trash")).toBe(false);
+    await user.click(row.getByRole("button", { name: "Remove…" }));
+    await user.click(screen.getByRole("button", { name: "Move to trash" }));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Moved frames-run3.csv to the trash.",
+    );
+    expect(fake.requests.map((r) => r.body)).toContainEqual({
+      type: "artifact_trash",
+      project_id: "p1",
+      path: "runs/frames-run3.csv",
+    });
+  });
+
+  it("says why the daemon refused to remove a file", async () => {
+    const user = userEvent.setup();
+    const fake = owner(grouped()).onRequest("artifact_trash", () => {
+      throw new DaemonError("invalid_request", "a live card uses it");
+    });
+    show(fake);
+    const row = await openTidy(user, "frames-run3.csv");
+    await user.click(row.getByRole("button", { name: "Remove…" }));
+    await user.click(screen.getByRole("button", { name: "Move to trash" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "frames-run3.csv: a live card uses it",
+    );
+    expect(screen.getByText("frames-run3.csv")).toBeInTheDocument();
   });
 
   it("attaches a file to a card, then reads the list again", async () => {
@@ -146,14 +212,13 @@ describe("tidy up", () => {
       value: create(ItemDetailSchema, {}),
     }));
     show(fake);
-    await user.click(await screen.findByRole("tab", { name: "Tidy up" }));
-    const row = (await screen.findByText("frames-run3.csv")).closest("li");
-    const inRow = within(row ?? document.body);
-    await user.click(inRow.getByRole("button", { name: "Attach to a card…" }));
-    await user.click(inRow.getByRole("button", { name: "Cancel" }));
-    await user.click(inRow.getByRole("button", { name: "Attach to a card…" }));
-    await user.type(inRow.getByRole("textbox", { name: /Card to attach/ }), " ASL-9 ");
-    await user.click(inRow.getByRole("button", { name: "Attach" }));
+    const row = await openTidy(user, "frames-run3.csv");
+    expect(row.queryByRole("button", { name: "Keep" })).toBeNull();
+    await user.click(row.getByRole("button", { name: "Attach to a card…" }));
+    await user.click(row.getByRole("button", { name: "Cancel" }));
+    await user.click(row.getByRole("button", { name: "Attach to a card…" }));
+    await user.type(row.getByRole("textbox", { name: /Card to attach/ }), " ASL-9 ");
+    await user.click(row.getByRole("button", { name: "Attach" }));
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Attached frames-run3.csv to ASL-9.",
     );
@@ -170,28 +235,23 @@ describe("tidy up", () => {
       throw new DaemonError("not_found", "no card ASL-99");
     });
     show(fake);
-    await user.click(await screen.findByRole("tab", { name: "Tidy up" }));
-    const row = (await screen.findByText("frames-run3.csv")).closest("li");
-    const inRow = within(row ?? document.body);
-    await user.click(inRow.getByRole("button", { name: "Attach to a card…" }));
-    await user.type(inRow.getByRole("textbox"), "ASL-99");
-    await user.click(inRow.getByRole("button", { name: "Attach" }));
-    expect(await inRow.findByRole("alert")).toHaveTextContent("no card ASL-99");
+    const row = await openTidy(user, "frames-run3.csv");
+    await user.click(row.getByRole("button", { name: "Attach to a card…" }));
+    await user.type(row.getByRole("textbox"), "ASL-99");
+    await user.click(row.getByRole("button", { name: "Attach" }));
+    expect(await row.findByRole("alert")).toHaveTextContent("no card ASL-99");
   });
 
   it("only lists them to a connection that can't change cards", async () => {
     const user = userEvent.setup();
-    localStorage.setItem("flotilla.artifacts.kept.p1", '["notes-0917.md", 3]');
-    show(grouped(), false);
-    await user.click(await screen.findByRole("tab", { name: "Tidy up" }));
-    expect(await screen.findByText("frames-run3.csv")).toBeInTheDocument();
-    expect(screen.queryByText("notes-0917.md")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Keep" })).toBeNull();
+    show(owner(grouped()), false);
+    const row = await openTidy(user, "frames-run3.csv");
+    expect(row.queryByRole("button")).toHaveAccessibleName(/frames-run3/);
   });
 
   it("says when every shared file is on a card or kept", async () => {
     const user = userEvent.setup();
-    show(grouped(GROUPED_ARTIFACTS.filter((a) => (a.used_by ?? []).length > 0)));
+    show(grouped(GROUPED_ARTIFACTS.filter((a) => (a.used_by ?? []).length > 0 || a.kept)));
     await user.click(await screen.findByRole("tab", { name: "Tidy up" }));
     expect(await screen.findByText("Every shared file is on a card or kept.")).toBeInTheDocument();
   });

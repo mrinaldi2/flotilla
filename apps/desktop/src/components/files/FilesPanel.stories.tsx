@@ -25,6 +25,7 @@ function Panel(props: { readonly click?: string }): ReactElement {
       };
     });
     fake.capabilities = [...fake.capabilities, ARTIFACTS_V2];
+    fake.grants = ["read", "control", "approve"];
     return fake;
   });
   useClickOnce(box, props.click);
@@ -46,5 +47,5 @@ function Panel(props: { readonly click?: string }): ReactElement {
 export const Shared: Story = () => <Panel />;
 /** The owner's uploads. */
 export const Uploads: Story = () => <Panel click="Uploads" />;
-/** Shared files no card uses, to keep or attach to a card. */
+/** Shared files no card uses or kept: keep, attach to a card, or remove. */
 export const TidyUp: Story = () => <Panel click="Tidy up" />;

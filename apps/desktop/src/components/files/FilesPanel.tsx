@@ -22,7 +22,7 @@ interface FilesPanelProps {
   /** The file being previewed, or null for the list. */
   readonly selected: string | null;
   readonly onSelect: (path: string | null) => void;
-  /** The control grant: Tidy up attaches files to cards. */
+  /** The control grant: Tidy up attaches files to cards (keeping and removing need approve too). */
   readonly canControl?: boolean;
 }
 
@@ -92,7 +92,7 @@ function Files(props: {
   );
 }
 
-function ArtifactList(props: FilesPanelProps): ReactElement {
+function ArtifactList(props: Omit<FilesPanelProps, "selected">): ReactElement {
   const { client, bot, connected, onSelect } = props;
   const grouped = client.capabilities.includes(ARTIFACTS_V2);
   const [view, setView] = useState<View>("shared");
@@ -114,7 +114,10 @@ function ArtifactList(props: FilesPanelProps): ReactElement {
           client={client}
           projectId={bot.project_id}
           artifacts={pages.artifacts}
-          canEdit={props.canControl ?? false}
+          allowed={{
+            attach: props.canControl ?? false,
+            settle: (props.canControl ?? false) && client.hasGrant("approve"),
+          }}
           onSelect={onSelect}
           onChanged={pages.reload}
         />
@@ -131,7 +134,8 @@ function ArtifactList(props: FilesPanelProps): ReactElement {
 }
 
 export default function FilesPanel(props: FilesPanelProps): ReactElement {
-  const { client, bot, selected, onSelect } = props;
+  const { selected, ...rest } = props;
+  const { client, bot, onSelect } = rest;
   if (selected !== null) {
     return (
       <FilePreview
@@ -144,5 +148,5 @@ export default function FilesPanel(props: FilesPanelProps): ReactElement {
       />
     );
   }
-  return <ArtifactList {...props} />;
+  return <ArtifactList {...rest} />;
 }

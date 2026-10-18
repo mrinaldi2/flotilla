@@ -129,6 +129,8 @@ export interface Artifact {
   readonly group?: ArtifactGroup;
   /** The live cards that attach or link it (0.22.0). */
   readonly used_by?: readonly string[];
+  /** The owner kept it: Tidy up leaves it out (0.22.0, `artifact_keep`). */
+  readonly kept?: boolean;
 }
 
 /** Artifacts by kind (0.22.0): `group` and `used_by`, and a card's artifact links as documents. */

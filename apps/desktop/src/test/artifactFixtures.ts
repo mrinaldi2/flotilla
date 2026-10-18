@@ -1,6 +1,6 @@
 // A project's artifacts by kind (0.22.0, `artifacts_v2`), for tests and
-// stories: shared files (one on two cards, two loose), an upload and a
-// check log.
+// stories: shared files (one on two cards, two loose, one kept), an upload
+// and a check log.
 
 import type { Artifact } from "../protocol/chat";
 
@@ -34,6 +34,7 @@ export const GROUPED_ARTIFACTS: readonly Artifact[] = [
     created_by: { bot_id: "b-lead", name: "Lead", avatar: "icon:orbit", via: "wrote" },
   }),
   file("runs/frames-run3.csv", { size: 1_830_000, mime: "text/csv" }),
+  file("style-guide.md", { mime: "text/markdown", kept: true }),
   file("uploads/calendar-2026.pdf", {
     group: "uploads",
     size: 920_000,

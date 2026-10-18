@@ -264,6 +264,19 @@ export type ServerReply =
       /** With `limit`: more after this page, from `next_before`. */
       readonly has_more?: boolean;
       readonly next_before?: string | null;
+    })
+  | (ReplyBase & {
+      /** To `artifact_trash` (0.22.0). */
+      readonly type: "artifact_trashed";
+      readonly project_id: string;
+      readonly path: string;
+    })
+  | (ReplyBase & {
+      /** To `artifact_keep` (0.22.0). */
+      readonly type: "artifact_kept";
+      readonly project_id: string;
+      readonly path: string;
+      readonly kept: boolean;
     });
 
 export type ServerReplyType = ServerReply["type"];

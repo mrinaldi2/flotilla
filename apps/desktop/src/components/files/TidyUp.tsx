@@ -1,49 +1,28 @@
-// Tidy up (0.22.0, `artifacts_v2`): the shared files no card uses, for the
-// owner to keep, or attach to the card they belong to. Nothing is moved or
-// deleted by itself. Kept files are remembered on this computer and leave
-// the list.
+// Tidy up (0.22.0, `artifacts_v2`): the shared files no card uses and the
+// owner hasn't kept, for the owner to keep (`artifact_keep`), attach to the
+// card they belong to, or remove to the trash (`artifact_trash`, after a
+// confirm). Nothing is moved or deleted by itself.
 
 import { useState } from "react";
 import type { FormEvent, ReactElement } from "react";
 import type { DaemonApi } from "../../protocol/api";
 import { boardCall } from "../../protocol/board";
 import type { Artifact } from "../../protocol/chat";
-import { readStored, writeStored } from "../../storage";
 import { errText } from "../../util";
+import ConfirmDialog from "../overlay/ConfirmDialog";
 import { sizeLabel } from "./ArtifactRow";
 
-function keptName(projectId: string): string {
-  return `artifacts.kept.${projectId}`;
-}
-
-/** The files kept here, by `rel`. Storage can be unavailable: nothing is kept then. */
-function readKept(projectId: string): ReadonlySet<string> {
-  try {
-    const raw = readStored(keptName(projectId));
-    const parsed: unknown = raw === null ? [] : JSON.parse(raw);
-    return new Set(
-      Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === "string") : [],
-    );
-  } catch {
-    return new Set();
-  }
-}
-
-function writeKept(projectId: string, kept: ReadonlySet<string>): void {
-  try {
-    writeStored(keptName(projectId), JSON.stringify([...kept]));
-  } catch {
-    // Kept for this session only.
-  }
-}
-
-/** The shared files no card uses that weren't kept. */
+/** The shared files no card uses that the owner hasn't kept, or settled here. */
 function looseFiles(
   artifacts: readonly Artifact[],
-  kept: ReadonlySet<string>,
+  settled: ReadonlySet<string>,
 ): readonly Artifact[] {
   return artifacts.filter(
-    (a) => (a.group ?? "shared") === "shared" && (a.used_by ?? []).length === 0 && !kept.has(a.rel),
+    (a) =>
+      (a.group ?? "shared") === "shared" &&
+      (a.used_by ?? []).length === 0 &&
+      a.kept !== true &&
+      !settled.has(a.rel),
   );
 }
 
@@ -100,48 +79,100 @@ function AttachForm(props: {
   );
 }
 
-function LooseRow(props: {
+/** What this connection may do to a loose file. */
+interface Allowed {
+  /** The control grant: attach it to a card. */
+  readonly attach: boolean;
+  /** The approve grant: keep it or remove it. */
+  readonly settle: boolean;
+}
+
+function LooseActions(props: {
   readonly client: DaemonApi;
   readonly artifact: Artifact;
-  readonly canEdit: boolean;
+  readonly allowed: Allowed;
   readonly onKeep: () => void;
+  readonly onRemove: () => void;
   readonly onAttached: (card: string) => void;
-  readonly onSelect: (path: string) => void;
-}): ReactElement {
-  const { artifact: a } = props;
+}): ReactElement | null {
   const [attaching, setAttaching] = useState(false);
+  const { allowed } = props;
+  if (attaching) {
+    return (
+      <AttachForm
+        client={props.client}
+        artifact={props.artifact}
+        onAttached={props.onAttached}
+        onCancel={() => setAttaching(false)}
+      />
+    );
+  }
+  if (!allowed.attach && !allowed.settle) {
+    return null;
+  }
   return (
-    <li className="files-item files-loose">
-      <button
-        type="button"
-        className="files-row"
-        title={a.rel}
-        onClick={() => props.onSelect(a.path)}
-      >
-        <span className="files-name">{a.title ?? a.name}</span>
-        <span className="files-meta">
-          {a.rel} · {sizeLabel(a.size)}
-        </span>
-      </button>
-      {!props.canEdit ? null : attaching ? (
-        <AttachForm
-          client={props.client}
-          artifact={a}
-          onAttached={props.onAttached}
-          onCancel={() => setAttaching(false)}
-        />
-      ) : (
-        <div className="files-loose-actions">
-          <button type="button" className="btn btn-small" onClick={props.onKeep}>
-            Keep
-          </button>
-          <button type="button" className="btn btn-small" onClick={() => setAttaching(true)}>
-            Attach to a card…
-          </button>
-        </div>
-      )}
-    </li>
+    <div className="files-loose-actions">
+      {allowed.settle ? (
+        <button type="button" className="btn btn-small" onClick={props.onKeep}>
+          Keep
+        </button>
+      ) : null}
+      {allowed.attach ? (
+        <button type="button" className="btn btn-small" onClick={() => setAttaching(true)}>
+          Attach to a card…
+        </button>
+      ) : null}
+      {allowed.settle ? (
+        <button type="button" className="btn btn-small" onClick={props.onRemove}>
+          Remove…
+        </button>
+      ) : null}
+    </div>
   );
+}
+
+/** Keeps, removes and attaches loose files, and says what happened. */
+function useTidy(client: DaemonApi, projectId: string, onChanged: () => void) {
+  // Settled here: out of the list before the list is read again.
+  const [settled, setSettled] = useState<ReadonlySet<string>>(new Set());
+  const [note, setNote] = useState<{ readonly text: string; readonly failed: boolean } | null>(
+    null,
+  );
+  const done = (a: Artifact, text: string): void => {
+    setSettled((s) => new Set(s).add(a.rel));
+    setNote({ text, failed: false });
+    onChanged();
+  };
+  const run = async (a: Artifact, send: () => Promise<unknown>, text: string): Promise<void> => {
+    try {
+      await send();
+      done(a, text);
+    } catch (failure) {
+      setNote({ text: `${a.name}: ${errText(failure)}`, failed: true });
+    }
+  };
+  const keep = (a: Artifact): Promise<void> =>
+    run(
+      a,
+      () =>
+        client.request(
+          { type: "artifact_keep", project_id: projectId, path: a.rel, keep: true },
+          "artifact_kept",
+        ),
+      `Kept ${a.name}.`,
+    );
+  const remove = (a: Artifact): Promise<void> =>
+    run(
+      a,
+      () =>
+        client.request(
+          { type: "artifact_trash", project_id: projectId, path: a.rel },
+          "artifact_trashed",
+        ),
+      `Moved ${a.name} to the trash.`,
+    );
+  const attached = (a: Artifact, card: string): void => done(a, `Attached ${a.name} to ${card}.`);
+  return { settled, note, keep, remove, attached };
 }
 
 export default function TidyUp(props: {
@@ -149,30 +180,23 @@ export default function TidyUp(props: {
   readonly projectId: string;
   /** The shared files read so far. */
   readonly artifacts: readonly Artifact[];
-  /** The control grant: attaches files to cards. */
-  readonly canEdit: boolean;
+  readonly allowed: Allowed;
   readonly onSelect: (path: string) => void;
-  /** A file was attached: the list reads again, with its card. */
+  /** A file was kept, removed or attached: the list reads again. */
   readonly onChanged: () => void;
 }): ReactElement {
-  const { projectId } = props;
-  const [kept, setKept] = useState(() => readKept(projectId));
-  const [note, setNote] = useState<string | null>(null);
-  const loose = looseFiles(props.artifacts, kept);
-  const keep = (a: Artifact): void => {
-    const next = new Set(kept).add(a.rel);
-    setKept(next);
-    writeKept(projectId, next);
-    setNote(`Kept ${a.name}.`);
-  };
+  const tidy = useTidy(props.client, props.projectId, props.onChanged);
+  const [removing, setRemoving] = useState<Artifact | null>(null);
+  const loose = looseFiles(props.artifacts, tidy.settled);
   return (
     <div className="files-tidy">
       <p className="files-tidy-intro">
-        Shared files no card uses. Keep the ones the project needs, or attach each to its card.
+        Shared files no card uses. Keep the ones the project needs, attach each to its card, or
+        remove it.
       </p>
-      {note === null ? null : (
-        <p className="files-tidy-note" role="status">
-          {note}
+      {tidy.note === null ? null : (
+        <p className="files-tidy-note" role={tidy.note.failed ? "alert" : "status"}>
+          {tidy.note.text}
         </p>
       )}
       {loose.length === 0 ? (
@@ -180,20 +204,42 @@ export default function TidyUp(props: {
       ) : (
         <ul className="files-list">
           {loose.map((a) => (
-            <LooseRow
-              key={a.path}
-              client={props.client}
-              artifact={a}
-              canEdit={props.canEdit}
-              onSelect={props.onSelect}
-              onKeep={() => keep(a)}
-              onAttached={(card) => {
-                setNote(`Attached ${a.name} to ${card}.`);
-                props.onChanged();
-              }}
-            />
+            <li key={a.path} className="files-item files-loose">
+              <button
+                type="button"
+                className="files-row"
+                title={a.rel}
+                onClick={() => props.onSelect(a.path)}
+              >
+                <span className="files-name">{a.title ?? a.name}</span>
+                <span className="files-meta">
+                  {a.rel} · {sizeLabel(a.size)}
+                </span>
+              </button>
+              <LooseActions
+                client={props.client}
+                artifact={a}
+                allowed={props.allowed}
+                onKeep={() => void tidy.keep(a)}
+                onRemove={() => setRemoving(a)}
+                onAttached={(card) => tidy.attached(a, card)}
+              />
+            </li>
           ))}
         </ul>
+      )}
+      {removing === null ? null : (
+        <ConfirmDialog
+          title={`Remove ${removing.name}?`}
+          body="It moves to the trash on the computer that holds the project, where you can still restore it."
+          confirmLabel="Move to trash"
+          onConfirm={() => {
+            const a = removing;
+            setRemoving(null);
+            void tidy.remove(a);
+          }}
+          onCancel={() => setRemoving(null)}
+        />
       )}
     </div>
   );

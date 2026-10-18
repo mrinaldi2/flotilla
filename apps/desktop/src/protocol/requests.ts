@@ -273,6 +273,21 @@ export type ClientRequestBody =
       readonly limit?: number;
     }
   | {
+      /** Moves a shared file no live card uses to the OS trash (0.22.0, `artifacts_v2`; approve). */
+      readonly type: "artifact_trash";
+      readonly project_id: string;
+      /** The artifact's `rel`. */
+      readonly path: string;
+    }
+  | {
+      /** Marks a shared file as kept, or not: Tidy up leaves it out (0.22.0; approve). */
+      readonly type: "artifact_keep";
+      readonly project_id: string;
+      /** The artifact's `rel`. */
+      readonly path: string;
+      readonly keep: boolean;
+    }
+  | {
       readonly type: "write_artifact";
       readonly project_id: string;
       readonly name: string;
