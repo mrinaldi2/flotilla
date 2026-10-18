@@ -108,3 +108,42 @@
   flex: 1 1 220px;
   margin: 0;
 }
+
+/* A card's plan node (0.21.0): its kind as a glyph, then its title, cut short. */
+.board-card-node {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  margin-top: 6px;
+  padding: 2px 6px;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-sizing: border-box;
+  width: fit-content;
+}
+
+.board-card-node .plan-glyph {
+  width: 14px;
+  height: 14px;
+  font-size: 9px;
+  border-radius: 3px;
+}
+
+.board-card-node-title {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The board's epics and features as filter chips: one line each. */
+.board-filter-nodes .board-filter-chip {
+  max-width: 200px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

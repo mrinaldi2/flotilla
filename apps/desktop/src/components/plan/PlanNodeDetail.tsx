@@ -5,12 +5,14 @@
 
 import type { ReactElement } from "react";
 import type { BoardApi } from "../../protocol/board";
+import type { Bot } from "../../protocol/entities";
 import type { ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import type { PlanDoc, PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import { PlanDocKind, PlanResearchState } from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import Markdown from "../control/Markdown";
 import { typeLabel } from "../board/labels";
 import { SkipResearch } from "./PlanGatePanel";
+import PlanNodeActions from "./PlanNodeActions";
 import { day, historyLine } from "./planHistory";
 import PlanStepper from "./PlanStepper";
 import { docWord, fileName, kindWords, stageChip } from "./planText";
@@ -22,8 +24,12 @@ export interface PlanNodeDetailProps {
   /** Its ancestors, the goal first. */
   readonly ancestors: readonly PlanNode[];
   readonly who: (actor: string) => string;
-  /** The owner's: rules gates and skips research. */
+  /** The owner's: rules gates, skips research, moves a goal, drops a node. */
   readonly canRule: boolean;
+  /** The control grant: edits a node. */
+  readonly canEdit: boolean;
+  readonly bots: readonly Bot[];
+  readonly leadName?: string;
   readonly onOpenNode: (id: string) => void;
   readonly onOpenGate: () => void;
   readonly onOpenDoc: (doc: PlanDoc) => void;
@@ -221,6 +227,16 @@ export default function PlanNodeDetail(props: PlanNodeDetailProps): ReactElement
         </nav>
       )}
       <Header {...props} />
+      <PlanNodeActions
+        key={node.id}
+        api={props.api}
+        node={node}
+        bots={props.bots}
+        leadName={props.leadName}
+        canRule={props.canRule}
+        canEdit={props.canEdit}
+        onChanged={props.onChanged}
+      />
       <PlanStepper node={node} />
       {node.summary.trim() === "" ? null : (
         <div className="plan-summary">

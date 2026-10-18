@@ -40,7 +40,7 @@ const at = (iso: string) => timestampFromDate(new Date(iso));
 export const PLAN_PROJECT = "p1";
 export const PLAN_BOARD = "p1/combat-readability";
 
-function node(over: MessageInitShape<typeof PlanNodeSchema>): PlanNode {
+export function node(over: MessageInitShape<typeof PlanNodeSchema>): PlanNode {
   return create(PlanNodeSchema, {
     projectId: PLAN_PROJECT,
     createdBy: "user",
@@ -215,12 +215,14 @@ export function planNodes(): PlanNode[] {
   ];
 }
 
-export function planTree(over: Partial<{ enabled: boolean }> = {}): PlanTree {
+export function planTree(
+  over: Partial<{ enabled: boolean; nodes: readonly PlanNode[] }> = {},
+): PlanTree {
   return create(PlanTreeSchema, {
     projectId: PLAN_PROJECT,
     enabled: over.enabled ?? true,
     hasRepo: true,
-    nodes: planNodes(),
+    nodes: [...(over.nodes ?? planNodes())],
     guidelines: [{ kind: PlanDocKind.GUIDELINE, path: "docs/guidelines/game-feel.md" }],
   });
 }
@@ -233,28 +235,30 @@ function planNodeDetail(id: string): PlanNodeDetail {
   const found = planNodes().find((n) => n.id === id);
   return create(PlanNodeDetailSchema, {
     node: found,
-    history: [
-      { at: at("2026-10-11T08:00:00Z"), actor: "user", kind: "approved", stage: PlanStage.PRD },
-      {
-        at: at("2026-10-14T16:00:00Z"),
-        actor: "daemon",
-        kind: "research_closed",
-        stage: PlanStage.RESEARCH,
-      },
-      {
-        at: at("2026-10-16T12:00:00Z"),
-        actor: "user",
-        kind: "sent_back",
-        stage: PlanStage.HLD,
-        note: "Add the risks.",
-      },
-      {
-        at: at("2026-10-17T10:00:00Z"),
-        actor: "bot:lead",
-        kind: "submitted",
-        stage: PlanStage.HLD,
-      },
-    ],
+    history: !["PL-4", "PL-8"].includes(id)
+      ? [{ at: at("2026-10-10T08:00:00Z"), actor: "user", kind: "created" }]
+      : [
+          { at: at("2026-10-11T08:00:00Z"), actor: "user", kind: "approved", stage: PlanStage.PRD },
+          {
+            at: at("2026-10-14T16:00:00Z"),
+            actor: "daemon",
+            kind: "research_closed",
+            stage: PlanStage.RESEARCH,
+          },
+          {
+            at: at("2026-10-16T12:00:00Z"),
+            actor: "user",
+            kind: "sent_back",
+            stage: PlanStage.HLD,
+            note: "Add the risks.",
+          },
+          {
+            at: at("2026-10-17T10:00:00Z"),
+            actor: "bot:lead",
+            kind: "submitted",
+            stage: PlanStage.HLD,
+          },
+        ],
     cards:
       id !== "PL-4"
         ? []

@@ -6,11 +6,14 @@
 import { useCallback, useMemo, useState } from "react";
 import type { Bot } from "../../protocol/entities";
 import type { Board, BoardColumn, ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import type { PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
+import { filterNodes, subtrees } from "../plan/belongsTo";
 import type { BotOption } from "./BoardFilterBar";
 import type { BoardPrefs } from "./boardPrefs";
 import { loadBoardPrefs, saveBoardPrefs } from "./boardPrefs";
 import { boardOfItem, cardsOf, columnsOf, pickBoard } from "./boards";
 import type { BoardModel } from "./boardSync";
+import type { NodeScope } from "./filters";
 import { matchesFilters } from "./filters";
 import type { LabelGroupView } from "./labelGroups";
 import { boardLabelGroups } from "./labelGroups";
@@ -33,6 +36,12 @@ export interface BoardView {
   /** The groups whose labels the cards show: the board's own, or, from a
    * home that names no boards, every group the cards use. */
   readonly chipGroups: ReadonlySet<string>;
+  /** The plan's nodes by id, for the cards' node chips (0.21.0). */
+  readonly nodesById: ReadonlyMap<string, PlanNode>;
+  /** Each node and those under it, for the node filter; none without a plan. */
+  readonly scope: NodeScope | undefined;
+  /** The board's epics and features, as filter chips. */
+  readonly filterNodes: readonly PlanNode[];
   /** `bot:<id>` in words. */
   readonly who: (actor: string) => string;
   readonly opened: string | null;
@@ -73,6 +82,21 @@ function useBotOptions(bots: readonly Bot[], cards: readonly ItemCard[]): readon
   }, [bots, cards]);
 }
 
+/** The plan's part of the board: node chips, the node filter's scope and its chips. */
+function usePlanView(
+  nodes: readonly PlanNode[] | undefined,
+  boardId: string | undefined,
+): Pick<BoardView, "nodesById" | "scope" | "filterNodes"> {
+  return useMemo(
+    () => ({
+      nodesById: new Map((nodes ?? []).map((n) => [n.id, n])),
+      scope: nodes === undefined ? undefined : subtrees(nodes),
+      filterNodes: filterNodes(nodes ?? [], boardId),
+    }),
+    [nodes, boardId],
+  );
+}
+
 export function useBoardView(opts: {
   readonly projectId: string;
   readonly model: BoardModel;
@@ -80,6 +104,8 @@ export function useBoardView(opts: {
   readonly openItem?: string;
   readonly openBoard?: string;
   readonly settings?: SettingsSection;
+  /** The project's plan nodes while planning is on (0.21.0). */
+  readonly planNodes?: readonly PlanNode[];
 }): BoardView {
   const { model, bots } = opts;
   const [prefs, setPrefs] = useState<BoardPrefs>(() => loadBoardPrefs(opts.projectId));
@@ -103,6 +129,7 @@ export function useBoardView(opts: {
   }, [model.cards, board]);
   const botsById = useMemo(() => new Map(bots.map((bot) => [bot.id, bot])), [bots]);
   const botOptions = useBotOptions(bots, cards);
+  const plan = usePlanView(opts.planNodes, board?.id);
   const labelGroups = useMemo(
     () =>
       boardLabelGroups(
@@ -129,7 +156,8 @@ export function useBoardView(opts: {
     board,
     columns,
     cards,
-    shown: cards.filter((card) => matchesFilters(card, prefs.filters)),
+    shown: cards.filter((card) => matchesFilters(card, prefs.filters, plan.scope)),
+    ...plan,
     botsById,
     botOptions,
     labelGroups,

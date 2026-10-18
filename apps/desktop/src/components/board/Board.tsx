@@ -156,6 +156,7 @@ function Bar(
           onChange={(filters) => updatePrefs({ ...prefs, filters })}
           botOptions={view.botOptions}
           labelGroups={view.labelGroups}
+          planNodes={view.filterNodes}
           shown={view.shown.length}
           total={view.cards.length}
           hiddenNames={columns.filter((c) => !c.visible).map((c) => c.name)}
@@ -240,6 +241,7 @@ export default function Board(props: BoardProps): ReactElement {
     openItem: props.openItem,
     openBoard: props.openBoard,
     settings: props.initial?.settings,
+    planNodes: props.planNodes,
   });
   const { prefs, updatePrefs, board, columns, cards } = view;
   const [sheet, setSheet] = useState<Sheet>(props.initial?.sheet ?? null);
@@ -290,6 +292,8 @@ export default function Board(props: BoardProps): ReactElement {
         onSetLimit={model.canRule ? setLimit : undefined}
         onNewItem={newItem}
         chipGroups={view.chipGroups}
+        scope={view.scope}
+        nodesById={view.nodesById}
       />
       <Side {...parts} moves={moves} />
       <Sheets sheet={sheet} board={props} view={view} onClose={() => setSheet(null)} />
