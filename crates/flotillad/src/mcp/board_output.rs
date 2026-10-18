@@ -35,6 +35,7 @@ pub(super) fn friendly(mut value: Value) -> Value {
         all_spellings()
             .into_iter()
             .chain(crate::plan::contract::spellings())
+            .chain(crate::questions::wire::all_spellings())
             .map(|(short, wire)| (wire, short))
             .collect()
     });

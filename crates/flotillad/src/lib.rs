@@ -54,6 +54,7 @@ pub mod project_trash;
 pub mod projectmgmt;
 pub mod prs;
 pub mod push;
+pub mod questions;
 pub mod quiesce;
 pub mod redact;
 pub mod releases;

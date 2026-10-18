@@ -39,6 +39,9 @@ pub(super) const PLAN: &str = "## The plan\n\n\
      reads it on the card, not in the artifacts folder. Open the spikes on its board\n\
      with `plan_node_id` set. Only the owner skips research; the lead may\n\
      ask with `plan_research_skip` and a reason.\n\
+     - Ask the owner with `ask_owner` (the spike as `item_id`, one entry per\n\
+     question). A `blocking` question holds the node's research and gate\n\
+     until it is answered; the answers are added to the research document.\n\
      - Never create a feature or an epic yourself: they are born when the\n\
      owner approves their parent's document. The lead may propose an\n\
      initiative (`plan_propose`); the owner accepts it.\n\

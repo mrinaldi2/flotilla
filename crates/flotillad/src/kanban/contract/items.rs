@@ -111,6 +111,7 @@ impl From<m::ItemCard> for c::ItemCard {
                 refused: b.refused,
             }),
             plan_node_id: v.plan_node_id,
+            questions_open: v.questions_open,
             ..Default::default()
         };
         crate::compat018::card_out(&mut card);
@@ -149,6 +150,7 @@ impl TryFrom<c::ItemCard> for m::ItemCard {
                 refused: b.refused,
             }),
             plan_node_id: v.plan_node_id,
+            questions_open: v.questions_open,
         })
     }
 }

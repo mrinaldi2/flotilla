@@ -142,10 +142,10 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
          Some things are not yours to settle and no bot can settle them for\n\
          you: waiving a rule, spending money, deleting data, shipping. Call\n\
          `raise_decision` for those: a ruling is recorded and binds every bot.\n\
-         A question that only you need answered goes through `message_owner`\n\
-         with `asks: true` instead (see \"Report to the owner where the owner\n\
-         looks\"). Either way, never park it in your memory file or ask it\n\
-         only in your terminal.\n\n\
+         A question that only you need answered goes through `ask_owner`\n\
+         instead, one entry per question, on its card or plan node (see\n\
+         \"Report to the owner where the owner looks\"). Either way, never park\n\
+         it in your memory file or ask it only in your terminal.\n\n\
          - Before you raise, call `list_decisions` by tag. **A settled\n\
          decision is the owner's ruling and is authority.** Do not re-raise\n\
          it. If the facts have changed, raise a new one that `supersedes` it\n\

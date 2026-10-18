@@ -26,6 +26,7 @@ mod forward;
 mod item_edits;
 mod mirrored;
 mod plan;
+mod questions;
 mod reads;
 mod structure;
 
@@ -212,17 +213,12 @@ impl Conn {
             | Request::PlanResearchSkip(_)
             | Request::PlanDrop(_)
             | Request::PlanDocRead(_)) => self.plan_request(req)?,
-            // Questions (0.22.0, `questions_v1`): contracted, served from
-            // step 2. `ask_owner` is a bot's, over MCP.
-            Request::AskOwner(_)
+            // Questions (0.22.0, `questions_v1`). `ask_owner` is a bot's,
+            // over MCP.
+            req @ (Request::AskOwner(_)
             | Request::QuestionList(_)
             | Request::QuestionAnswer(_)
-            | Request::QuestionDismiss(_) => {
-                return Err(refuse(
-                    "unsupported",
-                    "questions come with a later daemon (questions_v1)",
-                ))
-            }
+            | Request::QuestionDismiss(_)) => self.question_request(req)?,
         }))
     }
 
@@ -304,6 +300,9 @@ async fn forward(
 }
 
 fn push(change: &BoardChange) -> c::BoardPush {
+    if let Some(push) = questions::push(change) {
+        return push;
+    }
     if let Some(node) = change.plan.as_deref() {
         return c::BoardPush {
             push: Some(c::board_push::Push::PlanChange(c::PlanChange {
@@ -321,7 +320,7 @@ fn push(change: &BoardChange) -> c::BoardPush {
         ChangeKind::SettingsChanged => c::BoardEventKind::SettingsChanged,
         ChangeKind::DraftChanged => c::BoardEventKind::DraftChanged,
         // Carries its node, so it went out above.
-        ChangeKind::PlanChanged => c::BoardEventKind::SettingsChanged,
+        ChangeKind::PlanChanged | ChangeKind::QuestionChanged => c::BoardEventKind::SettingsChanged,
     };
     event(c::BoardEvent {
         project_id: change.project_id.clone(),

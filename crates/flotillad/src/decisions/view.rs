@@ -29,6 +29,7 @@ pub fn decision_view(db: &Db, decision: &Decision, detail: Detail) -> anyhow::Re
     };
     let bots = db.bots_by_id(&bot_ids(std::slice::from_ref(decision), &comments))?;
     let mut view = base_view(decision, &bots);
+    anchor(&mut view, &db.decision_anchors(ids)?);
     view.tags = db.tags_for(ids)?.remove(&decision.id).unwrap_or_default();
     if let Some((count, last)) = db.comment_counts(ids)?.get(&decision.id) {
         view.comment_count = *count;
@@ -86,6 +87,18 @@ fn base_view(decision: &Decision, bots: &HashMap<String, Bot>) -> DecisionView {
         notifications: Vec::new(),
         edited_at: decision.edited_at,
         created_at: decision.created_at,
+        item_id: None,
+        plan_node_id: None,
+        blocking: false,
+    }
+}
+
+/// The card, plan node and blocking flag of each decision (0.22.0).
+fn anchor(view: &mut DecisionView, anchors: &HashMap<String, crate::db::Anchor>) {
+    if let Some(a) = anchors.get(&view.id) {
+        view.item_id = a.item_id.clone();
+        view.plan_node_id = a.plan_node_id.clone();
+        view.blocking = a.blocking;
     }
 }
 
@@ -107,9 +120,11 @@ pub fn decision_views(db: &Db, decisions: &[Decision]) -> anyhow::Result<Vec<Dec
     let mut tags = db.tags_for(&ids)?;
     let counts = db.comment_counts(&ids)?;
     let bots = db.bots_by_id(&bot_ids(decisions, &[]))?;
+    let anchors = db.decision_anchors(&ids)?;
     let mut out = Vec::with_capacity(decisions.len());
     for decision in decisions {
         let mut view = base_view(decision, &bots);
+        anchor(&mut view, &anchors);
         view.tags = tags.remove(&decision.id).unwrap_or_default();
         if let Some((count, last)) = counts.get(&decision.id) {
             view.comment_count = *count;

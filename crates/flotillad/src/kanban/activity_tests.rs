@@ -30,6 +30,7 @@ fn change(kind: ChangeKind, events: Vec<ItemEvent>) -> BoardChange {
         events,
         origin: None,
         plan: None,
+        question: None,
     }
 }
 

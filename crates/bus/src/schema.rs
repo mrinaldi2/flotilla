@@ -33,6 +33,7 @@ mod permissions;
 mod plan;
 mod platform_labels;
 mod prs;
+mod questions;
 mod quiesce;
 mod release_pr;
 mod releases;
@@ -79,6 +80,7 @@ use permissions::{
 use plan::MIGRATION_PLAN;
 use platform_labels::MIGRATION_PLATFORM_LABELS;
 use prs::MIGRATION_PR_CORE;
+use questions::MIGRATION_QUESTIONS;
 use quiesce::MIGRATION_QUIESCE;
 use release_pr::MIGRATION_RELEASE_PR;
 use releases::{
@@ -168,6 +170,7 @@ pub const MIGRATIONS: &[&str] = &[
     "ALTER TABLE project ADD COLUMN description TEXT NOT NULL DEFAULT '';",
     MIGRATION_CARD_TYPES,
     MIGRATION_PLAN,
+    MIGRATION_QUESTIONS,
 ];
 
 #[cfg(test)]
