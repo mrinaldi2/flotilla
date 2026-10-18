@@ -2414,7 +2414,7 @@ export enum AttentionKind {
   PLAN_GATE = 20,
 
   /**
-   * a bot's question for the owner, one row each; `decision_id` is the question's id, `item_id` its card when it has one (0.22.0, capability `questions_v1`)
+   * a bot's question for the owner, one row each; `decision_id` is the question's id (0.22.0, capability `questions_v1`)
    *
    * @generated from enum value: QUESTION = 21;
    */
