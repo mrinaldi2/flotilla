@@ -42,6 +42,10 @@ pub(super) const PLAN: &str = "## The plan\n\n\
      initiative (`plan_propose`); the owner accepts it.\n\
      - A document sent back comes with the owner's note: change it and\n\
      submit it again.\n\
+     - The lead's plan work arrives as cards assigned to it, labelled\n\
+     `kickoff`: initiatives to propose for an active goal, a node's\n\
+     research, a document to write or revise. Each says what to do and\n\
+     where; a document's card closes itself once the owner approves.\n\
      - Read the project's guidelines in `docs/guidelines/` before you work,\n\
      and follow them.\n\n";
 

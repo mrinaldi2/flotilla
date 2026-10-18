@@ -233,6 +233,28 @@ impl Plan {
         ));
     }
 
+    /// The lead's kickoff card of `node` whose title starts with `prefix`
+    /// ("Research: ", "Write the PRD: ").
+    pub fn kickoff(&self, node: &str, prefix: &str) -> Option<String> {
+        self.d
+            .app
+            .db
+            .board_read(|t| t.plan_node_cards(node))
+            .expect("cards")
+            .into_iter()
+            .find(|c| c.title.starts_with(prefix))
+            .map(|c| c.id)
+    }
+
+    /// The lead's research kickoff of `node`, done with a document.
+    pub fn research_kickoff_done(&self, node: &str) {
+        let card = self
+            .kickoff(node, "Research: ")
+            .expect("a research kickoff");
+        self.finish(&card);
+        self.document(&card, "research/kickoff.md");
+    }
+
     /// Links a research document to the card.
     pub fn document(&self, item_id: &str, path: &str) {
         self.d

@@ -110,6 +110,8 @@ mod peers;
 mod permissions;
 mod plan;
 mod plan_gates;
+mod plan_kickoff;
+pub use plan_kickoff::NodeCard;
 #[cfg(test)]
 mod plan_tests;
 #[cfg(test)]

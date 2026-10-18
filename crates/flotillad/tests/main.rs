@@ -140,6 +140,7 @@ mod permission_profiles;
 mod permissions;
 mod plan_close;
 mod plan_flow;
+mod plan_kickoff;
 mod plan_mcp;
 mod plan_peer;
 mod plan_rules;

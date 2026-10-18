@@ -164,7 +164,13 @@ async fn plan_requests_are_served_and_watchers_hear_each_change() {
     else {
         panic!("items");
     };
-    let ids: Vec<&str> = found.cards.iter().map(|c| c.id.as_str()).collect();
+    // The lead's kickoff cards belong to the subtree too.
+    let ids: Vec<&str> = found
+        .cards
+        .iter()
+        .filter(|c| !c.title.starts_with("Research: ") && !c.title.starts_with("Propose "))
+        .map(|c| c.id.as_str())
+        .collect();
     assert_eq!(ids, [item.id.as_str()]);
     assert_eq!(
         found.cards[0].plan_node_id.as_deref(),
@@ -187,7 +193,14 @@ async fn plan_requests_are_served_and_watchers_hear_each_change() {
     ) else {
         panic!("a node");
     };
-    assert_eq!(detail.cards.len(), 1);
+    assert_eq!(
+        detail
+            .cards
+            .iter()
+            .filter(|c| !c.labels.iter().any(|l| l == "kickoff"))
+            .count(),
+        1
+    );
     assert_eq!(detail.history[0].kind, "created");
     let missing = call(
         &mut plan.owner,

@@ -29,6 +29,7 @@ pub mod contract;
 mod create;
 pub mod docs;
 mod gates;
+mod kickoff;
 pub mod model;
 mod reads;
 mod research;
@@ -69,6 +70,12 @@ struct Wrote {
     /// Nodes the daemon changed rather than the caller: research a spike
     /// closed, recorded on a read.
     by_daemon: Vec<String>,
+    /// Kickoff cards assigned to a lead, whose leads are told once the
+    /// write commits (`kickoff`).
+    assigned: Vec<String>,
+    /// Nodes to check for a kickoff besides those changed: every open node
+    /// of a project whose plan was read.
+    look: Vec<String>,
     cards: Vec<String>,
     boards: Vec<String>,
     created: Vec<String>,
@@ -189,8 +196,32 @@ impl Planner<'_> {
     ) -> anyhow::Result<(T, Vec<String>)> {
         let mut feed = self.app.board.writer();
         let mut wrote = Wrote::default();
-        let out = self.app.db.board_tx(|t| work(t, &mut wrote))?;
+        // A kickoff's card is made as the caller's; the daemon's own
+        // changes (research a read closed) are told to the lead as the
+        // owner's, since a notice from the daemon tells nobody.
+        let by = match self.actor {
+            Actor::Daemon => Actor::User,
+            other => other,
+        };
+        let out = self.app.db.board_tx(|t| {
+            let out = work(t, &mut wrote)?;
+            let mut ids = wrote.nodes.clone();
+            ids.extend(
+                wrote
+                    .look
+                    .iter()
+                    .filter(|id| !wrote.nodes.contains(id))
+                    .cloned(),
+            );
+            kickoff::ensure(t, &mut wrote, &ids, &by)?;
+            Ok(out)
+        })?;
         let db = &self.app.db;
+        for id in &wrote.assigned {
+            if let Ok(Some(item)) = db.get_item(id) {
+                crate::kanban::notices::tell_reassigned(self.app, None, &item, &by);
+            }
+        }
         for board in &wrote.boards {
             let Some(project_id) = db.board(board)?.map(|b| b.project_id) else {
                 continue;

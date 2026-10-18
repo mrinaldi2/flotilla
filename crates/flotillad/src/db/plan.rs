@@ -85,9 +85,12 @@ fn fill(conn: &Connection, node: &mut Node) -> anyhow::Result<()> {
             .query_map(params![node.id], |r| r.get(0))?
             .collect::<Result<_, _>>()?;
     }
+    // A node's progress is the cards that build it, not the lead's
+    // kickoffs (its plan work, which the stage already shows).
     let (total, done): (u32, u32) = conn.query_row(
         "SELECT count(*), coalesce(sum(category = ?2), 0) FROM item
-         WHERE plan_node_id = ?1 AND state = 'live' AND category != ?3",
+         WHERE plan_node_id = ?1 AND state = 'live' AND category != ?3
+         AND labels NOT LIKE '%\"kickoff\"%'",
         params![
             node.id,
             to_text(&ColumnCategory::Done),

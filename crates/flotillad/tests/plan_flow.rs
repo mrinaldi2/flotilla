@@ -104,30 +104,31 @@ async fn an_initiative_gets_its_board_and_research_closes_on_its_spikes() {
     assert_eq!(refusal[0].code, "plan.research_open");
     assert!(refusal[0].text.contains(&spike), "{}", refusal[0].text);
 
-    // Done with a document, the spike closes research and the PRD is next.
+    // Done with a document, the spikes (the lead's research kickoff
+    // among them) close research and the PRD is next.
     plan.finish(&spike);
     plan.document(&spike, "research/references.md");
+    plan.research_kickoff_done(&init.id);
     let tree = plan.owner().tree(&plan.pid).unwrap();
     let read = tree.nodes.iter().find(|n| n.id == init.id).unwrap();
     assert_eq!(read.stage, Stage::Prd);
     let research = read.research.as_ref().unwrap();
     assert_eq!(research.state, ResearchState::Closed);
     assert!(research.closed_at.is_some());
-    assert_eq!(research.spikes, std::slice::from_ref(&spike));
+    assert!(research.spikes.contains(&spike), "{:?}", research.spikes);
+    assert_eq!(research.spikes.len(), 2, "with the lead's research kickoff");
     let doc = read
         .docs
         .iter()
-        .find(|d| d.kind == DocKind::Research)
+        .find(|d| d.kind == DocKind::Research && d.path == "research/references.md")
         .unwrap();
-    assert_eq!(
-        (doc.path.as_str(), doc.item_id.as_deref()),
-        ("research/references.md", Some(spike.as_str()))
-    );
+    assert_eq!(doc.item_id.as_deref(), Some(spike.as_str()));
     assert_eq!((read.cards_total, read.cards_done), (1, 1));
     let detail = plan.owner().detail(&init.id).unwrap().unwrap();
     let kinds: Vec<&str> = detail.history.iter().map(|e| e.kind.as_str()).collect();
     assert_eq!(kinds, ["created", "research_closed"]);
-    assert_eq!(detail.cards.len(), 1);
+    // The test's spike, the research kickoff and the PRD's kickoff.
+    assert_eq!(detail.cards.len(), 3);
 }
 
 #[tokio::test]
