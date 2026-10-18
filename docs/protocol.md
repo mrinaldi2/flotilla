@@ -45,7 +45,9 @@ Board glance and project setup add `board_presets`, `project_description`,
 and `project_repo_clone`, each advertised once the daemon serves it (see
 [the Board glance and project setup](#the-board-glance-and-project-setup-0200)). The
 0.21 plan adds `plan_v1`, `item_types_v2`, `column_research` and `attention_plan`
-(see [the plan](#the-plan-0210)); the strings are `bus::contract::capability`.
+(see [the plan](#the-plan-0210)). 0.22 adds `questions_v1` and `artifacts_v2` (see
+[questions and artifacts](#questions-and-artifacts-0220)). The strings are
+`bus::contract::capability`.
 
 `hello_ok.contracts` maps each typed surface to its contract version, e.g.
 `{"board": 1}`. Those surfaces are defined once in protobuf under
@@ -229,7 +231,7 @@ Codes: `auth_failed`, `unsupported_version`, `not_found`, `invalid_request`,
 | `list_chat` | `bot_id, before?` (a turn id), `limit?` (default 30, max 200) | `chat` (`turns` oldest first, `has_more`) |
 | `get_chat_step` | `bot_id, item_id` | `chat_step` (`detail`: `input?, command?, output?, diff?, content?`) |
 | `get_chat_image` | `bot_id, image_id` | `file` |
-| `list_artifacts` | `project_id, limit?` (default: every file; max 500), `before?` | `artifacts` (newest first, then by path), `has_more`, `next_before`. Each artifact may carry `created_by: { bot_id?, name, avatar, machine?, via }`, who made the file: `wrote`/`edited` (the first bot whose file tools touched it, by its transcript), `command` (the first bot whose command named its path), `upload` (the owner, from the app; no `bot_id`), or `sent` (a bot on another machine, with a result). Absent when it cannot be told. Pass a page's `next_before` as `before` for the next page; it is `null` once `has_more` is false. The cursor is the last file's modified time and path, so a file edited between pages moves to the top rather than shifting the rest. Without `limit` every file comes back, as older clients expect. |
+| `list_artifacts` | `project_id, group?` (`shared`, `uploads` or `checks`; 0.22.0, `artifacts_v2`), `limit?` (default: every file; max 500), `before?` | `artifacts` (newest first, then by path), `has_more`, `next_before`. Each artifact may carry `created_by: { bot_id?, name, avatar, machine?, via }`, who made the file: `wrote`/`edited` (the first bot whose file tools touched it, by its transcript), `command` (the first bot whose command named its path), `upload` (the owner, from the app; no `bot_id`), or `sent` (a bot on another machine, with a result). Absent when it cannot be told. Pass a page's `next_before` as `before` for the next page; it is `null` once `has_more` is false. The cursor is the last file's modified time and path, so a file edited between pages moves to the top rather than shifting the rest. Without `limit` every file comes back, as older clients expect. |
 | `write_artifact` | `project_id, name, base64` (one chunk, up to ~512 KB), `upload_id?` (from the first chunk's reply), `last` | `upload` (`upload_id`, and `path` once the last chunk is in); `control` grant. Files land in the project's `artifacts/uploads/`, up to 16 MB |
 | `list_tasks` | `bot_id, state?` (`open` \| `closed`), `limit?` (default 100) | `tasks`: newest first, only open or only closed (`done`, `cancelled`, `expired`) ones when `state` says which, so a client can load every open task and a page of closed ones; each with `state`, `role` (`assigned` \| `delegated`), `other` (`name`, `machine?`), `request` and `result?` as previews (`request_truncated`, `result_truncated` say when they were cut), `deadline_at?`, `closed_at?` |
 | `get_task` | `bot_id, task_id` | `task`: the same shape with the whole request and result |
@@ -420,7 +422,13 @@ Decision { "id", "project_id", "kind": "question"|"decision", "title", "body",
            "ruling": {"option?","text","reason?","answered_at","answered_by"}?,
            "published_at?", "supersedes_id?", "superseded_by_id?", "withdrawn_reason?",
            "tags": ["..."], "comment_count", "last_comment_at?",
-           "comments": [...], "notifications": [...], "edited_at?", "created_at" }
+           "comments": [...], "notifications": [...], "edited_at?", "created_at",
+           "item_id?", "plan_node_id?", "blocking?" }
+  `item_id`, `plan_node_id` and `blocking` (0.22.0, `questions_v1`): the card
+  and plan node a decision is about, and, on a `question`, whether it holds
+  its node's research and gate. A question asked with `ask_owner` is a
+  decision of kind `question` whose `title` is the question and `body` its
+  `why`; its `ruling` is the owner's answer.
   An option's `grants` (H-117) are permission extras the owner grants by picking it.
   - **At raise:** each one is checked. `bot` may be given as a name and is stored as the bot's id; `extra` must be a known extra.
   - **When they apply:** when the owner's own ruling is published, with no second step. A ruling a bot relayed applies on the owner's `confirm_decision`.
@@ -1247,6 +1255,59 @@ capability.
 - **Plan gates in Needs you (`attention_plan`).** `AttentionKind`
   `PLAN_GATE` (20, weight 3), targeting `plan_node_id`; the owner answers
   with `plan_rule`.
+
+### Questions and artifacts (0.22.0)
+
+Additions to contracts `board` 1 and `home` 1, and to the JSON requests; no
+version changes. A client uses an addition only with a daemon that
+advertises its capability.
+
+- **Questions (`questions_v1`).** `proto/flotilla/board/v1/questions.proto`.
+  A `Question` is the board's view of a decision of kind `question`: one
+  question, its `options` and `recommendation`, `blocking`, `state` (open,
+  answered, dismissed), who asked, the card (`item_id`) and plan node
+  (`plan_node_id`) it is about, and the owner's `answer` (an option, text or
+  both). Each question is answered once.
+  - **Requests.** `question_list` → `questions` (read: a project's
+    questions, filtered by card, node or state, open ones first, paged by
+    `before`). `question_answer` and `question_dismiss` → `questioned`
+    (approve; `expected_version` as with the plan). `ask_owner` →
+    `questioned` is a bot's, over MCP: one record per question, at most 8 a
+    call, and a comment on the card that links them.
+  - **`questioned`.** `done` (the questions after the change), `conflict`
+    (the question now) or `refused` (`question.answered`,
+    `question.no_option`, `question.empty`, `question.too_many`).
+  - **Pushes and details.** `question_change` goes to connections watching
+    the project. `ItemDetail.questions` and `PlanNodeDetail.questions` (a
+    node's own and its cards') list them, open ones first. `ItemCard` and
+    `PlanNode` count them in `questions_open`, and `PlanNode` counts the
+    blocking ones in `questions_blocking`.
+  - **The plan.** While a blocking question of a node is open, its research
+    doesn't close and `plan_submit` is refused with `plan.question_open`.
+    An answer on a research spike is written into the spike's research
+    document (`written_to`), and a gate submission lists the node's answered
+    questions.
+  - **Needs you.** `AttentionKind` `QUESTION` (21, weight 1; 3 when
+    blocking), one row per open question, targeting `decision_id` with
+    `item_id` its card, and `question_blocking`. `OWNER_QUESTION` rows stay
+    for questions asked the older ways (`item_comment {asks_owner}`,
+    `message_owner {asks}`).
+  - **Older clients.** Older clients see the questions as decisions of kind
+    `question` in the registry. A daemon without `questions_v1` answers the
+    requests with the envelope error `unsupported`.
+- **Artifacts by kind (`artifacts_v2`).** `list_artifacts {project_id,
+  group?, limit?, before?}`.
+  - **`group`.** `group` is `shared` (files no single card owns: the
+    default), `uploads` (the owner's, under `uploads/`) or `checks` (check
+    logs, under `checks/`). Each artifact carries its `group`, and
+    `used_by`: the ids of the live cards that attach or link it.
+  - **Storage folders.** The storage folders are never listed: card
+    attachments (`items/`) and the linked computer's cache (`.cache/`).
+  - **Card documents.** `ItemDetail.attachments` also lists each `artifact`
+    link of the card as a document (`kind` doc, `path` its artifact), so a
+    card shows one list of documents.
+  - **Older daemons.** Without `artifacts_v2`, `group` is ignored and
+    everything is listed, as before.
 
 ### Flow metrics (B11)
 

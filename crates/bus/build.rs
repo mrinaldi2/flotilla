@@ -16,6 +16,7 @@ const FILES: &[&str] = &[
     "flotilla/board/v1/releases.proto",
     "flotilla/board/v1/meetings.proto",
     "flotilla/board/v1/plan.proto",
+    "flotilla/board/v1/questions.proto",
     "flotilla/home/v1/home.proto",
     "flotilla/pr/v1/pr.proto",
     "flotilla/pr/v1/tools.proto",

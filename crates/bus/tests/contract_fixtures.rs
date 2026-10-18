@@ -227,6 +227,10 @@ fn arm_of(envelope: &bus::contract::wire::Envelope) -> String {
                 board_request::Request::PlanResearchSkip(_) => "plan_research_skip",
                 board_request::Request::PlanDrop(_) => "plan_drop",
                 board_request::Request::PlanDocRead(_) => "plan_doc_read",
+                board_request::Request::AskOwner(_) => "ask_owner",
+                board_request::Request::QuestionList(_) => "question_list",
+                board_request::Request::QuestionAnswer(_) => "question_answer",
+                board_request::Request::QuestionDismiss(_) => "question_dismiss",
             }
         ),
         Body::BoardResponse(r) => format!(
@@ -257,6 +261,13 @@ fn arm_of(envelope: &bus::contract::wire::Envelope) -> String {
                         plan_result::Outcome::Refused(_) => "planned.refused",
                         plan_result::Outcome::Conflict(_) => "planned.conflict",
                     },
+                board_response::Response::Questions(_) => "questions",
+                board_response::Response::Questioned(q) =>
+                    match q.outcome.as_ref().expect("an outcome") {
+                        question_result::Outcome::Done(_) => "questioned.done",
+                        question_result::Outcome::Conflict(_) => "questioned.conflict",
+                        question_result::Outcome::Refused(_) => "questioned.refused",
+                    },
                 board_response::Response::PlanDoc(_) => "plan_doc",
             }
         ),
@@ -265,6 +276,7 @@ fn arm_of(envelope: &bus::contract::wire::Envelope) -> String {
             match p.push.as_ref().expect("a push") {
                 board_push::Push::BoardEvent(_) => "board_event",
                 board_push::Push::PlanChange(_) => "plan_change",
+                board_push::Push::QuestionChange(_) => "question_change",
             }
         ),
         Body::HomeRequest(r) => format!(

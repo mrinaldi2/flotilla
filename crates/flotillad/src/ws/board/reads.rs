@@ -168,6 +168,8 @@ pub(super) fn item_detail(app: &AppState, id: &str) -> Result<c::ItemDetail, Ref
                     .map(|a| to_wire(a, &artifacts))
                     .collect(),
                 invited: t.invited(id)?,
+                // Filled with the questions (0.22.0, step 2).
+                questions: Vec::new(),
             }))
         })?
         .ok_or_else(|| not_found(id))
