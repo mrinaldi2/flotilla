@@ -9,6 +9,19 @@ use common::*;
 #[tokio::test]
 async fn release_install_outside_a_bot_session_is_refused() {
     let d = spawn_daemon().await;
+    // The local endpoint comes up just after the daemon answers: a CLI
+    // started before it found no socket (a flake in CI).
+    #[cfg(unix)]
+    {
+        let socket = d.app.cfg.home.join("run").join("bus.sock");
+        for _ in 0..100 {
+            if socket.exists() {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        }
+        assert!(socket.exists(), "no local endpoint at {}", socket.display());
+    }
     let dir = tempfile::tempdir().expect("dir");
     let config = dir.path().join("flotillad.toml");
     std::fs::write(
