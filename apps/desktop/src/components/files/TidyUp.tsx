@@ -143,34 +143,30 @@ function useTidy(client: DaemonApi, projectId: string, onChanged: () => void) {
     setNote({ text, failed: false });
     onChanged();
   };
-  const run = async (a: Artifact, send: () => Promise<unknown>, text: string): Promise<void> => {
+  /** Sends a request whose answer says, in words, what was done. */
+  const run = async (a: Artifact, send: () => Promise<string>): Promise<void> => {
     try {
-      await send();
-      done(a, text);
+      done(a, await send());
     } catch (failure) {
       setNote({ text: `${a.name}: ${errText(failure)}`, failed: true });
     }
   };
   const keep = (a: Artifact): Promise<void> =>
-    run(
-      a,
-      () =>
-        client.request(
-          { type: "artifact_keep", project_id: projectId, path: a.rel, keep: true },
-          "artifact_kept",
-        ),
-      `Kept ${a.name}.`,
-    );
+    run(a, async () => {
+      await client.request(
+        { type: "artifact_keep", project_id: projectId, path: a.rel, keep: true },
+        "artifact_kept",
+      );
+      return `Kept ${a.name}.`;
+    });
   const remove = (a: Artifact): Promise<void> =>
-    run(
-      a,
-      () =>
-        client.request(
-          { type: "artifact_trash", project_id: projectId, path: a.rel },
-          "artifact_trashed",
-        ),
-      `Moved ${a.name} to the trash.`,
-    );
+    run(a, async () => {
+      const reply = await client.request(
+        { type: "artifact_trash", project_id: projectId, path: a.rel },
+        "artifact_trashed",
+      );
+      return `Moved ${a.name} to ${reply.bin === "folder" ? "Flotilla's trash folder" : "the trash"}.`;
+    });
   const attached = (a: Artifact, card: string): void => done(a, `Attached ${a.name} to ${card}.`);
   return { settled, note, keep, remove, attached };
 }

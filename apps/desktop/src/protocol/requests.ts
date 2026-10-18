@@ -273,7 +273,10 @@ export type ClientRequestBody =
       readonly limit?: number;
     }
   | {
-      /** Moves a shared file no live card uses to the OS trash (0.22.0, `artifacts_v2`; approve). */
+      /**
+       * Moves a shared file no live card uses to the trash (0.22.0, `artifacts_v2`;
+       * approve). A file a live card uses is refused with `conflict`, naming the cards.
+       */
       readonly type: "artifact_trash";
       readonly project_id: string;
       /** The artifact's `rel`. */

@@ -3,8 +3,9 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { ARTIFACTS_V2 } from "../../../protocol/chat";
-import { ItemAttachmentSchema } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { ItemAttachmentSchema, LinkKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import type { ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { EditResultSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import type { ItemDetail } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { defaultColumns } from "../../../test/boardFixtures";
 import { DASH_BOTS } from "../../../test/dashboardFixtures";
@@ -100,13 +101,13 @@ function doc(id: string, name: string, path: string): ItemAttachment {
   return create(ItemAttachmentSchema, { id, itemId: "H-017", kind: "doc", name, path });
 }
 
-/** A change note attached, and linked as an artifact too, and a spec. */
+/** A spec attached (and linked too), and the change note linked as an artifact. */
 function withDocs(): ItemDetail {
   const detail = itemDetail();
   detail.attachments = [
-    doc("a1", "change note", "H-017-change.md"),
+    doc("a1", "spec", "specs/items.md"),
+    doc("link:specs/items.md", "spec", "specs/items.md"),
     doc("link:H-017-change.md", "change note", "H-017-change.md"),
-    doc("a2", "spec", "specs/items.md"),
   ];
   return detail;
 }
@@ -121,6 +122,30 @@ describe("ItemDrawer documents", () => {
     expect(within(docs).getByRole("heading")).toHaveTextContent("Documents 2");
     await user.click(screen.getByRole("tab", { name: "Links 3" }));
     expect(screen.getByRole("tabpanel")).not.toHaveTextContent("Artifacts");
+  });
+
+  it("removes a linked document with its link, and a stored one with a detach", async () => {
+    const user = userEvent.setup();
+    const fake = questionsClient()
+      .onBoard("itemUnlink", () => ({ case: "edited", value: create(EditResultSchema, {}) }))
+      .onBoard("itemDetach", () => ({ case: "item", value: withDocs() }));
+    fake.capabilities = [ARTIFACTS_V2];
+    setup(fake, withDocs());
+    await user.click(await screen.findByRole("button", { name: "Detach change note" }));
+    await waitFor(() =>
+      expect(fake.boardCalls).toContainEqual({
+        case: "itemUnlink",
+        value: { id: "H-017", kind: LinkKind.ARTIFACT, ref: "H-017-change.md" },
+      }),
+    );
+    await waitFor(() => expect(fake.boardCalls.at(-1)?.case).toBe("itemGet"));
+    await user.click(screen.getByRole("button", { name: "Detach spec" }));
+    await waitFor(() =>
+      expect(fake.boardCalls).toContainEqual({
+        case: "itemDetach",
+        value: { id: "H-017", attachmentId: "a1" },
+      }),
+    );
   });
 
   it("keeps Attachments and the Links tab's artifacts with an older daemon", async () => {

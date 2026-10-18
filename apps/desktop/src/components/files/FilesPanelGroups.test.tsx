@@ -124,21 +124,26 @@ describe("artifacts by kind", () => {
   });
 });
 
-function owner(fake: FakeDaemon): FakeDaemon {
+/** The approve grant, with the daemon's keep and trash (step 3's shapes). */
+function owner(fake: FakeDaemon, bin: "os" | "folder" = "os"): FakeDaemon {
   fake.grants = ["read", "control", "approve"];
   return fake
-    .onRequest("artifact_keep", (body) => ({
-      type: "artifact_kept",
-      req_id: "2",
-      project_id: "p1",
-      path: body.type === "artifact_keep" ? body.path : "",
-      kept: true,
-    }))
+    .onRequest("artifact_keep", (body) => {
+      const rel = body.type === "artifact_keep" ? body.path : "";
+      const listed = GROUPED_ARTIFACTS.find((a) => a.rel === rel) ?? GROUPED_ARTIFACTS[0];
+      return {
+        type: "artifact_kept",
+        req_id: "2",
+        project_id: "p1",
+        artifact: { ...(listed ?? { path: rel, rel, name: rel, size: 0, mime: "" }), kept: true },
+      };
+    })
     .onRequest("artifact_trash", (body) => ({
       type: "artifact_trashed",
       req_id: "3",
       project_id: "p1",
       path: body.type === "artifact_trash" ? body.path : "",
+      bin,
     }));
 }
 
@@ -190,10 +195,21 @@ describe("tidy up", () => {
     });
   });
 
+  it("says when a file went to Flotilla's trash folder", async () => {
+    const user = userEvent.setup();
+    show(owner(grouped(), "folder"));
+    const row = await openTidy(user, "notes-0917.md");
+    await user.click(row.getByRole("button", { name: "Remove…" }));
+    await user.click(screen.getByRole("button", { name: "Move to trash" }));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Moved notes-0917.md to Flotilla's trash folder.",
+    );
+  });
+
   it("says why the daemon refused to remove a file", async () => {
     const user = userEvent.setup();
     const fake = owner(grouped()).onRequest("artifact_trash", () => {
-      throw new DaemonError("invalid_request", "a live card uses it");
+      throw new DaemonError("conflict", "a live card uses it");
     });
     show(fake);
     const row = await openTidy(user, "frames-run3.csv");

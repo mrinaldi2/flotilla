@@ -270,13 +270,15 @@ export type ServerReply =
       readonly type: "artifact_trashed";
       readonly project_id: string;
       readonly path: string;
+      /** The OS trash, or Flotilla's own trash folder where there is none. */
+      readonly bin: "os" | "folder";
     })
   | (ReplyBase & {
       /** To `artifact_keep` (0.22.0). */
       readonly type: "artifact_kept";
       readonly project_id: string;
-      readonly path: string;
-      readonly kept: boolean;
+      /** As listed, with `kept`. */
+      readonly artifact: Artifact;
     });
 
 export type ServerReplyType = ServerReply["type"];
