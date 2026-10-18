@@ -103,6 +103,11 @@ export interface Decision {
   readonly notifications?: readonly DecisionNotification[];
   readonly edited_at?: string;
   readonly created_at: string;
+  /** The card and plan node it is about (0.22.0, `questions_v1`). */
+  readonly item_id?: string;
+  readonly plan_node_id?: string;
+  /** A question that holds its node's research and gate (0.22.0). */
+  readonly blocking?: boolean;
 }
 
 export interface Tag {

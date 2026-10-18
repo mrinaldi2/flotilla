@@ -101,7 +101,8 @@ impl Conn {
             | Request::ItemDraftChanges(_)
             | Request::PlanGet(_)
             | Request::PlanNodeGet(_)
-            | Request::PlanDocRead(_) => Capability::Read,
+            | Request::PlanDocRead(_)
+            | Request::QuestionList(_) => Capability::Read,
             // Choosing the board's home is the owner's call (H-037), and so
             // is the boards' structure (0.19.0).
             Request::BoardEnable(_)
@@ -118,7 +119,10 @@ impl Conn {
             | Request::PlanEnable(_)
             | Request::PlanRule(_)
             | Request::PlanResearchSkip(_)
-            | Request::PlanDrop(_) => Capability::Approve,
+            | Request::PlanDrop(_)
+            // Answering is a ruling (0.22.0).
+            | Request::QuestionAnswer(_)
+            | Request::QuestionDismiss(_) => Capability::Approve,
             _ => Capability::Control,
         };
         if !self.caps.contains(&cap) {
@@ -208,6 +212,17 @@ impl Conn {
             | Request::PlanResearchSkip(_)
             | Request::PlanDrop(_)
             | Request::PlanDocRead(_)) => self.plan_request(req)?,
+            // Questions (0.22.0, `questions_v1`): contracted, served from
+            // step 2. `ask_owner` is a bot's, over MCP.
+            Request::AskOwner(_)
+            | Request::QuestionList(_)
+            | Request::QuestionAnswer(_)
+            | Request::QuestionDismiss(_) => {
+                return Err(refuse(
+                    "unsupported",
+                    "questions come with a later daemon (questions_v1)",
+                ))
+            }
         }))
     }
 

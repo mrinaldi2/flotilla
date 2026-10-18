@@ -261,6 +261,9 @@ export type ServerReply =
       readonly type: "artifacts";
       readonly project_id: string;
       readonly artifacts: readonly Artifact[];
+      /** With `limit`: more after this page, from `next_before`. */
+      readonly has_more?: boolean;
+      readonly next_before?: string | null;
     });
 
 export type ServerReplyType = ServerReply["type"];

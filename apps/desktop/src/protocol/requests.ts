@@ -2,7 +2,7 @@
 
 import type { BrowserInputEvent } from "./agents";
 import type { CleanupRequestBody } from "./cleanup";
-import type { PermissionAnswer } from "./chat";
+import type { ArtifactGroup, PermissionAnswer } from "./chat";
 import type { DashboardRequestBody } from "./dashboard";
 import type { MeetingRequestBody } from "./meetings";
 import type { OwnerActionRequestBody } from "./ownerActions";
@@ -213,7 +213,14 @@ export type ClientRequestBody =
     }
   | { readonly type: "get_chat_step"; readonly bot_id: string; readonly item_id: string }
   | { readonly type: "get_chat_image"; readonly bot_id: string; readonly image_id: string }
-  | { readonly type: "list_artifacts"; readonly project_id: string }
+  | {
+      readonly type: "list_artifacts";
+      readonly project_id: string;
+      /** 0.22.0, `artifacts_v2`; an older daemon lists everything. */
+      readonly group?: ArtifactGroup;
+      readonly limit?: number;
+      readonly before?: string;
+    }
   | {
       readonly type: "read_file";
       readonly path: string;

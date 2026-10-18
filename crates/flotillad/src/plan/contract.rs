@@ -197,6 +197,9 @@ impl From<m::Node> for c::PlanNode {
             updated_at: stamp(v.updated_at),
             version: v.version,
             rank: v.rank,
+            // Counted with the questions (0.22.0, step 2).
+            questions_open: 0,
+            questions_blocking: 0,
         }
     }
 }
@@ -307,6 +310,8 @@ impl From<super::Detail> for c::PlanNodeDetail {
             node: Some(v.node.into()),
             history: v.history.into_iter().map(Into::into).collect(),
             cards: v.cards.into_iter().map(Into::into).collect(),
+            // Filled with the questions (0.22.0, step 2).
+            questions: Vec::new(),
         }
     }
 }
