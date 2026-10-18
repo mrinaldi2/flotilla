@@ -151,11 +151,29 @@ async fn bots_work_an_item_through_the_board_over_mcp() {
         )
         .await;
     assert!(error_text(&raw).contains("start.research"), "{raw}");
-    let recorded = common::board::record_research(dev, &id).await;
+    // A research document attached to the card records it, as the
+    // "Code research" section does.
+    let workspace = pair
+        .d
+        .app
+        .db
+        .get_bot(&pair.ids[1])
+        .unwrap()
+        .unwrap()
+        .workspace_path;
+    std::fs::create_dir_all(&workspace).unwrap();
+    std::fs::write(
+        std::path::Path::new(&workspace).join("code-research.md"),
+        "# Code research\n\nThe board moves live in kanban/moves.rs.\n",
+    )
+    .unwrap();
+    dev.call("item_attach", json!({"id": id, "file": "code-research.md"}))
+        .await;
+    let attached = get(dev, &id).await;
     let moved = dev
         .call(
             "item_move",
-            json!({"id": id, "to": "doing", "expected_version": version(&recorded["item"])}),
+            json!({"id": id, "to": "doing", "expected_version": version(&attached["item"])}),
         )
         .await;
     assert_eq!(moved["item"]["category"], "doing");

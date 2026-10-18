@@ -114,6 +114,19 @@ const ROWS: &[Row] = &[
         expect: &["start.research"],
     },
     Row {
+        rule: "Ready → Doing: an attached research document is research recorded (0.21.0)",
+        from: Cat::Ready,
+        to: Cat::Doing,
+        ok: |c| {
+            c.who = bot("lead", LEAD);
+            c.ctx.links.push(link(LinkKind::Task, "lead"));
+            c.item.description = "## Code research\n\n".into();
+            c.ctx.attachments.push("TP-9-code-research.md  ".into());
+        },
+        bad: |c| c.ctx.attachments.clear(),
+        expect: &["start.research"],
+    },
+    Row {
         rule: "Ready → Doing (assignee pulls): per-assignee WIP",
         from: Cat::Ready,
         to: Cat::Doing,

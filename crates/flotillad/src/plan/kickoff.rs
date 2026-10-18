@@ -107,9 +107,10 @@ fn wanted(t: &BoardTx<'_>, node: &Node) -> anyhow::Result<Option<Card>> {
                 title: format!("Research: {title}"),
                 description: format!(
                     "Research {id} “{title}” before its {}: answer what it needs to know \
-                     (playtests, telemetry, references, the code), write the findings in the \
-                     repository under {}, and link each document to this card (item_link kind \
-                     artifact). More spikes for {id} (plan_node_id) split the work. Research \
+                     (playtests, telemetry, references, the code), write the findings as a \
+                     Markdown file with \"research\" in its name and attach it to this card \
+                     (item_attach with file), so the owner reads it on the card. A copy kept \
+                     in the repository goes under {}. More spikes for {id} (plan_node_id) split the work. Research \
                      closes once every spike of {id}, this one included, is done with a \
                      document; then write the {} and submit it.",
                     if node.kind == Kind::Initiative {

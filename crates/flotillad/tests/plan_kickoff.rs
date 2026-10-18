@@ -139,6 +139,11 @@ async fn an_initiative_walks_the_lead_through_research_and_its_prd() {
     assert_eq!(Some(read.board_id.as_str()), init.board_id.as_deref());
     assert_eq!(read.item_type, ItemType::Spike);
     assert!(
+        read.description.contains("item_attach"),
+        "{}",
+        read.description
+    );
+    assert!(
         read.description
             .contains("docs/initiatives/combat-readability/research/"),
         "{}",
