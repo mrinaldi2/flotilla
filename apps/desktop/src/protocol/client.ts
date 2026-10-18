@@ -65,6 +65,7 @@ export class DaemonClient implements DaemonApi {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly pending = new Map<string, PendingRequest>();
   private readonly binary = new BinaryChannel();
+  readonly onPlanChange: BinaryChannel["onPlan"] = (handler) => this.binary.onPlan(handler);
   private readonly cursors = new Map<string, number>();
   private readonly statusListeners = new Set<(status: ConnectionStatus) => void>();
   private readonly handlers: PushHandlerSets = emptyHandlers();

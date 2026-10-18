@@ -10,6 +10,7 @@ import type { DaemonApi } from "../../protocol/api";
 import { boardCall } from "../../protocol/board";
 import type { Bot, Project } from "../../protocol/entities";
 import type { BoardColumn } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import type { PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import type { BoardSnapshot } from "../../protocol/gen/flotilla/board/v1/requests_pb";
 import { useNow } from "../control/useNow";
 import { ItemOwnerActions } from "../ownerActions/OwnerActionList";
@@ -41,6 +42,8 @@ export interface BoardProps {
   readonly openItem?: string;
   /** A board to show, from a link. */
   readonly openBoard?: string;
+  /** The project's plan nodes while planning is on (0.21.0): new cards belong to one. */
+  readonly planNodes?: readonly PlanNode[];
   readonly model: BoardModel;
   readonly refresh: () => void;
   readonly adopt: (snapshot: BoardSnapshot) => void;
@@ -89,6 +92,7 @@ function Sheets(props: {
         api={client}
         projectId={project.id}
         board={view.board}
+        planNodes={props.board.planNodes}
         onCreated={(id) => {
           props.onClose();
           view.openItem(id);
@@ -152,6 +156,7 @@ function Bar(
           onChange={(filters) => updatePrefs({ ...prefs, filters })}
           botOptions={view.botOptions}
           labelGroups={view.labelGroups}
+          planNodes={view.filterNodes}
           shown={view.shown.length}
           total={view.cards.length}
           hiddenNames={columns.filter((c) => !c.visible).map((c) => c.name)}
@@ -188,6 +193,7 @@ function Side(p: Parts & { readonly moves: BoardMoves }): ReactElement {
         projectId={project.id}
         openId={view.opened}
         shown={view.shown}
+        cards={cards}
         drafts={model.drafts}
         columns={columns}
         bots={props.bots}
@@ -235,6 +241,7 @@ export default function Board(props: BoardProps): ReactElement {
     openItem: props.openItem,
     openBoard: props.openBoard,
     settings: props.initial?.settings,
+    planNodes: props.planNodes,
   });
   const { prefs, updatePrefs, board, columns, cards } = view;
   const [sheet, setSheet] = useState<Sheet>(props.initial?.sheet ?? null);
@@ -285,6 +292,8 @@ export default function Board(props: BoardProps): ReactElement {
         onSetLimit={model.canRule ? setLimit : undefined}
         onNewItem={newItem}
         chipGroups={view.chipGroups}
+        scope={view.scope}
+        nodesById={view.nodesById}
       />
       <Side {...parts} moves={moves} />
       <Sheets sheet={sheet} board={props} view={view} onClose={() => setSheet(null)} />

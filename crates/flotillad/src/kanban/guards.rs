@@ -10,6 +10,8 @@ pub use ac::{check_ac, check_ac_edit, flag_ac, needs_evidence};
 use conditions::conditions;
 pub(crate) use conditions::section_filled;
 pub use conditions::{check_template, open_post_install, DOR_FIELDS};
+pub use research::check_type;
+pub(crate) use research::{unmet_research, SECTION as RESEARCH_SECTION};
 
 use super::model::{
     BoardColumn, ColumnCategory as Cat, Item, ItemLink, LinkKind, PersonRole, Role, Unmet, WipScope,
@@ -94,6 +96,9 @@ pub struct ColumnLoad {
 #[derive(Debug, Clone, Default)]
 pub struct Context {
     pub links: Vec<ItemLink>,
+    /// The names of the item's attachments not removed (a file's, or the
+    /// path or URL of a linked doc).
+    pub attachments: Vec<String>,
     pub blockers: Vec<Blocker>,
     /// The Definition of Ready fields of the item's template.
     pub ready: Vec<String>,
@@ -176,7 +181,9 @@ pub fn rule(from: Cat, to: Cat) -> Rule {
         (_, Cancelled) => Rule::Cancel,
         (Inbox, Ready) => Rule::Refine,
         (Ready, Inbox) => Rule::Unrefine,
-        (Ready, Doing) => Rule::Start,
+        // Starting is entering Research or Doing; Doing also wants the code
+        // research recorded (0.21.0, `start.research`).
+        (Ready, Research | Doing) | (Research, Doing) => Rule::Start,
         (Doing, Review) => Rule::Submit,
         (Review, Verify) => Rule::Approve,
         (Review, Doing) => Rule::Rework,
@@ -375,5 +382,6 @@ pub fn check_lead(who: &Who) -> Vec<Unmet> {
 
 mod ac;
 mod conditions;
+mod research;
 #[cfg(test)]
 mod tests;

@@ -118,7 +118,11 @@ async fn step3(k: &mut K9, s: &c::BoardSnapshot) -> c::BoardSnapshot {
         .iter()
         .filter_map(|col| col["name"].as_str())
         .collect();
-    assert_eq!(columns, ["To do", "Doing", "QA", "Done"], "{got}");
+    assert_eq!(
+        columns,
+        ["To do", "Research", "Doing", "QA", "Done"],
+        "{got}"
+    );
 
     let listed = k.lead.call("board_list", json!({})).await;
     let version = &listed["boards"][0]["board"]["version"];
@@ -152,7 +156,8 @@ async fn k9_recipe_box_end_to_end() {
     let id = drafts::step4(&mut k, &recipes, &todo).await;
     assert!(id.starts_with("RC-"), "{id}");
 
-    // 5. To do → Doing → QA → Done, refused once naming the missing rule.
+    // 5. To do → Research → Doing → QA → Done, refused once naming the
+    // missing rule.
     flow::step5(&mut k, &s, &recipes, &id).await;
 
     // 6. The Research board, from the phone's approval of a proposal.
@@ -200,9 +205,12 @@ async fn k9_g1_a_fresh_projects_first_board_is_simple_with_review() {
     );
     let main = board(&s, "Main");
     assert_eq!(main.flow, "custom");
-    assert_eq!(main.automations["work.started"], "doing");
+    assert_eq!(main.automations["work.started"], "research");
     let names: Vec<&str> = s.columns.iter().map(|col| col.name.as_str()).collect();
-    assert_eq!(names, ["To do", "Doing", "Review", "Done", "Cancelled"]);
+    assert_eq!(
+        names,
+        ["To do", "Research", "Doing", "Review", "Done", "Cancelled"]
+    );
     assert!(
         s.roles.iter().any(|r| r.bot_id == lead_id),
         "the lead holds the board's Lead role: {:?}",

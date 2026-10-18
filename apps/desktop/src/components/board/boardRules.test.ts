@@ -78,7 +78,7 @@ describe("filters", () => {
     expect(matchesFilters(item, labels("platform:ios", "area:daemon"))).toBe(true);
     expect(matchesFilters(item, labels("platform:ios", "area:web"))).toBe(false);
     expect(matchesFilters(item, labels("urgent"))).toBe(true);
-    expect(matchesFilters(item, { bots: ["b1"], labels: [], types: [ItemType.FEATURE] })).toBe(
+    expect(matchesFilters(item, { ...NO_FILTERS, bots: ["b1"], types: [ItemType.SPIKE] })).toBe(
       false,
     );
   });
@@ -95,6 +95,7 @@ describe("filters", () => {
       bots: ["b1"],
       labels: ["area:web"],
       types: [ItemType.BUG],
+      nodes: [],
     });
     expect(parseFilters("nonsense")).toEqual(NO_FILTERS);
   });

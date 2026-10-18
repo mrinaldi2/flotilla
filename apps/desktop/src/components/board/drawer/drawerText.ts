@@ -20,6 +20,8 @@ import type { MoveCheck } from "../../../protocol/gen/flotilla/board/v1/requests
 const STEPS: readonly { readonly category: ColumnCategory; readonly word: string }[] = [
   { category: ColumnCategory.INBOX, word: "Inbox" },
   { category: ColumnCategory.READY, word: "Ready" },
+  // 0.21.0: tasks and bugs read the code before Doing, on boards that have it.
+  { category: ColumnCategory.RESEARCH, word: "Research" },
   { category: ColumnCategory.DOING, word: "Doing" },
   { category: ColumnCategory.REVIEW, word: "Review" },
   { category: ColumnCategory.VERIFY, word: "Verify" },
@@ -66,10 +68,10 @@ interface Flow {
 }
 
 /**
- * The item's path (0.19.0). A release-gated board (or one from a home
- * before 0.19) has the canonical steps; a custom board's path is its own
- * visible columns in order, Cancelled aside. Only release-gated columns
- * have a Ready category.
+ * The item's path (0.19.0). A board with a Ready column (release-gated, an
+ * initiative's, or one from a home before 0.19) has the canonical steps it
+ * holds; a custom board's path is its own visible columns in order,
+ * Cancelled aside.
  */
 export function flowOf(columns: readonly BoardColumn[], current: BoardColumn | undefined): Flow {
   const board = columns.filter((c) => current !== undefined && c.boardId === current.boardId);
@@ -88,10 +90,17 @@ export function flowOf(columns: readonly BoardColumn[], current: BoardColumn | u
       next: reached < 0 ? undefined : path[reached + 1],
     };
   }
-  const reached = STEPS.findIndex((s) => s.category === current?.category);
-  const following = reached < 0 ? undefined : STEPS[reached + 1];
+  // The steps the board has: an initiative's board (0.21.0) has Research and
+  // none of the release steps. Unknown, every step but Research.
+  const steps = STEPS.filter((s) =>
+    board.length === 0
+      ? s.category !== ColumnCategory.RESEARCH
+      : board.some((c) => c.category === s.category),
+  );
+  const reached = steps.findIndex((s) => s.category === current?.category);
+  const following = reached < 0 ? undefined : steps[reached + 1];
   return {
-    steps: STEPS.map((s) => ({ key: s.word, word: s.word })),
+    steps: steps.map((s) => ({ key: s.word, word: s.word })),
     reached,
     next: following ? columns.find((c) => c.category === following.category) : undefined,
   };

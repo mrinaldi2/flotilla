@@ -147,7 +147,8 @@ impl Editor<'_> {
 
     /// A new item in the board's inbox, or a draft (the owner's alone).
     pub fn create(&self, req: &c::ItemCreate) -> anyhow::Result<Edited> {
-        let unmet = guards::check_new(&req.title);
+        let mut unmet = guards::check_new(&req.title);
+        unmet.extend(guards::check_type(req.r#type));
         if !unmet.is_empty() {
             return Ok(Edited::Refused(unmet));
         }
@@ -159,6 +160,10 @@ impl Editor<'_> {
         }
         if let Some(parent) = req.parent_id.as_deref().filter(|p| !p.is_empty()) {
             self.own_item(parent)?;
+        }
+        let plan_node_id = req.plan_node_id.as_deref().filter(|n| !n.is_empty());
+        if let Some(unmet) = self.unknown_node(plan_node_id)? {
+            return Ok(Edited::Refused(vec![unmet]));
         }
         let labels = crate::compat018::create_labels(req);
         let new = NewItem {
@@ -176,6 +181,7 @@ impl Editor<'_> {
             labels: &labels,
             parent_id: req.parent_id.as_deref().filter(|p| !p.is_empty()),
             acceptance_criteria: &req.acceptance_criteria,
+            plan_node_id,
         };
         self.published(ChangeKind::ItemUpserted, None, || {
             let item = self.app.db.board_tx(|t| match draft {
@@ -188,8 +194,15 @@ impl Editor<'_> {
     }
 
     pub fn update(&self, req: &c::ItemUpdate) -> anyhow::Result<Edited> {
+        let retired = req.r#type.map(guards::check_type).unwrap_or_default();
+        if !retired.is_empty() {
+            return Ok(Edited::Refused(retired));
+        }
         if let Some(parent) = req.parent_id.as_deref().filter(|p| !p.is_empty()) {
             self.own_item(parent)?;
+        }
+        if let Some(unmet) = self.unknown_node(req.plan_node_id.as_deref())? {
+            return Ok(Edited::Refused(vec![unmet]));
         }
         let group = crate::compat018::update_group(req);
         let priority = req.priority.map(Priority::from_wire).transpose()?;
@@ -223,6 +236,11 @@ impl Editor<'_> {
                 .as_deref()
                 .map(|p| (!p.is_empty()).then_some(p)),
             item_type: req.r#type.map(ItemType::from_wire).transpose()?,
+            // An empty node clears it.
+            plan_node_id: req
+                .plan_node_id
+                .as_deref()
+                .map(|n| (!n.is_empty()).then_some(n)),
         };
         let retype = edit.item_type;
         let guard = |item: &Item, who: &Who| {
@@ -232,7 +250,7 @@ impl Editor<'_> {
             }
             // Raising to P0 is the lead's or the owner's call.
             let to_p0 = priority == Some(Priority::P0) && item.priority != Priority::P0;
-            // So is changing an item's type, e.g. feature → epic.
+            // So is changing an item's type, e.g. task → spike.
             let retyped = retype.is_some_and(|t| t != item.item_type);
             let mut unmet = if to_p0 || retyped {
                 guards::check_lead(who)
@@ -281,6 +299,15 @@ impl Editor<'_> {
                 .remove_item_link(&req.id, kind, &req.r#ref, &self.actor)?;
             Ok((removed, removed.then(|| req.id.clone())))
         })
+    }
+
+    /// Why a card can't belong to `node`: it isn't a plan node of this
+    /// project (0.21.0). An empty one clears the card's node.
+    fn unknown_node(&self, node: Option<&str>) -> anyhow::Result<Option<Unmet>> {
+        let Some(node) = node.filter(|n| !n.is_empty()) else {
+            return Ok(None);
+        };
+        crate::plan::unknown_node(self.app, self.project_id, node)
     }
 
     /// A discarded draft keeps its history and takes no change.

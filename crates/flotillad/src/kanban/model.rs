@@ -74,6 +74,8 @@ text_enum!(
         Inbox => "inbox", Ready => "ready", Doing => "doing", Review => "review",
         Verify => "verify", Approval => "approval", Deploying => "deploying",
         Done => "done", Cancelled => "cancelled",
+        // Between Ready and Doing (0.21.0): the assignee reads the code first.
+        Research => "research",
     }
 );
 text_enum!(
@@ -100,7 +102,8 @@ impl ColumnCategory {
             ColumnCategory::Inbox | ColumnCategory::Ready => ColumnKind::Open,
             ColumnCategory::Done => ColumnKind::Done,
             ColumnCategory::Cancelled => ColumnKind::Cancelled,
-            ColumnCategory::Doing
+            ColumnCategory::Research
+            | ColumnCategory::Doing
             | ColumnCategory::Review
             | ColumnCategory::Verify
             | ColumnCategory::Approval
@@ -113,7 +116,8 @@ text_enum!(Role {
     ReviewerUx => "reviewer.ux", Tester => "tester", Dev => "dev",
     ReviewerCe => "reviewer.ce",
 });
-text_enum!(ItemType { Epic => "epic", Feature => "feature", Bug => "bug", Spike => "spike", Chore => "chore" });
+// Features and epics live in the plan, and chores became tasks (0.21.0).
+text_enum!(ItemType { Task => "task", Design => "design", Bug => "bug", Spike => "spike" });
 text_enum!(Size { S => "S", M => "M", L => "L" });
 text_enum!(Priority { P0 => "P0", P1 => "P1", P2 => "P2", P3 => "P3" });
 text_enum!(PersonRole { Reviewer => "reviewer", Verifier => "verifier" });
@@ -121,7 +125,7 @@ text_enum!(VerificationResult { Pass => "pass", Fail => "fail", Blocked => "bloc
 text_enum!(LinkKind {
     Task => "task", Decision => "decision", Artifact => "artifact", Branch => "branch", Pr => "pr",
     Meeting => "meeting", ItemBlocks => "item:blocks", ItemRelates => "item:relates",
-    ItemDuplicates => "item:duplicates", Thread => "thread",
+    ItemDuplicates => "item:duplicates", Thread => "thread", Design => "design",
 });
 text_enum!(
     /// Where an item stands (0.19.0 K4b): a draft is on no column yet.
@@ -256,6 +260,8 @@ pub struct Item {
     pub done_at: Option<DateTime<Utc>>,
     pub version: u64,
     pub state: ItemState,
+    /// The plan node it belongs to (0.21.0).
+    pub plan_node_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -284,6 +290,8 @@ pub struct ItemCard {
     pub invited: Vec<String>,
     /// Why it can't move on, filled when the card is read (`kanban::stuck`).
     pub move_block: Option<MoveBlock>,
+    /// The plan node it belongs to (0.21.0).
+    pub plan_node_id: Option<String>,
 }
 
 /// What stops a card: its last refused move, or the next column's rules.
@@ -380,15 +388,5 @@ pub struct Unmet {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn stored_spellings_parse_back() {
-        for kind in LinkKind::ALL {
-            assert_eq!(LinkKind::parse(kind.as_str()), Some(*kind));
-        }
-        assert_eq!(Role::parse("reviewer.ux"), Some(Role::ReviewerUx));
-        assert_eq!(Size::parse("XL"), None);
-    }
-}
+#[path = "model_tests.rs"]
+mod tests;

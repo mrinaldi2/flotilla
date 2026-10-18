@@ -16,7 +16,15 @@ import { escapeIsTheDrawers } from "../../../hooks/useDrawerEscape";
 import type { DaemonApi } from "../../../protocol/api";
 import type { BoardApi } from "../../../protocol/board";
 import type { Bot } from "../../../protocol/entities";
-import type { BoardColumn, ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type {
+  BoardColumn,
+  Item,
+  ItemAttachment,
+  ItemCard,
+} from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { ColumnKind, ItemType } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { ItemDetail } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
+import { COLUMN_RESEARCH } from "../../../protocol/plan";
 import AttachmentsSection from "../attachments/AttachmentsSection";
 import AttachmentViewer from "../attachments/AttachmentViewer";
 import { useArtifactReader } from "../attachments/DocumentPreview";
@@ -24,6 +32,7 @@ import ItemMarkdown from "../attachments/ItemMarkdown";
 import { useDrawerAttachments } from "../attachments/useDrawerAttachments";
 import { useDraftDrawer } from "../drafts/useDraftDrawer";
 import type { Anchor } from "../useBoardMoves";
+import { AttachDesign, DesignSection } from "./DesignSection";
 import DrawerBody from "./DrawerBody";
 import { DrawerHeader } from "./DrawerParts";
 import type { Tab } from "./DrawerTabsView";
@@ -69,6 +78,10 @@ export interface ItemDrawerProps {
   /** Stories: open in the edit form, or with a bot's chat docked. */
   readonly initialEdit?: boolean;
   readonly initialDiscuss?: string;
+  /** Opens another card here: a task's design (0.21.0). */
+  readonly onOpenItem?: (id: string) => void;
+  /** The board's open tasks, which a done Design card attaches to (0.21.0). */
+  readonly designTasks?: readonly ItemCard[];
 }
 
 /** "bot:<id>", "user", "device:…", "daemon": who did something, in words. */
@@ -150,9 +163,39 @@ function useItemDrawer(props: ItemDrawerProps) {
   return { state, editing, setEditing, viewing, setViewing, editable, who, files, now, draft };
 }
 
+/** A task's design cards, and on a done Design card the owner's "Attach design to a task…". */
+function DesignParts(props: {
+  readonly p: ItemDrawerProps;
+  readonly item: Item;
+  readonly detail: ItemDetail;
+  readonly editable: boolean;
+}): ReactElement {
+  const { p, item } = props;
+  const column = p.columns.find((c) => c.key === item.columnKey);
+  const attachable =
+    props.editable &&
+    p.api.capabilities.includes(COLUMN_RESEARCH) &&
+    item.type === ItemType.DESIGN &&
+    column?.kind === ColumnKind.DONE;
+  return (
+    <>
+      <DesignSection
+        api={p.api}
+        links={props.detail.links}
+        columnName={(key) => p.columns.find((c) => c.key === key)?.name ?? key}
+        onOpenItem={p.onOpenItem}
+      />
+      {attachable && p.designTasks !== undefined ? (
+        <AttachDesign api={p.api} designId={item.id} tasks={p.designTasks} />
+      ) : null}
+    </>
+  );
+}
+
 /** The item's attachments under its description, and a draft's "Discuss with a bot". */
 function OverviewAfter(props: {
   readonly api: BoardApi;
+  readonly design: ReactNode;
   readonly draftAfter: ReactNode;
   readonly attachments: readonly ItemAttachment[];
   readonly files: ReturnType<typeof useDrawerAttachments>;
@@ -162,6 +205,7 @@ function OverviewAfter(props: {
   return (
     <>
       {props.draftAfter}
+      {props.design}
       <AttachmentsSection
         api={props.api}
         attachments={props.attachments}
@@ -199,6 +243,7 @@ function DrawerMain(props: { readonly p: ItemDrawerProps; readonly d: DrawerStat
     after: (
       <OverviewAfter
         api={p.api}
+        design={<DesignParts p={p} item={item} detail={detail} editable={d.editable} />}
         draftAfter={d.draft.after}
         attachments={detail.attachments}
         files={d.files}

@@ -1,5 +1,7 @@
 //! The board's read requests, each from one consistent snapshot.
 
+use std::collections::HashSet;
+
 use bus::contract::board as c;
 use bus::Capability;
 
@@ -101,14 +103,17 @@ impl Conn {
             (Err(e), Some(_)) => return Err(refuse("invalid_request", format!("search: {e}"))),
             (Err(e), None) => return Err(e.into()),
         };
-        query_cards(r, cards)
+        let nodes = crate::plan::subtree_ids(&self.app, &r.plan_node_ids)?;
+        query_cards(r, cards, nodes.as_ref())
     }
 }
 
 /// The cards among `cards` an `ItemQuery` asks for, its text aside.
+/// `nodes` are the plan nodes it asks for with every node under them.
 pub(super) fn query_cards(
     r: &c::ItemQuery,
     cards: Vec<m::ItemCard>,
+    nodes: Option<&HashSet<String>>,
 ) -> Result<c::ItemQueryResult, Refusal> {
     let bad = |e: MapError| refuse("invalid_request", e.to_string());
     let types = wire_list(&r.types, m::ItemType::from_wire).map_err(bad)?;
@@ -123,6 +128,7 @@ pub(super) fn query_cards(
             && (priorities.is_empty() || priorities.contains(&card.priority))
             && crate::kanban::labels::matches_any(&card.labels, &labels)
             && r.blocked.is_none_or(|b| card.blocked == b)
+            && nodes.is_none_or(|n| card.plan_node_id.as_ref().is_some_and(|id| n.contains(id)))
     };
     Ok(c::ItemQueryResult {
         cards: cards.into_iter().filter(wanted).map(Into::into).collect(),

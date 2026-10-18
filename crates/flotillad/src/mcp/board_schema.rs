@@ -200,6 +200,7 @@ pub(super) fn all_tools() -> impl Iterator<Item = &'static BoardTool> {
     BOARD_TOOLS
         .iter()
         .chain(super::releases::RELEASE_TOOLS)
+        .chain(super::plan::PLAN_TOOLS)
         .chain(super::meetings::MEETING_TOOLS)
         .chain(super::prs::PR_TOOLS)
 }

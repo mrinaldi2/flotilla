@@ -37,7 +37,10 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
     assert_eq!(settings.home_daemon_id, d.app.db.daemon_id().expect("id"));
     // A new project's first board is Simple + Review (0.19.0).
     let names: Vec<&str> = board.columns.iter().map(|col| col.name.as_str()).collect();
-    assert_eq!(names, ["To do", "Doing", "Review", "Done", "Cancelled"]);
+    assert_eq!(
+        names,
+        ["To do", "Research", "Doing", "Review", "Done", "Cancelled"]
+    );
     assert_eq!(board.boards[0].flow, "custom");
     assert!(board.cards.is_empty());
     assert_eq!(board.seq, 0);
@@ -49,7 +52,7 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
             &NewItem {
                 project_id: &project_id,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title: "Board over WS",
                 description: "",
                 size: None,
@@ -57,6 +60,7 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
                 labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &Actor::User,
         )
@@ -119,7 +123,7 @@ async fn the_board_is_read_moved_and_watched_over_binary_frames() {
     ) else {
         panic!("expected a move check");
     };
-    assert_eq!(check.columns.len(), 4, "every column but its own");
+    assert_eq!(check.columns.len(), 5, "every column but its own");
     assert!(
         check.columns.iter().all(|col| !col.owner_override),
         "a custom board lists every move it takes"
@@ -287,7 +291,7 @@ async fn grants_and_bad_requests_are_refused() {
     assert_eq!(error_code(call(&mut reader, get()).await), "no_board");
     snapshot(call(&mut owner, get()).await);
     let board = snapshot(call(&mut reader, get()).await);
-    assert_eq!(board.columns.len(), 5);
+    assert_eq!(board.columns.len(), 6);
 
     // Moving needs control.
     assert_eq!(

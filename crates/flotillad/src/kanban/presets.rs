@@ -35,6 +35,9 @@ pub struct PresetColumn {
     pub wip_scope: WipScope,
     pub visible: bool,
     pub policy: ColumnPolicy,
+    /// The Research column (0.21.0): an active column whose category is
+    /// `research`, where a task or bug's assignee reads the code first.
+    pub research: bool,
 }
 
 /// The category a custom column carries for the code that still reads
@@ -50,7 +53,10 @@ pub fn category_of(kind: ColumnKind) -> ColumnCategory {
 
 impl PresetColumn {
     pub fn category(&self) -> ColumnCategory {
-        category_of(self.kind)
+        match self.research && self.kind == ColumnKind::Active {
+            true => ColumnCategory::Research,
+            false => category_of(self.kind),
+        }
     }
 }
 
@@ -95,12 +101,16 @@ impl Preset {
                     None,
                     ColumnPolicy::default(),
                 ),
+                research(ColumnPolicy::default()),
                 col(
                     "doing",
                     "Doing",
                     ColumnKind::Active,
                     Some(3),
-                    ColumnPolicy::default(),
+                    ColumnPolicy {
+                        rules: vec![EntryRule::ResearchRecorded],
+                        ..ColumnPolicy::default()
+                    },
                 ),
                 col(
                     "done",
@@ -135,6 +145,11 @@ impl Preset {
                         allowed_from: Vec::new(),
                     },
                 ),
+                research(ColumnPolicy {
+                    movers: vec![Mover::Lead, Mover::Assignee],
+                    rules: vec![EntryRule::AssigneeSet],
+                    allowed_from: Vec::new(),
+                }),
                 PresetColumn {
                     wip_scope: WipScope::PerAssignee,
                     ..col(
@@ -144,7 +159,7 @@ impl Preset {
                         Some(1),
                         ColumnPolicy {
                             movers: vec![Mover::Lead, Mover::Assignee],
-                            rules: vec![EntryRule::AssigneeSet],
+                            rules: vec![EntryRule::AssigneeSet, EntryRule::ResearchRecorded],
                             allowed_from: Vec::new(),
                         },
                     )
@@ -183,6 +198,7 @@ impl Preset {
                     wip_scope: c.wip_scope,
                     visible: c.visible,
                     policy: ColumnPolicy::default(),
+                    research: c.category == ColumnCategory::Research,
                 })
                 .collect(),
         }
@@ -206,7 +222,8 @@ impl Preset {
                 (Fact::PrClosed, "doing"),
                 (Fact::PrChangesRequested, "doing"),
             ],
-            Preset::SimpleReview => &[(Fact::WorkStarted, "doing")],
+            // Starting a card is reading its code first (0.21.0).
+            Preset::SimpleReview => &[(Fact::WorkStarted, "research")],
             Preset::Simple | Preset::ReleaseGated => &[],
         };
         pairs
@@ -231,12 +248,23 @@ fn col(
         wip_scope: WipScope::Column,
         visible: true,
         policy,
+        research: false,
     }
 }
 
-/// To do → Doing → Review → Done. The assignee moves its own card To do ↔
-/// Doing and Doing → Review; the daemon moves it to Doing when the assignee
-/// starts (`work.started`). Done is the owner's, or the lead's when the
+/// Between the open columns and Doing: the assignee reads the code and
+/// records what it found before the card may enter Doing (0.21.0).
+fn research(policy: ColumnPolicy) -> PresetColumn {
+    PresetColumn {
+        research: true,
+        ..col("research", "Research", ColumnKind::Active, None, policy)
+    }
+}
+
+/// To do → Research → Doing → Review → Done. The assignee moves its own card
+/// along and Doing → Review; the daemon moves it to Research when the
+/// assignee starts (`work.started`), and a task or bug enters Doing once its
+/// code research is recorded. Done is the owner's, or the lead's when the
 /// lead isn't the card's assignee, so a bot never approves its own work.
 fn simple_review() -> Vec<PresetColumn> {
     let assignee_or_lead = || vec![Mover::Lead, Mover::Assignee];
@@ -252,6 +280,11 @@ fn simple_review() -> Vec<PresetColumn> {
                 allowed_from: Vec::new(),
             },
         ),
+        research(ColumnPolicy {
+            movers: assignee_or_lead(),
+            rules: vec![EntryRule::AssigneeSet],
+            allowed_from: Vec::new(),
+        }),
         col(
             "doing",
             "Doing",
@@ -259,7 +292,7 @@ fn simple_review() -> Vec<PresetColumn> {
             Some(3),
             ColumnPolicy {
                 movers: assignee_or_lead(),
-                rules: vec![EntryRule::AssigneeSet],
+                rules: vec![EntryRule::AssigneeSet, EntryRule::ResearchRecorded],
                 allowed_from: Vec::new(),
             },
         ),

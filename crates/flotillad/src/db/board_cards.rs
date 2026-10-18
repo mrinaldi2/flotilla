@@ -14,6 +14,7 @@ pub(crate) fn is_active(category: ColumnCategory) -> bool {
     matches!(
         category,
         ColumnCategory::Ready
+            | ColumnCategory::Research
             | ColumnCategory::Doing
             | ColumnCategory::Review
             | ColumnCategory::Verify
@@ -78,7 +79,8 @@ fn cards_with(
                 ELSE '[]' END,
                 EXISTS(SELECT 1 FROM keeper_mark k WHERE k.item_id = i.id
                     AND k.rule IN ('stale', 'silent_stale') AND k.fired_at IS NOT NULL
-                    AND {holds})
+                    AND {holds}),
+                i.plan_node_id
          FROM item i JOIN board_column c ON c.project_id = i.project_id AND c.key = i.column_key
          WHERE i.project_id = ?1 AND {states} {filter}
          ORDER BY c.ord, i.rank",
@@ -112,6 +114,7 @@ fn cards_with(
             draft,
             invited: from_json(r.get(18)?)?,
             move_block: None,
+            plan_node_id: r.get(20)?,
         })
     };
     let cards = match arg {

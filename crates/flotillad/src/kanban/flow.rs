@@ -6,7 +6,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::guards::{over_limit, unmet, wip_unmet, Context, Move, Who};
-use super::model::{BoardColumn, ColumnKind, Item, LinkKind, Size, Unmet};
+use super::model::{BoardColumn, ColumnCategory, ColumnKind, Item, LinkKind, Size, Unmet};
 
 /// Who may move an item into a column; any one of a column's movers will do.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -46,6 +46,9 @@ pub enum EntryRule {
     /// whoever linked its branch or PR.
     Independent,
     Reason,
+    /// A task or bug has its code research recorded (0.21.0,
+    /// `start.research`); other types pass.
+    ResearchRecorded,
     /// A check another module registers (`release.in_open_package`).
     Predicate {
         name: String,
@@ -118,7 +121,13 @@ pub fn evaluate(
             None,
         ));
     }
+    // Research is asked of a card starting, from an open column or from
+    // Research, never of one sent back for rework.
+    let starting = from.kind == ColumnKind::Open || from.category == ColumnCategory::Research;
     for rule in &policy.rules {
+        if *rule == EntryRule::ResearchRecorded && !starting {
+            continue;
+        }
         out.extend(check(rule, item, mv, who, ctx));
     }
     if !is_return(from, to) && over_limit(item, to, ctx).is_some() {
@@ -240,6 +249,9 @@ fn check(rule: &EntryRule, item: &Item, mv: &Move<'_>, who: &Who, ctx: &Context)
             Some(_) => Vec::new(),
         },
         EntryRule::Independent => independent(item, who, ctx),
+        EntryRule::ResearchRecorded => super::guards::unmet_research(item, ctx)
+            .into_iter()
+            .collect(),
         EntryRule::Reason if !mv.reason.is_some_and(|r| !r.trim().is_empty()) => {
             fail("reason.required", "Give a reason.".into(), None)
         }

@@ -23,7 +23,7 @@ async fn a_card_says_why_it_cant_move() {
             block.reason.as_str(),
             block.refused
         ),
-        ("doing", "Nobody is assigned.", false)
+        ("research", "Nobody is assigned.", false)
     );
 
     // A refused move shows instead, until it would pass or the card moves.
@@ -36,9 +36,23 @@ async fn a_card_says_why_it_cant_move() {
     assert_eq!((block.to_column.as_str(), block.refused), ("review", true));
     assert_eq!(block.reason, "Items come to Review only from doing.");
 
-    // Assigned, it may start; in Doing, nothing stops it reaching Review.
+    // Assigned, it may start: in Research, its code research is what stops
+    // it reaching Doing; in Doing, nothing stops it reaching Review.
     f.assign(&item.id, Some("Builder")).await;
     f.bots[0].call("item_get", json!({"id": item.id})).await;
+    let card = f.card(&item.id).await;
+    assert_eq!(card.column_key, "research");
+    let block = card.move_block.expect("the research block");
+    assert_eq!(
+        (
+            block.to_column.as_str(),
+            block.reason.as_str(),
+            block.refused
+        ),
+        ("doing", "No code research is recorded yet.", false)
+    );
+    f.research(0, &item.id).await;
+    f.bot_move(0, &item.id, "doing").await;
     let card = f.card(&item.id).await;
     assert_eq!(card.column_key, "doing");
     assert_eq!(card.move_block, None, "{card:?}");
@@ -131,7 +145,7 @@ async fn a_question_about_a_draft_closes_when_its_discussion_ends() {
         &mut f.owner,
         Request::ItemCreate(c::ItemCreate {
             project_id: f.project.clone(),
-            r#type: c::ItemType::Feature as i32,
+            r#type: c::ItemType::Task as i32,
             title: "Gift cards".into(),
             draft: Some(true),
             ..Default::default()

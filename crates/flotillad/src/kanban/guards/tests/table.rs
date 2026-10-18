@@ -89,7 +89,7 @@ const ROWS: &[Row] = &[
         expect: &["reason.required"],
     },
     Row {
-        rule: "Ready → Doing (lead): assignee set, not an epic, task linked",
+        rule: "Ready → Doing (lead): assignee set, task linked",
         from: Cat::Ready,
         to: Cat::Doing,
         ok: |c| {
@@ -98,10 +98,33 @@ const ROWS: &[Row] = &[
         },
         bad: |c| {
             c.item.assignee = None;
-            c.item.item_type = ItemType::Epic;
             c.ctx.links.clear();
         },
-        expect: &["start.assignee", "start.epic", "start.task"],
+        expect: &["start.assignee", "start.task"],
+    },
+    Row {
+        rule: "Ready → Doing: a task's code research is recorded (0.21.0)",
+        from: Cat::Ready,
+        to: Cat::Doing,
+        ok: |c| {
+            c.who = bot("lead", LEAD);
+            c.ctx.links.push(link(LinkKind::Task, "lead"));
+        },
+        bad: |c| c.item.description = "## Code research\n\n".into(),
+        expect: &["start.research"],
+    },
+    Row {
+        rule: "Ready → Doing: an attached research document is research recorded (0.21.0)",
+        from: Cat::Ready,
+        to: Cat::Doing,
+        ok: |c| {
+            c.who = bot("lead", LEAD);
+            c.ctx.links.push(link(LinkKind::Task, "lead"));
+            c.item.description = "## Code research\n\n".into();
+            c.ctx.attachments.push("TP-9-code-research.md  ".into());
+        },
+        bad: |c| c.ctx.attachments.clear(),
+        expect: &["start.research"],
     },
     Row {
         rule: "Ready → Doing (assignee pulls): per-assignee WIP",
@@ -276,12 +299,12 @@ const ROWS: &[Row] = &[
         expect: &["move.daemon_only"],
     },
     Row {
-        rule: "Doing/Review/Verify → Done: spike or non-code chore, outcome linked, lead or another reviewer",
+        rule: "Doing/Review/Verify → Done: spike or non-code design ticket, outcome linked, lead or another reviewer",
         from: Cat::Review,
         to: Cat::Done,
         ok: |c| {
             c.who = bot("lead", LEAD);
-            c.item.item_type = ItemType::Chore;
+            c.item.item_type = ItemType::Design;
             c.ctx.links.push(link(LinkKind::Artifact, "dev"));
         },
         bad: |c| c.ctx.links = vec![link(LinkKind::Branch, "dev")],

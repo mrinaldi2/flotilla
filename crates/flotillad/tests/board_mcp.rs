@@ -63,13 +63,13 @@ async fn bots_work_an_item_through_the_board_over_mcp() {
         .unwrap();
     assert_eq!(
         create["inputSchema"]["properties"]["type"]["enum"],
-        json!(["epic", "feature", "bug", "spike", "chore"])
+        json!(["task", "design", "bug", "spike"])
     );
 
     let created = dev
         .call(
             "item_create",
-            json!({"type": "feature", "title": "Board tools", "labels": ["area:daemon"],
+            json!({"type": "task", "title": "Board tools", "labels": ["area:daemon"],
                    "size": "M", "acceptance_criteria": ["bots can move cards"]}),
         )
         .await;
@@ -77,7 +77,7 @@ async fn bots_work_an_item_through_the_board_over_mcp() {
     let id = item["id"].as_str().unwrap().to_string();
     assert_eq!(
         (item["type"].as_str(), item["category"].as_str()),
-        (Some("feature"), Some("inbox"))
+        (Some("task"), Some("inbox"))
     );
 
     // Only the lead assigns.
@@ -135,10 +135,45 @@ async fn bots_work_an_item_through_the_board_over_mcp() {
         )
         .await;
     let task_id = sent["task_id"].as_str().unwrap().to_string();
+    // Starting is Research first (0.21.0): Doing wants the code research
+    // recorded, and says so.
+    let researching = dev
+        .call(
+            "item_move",
+            json!({"id": id, "to": "research", "expected_version": version(&assigned["item"])}),
+        )
+        .await;
+    assert_eq!(researching["item"]["category"], "research");
+    let raw = dev
+        .call_raw(
+            "item_move",
+            json!({"id": id, "to": "doing", "expected_version": version(&researching["item"])}),
+        )
+        .await;
+    assert!(error_text(&raw).contains("start.research"), "{raw}");
+    // A research document attached to the card records it, as the
+    // "Code research" section does.
+    let workspace = pair
+        .d
+        .app
+        .db
+        .get_bot(&pair.ids[1])
+        .unwrap()
+        .unwrap()
+        .workspace_path;
+    std::fs::create_dir_all(&workspace).unwrap();
+    std::fs::write(
+        std::path::Path::new(&workspace).join("code-research.md"),
+        "# Code research\n\nThe board moves live in kanban/moves.rs.\n",
+    )
+    .unwrap();
+    dev.call("item_attach", json!({"id": id, "file": "code-research.md"}))
+        .await;
+    let attached = get(dev, &id).await;
     let moved = dev
         .call(
             "item_move",
-            json!({"id": id, "to": "doing", "expected_version": version(&assigned["item"])}),
+            json!({"id": id, "to": "doing", "expected_version": version(&attached["item"])}),
         )
         .await;
     assert_eq!(moved["item"]["category"], "doing");
@@ -258,7 +293,7 @@ async fn bot_writes_over_mcp_reach_watching_boards() {
     let created = dev
         .call(
             "item_create",
-            json!({"type": "chore", "title": "Pushed", "platforms": ["infra"]}),
+            json!({"type": "task", "title": "Pushed", "platforms": ["infra"]}),
         )
         .await;
     let id = created["item"]["id"].as_str().unwrap().to_string();

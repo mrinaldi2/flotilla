@@ -40,9 +40,9 @@ fn item(in_column: &str) -> Item {
         id: "RB-1".into(),
         board_id: "b".into(),
         seq: 1,
-        item_type: ItemType::Feature,
+        item_type: ItemType::Task,
         title: "Tags".into(),
-        description: String::new(),
+        description: "## Code research\n\nRead it.\n".into(),
         size: Some(Size::S),
         priority: Priority::P2,
         rank: "a".into(),
@@ -71,6 +71,7 @@ fn item(in_column: &str) -> Item {
         done_at: None,
         version: 1,
         state: crate::kanban::model::ItemState::Live,
+        plan_node_id: None,
     }
 }
 

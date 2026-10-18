@@ -118,6 +118,7 @@ pub(crate) fn rows(
         p0_items(app, &mut b)?;
         drafts_updated(app, &mut b)?;
         super::keeper::cards_waiting(app, &mut b)?;
+        super::plan::gates(app, &mut b)?;
     }
     if scope.local {
         owner_actions(app, &mut b)?;

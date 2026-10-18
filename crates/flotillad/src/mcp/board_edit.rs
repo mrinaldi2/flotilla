@@ -90,7 +90,7 @@ pub(super) fn call(
         }
         // Started, the card moved after the edit: the item as it is now,
         // so its version is the one the next write needs.
-        if matches!(touch, crate::kanban::starts::Touch::Started(_)) {
+        if matches!(touch, crate::kanban::starts::Touch::Started(..)) {
             if let Some(item) = app.db.get_item(id)? {
                 reply["item"] = item_out(item)?;
             }

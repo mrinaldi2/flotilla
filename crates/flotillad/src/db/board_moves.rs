@@ -127,8 +127,15 @@ impl BoardTx<'_> {
                     .collect()
             })
             .unwrap_or_default();
+        let attachments = self
+            .attachments(&item.id)?
+            .into_iter()
+            .filter(|a| !a.removed)
+            .map(|a| format!("{} {} {}", a.name, a.path, a.url))
+            .collect();
         Ok(Context {
             links: self.item_links(&item.id)?,
+            attachments,
             blockers: self.blockers_of(&item.id)?,
             ready,
             required_machines: settings.required_machines,

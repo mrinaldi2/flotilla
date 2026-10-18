@@ -36,14 +36,14 @@ async fn the_assignee_owns_its_card_without_a_board_role() {
         )
         .await;
     assert_eq!(
-        edited["item"]["column_key"], "doing",
+        edited["item"]["column_key"], "research",
         "the item as it is now: {edited}"
     );
     assert!(
         edited["started"].is_string(),
         "its first edit starts it: {edited}"
     );
-    assert_eq!(f.now(&mine.id).column_key, "doing");
+    assert_eq!(f.now(&mine.id).column_key, "research");
     let attached = f.bots[1]
         .call(
             "item_attach",
@@ -58,6 +58,9 @@ async fn the_assignee_owns_its_card_without_a_board_role() {
         )
         .await;
     assert!(linked["link"].is_object(), "{linked}");
+    f.research(1, &mine.id).await;
+    let doing = f.bot_move(1, &mine.id, "doing").await;
+    assert_ne!(doing["isError"], json!(true), "{doing}");
     let review = f.bot_move(1, &mine.id, "review").await;
     assert_ne!(review["isError"], json!(true), "{review}");
     // Done is the owner's, or a lead's who didn't do it.
@@ -79,7 +82,7 @@ async fn the_assignee_owns_its_card_without_a_board_role() {
     assert!(text.contains("it isn't assigned to you"), "{text}");
     assert!(text.contains("Ask the lead to assign it to you"), "{text}");
     let raw = f.bots[1]
-        .call_raw("item_create", json!({"type": "chore", "title": "Mine"}))
+        .call_raw("item_create", json!({"type": "task", "title": "Mine"}))
         .await;
     let text = error_text(&raw);
     assert!(

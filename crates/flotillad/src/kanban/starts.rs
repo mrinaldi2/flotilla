@@ -28,8 +28,8 @@ use crate::kanban::moves::{load_in, unmet_for};
 pub enum Touch {
     /// Nothing: not a start.
     None,
-    /// It moved to this column.
-    Started(String),
+    /// It moved to this column; `true` when that is a Research column.
+    Started(String, bool),
     /// It would have started, but the move isn't one the assignee may make
     /// now: the column's name and what stops it.
     Held(String, Vec<String>),
@@ -40,7 +40,7 @@ impl Touch {
     pub fn reply(&self) -> Option<(&'static str, String)> {
         match self {
             Touch::None => None,
-            Touch::Started(column) => Some(("started", started_note(column))),
+            Touch::Started(column, research) => Some(("started", started_note(column, *research))),
             Touch::Held(column, why) => Some((
                 "not_started",
                 format!(
@@ -54,11 +54,18 @@ impl Touch {
 }
 
 /// What the reply says when the call started the bot's work on its card.
-pub fn started_note(column: &str) -> String {
+pub fn started_note(column: &str, research: bool) -> String {
+    let first = match research {
+        true => {
+            " First read the code it touches and write what you found under “Code \
+                 research” (or link a research document): it can't go further until you do."
+        }
+        false => "",
+    };
     format!(
-        "You started work on this card, so it moved to {column}. When the work is done, \
-         comment the result, link or attach what you made and move it on with item_move. If \
-         it isn't ready or something is unclear, move it back and ask the owner \
+        "You started work on this card, so it moved to {column}.{first} When the work is \
+         done, comment the result, link or attach what you made and move it on with \
+         item_move. If it isn't ready or something is unclear, move it back and ask the owner \
          (message_owner with asks: true and item)."
     )
 }
@@ -114,7 +121,11 @@ fn start(app: &Arc<AppState>, bot: &bus::Bot, item_id: &str) -> anyhow::Result<T
         card: card_after_commit(&app.db, item_id),
         from_column: Some(from),
     });
-    Ok(Touch::Started(column))
+    let research = matches!(
+        app.db.get_item(item_id),
+        Ok(Some(item)) if item.category == crate::kanban::model::ColumnCategory::Research
+    );
+    Ok(Touch::Started(column, research))
 }
 
 /// Whether the touch starts the card.

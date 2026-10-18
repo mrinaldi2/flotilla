@@ -37,9 +37,9 @@ fn item(in_column: &str, assignee: Option<&str>) -> Item {
         id: "P-1".into(),
         board_id: "b".into(),
         seq: 1,
-        item_type: ItemType::Feature,
+        item_type: ItemType::Task,
         title: "Buttons".into(),
-        description: String::new(),
+        description: "## Code research\n\nRead it.\n".into(),
         size: None,
         priority: Priority::P2,
         rank: "a".into(),
@@ -60,6 +60,7 @@ fn item(in_column: &str, assignee: Option<&str>) -> Item {
         done_at: None,
         version: 1,
         state: ItemState::Live,
+        plan_node_id: None,
     }
 }
 

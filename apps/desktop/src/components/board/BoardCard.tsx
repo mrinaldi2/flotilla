@@ -2,6 +2,8 @@ import { MoreHorizontal } from "lucide-react";
 import type { DragEvent, KeyboardEvent, ReactElement } from "react";
 import type { Bot } from "../../protocol/entities";
 import type { ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import type { PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
+import { kindWords } from "../plan/planText";
 import BotAvatar from "../BotAvatar";
 import { labelGroupOf, labelWord } from "./labelGroups";
 import { typeLabel, urgentPriority } from "./labels";
@@ -26,6 +28,22 @@ interface BoardCardProps {
   readonly chipGroups?: ReadonlySet<string>;
   /** A column's name by key, for the "can't move" line. */
   readonly columnNameOf?: (key: string) => string;
+  /** The plan node it belongs to (0.21.0), shown as a chip. */
+  readonly node?: PlanNode;
+}
+
+/** "E Hit feedback": the plan node a card belongs to, its kind as a glyph. */
+function NodeChip({ node }: { readonly node: PlanNode }): ReactElement {
+  const kind = kindWords(node.kind);
+  return (
+    <span className="board-card-node" title={`${kind.word}: ${node.title}`}>
+      <span className={`plan-glyph plan-glyph-${kind.word.toLowerCase()}`} aria-hidden="true">
+        {kind.glyph}
+      </span>
+      <span className="visually-hidden">{`${kind.word}: `}</span>
+      <span className="board-card-node-title">{node.title}</span>
+    </span>
+  );
 }
 
 function assigneeName(card: ItemCard, assignee: Bot | undefined): string | null {
@@ -208,6 +226,7 @@ export default function BoardCard(props: BoardCardProps): ReactElement {
           ))}
         </div>
       )}
+      {props.node === undefined ? null : <NodeChip node={props.node} />}
       <CardLines card={card} stuck={stuck} />
       <div className="board-card-foot">
         {name === null ? (

@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import type { DragEvent, HTMLAttributes, ReactElement, ReactNode } from "react";
 import type { Bot } from "../../protocol/entities";
 import type { BoardColumn } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { ColumnCategory } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import BotAvatar from "../BotAvatar";
 import ColumnLimit from "./ColumnLimit";
 import type { WipSummary } from "./wip";
@@ -111,9 +112,11 @@ function HeaderCount({ summary }: { readonly summary: WipSummary }): ReactElemen
 export default function BoardColumnView(props: BoardColumnViewProps): ReactElement {
   const { column, summary, drop, botsById } = props;
   const description = wipDescription(column.name, summary);
+  const research = column.category === ColumnCategory.RESEARCH;
   const className = [
     "board-column",
     `board-column-${summary.state}`,
+    research ? "board-column-research" : "",
     drop.kind === "allowed" ? "board-column-allowed" : "",
     drop.kind === "refused" ? "board-column-refused" : "",
   ]
@@ -152,6 +155,9 @@ export default function BoardColumnView(props: BoardColumnViewProps): ReactEleme
             </button>
           )}
         </div>
+        {research ? (
+          <p className="board-column-hint">Bots read the code and write findings before Doing.</p>
+        ) : null}
         {summary.loads.length === 0 ? null : (
           <ul className="board-column-loads" aria-label="Items per bot">
             {summary.loads.map((load) => {

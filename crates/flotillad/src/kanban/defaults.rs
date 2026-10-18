@@ -48,6 +48,14 @@ pub const COLUMNS: &[DefaultColumn] = &[
         None,
         WipScope::Column,
     ),
+    // A task or bug's assignee reads the code here first (0.21.0).
+    column(
+        "research",
+        "Research",
+        ColumnCategory::Research,
+        None,
+        WipScope::Column,
+    ),
     column(
         "doing",
         "Doing",
@@ -100,18 +108,26 @@ pub const COLUMNS: &[DefaultColumn] = &[
 pub fn item_templates() -> Vec<(ItemType, Value)> {
     vec![
         (
-            ItemType::Feature,
+            ItemType::Task,
             json!({
-                "sections": ["User/problem", "Proposed behaviour", "Out of scope", "Design/spec link"],
+                "sections": ["What and why", "Code research", "Plan", "Risk", "Rollback"],
                 "ready": ["acceptance_criteria", "size", "spec_link"],
                 "flow": "full"
+            }),
+        ),
+        (
+            ItemType::Design,
+            json!({
+                "sections": ["Problem", "Design", "Mockups", "Hands off to"],
+                "ready": ["description"],
+                "flow": "doing_review_done"
             }),
         ),
         (
             ItemType::Bug,
             json!({
                 "sections": ["Steps to reproduce", "Expected", "Actual", "Machine/version",
-                             "Logs/screenshots", "Severity"],
+                             "Logs/screenshots", "Severity", "Code research"],
                 "ready": ["steps_to_reproduce", "expected_actual", "acceptance_criteria"],
                 "flow": "full"
             }),
@@ -122,22 +138,6 @@ pub fn item_templates() -> Vec<(ItemType, Value)> {
                 "sections": ["Question to answer", "Timebox (≤ 24h)", "Options considered", "Outcome"],
                 "ready": ["question", "timebox"],
                 "flow": "doing_review_done"
-            }),
-        ),
-        (
-            ItemType::Chore,
-            json!({
-                "sections": ["What and why", "Risk", "Rollback"],
-                "ready": ["description"],
-                "flow": "full_if_code"
-            }),
-        ),
-        (
-            ItemType::Epic,
-            json!({
-                "sections": ["Goal", "Success measure", "Children"],
-                "ready": ["goal"],
-                "flow": "none"
             }),
         ),
     ]
@@ -155,6 +155,19 @@ pub fn description_skeleton(template: &Value) -> String {
                 .collect::<String>()
         })
         .unwrap_or_default()
+}
+
+/// A new item's description with `text` under the template's first
+/// section and the other sections as empty headings: a task an LLD made
+/// keeps its summary and still has its "Code research" section to fill.
+pub fn description_with(template: &Value, text: &str) -> String {
+    let skeleton = description_skeleton(template);
+    let text = text.trim();
+    match (skeleton.find("\n\n"), text.is_empty()) {
+        (Some(end), false) => format!("{}\n\n{text}\n\n{}", &skeleton[..end], &skeleton[end + 2..]),
+        _ if skeleton.is_empty() => text.to_string(),
+        _ => skeleton,
+    }
 }
 
 /// The item-id prefix a project starts with: the initials of its name in
@@ -188,9 +201,23 @@ mod tests {
     }
 
     #[test]
+    fn a_description_with_text_keeps_the_other_sections() {
+        let template = json!({ "sections": ["What and why", "Code research"] });
+        assert_eq!(
+            description_with(&template, "Make it fast."),
+            "## What and why\n\nMake it fast.\n\n## Code research\n\n"
+        );
+        assert_eq!(
+            description_with(&template, " "),
+            description_skeleton(&template)
+        );
+        assert_eq!(description_with(&json!({}), "Only text"), "Only text");
+    }
+
+    #[test]
     fn every_item_type_has_a_template_and_the_skeleton_lists_its_sections() {
         let templates = item_templates();
-        assert_eq!(templates.len(), 5);
+        assert_eq!(templates.len(), 4);
         let bug = &templates
             .iter()
             .find(|(t, _)| *t == ItemType::Bug)

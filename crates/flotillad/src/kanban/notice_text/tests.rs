@@ -55,7 +55,7 @@ fn item(column: &BoardColumn) -> Item {
         id: "P-1".into(),
         board_id: "b".into(),
         seq: 1,
-        item_type: ItemType::Feature,
+        item_type: ItemType::Task,
         title: "Buttons".into(),
         description: String::new(),
         size: None,
@@ -78,6 +78,7 @@ fn item(column: &BoardColumn) -> Item {
         done_at: None,
         version: 1,
         state: ItemState::Live,
+        plan_node_id: None,
     }
 }
 
@@ -99,14 +100,16 @@ fn notice(preset: Preset, key: &str, n: Notice<'_>, last: Option<&str>) -> Strin
 }
 
 #[test]
-fn the_first_board_plans_doing_review_and_back_to_to_do() {
+fn the_first_board_plans_research_doing_review_and_back_to_to_do() {
     let cols = columns(Preset::SimpleReview);
     let plan = Plan::of(Some(&board(Preset::SimpleReview)), &cols).expect("custom");
-    assert_eq!(plan.start, Some(("Doing".to_string(), true)));
+    assert_eq!(plan.start, Some(("Research".to_string(), true)));
+    assert_eq!(plan.then.as_deref(), Some("Doing"));
     assert_eq!(plan.finish.as_deref(), Some("Review"));
     assert_eq!(plan.back.as_deref(), Some("To do"));
     let simple = Plan::of(Some(&board(Preset::Simple)), &columns(Preset::Simple)).expect("custom");
-    assert_eq!(simple.start, Some(("Doing".to_string(), false)));
+    assert_eq!(simple.start, Some(("Research".to_string(), false)));
+    assert_eq!(simple.then.as_deref(), Some("Doing"));
     assert_eq!(simple.finish.as_deref(), Some("Done"));
     let gated = board(Preset::ReleaseGated);
     assert!(Plan::of(Some(&gated), &columns(Preset::ReleaseGated)).is_none());
@@ -121,7 +124,13 @@ fn an_assignment_says_which_card_where_and_what_to_do() {
     );
     assert!(text.contains("It is in To do (not started)."), "{text}");
     assert!(
-        text.contains("Start now: read it with item_get, which moves it to Doing."),
+        text.contains("Start now: read it with item_get, which moves it to Research."),
+        "{text}"
+    );
+    assert!(
+        text.contains(
+            "under “Code research” (or link a research document); then move it to Doing."
+        ),
         "{text}"
     );
     assert!(text.contains("move it to Review with item_move"), "{text}");
@@ -135,7 +144,11 @@ fn an_assignment_says_which_card_where_and_what_to_do() {
 #[test]
 fn on_a_board_without_the_automation_the_bot_moves_it_itself() {
     let text = notice(Preset::Simple, "todo", Notice::Assigned, None);
-    assert!(text.contains("move it to Doing with item_move"), "{text}");
+    assert!(
+        text.contains("move it to Research with item_move"),
+        "{text}"
+    );
+    assert!(text.contains("then move it to Doing."), "{text}");
     assert!(text.contains("move it to Done with item_move"), "{text}");
 }
 

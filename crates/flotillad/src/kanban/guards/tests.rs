@@ -1,12 +1,11 @@
 //! Guard tests: the release-gated table (`table`), then the finer points of WIP,
 //! reviewers, DoR sections and the rules outside moves.
-use chrono::Utc;
-
 use super::*;
 use crate::kanban::defaults::COLUMNS;
 use crate::kanban::model::{
     AcceptanceCriterion, ItemPerson, ItemType, ItemVerification, Priority, Size, VerificationResult,
 };
+use chrono::Utc;
 
 struct Case {
     item: Item,
@@ -61,9 +60,9 @@ fn item(category: Cat) -> Item {
         id: "H-1".into(),
         board_id: "p/main".into(),
         seq: 1,
-        item_type: ItemType::Feature,
+        item_type: ItemType::Task,
         title: "A thing".into(),
-        description: "## User/problem\n\nIt hurts.\n".into(),
+        description: "## User/problem\n\nIt hurts.\n\n## Code research\n\nguards.rs\n".into(),
         size: Some(Size::M),
         priority: Priority::P2,
         rank: "a".into(),
@@ -93,6 +92,7 @@ fn item(category: Cat) -> Item {
         done_at: None,
         version: 1,
         state: crate::kanban::model::ItemState::Live,
+        plan_node_id: None,
     }
 }
 
@@ -310,14 +310,14 @@ fn the_lead_or_another_reviewer_closes_a_spike_on_its_outcome() {
     c.who = bot("arch", &[Role::ReviewerArch]);
     assert!(run(&c, Cat::Done).is_empty());
 
-    // A chore closes the same way while it has no code; a branch makes it
-    // a release's.
-    c.item.item_type = ItemType::Chore;
+    // A design ticket closes the same way while it has no code; a branch
+    // makes it a release's.
+    c.item.item_type = ItemType::Design;
     assert!(run(&c, Cat::Done).is_empty());
     c.ctx.links.push(link(LinkKind::Branch, "dev"));
     assert_eq!(run(&c, Cat::Done), ["done.flow"]);
-    // Features and bugs keep the release path.
-    for kind in [ItemType::Feature, ItemType::Bug] {
+    // Tasks and bugs keep the release path.
+    for kind in [ItemType::Task, ItemType::Bug] {
         c.item.item_type = kind;
         assert_eq!(run(&c, Cat::Done), ["done.flow"], "{kind:?}");
     }
@@ -332,7 +332,7 @@ fn a_spike_not_yet_started_is_told_how_to_close() {
         c.item.item_type = ItemType::Spike;
         c.who = bot("lead", LEAD);
         assert_eq!(run(&c, Cat::Done), ["done.not_started"], "{from:?}");
-        c.item.item_type = ItemType::Feature;
+        c.item.item_type = ItemType::Task;
         assert_eq!(run(&c, Cat::Done), ["move.daemon_only"], "{from:?}");
     }
 }

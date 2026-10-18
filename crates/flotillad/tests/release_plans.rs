@@ -22,7 +22,7 @@ fn open_item(r: &Releases, title: &str) -> String {
             &NewItem {
                 project_id: &r.project,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title,
                 description: "",
                 size: None,
@@ -30,6 +30,7 @@ fn open_item(r: &Releases, title: &str) -> String {
                 labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &["one".to_string(), "two".to_string()],
+                plan_node_id: None,
             },
             &Actor::User,
         )

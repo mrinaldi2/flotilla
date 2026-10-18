@@ -24,7 +24,7 @@ fn card(r: &Releases, title: &str) -> String {
             &NewItem {
                 project_id: &r.project,
                 board_id: None,
-                item_type: ItemType::Chore,
+                item_type: ItemType::Task,
                 title,
                 description: "",
                 size: None,
@@ -32,6 +32,7 @@ fn card(r: &Releases, title: &str) -> String {
                 labels: &["platform:daemon".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &Actor::User,
         )

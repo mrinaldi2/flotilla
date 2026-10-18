@@ -74,7 +74,7 @@ fn publish_draft(app: &AppState, feed: &mut FeedWriter<'_>, project_id: &str, id
 }
 
 /// The project's lead: the project's own, else the bot holding the role.
-fn lead_of(app: &AppState, project_id: &str) -> anyhow::Result<Option<String>> {
+pub(crate) fn lead_of(app: &AppState, project_id: &str) -> anyhow::Result<Option<String>> {
     if let Some(lead) = app.db.get_project(project_id)?.and_then(|p| p.lead_bot_id) {
         return Ok(Some(lead));
     }

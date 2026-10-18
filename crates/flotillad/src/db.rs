@@ -2,7 +2,6 @@ use std::path::Path;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use anyhow::Context;
-use bus::schema::MIGRATIONS;
 use bus::*;
 use chrono::{DateTime, Duration, Utc};
 use rusqlite::{params, Connection, OptionalExtension};
@@ -27,6 +26,7 @@ pub use overview::LatestSummary;
 pub use owner_messages::{OwnerProof, OwnerVia};
 pub use owner_threads::{Asked, OwnerQuestion};
 pub use peer_grants::{GrantEnd, GrantRuling, PeerGrant};
+pub use plan_gates::Spike;
 pub use quiesce::{NewQuiesce, Quiesce};
 pub use release_cut::{LeaveOut, NewCut};
 pub use release_life::NewReleaseTest;
@@ -72,6 +72,9 @@ mod boards_migration_tests;
 mod bot_runtime;
 mod bots;
 mod card_questions;
+pub mod card_types;
+#[cfg(test)]
+mod card_types_tests;
 pub mod check_jobs;
 mod checks;
 #[cfg(test)]
@@ -93,6 +96,7 @@ mod guardrails;
 mod meetings;
 pub mod merge_queue;
 pub mod metrics;
+mod migrate;
 mod migrate_columns;
 mod overview;
 mod owner_actions;
@@ -104,6 +108,12 @@ mod owner_threads_tests;
 mod peer_grants;
 mod peers;
 mod permissions;
+mod plan;
+mod plan_gates;
+mod plan_kickoff;
+pub use plan_kickoff::NodeCard;
+#[cfg(test)]
+mod plan_tests;
 #[cfg(test)]
 mod platform_labels_migration_tests;
 mod pr_changes;
@@ -122,6 +132,9 @@ mod release_work;
 mod releases;
 #[cfg(test)]
 mod releases_tests;
+mod research_columns;
+#[cfg(test)]
+mod research_columns_tests;
 pub mod review_settings;
 pub mod reviews;
 mod revisions;
@@ -266,22 +279,10 @@ impl Db {
     }
 
     fn migrate(&self) -> anyhow::Result<()> {
-        let mut conn = self.lock();
-        let tx = conn.transaction()?;
-        let mut version = schema_version(&tx)?;
-        while version < MIGRATIONS.len() {
-            let sql = migrate_columns::without_existing_columns(&tx, MIGRATIONS[version])?;
-            tx.execute_batch(&sql)
-                .with_context(|| format!("applying migration {}", version + 1))?;
-            version += 1;
-        }
-        tx.execute(
-            "INSERT INTO meta(key, value) VALUES ('schema_version', ?1)
-             ON CONFLICT(key) DO UPDATE SET value = ?1",
-            params![version.to_string()],
-        )?;
-        tx.commit()?;
-        Ok(())
+        migrate::migrate(&mut self.lock())?;
+        // What the 0.21 card types migration leaves to the daemon.
+        self.backfill_card_type_templates()?;
+        self.backfill_research_columns()
     }
 
     pub fn integrity_check(&self) -> anyhow::Result<bool> {

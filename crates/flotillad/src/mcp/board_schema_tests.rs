@@ -14,6 +14,7 @@ fn every_tool_has_its_message_and_every_enum_resolves() {
             + super::super::releases::RELEASE_TOOLS.len()
             + super::super::meetings::MEETING_TOOLS.len()
             + super::super::prs::PR_TOOLS.len()
+            + super::super::plan::PLAN_TOOLS.len()
     );
     assert!(!json!(all).to_string().contains("project_id"));
 }
@@ -63,7 +64,7 @@ fn short_names_decode_and_come_back_short() {
     let err = decode::<c::ItemCreate>("ItemCreate", &json!({"type": "story", "title": "x"}), "p")
         .unwrap_err()
         .to_string();
-    assert!(err.contains("epic, feature, bug, spike, chore"), "{err}");
+    assert!(err.contains("task, design, bug, spike"), "{err}");
     let err = decode::<c::ItemMove>("ItemMove", &json!({"id": "H-1"}), "p")
         .unwrap_err()
         .to_string();

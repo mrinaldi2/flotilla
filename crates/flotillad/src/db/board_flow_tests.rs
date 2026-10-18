@@ -64,6 +64,7 @@ fn a_second_board_gets_its_own_columns_and_automations() {
         [
             "rs-inbox",
             "rs-ready",
+            "rs-research",
             "rs-doing",
             "rs-review",
             "rs-done",
@@ -90,6 +91,7 @@ fn a_custom_boards_columns_decide_its_moves_and_facts() {
             &NewItem {
                 board_id: Some(&rs.id),
                 acceptance_criteria: &[],
+                plan_node_id: None,
                 ..new_item(&p, "Compare parsers")
             },
             &OWNER,

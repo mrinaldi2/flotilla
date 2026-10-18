@@ -72,7 +72,7 @@ pub fn file(
             &NewItem {
                 project_id: project,
                 board_id: None,
-                item_type: ItemType::Chore,
+                item_type: ItemType::Task,
                 title: &title,
                 description: &description,
                 size: None,
@@ -80,6 +80,7 @@ pub fn file(
                 labels: &["follow-up".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &actor,
         )?;

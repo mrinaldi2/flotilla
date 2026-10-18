@@ -55,14 +55,15 @@ impl Board {
                 &NewItem {
                     project_id: &self.project,
                     board_id: None,
-                    item_type: ItemType::Feature,
+                    item_type: ItemType::Task,
                     title,
-                    description: "",
+                    description: "## Code research\n\nRead the board code.\n",
                     size: Some(Size::M),
                     priority: Priority::P2,
                     labels: &["platform:daemon".to_string()],
                     parent_id: None,
                     acceptance_criteria: &ac,
+                    plan_node_id: None,
                 },
                 &Actor::User,
             )

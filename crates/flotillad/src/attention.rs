@@ -16,6 +16,7 @@ use serde_json::Value;
 mod cleanup;
 mod keeper;
 mod legacy;
+mod plan;
 mod prs;
 mod rows;
 mod stopped;
@@ -33,6 +34,9 @@ pub(crate) use waiting::waiting_bots;
 pub(crate) fn weight(kind: AttentionKind) -> u32 {
     match kind {
         AttentionKind::ReleaseAwaiting
+        // A plan gate (0.21.0) holds a whole subtree's work, as a release
+        // awaiting the owner holds its items.
+        | AttentionKind::PlanGate
         | AttentionKind::PrReview
         | AttentionKind::MainMovedOutside
         | AttentionKind::OwnerAction

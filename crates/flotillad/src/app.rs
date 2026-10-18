@@ -68,6 +68,12 @@ pub const CAPABILITIES: &[&str] = &[
     bus::contract::capability::OVERVIEW_BOTS,
     bus::contract::capability::OVERVIEW_TOP_ATTENTION,
     bus::contract::capability::ATTENTION_BOT_STOPPED,
+    bus::contract::capability::ITEM_TYPES_V2,
+    bus::contract::capability::COLUMN_RESEARCH,
+    // The plan (0.21.0 #43): its board requests and pushes, and its gates
+    // in Needs you.
+    bus::contract::capability::PLAN_V1,
+    bus::contract::capability::ATTENTION_PLAN,
 ];
 
 pub struct AppState {
@@ -224,10 +230,20 @@ mod tests {
 
 #[cfg(test)]
 mod capability_tests {
-    /// The 0.19 and 0.20 board and home additions are all served.
+    use bus::contract::capability;
+
+    /// Contract strings the daemon doesn't serve yet: each joins the list
+    /// once it does. Every 0.21 string is served from #43's step 3.
+    const NOT_SERVED_YET: &[&str] = &[];
+
+    /// The 0.19, 0.20 and 0.21 board and home additions are all served.
     #[test]
     fn every_board_glance_capability_is_served() {
-        for capability in bus::contract::capability::ALL {
+        for capability in capability::ALL {
+            if NOT_SERVED_YET.contains(capability) {
+                assert!(!super::CAPABILITIES.contains(capability), "{capability}");
+                continue;
+            }
             assert!(super::CAPABILITIES.contains(capability), "{capability}");
         }
     }

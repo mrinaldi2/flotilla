@@ -112,4 +112,19 @@ describe("attentionRow", () => {
       attentionRow({ kind: "owner_action", id: "o", title: "Run" }, actions()),
     ).toBeUndefined();
   });
+
+  it("opens a plan node on its gate", () => {
+    const onOpenPlanGate = vi.fn<(nodeId: string) => void>();
+    const row: AttentionRowJson = {
+      kind: "plan_gate",
+      id: "plan_gate:d-mac:PL-4",
+      title: "Approve the HLD of Enemy attack telegraphing?",
+      plan_node_id: "PL-4",
+    };
+    const view = attentionRow(row, { ...actions(), onOpenPlanGate });
+    expect(view).toMatchObject({ action: "Review", meta: "A plan gate waits for your ruling" });
+    view?.onAction?.(click);
+    expect(onOpenPlanGate).toHaveBeenCalledWith("PL-4");
+    expect(attentionRow(row, actions())?.action).toBeUndefined();
+  });
 });

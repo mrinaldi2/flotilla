@@ -45,7 +45,7 @@ async fn gate() -> Gate {
             &NewItem {
                 project_id: &project,
                 board_id: None,
-                item_type: ItemType::Feature,
+                item_type: ItemType::Task,
                 title: "Per computer",
                 description: "",
                 size: None,
@@ -53,6 +53,7 @@ async fn gate() -> Gate {
                 labels: &["platform:desktop".to_string()],
                 parent_id: None,
                 acceptance_criteria: &[],
+                plan_node_id: None,
             },
             &Actor::User,
         )

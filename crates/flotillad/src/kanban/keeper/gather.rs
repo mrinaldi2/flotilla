@@ -48,6 +48,15 @@ fn view(board: Option<Board>, columns: &[BoardColumn]) -> BoardView {
         .and_then(|b| b.automations.get(Fact::WorkStarted.name()))
         .and_then(|key| active.iter().find(|c| &c.key == key));
     let start = mapped.or_else(|| active.iter().find(|c| c.visible));
+    // Research (0.21.0) is the assignee's own work, as the column after it
+    // is: review starts past that one.
+    let start = start.map(|s| match s.category {
+        ColumnCategory::Research => active
+            .iter()
+            .find(|c| c.ord > s.ord && c.category != ColumnCategory::Research)
+            .unwrap_or(s),
+        _ => s,
+    });
     BoardView {
         start_ord: start.map(|c| c.ord),
         plan: Plan::of(board.as_ref(), columns),
@@ -152,8 +161,12 @@ impl Project {
             return Role::Other;
         };
         if !board.custom {
-            // Release-gated: only Doing is the assignee's own work.
-            return if column.category == ColumnCategory::Doing {
+            // Release-gated: only Research and Doing are the assignee's own
+            // work.
+            return if matches!(
+                column.category,
+                ColumnCategory::Research | ColumnCategory::Doing
+            ) {
                 Role::Work
             } else {
                 Role::Other

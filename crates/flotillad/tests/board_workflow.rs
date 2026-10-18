@@ -135,7 +135,7 @@ async fn the_lead_assigns_roles_and_retypes_items() {
     let raw = dev
         .call_raw(
             "item_update",
-            json!({"id": id, "expected_version": version, "type": "epic"}),
+            json!({"id": id, "expected_version": version, "type": "spike"}),
         )
         .await;
     assert!(
@@ -145,10 +145,10 @@ async fn the_lead_assigns_roles_and_retypes_items() {
     let epic = lead
         .call(
             "item_update",
-            json!({"id": id, "expected_version": version, "type": "epic"}),
+            json!({"id": id, "expected_version": version, "type": "spike"}),
         )
         .await;
-    assert_eq!(epic["item"]["type"], "epic");
+    assert_eq!(epic["item"]["type"], "spike");
     let child = item(&pair, &project, "inbox", None);
     let version = get(lead, &child).await["version"]
         .as_str()

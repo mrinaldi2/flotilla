@@ -65,9 +65,15 @@ impl Start {
 /// change: the list is its visible columns, in order.
 fn renamed(preset: Preset, specs: &[c::ColumnSpec]) -> Result<Start, String> {
     let mut start = Start::of(preset);
-    let visible: Vec<usize> = (0..start.columns.len())
+    let mut visible: Vec<usize> = (0..start.columns.len())
         .filter(|&i| start.columns[i].visible)
         .collect();
+    // A client from before 0.21 lists the columns without Research, which
+    // then keeps its name.
+    let named_research = specs.iter().any(|s| s.key.as_deref() == Some("research"));
+    if specs.len() + 1 == visible.len() && !named_research {
+        visible.retain(|&i| !start.columns[i].research);
+    }
     if specs.len() != visible.len() {
         return Err(format!(
             "A release-gated board keeps its {} columns: list each of them, in order, \
@@ -164,6 +170,7 @@ fn custom(preset: Preset, specs: &[c::ColumnSpec]) -> Result<Start, String> {
                 wip_scope: WipScope::Column,
                 visible: true,
                 policy: ColumnPolicy::default(),
+                research: false,
             },
         };
         columns.push(column);
@@ -176,9 +183,15 @@ fn custom(preset: Preset, specs: &[c::ColumnSpec]) -> Result<Start, String> {
             .allowed_from
             .retain(|from| keys.contains(from));
     }
+    // A list without Research (from a client before 0.21.0) starts work in
+    // Doing, as it did.
     let automations = preset
         .automations()
         .into_iter()
+        .map(|(fact, column)| match column.as_str() {
+            "research" if !keys.contains(&column) => (fact, "doing".to_string()),
+            _ => (fact, column),
+        })
         .filter(|(_, column)| keys.contains(column))
         .collect();
     Ok(Start {

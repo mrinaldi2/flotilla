@@ -42,6 +42,7 @@ async fn a_linked_computer_reads_no_draft_from_the_home() {
                     labels: &[],
                     parent_id: None,
                     acceptance_criteria: &[],
+                    plan_node_id: None,
                 },
                 &Actor::User,
             )

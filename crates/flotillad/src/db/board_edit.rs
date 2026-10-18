@@ -30,6 +30,8 @@ pub struct ItemEdit<'a> {
     pub group: Option<(&'a str, &'a [String])>,
     pub parent_id: Option<Option<&'a str>>,
     pub item_type: Option<ItemType>,
+    /// The plan node it belongs to (0.21.0); `Some(None)` clears it.
+    pub plan_node_id: Option<Option<&'a str>>,
     /// The whole list; a criterion whose text stays keeps its check.
     pub acceptance_criteria: Option<&'a [String]>,
 }
@@ -190,6 +192,15 @@ impl BoardTx<'_> {
                     before.parent_id.as_deref().unwrap_or(""),
                     parent.unwrap_or(""),
                 )?;
+            }
+            let node = edit.plan_node_id;
+            if let Some(node) = node.filter(|n| *n != before.plan_node_id.as_deref()) {
+                tx.execute(
+                    "UPDATE item SET plan_node_id = ?2 WHERE id = ?1",
+                    params![id, node],
+                )?;
+                let from = before.plan_node_id.as_deref().unwrap_or("");
+                edited(tx, id, actor, "plan_node_id", from, node.unwrap_or(""))?;
             }
             Ok(())
         })?;

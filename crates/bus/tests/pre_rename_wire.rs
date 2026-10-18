@@ -11,12 +11,35 @@ use bus::contract::wire::Envelope;
 use prost::Message;
 use serde_json::Value;
 
-/// Message fixtures for fields added after the rename (0.20.0): the old
-/// schema has no way to encode them, so they have no recorded frame.
+/// Message fixtures for fields added after the rename (0.20.0, 0.21.0): the
+/// old schema has no way to encode them, so they have no recorded frame.
 const AFTER_THE_RENAME: &[&str] = &[
+    "push.plan_change",
     "request.board_enable.columns",
     "request.board_enable.preset",
     "request.board_enable.release_gated",
+    "request.item_create.task",
+    "request.item_query.plan",
+    "request.item_update.plan",
+    "request.plan_create",
+    "request.plan_create.goal",
+    "request.plan_doc_read",
+    "request.plan_drop",
+    "request.plan_enable",
+    "request.plan_get",
+    "request.plan_node_get",
+    "request.plan_propose",
+    "request.plan_research_skip",
+    "request.plan_rule",
+    "request.plan_rule.send_back",
+    "request.plan_submit",
+    "request.plan_update",
+    "response.plan",
+    "response.plan_doc",
+    "response.plan_node",
+    "response.planned.conflict",
+    "response.planned.done",
+    "response.planned.refused",
 ];
 
 fn fixtures() -> PathBuf {

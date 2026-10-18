@@ -81,7 +81,7 @@ impl Repo {
                 &NewItem {
                     project_id: &self.project,
                     board_id: None,
-                    item_type: ItemType::Feature,
+                    item_type: ItemType::Task,
                     title,
                     description: "",
                     size: None,
@@ -89,6 +89,7 @@ impl Repo {
                     labels: &["platform:daemon".to_string()],
                     parent_id: None,
                     acceptance_criteria: &[],
+                    plan_node_id: None,
                 },
                 &Actor::User,
             )

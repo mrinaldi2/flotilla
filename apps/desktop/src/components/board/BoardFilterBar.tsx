@@ -2,6 +2,8 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
 import type { Bot } from "../../protocol/entities";
+import type { PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
+import { kindWords } from "../plan/planText";
 import BotAvatar from "../BotAvatar";
 import type { BoardFilters } from "./filters";
 import { isFiltering, NO_FILTERS, toggled } from "./filters";
@@ -21,6 +23,8 @@ interface BoardFilterBarProps {
   readonly botOptions: readonly BotOption[];
   /** The board's label groups, each a row of chips. */
   readonly labelGroups: readonly LabelGroupView[];
+  /** The board's epics and features (0.21.0), each a chip. */
+  readonly planNodes?: readonly PlanNode[];
   readonly shown: number;
   readonly total: number;
   /** Names of the hidden columns ("Cancelled"), offered behind a toggle. */
@@ -108,10 +112,13 @@ function BotMenu({
 
 function Chip({
   label,
+  name,
   pressed,
   onToggle,
 }: {
   readonly label: string;
+  /** Its accessible name, when the label leans on a glyph. */
+  readonly name?: string;
   readonly pressed: boolean;
   readonly onToggle: () => void;
 }): ReactElement {
@@ -119,11 +126,40 @@ function Chip({
     <button
       type="button"
       className={`board-filter-chip${pressed ? " board-filter-on" : ""}`}
+      aria-label={name}
       aria-pressed={pressed}
       onClick={onToggle}
     >
       {label}
     </button>
+  );
+}
+
+/** The board's epics and features: a chip keeps a node's cards and those of the nodes under it. */
+function NodeChips(props: {
+  readonly nodes: readonly PlanNode[];
+  readonly picked: readonly string[];
+  readonly onToggle: (id: string) => void;
+}): ReactElement | null {
+  if (props.nodes.length === 0) {
+    return null;
+  }
+  return (
+    <div
+      className="board-filter-group board-filter-nodes"
+      role="group"
+      aria-label="Epic or feature"
+    >
+      {props.nodes.map((node) => (
+        <Chip
+          key={node.id}
+          label={`${kindWords(node.kind).glyph} ${node.title}`}
+          name={`${kindWords(node.kind).word}: ${node.title}`}
+          pressed={props.picked.includes(node.id)}
+          onToggle={() => props.onToggle(node.id)}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -164,6 +200,13 @@ export default function BoardFilterBar(props: BoardFilterBarProps): ReactElement
           </div>
         ),
       )}
+      <NodeChips
+        nodes={props.planNodes ?? []}
+        picked={filters.nodes}
+        onToggle={(id) => {
+          onChange({ ...filters, nodes: toggled(filters.nodes, id) });
+        }}
+      />
       <div className="board-filter-group" role="group" aria-label="Type">
         {FILTER_TYPES.map((type) => {
           const label = typeLabel(type);

@@ -12,11 +12,10 @@ use super::board_tests::{board, new_item, OWNER};
 fn every_contract_value_passes_the_schema_checks() {
     let (db, p) = board();
     for item_type in [
-        ItemType::Epic,
-        ItemType::Feature,
+        ItemType::Task,
+        ItemType::Design,
         ItemType::Bug,
         ItemType::Spike,
-        ItemType::Chore,
     ] {
         for (size, priority) in [
             (Size::S, Priority::P0),

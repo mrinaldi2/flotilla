@@ -61,7 +61,7 @@ impl Fresh {
     pub async fn item(&mut self, title: &str) -> c::Item {
         let req = Request::ItemCreate(c::ItemCreate {
             project_id: self.project.clone(),
-            r#type: c::ItemType::Feature as i32,
+            r#type: c::ItemType::Task as i32,
             title: title.into(),
             description: Some("Two button styles for the shop page.".into()),
             ..Default::default()
@@ -103,6 +103,12 @@ impl Fresh {
                 json!({"id": id, "to": to, "expected_version": version}),
             )
             .await
+    }
+
+    /// Bot `i` records its code research on the item (0.21.0), so a task
+    /// or bug may move on from Research to Doing.
+    pub async fn research(&mut self, i: usize, id: &str) -> Value {
+        super::board::record_research(&mut self.bots[i], id).await
     }
 
     /// Reads bot `i`'s inbox until a message holds `needle`; that message.

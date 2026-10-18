@@ -15,6 +15,7 @@ mod board_flow;
 mod board_links;
 mod board_proposals;
 mod boards;
+mod card_types;
 mod checks;
 mod cleanup;
 mod decisions;
@@ -29,6 +30,7 @@ mod owner_actions;
 mod owner_messages;
 mod peers;
 mod permissions;
+mod plan;
 mod platform_labels;
 mod prs;
 mod quiesce;
@@ -49,6 +51,7 @@ use board_links::{
 };
 use board_proposals::MIGRATION_BOARD_PROPOSALS;
 use boards::MIGRATION_BOARDS;
+use card_types::MIGRATION_CARD_TYPES;
 use checks::{
     MIGRATION_CHECKS, MIGRATION_CHECK_HEAVY, MIGRATION_CHECK_JOBS, MIGRATION_CHECK_UNROUTABLE,
 };
@@ -73,6 +76,7 @@ use permissions::{
     MIGRATION_PERMISSIONS, MIGRATION_PERMISSION_EXTRAS_PR_MERGE,
     MIGRATION_PERMISSION_EXTRAS_QUIESCE, MIGRATION_PERMISSION_EXTRAS_RELEASE_MAIN,
 };
+use plan::MIGRATION_PLAN;
 use platform_labels::MIGRATION_PLATFORM_LABELS;
 use prs::MIGRATION_PR_CORE;
 use quiesce::MIGRATION_QUIESCE;
@@ -162,6 +166,8 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_PROJECT_TRASH,
     // What a project is for, in the owner's words (0.20.0): told to its bots.
     "ALTER TABLE project ADD COLUMN description TEXT NOT NULL DEFAULT '';",
+    MIGRATION_CARD_TYPES,
+    MIGRATION_PLAN,
 ];
 
 #[cfg(test)]
