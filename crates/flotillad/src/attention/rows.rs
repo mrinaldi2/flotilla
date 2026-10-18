@@ -183,6 +183,29 @@ fn decisions(app: &AppState, releases: &[Release], b: &mut Builder<'_>) -> anyho
         .filter(|d| d.state == DecisionState::Open || is_relayed(d))
         .partition(|d| is_relayed(d));
     for d in open {
+        // A question asked with `ask_owner` (0.22.0) is its own row,
+        // answerable where it shows; a blocking one holds a node's work.
+        if let Some(q) = app.db.question_row(&d.id)? {
+            let part = Part {
+                kind: AttentionKind::Question,
+                target_id: d.id.clone(),
+                title: d.title.clone(),
+                created_at: d.created_at,
+                target: Some(Target::DecisionId(d.id.clone())),
+            };
+            let legacy = json!({
+                "kind": "decision", "id": d.id, "title": d.title,
+                "priority": d.priority, "deadline_at": d.deadline_at, "relayed": false,
+                "raised_by": d.raised_by_bot_id,
+            });
+            let weight = match q.blocking {
+                true => 3,
+                false => weight(AttentionKind::Question),
+            };
+            let row = b.push(part, weight, Some(legacy));
+            row.question_blocking = q.blocking;
+            continue;
+        }
         let part = Part {
             kind: AttentionKind::Decision,
             target_id: d.id.clone(),

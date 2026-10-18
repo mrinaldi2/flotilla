@@ -61,6 +61,7 @@ pub(super) fn call(
         }
         "item_flag_ac" => ed.flag_ac(&decode("ItemFlagAc", args, project)?)?,
         "item_attach" | "item_detach" => return super::board_attach::call(app, me, name, args),
+        q if super::questions::handles(q) => return super::questions::call(app, &me.bot, q, args),
         other => anyhow::bail!("unknown tool: {other}"),
     };
     if let Edited::Done(item) = &edited {

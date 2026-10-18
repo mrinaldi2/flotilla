@@ -23,12 +23,31 @@ fn research_open(t: &BoardTx<'_>, wrote: &mut Wrote, node: &Node) -> anyhow::Res
     if close_if_done(t, wrote, node)? {
         return Ok(None);
     }
-    let text =
-        still_open(&t.plan_spikes(&node.id)?).unwrap_or_else(|| "Research is open.".to_string());
+    let Some(text) = still_open(&t.plan_spikes(&node.id)?) else {
+        // The spikes are done: a blocking question holds it.
+        return question_open(t, node);
+    };
     Ok(Some(Step::Refused(vec![unmet(
         "plan.research_open",
         text,
         Some("Finish the spikes with their documents, or ask the owner to skip research."),
+    )])))
+}
+
+/// Why a blocking question stops the node, if one does (0.22.0).
+pub(super) fn question_open(t: &BoardTx<'_>, node: &Node) -> anyhow::Result<Option<Step>> {
+    let open = t.blocking_questions(&node.id)?;
+    if open.is_empty() {
+        return Ok(None);
+    }
+    let list: Vec<String> = open
+        .iter()
+        .map(|(id, text)| format!("“{text}” ({id})"))
+        .collect();
+    Ok(Some(Step::Refused(vec![unmet(
+        "plan.question_open",
+        format!("Waiting on the owner's answer to {}.", list.join(", ")),
+        Some("The owner answers it on the card, the plan node or in Needs you."),
     )])))
 }
 
@@ -88,6 +107,9 @@ impl Planner<'_> {
             }
             // Research that just closed moved the node on.
             let node = t.plan_node(&node.id)?.expect("read above");
+            if let Some(open) = question_open(t, &node)? {
+                return Ok(open);
+            }
             if !node.kind.gates_at(node.stage) {
                 return Ok(refused(
                     "plan.stage",

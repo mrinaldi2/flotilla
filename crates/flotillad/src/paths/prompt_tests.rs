@@ -78,7 +78,8 @@ fn tells_bots_where_a_question_for_the_owner_goes() {
     let md = system_md(&spec(""));
     assert!(md.contains("## When the owner has to decide"));
     assert!(md.contains("raise_decision"));
-    assert!(md.contains("ask it\nonly in your terminal"), "{md}");
+    assert!(md.contains("ask it only in your terminal"), "{md}");
+    assert!(md.contains("`ask_owner`"), "{md}");
     // The registry only replaces the hand-kept ledgers if a settled
     // ruling is read as authority rather than as one more opinion.
     assert!(md.contains("is authority"));

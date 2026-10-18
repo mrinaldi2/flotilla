@@ -74,6 +74,8 @@ pub const CAPABILITIES: &[&str] = &[
     // in Needs you.
     bus::contract::capability::PLAN_V1,
     bus::contract::capability::ATTENTION_PLAN,
+    // Questions for the owner (0.22.0).
+    bus::contract::capability::QUESTIONS_V1,
 ];
 
 pub struct AppState {
@@ -235,10 +237,7 @@ mod capability_tests {
     /// Contract strings the daemon doesn't serve yet: each joins the list
     /// once it does. Every 0.21 string is served from #43's step 3.
     /// Contracted for 0.22.0 and served once its daemon steps land.
-    const NOT_SERVED_YET: &[&str] = &[
-        bus::contract::capability::QUESTIONS_V1,
-        bus::contract::capability::ARTIFACTS_V2,
-    ];
+    const NOT_SERVED_YET: &[&str] = &[bus::contract::capability::ARTIFACTS_V2];
 
     /// The 0.19, 0.20 and 0.21 board and home additions are all served.
     #[test]

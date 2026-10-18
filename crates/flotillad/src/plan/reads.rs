@@ -24,6 +24,8 @@ pub struct Detail {
     pub node: Node,
     pub history: Vec<Event>,
     pub cards: Vec<ItemCard>,
+    /// Its questions and its cards', open ones first (0.22.0).
+    pub questions: Vec<bus::contract::board::Question>,
 }
 
 impl Planner<'_> {
@@ -77,11 +79,13 @@ impl Planner<'_> {
                 node,
                 history,
                 cards,
+                questions: Vec::new(),
             }))
         })?;
         let Some(mut detail) = read else {
             return Ok(None);
         };
+        detail.questions = crate::questions::on(self.app, None, Some(id))?;
         if detail.node.docs.iter().any(|d| d.approved_sha.is_some()) {
             if let Some((cache, head)) = docs::head(self.app, &project_id, true) {
                 for doc in &mut detail.node.docs {

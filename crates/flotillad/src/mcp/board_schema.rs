@@ -155,6 +155,7 @@ fn enum_names(enum_name: &str) -> Option<Vec<(&'static str, &'static str)>> {
     spellings(enum_name)
         .or_else(|| crate::prs::spellings(enum_name))
         .or_else(|| crate::compat018::spellings(enum_name))
+        .or_else(|| crate::questions::wire::spellings(enum_name))
 }
 
 fn schemas() -> &'static Map<String, Value> {
@@ -201,6 +202,7 @@ pub(super) fn all_tools() -> impl Iterator<Item = &'static BoardTool> {
         .iter()
         .chain(super::releases::RELEASE_TOOLS)
         .chain(super::plan::PLAN_TOOLS)
+        .chain(super::questions::QUESTION_TOOLS)
         .chain(super::meetings::MEETING_TOOLS)
         .chain(super::prs::PR_TOOLS)
 }

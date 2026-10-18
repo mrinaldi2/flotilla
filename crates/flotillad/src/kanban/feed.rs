@@ -35,6 +35,10 @@ pub enum ChangeKind {
     /// It takes no number of the project's sequence, since its push carries
     /// none, and stays on this computer like a draft.
     PlanChanged,
+    /// A question for the owner was asked, answered or dismissed (0.22.0):
+    /// its question is on the change. Like a plan change it takes no number
+    /// and stays on this computer.
+    QuestionChanged,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -60,6 +64,8 @@ pub struct BoardChange {
     pub origin: Option<u64>,
     /// The node of a `PlanChanged`, as it is after the change.
     pub plan: Option<Box<crate::plan::model::Node>>,
+    /// The question of a `QuestionChanged`, as it is after the change.
+    pub question: Option<Box<bus::contract::board::Question>>,
 }
 
 /// How many changes a slow connection may fall behind before it is told to
@@ -223,6 +229,7 @@ impl FeedWriter<'_> {
             events,
             origin: feed_by::origin(),
             plan: None,
+            question: None,
         }));
         *seq
     }
@@ -245,6 +252,33 @@ impl FeedWriter<'_> {
             events: Vec::new(),
             origin: feed_by::origin(),
             plan: Some(Box::new(node)),
+            question: None,
+        }));
+    }
+
+    /// A question as it is after a change, to the project's watchers at the
+    /// project's current number, which it doesn't take.
+    pub fn publish_question(
+        &mut self,
+        question: bus::contract::board::Question,
+        actor: Option<String>,
+    ) {
+        let project_id = question.project_id.clone();
+        let seq = self.seqs.get(&project_id).copied().unwrap_or(0);
+        let _ = self.tx.send(Arc::new(BoardChange {
+            project_id,
+            seq,
+            kind: ChangeKind::QuestionChanged,
+            item_id: question.item_id.clone().unwrap_or_default(),
+            card: None,
+            from_column: None,
+            board_id: None,
+            actor,
+            note: None,
+            events: Vec::new(),
+            origin: feed_by::origin(),
+            plan: None,
+            question: Some(Box::new(question)),
         }));
     }
 }

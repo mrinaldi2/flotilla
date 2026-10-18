@@ -154,6 +154,10 @@ pub struct Node {
     pub gate: Option<Gate>,
     pub cards_total: u32,
     pub cards_done: u32,
+    /// Open questions for the owner on it and its cards, and how many of
+    /// them block it (0.22.0).
+    pub questions_open: u32,
+    pub questions_blocking: u32,
     pub created_by: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
