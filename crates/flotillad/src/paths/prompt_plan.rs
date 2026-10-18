@@ -9,8 +9,9 @@ pub(super) const CARD_TYPES: &str = "## Cards and the Research column\n\n\
      them (`new.type_retired`).\n\n\
      A task or bug passes the Research column before Doing. There, read the\n\
      code it touches and write what you found under the card's \"Code\n\
-     research\" heading (which files, what you learned, the risk), or link a\n\
-     research document (`item_link` kind `artifact`). Doing refuses the card\n\
+     research\" heading (which files, what you learned, the risk), or attach\n\
+     a research document to the card (`item_attach` with `file`, \"research\"\n\
+     in its name). Doing refuses the card\n\
      until you have (`start.research`). Spikes and design tickets are\n\
      research themselves and skip it. When a design ticket is done, link it\n\
      to the task that builds it (`item_link` kind `design`).\n\n";
@@ -34,7 +35,8 @@ pub(super) const PLAN: &str = "## The plan\n\n\
      `plan_doc_read`.\n\n\
      - Research comes first: an initiative or epic starts in research, and\n\
      its document can't be submitted until every spike of it is done with a\n\
-     research document attached or linked. Open the spikes on its board\n\
+     research document attached (`item_attach` with `file`): the owner\n\
+     reads it on the card, not in the artifacts folder. Open the spikes on its board\n\
      with `plan_node_id` set. Only the owner skips research; the lead may\n\
      ask with `plan_research_skip` and a reason.\n\
      - Never create a feature or an epic yourself: they are born when the\n\

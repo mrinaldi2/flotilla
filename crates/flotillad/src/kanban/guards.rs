@@ -96,6 +96,9 @@ pub struct ColumnLoad {
 #[derive(Debug, Clone, Default)]
 pub struct Context {
     pub links: Vec<ItemLink>,
+    /// The names of the item's attachments not removed (a file's, or the
+    /// path or URL of a linked doc).
+    pub attachments: Vec<String>,
     pub blockers: Vec<Blocker>,
     /// The Definition of Ready fields of the item's template.
     pub ready: Vec<String>,

@@ -28,9 +28,9 @@ keeps its boards, and cards still have the four 0.21 types.
   since then says so, and the lead resubmits it.
 - **Research** is a tracked stage. An initiative or epic starts in research,
   and its gate can't be submitted until every spike of it (cards with
-  `plan_node_id` set to the node) is done with a research document linked or
-  attached. Only the owner skips research, with a reason. The lead may ask
-  (`plan_research_skip`).
+  `plan_node_id` set to the node) is done with a research document attached
+  (`item_attach`), which the owner reads on the card. Only the owner skips
+  research, with a reason. The lead may ask (`plan_research_skip`).
 - **Kickoffs.** Whatever a node waits on the lead for comes to the lead as
   a card assigned to it, labelled `kickoff`: "Propose initiatives for" an
   active goal (on the project's default board), "Research" for an
@@ -57,7 +57,7 @@ From 0.21.0, cards are **task**, **design**, **bug** and **spike**. Epics and
 features moved to the plan, and chores became tasks (`new.type_retired`
 refuses the old types). Every board has a **Research** column between its
 open columns and Doing. A task or bug enters Doing once its "Code research"
-section is filled or a research document is linked (`start.research`). A
+section is filled or a research document is attached (`start.research`). A
 done design ticket is linked to the task that builds it (`design`).
 
 ## Upgrading to 0.21.0
