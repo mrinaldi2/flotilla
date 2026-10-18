@@ -1,6 +1,8 @@
 //! Settling a project's plan when one of its cards changes (0.21.0): a
 //! card of a node reaching Done may release its feature, and the feature
-//! its epic and initiative, without waiting for the next read.
+//! its epic and initiative, without waiting for the next read. At start
+//! every planned project settles once, so a node left waiting on the lead
+//! gets its kickoff before anyone reads the plan.
 
 use std::sync::Arc;
 
@@ -11,8 +13,26 @@ use crate::actor::Actor;
 use crate::app::AppState;
 use crate::kanban::feed::ChangeKind;
 
+/// Settle the project's plan as the daemon, logging a failure.
+fn settle(app: &Arc<AppState>, project_id: &str) {
+    let planner = Planner {
+        app,
+        actor: Actor::Daemon,
+    };
+    if let Err(e) = planner.settle(project_id) {
+        tracing::warn!(project_id, error = %e, "plan not settled");
+    }
+}
+
 pub fn spawn(app: Arc<AppState>) {
     let mut rx = app.board.subscribe();
+    let start = app.clone();
+    tokio::task::spawn_blocking(
+        move || match start.db.board_read(|t| t.planned_projects()) {
+            Ok(projects) => projects.iter().for_each(|p| settle(&start, p)),
+            Err(e) => tracing::warn!(error = %e, "planned projects not read"),
+        },
+    );
     tokio::spawn(async move {
         loop {
             let change = match rx.recv().await {
@@ -32,15 +52,7 @@ pub fn spawn(app: Arc<AppState>) {
             }
             let app = app.clone();
             let project_id = change.project_id.clone();
-            tokio::task::spawn_blocking(move || {
-                let planner = Planner {
-                    app: &app,
-                    actor: Actor::Daemon,
-                };
-                if let Err(e) = planner.settle(&project_id) {
-                    tracing::warn!(project_id, error = %e, "plan not settled after a card change");
-                }
-            });
+            tokio::task::spawn_blocking(move || settle(&app, &project_id));
         }
     });
 }

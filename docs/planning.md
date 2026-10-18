@@ -31,6 +31,15 @@ keeps its boards, and cards still have the four 0.21 types.
   `plan_node_id` set to the node) is done with a research document linked or
   attached. Only the owner skips research, with a reason. The lead may ask
   (`plan_research_skip`).
+- **Kickoffs.** Whatever a node waits on the lead for comes to the lead as
+  a card assigned to it, labelled `kickoff`: "Propose initiatives for" an
+  active goal (on the project's default board), "Research" for an
+  initiative or epic in research (a spike, which counts toward closing
+  research), "Write the PRD/design/HLD/LLD" for a document stage, and
+  "Revise" after a send-back, carrying the owner's note. A document's card
+  closes once the node moves on, research's once research is skipped, and
+  the proposals card once the goal is met or dropped. Nothing is made twice,
+  and kickoffs don't count toward a node's progress.
 - **Boards.** Each initiative gets its own board, and the cards of its
   subtree go there with `plan_node_id`.
 - **Closing.** A feature in build is released once every card of it is done

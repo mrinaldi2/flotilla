@@ -105,7 +105,14 @@ impl Planner<'_> {
     pub fn settle(&self, project_id: &str) -> anyhow::Result<()> {
         self.run(|t, wrote| {
             research::settle(t, wrote, project_id)?;
-            super::closure::settle(t, wrote, project_id)
+            super::closure::settle(t, wrote, project_id)?;
+            wrote.look = t
+                .plan_nodes(project_id)?
+                .into_iter()
+                .filter(|n| !n.stage.is_final())
+                .map(|n| n.id)
+                .collect();
+            Ok(())
         })?;
         Ok(())
     }
