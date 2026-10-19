@@ -9,6 +9,11 @@
 //! - The folder is inside the bot's own, so its guard lets it `cargo clean`
 //!   or remove it, and no other bot's guard does.
 //! - Deleting the bot removes it: it is build output, not work.
+//!
+//! Lighter checkouts (0.23.0) add the computer's shared caches beside it:
+//! Rust builds go through one `sccache` under the home when it is installed
+//! (nothing changes when it isn't), and pnpm installs share one content
+//! store there. A variable the session already has wins, as above.
 
 use std::path::{Path, PathBuf};
 
@@ -32,6 +37,33 @@ pub fn with_bot_target(env: &mut Vec<(String, String)>, workspace: &Path) {
         CARGO_TARGET_ENV.to_string(),
         bot_target(workspace).display().to_string(),
     ));
+}
+
+/// Rust's shared compiler cache, under `<home>/cache`.
+pub const SCCACHE_DIR: &str = "sccache";
+/// pnpm's shared content store, under `<home>/cache`.
+pub const PNPM_STORE_DIR: &str = "pnpm-store";
+
+/// Adds the computer's shared build caches: `sccache` as Cargo's
+/// `RUSTC_WRAPPER` when it is on the tools' `PATH`, and pnpm's store.
+pub fn with_shared_caches(env: &mut Vec<(String, String)>, home: &Path) {
+    let sccache = crate::tool_path::which("sccache", &crate::tool_path::tool_path());
+    with_caches(env, home, sccache.as_deref());
+}
+
+/// [`with_shared_caches`] with `sccache` found (or not) already.
+pub fn with_caches(env: &mut Vec<(String, String)>, home: &Path, sccache: Option<&Path>) {
+    let cache = home.join("cache");
+    let mut set = |key: &str, value: PathBuf| {
+        if !env.iter().any(|(k, _)| k == key) {
+            env.push((key.to_string(), value.display().to_string()));
+        }
+    };
+    if let Some(sccache) = sccache {
+        set("RUSTC_WRAPPER", sccache.to_path_buf());
+        set("SCCACHE_DIR", cache.join(SCCACHE_DIR));
+    }
+    set("npm_config_store_dir", cache.join(PNPM_STORE_DIR));
 }
 
 /// Removes a deleted bot's target folder in the background: it can be tens
@@ -87,6 +119,41 @@ mod tests {
             shared,
             [(CARGO_TARGET_ENV.to_string(), "shared".to_string())]
         );
+    }
+
+    #[test]
+    fn shared_caches_follow_sccache_and_never_replace_a_bots_own() {
+        let home = Path::new("/h");
+        let get = |env: &[(String, String)], key: &str| {
+            env.iter().find(|(k, _)| k == key).map(|(_, v)| v.clone())
+        };
+        let mut without = Vec::new();
+        with_caches(&mut without, home, None);
+        assert_eq!(
+            get(&without, "RUSTC_WRAPPER"),
+            None,
+            "no sccache, no wrapper"
+        );
+        assert_eq!(get(&without, "SCCACHE_DIR"), None);
+        let store = home
+            .join("cache")
+            .join(PNPM_STORE_DIR)
+            .display()
+            .to_string();
+        assert_eq!(get(&without, "npm_config_store_dir"), Some(store.clone()));
+
+        let bin = Path::new("/opt/bin/sccache");
+        let mut with = Vec::new();
+        with_caches(&mut with, home, Some(bin));
+        assert_eq!(get(&with, "RUSTC_WRAPPER"), Some(bin.display().to_string()));
+        let dir = home.join("cache").join(SCCACHE_DIR).display().to_string();
+        assert_eq!(get(&with, "SCCACHE_DIR"), Some(dir));
+        assert_eq!(get(&with, "npm_config_store_dir"), Some(store));
+
+        let mut own = vec![("RUSTC_WRAPPER".to_string(), "mine".to_string())];
+        with_caches(&mut own, home, Some(bin));
+        assert_eq!(get(&own, "RUSTC_WRAPPER"), Some("mine".to_string()));
+        assert_eq!(own.iter().filter(|(k, _)| k == "RUSTC_WRAPPER").count(), 1);
     }
 
     #[test]

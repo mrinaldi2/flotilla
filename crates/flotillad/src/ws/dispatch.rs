@@ -122,9 +122,10 @@ const APPROVE_ONLY: &[&str] = &[
     "link_peer_bot",
     "link_project",
     "unlink_project",
-    // Repositories PRs may name (H-266, ARCH M1); the owner's clone (0.20.0).
+    // PRs' repositories (H-266, ARCH M1), the owner's clone (0.20.0), the disk budget (0.23.0).
     "set_project_extra_repos",
     "clone_project_repo",
+    "set_project_disk_budget",
     // The owner's review, comments and setting (H-269).
     "review_settings_set",
     "pr_review_submit",

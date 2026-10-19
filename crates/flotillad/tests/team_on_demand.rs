@@ -32,7 +32,7 @@ fn upgrading_makes_every_bot_but_the_lead_on_demand() {
     conn.execute_batch(
         "DROP TRIGGER project_lead_always_on;
          ALTER TABLE bot DROP COLUMN presence;
-         UPDATE meta SET value = '75' WHERE key = 'schema_version';",
+         UPDATE meta SET value = '76' WHERE key = 'schema_version';",
     )
     .unwrap();
     drop(conn);

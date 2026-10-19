@@ -76,6 +76,8 @@ mod bot_runtime;
 mod bots;
 mod card_questions;
 pub mod card_types;
+mod card_worktrees;
+pub use card_worktrees::CardWorktree;
 #[cfg(test)]
 mod card_types_tests;
 pub mod check_jobs;

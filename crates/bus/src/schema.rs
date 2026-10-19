@@ -17,6 +17,7 @@ mod board_links;
 mod board_proposals;
 mod boards;
 mod card_types;
+mod checkouts;
 mod checks;
 mod cleanup;
 mod decisions;
@@ -56,6 +57,7 @@ use board_links::{
 use board_proposals::MIGRATION_BOARD_PROPOSALS;
 use boards::MIGRATION_BOARDS;
 use card_types::MIGRATION_CARD_TYPES;
+use checkouts::MIGRATION_CARD_WORKTREES;
 use checks::{
     MIGRATION_CHECKS, MIGRATION_CHECK_HEAVY, MIGRATION_CHECK_JOBS, MIGRATION_CHECK_UNROUTABLE,
 };
@@ -176,6 +178,7 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_PLAN,
     MIGRATION_QUESTIONS,
     MIGRATION_ARTIFACT_KEEP,
+    MIGRATION_CARD_WORKTREES,
     MIGRATION_BOT_PRESENCE,
 ];
 

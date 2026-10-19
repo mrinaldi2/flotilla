@@ -68,6 +68,7 @@ const OTHER_PROGRAMS: &[(&str, &str)] = &[
 /// The modules where bots control the repository git runs in.
 const BOT_PATHS: &[&str] = &[
     "prs/",
+    "checkouts/",
     "worktree.rs",
     "releases/git_cache.rs",
     "cleanup.rs",
