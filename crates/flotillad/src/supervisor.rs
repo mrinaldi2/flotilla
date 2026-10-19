@@ -296,6 +296,8 @@ impl Supervisor {
         };
         tracing::info!(bot_id, state = state.as_str(), reason, "bot state");
         let item_id = self.inner.working.on_state(bot_id, from, state);
+        let starts = !working_on::in_turn(from) && working_on::in_turn(state);
+        let cause = (starts && self.inner.working.answering(bot_id)).then_some("answer");
         let item_title = item_id
             .as_deref()
             .and_then(|id| self.inner.db.get_item(id).ok().flatten())
@@ -307,6 +309,7 @@ impl Supervisor {
             at: chrono::Utc::now().to_rfc3339(),
             item_id,
             item_title,
+            cause,
         });
     }
 

@@ -249,8 +249,13 @@ impl DeliveryWorker {
 
     /// The envelope a local session reads for `msg`.
     /// The card the message is about, for the turn it starts (0.19.0): one
-    /// its text names, or the item the task it opens was delegated for.
+    /// its text names, or the item the task it opens was delegated for. The
+    /// owner's answer to a question names its question's card (0.22.0).
     fn note_card(&self, bot_id: &str, msg: &Message) {
+        if let Some(card) = self.answered_card(msg) {
+            self.supervisor.working_on().answer_delivered(bot_id, &card);
+            return;
+        }
         let card = match crate::supervisor::card_named(&msg.body) {
             Some(id) => Some(id.to_string()),
             None => self
@@ -263,6 +268,24 @@ impl DeliveryWorker {
         if let Some(card) = card {
             self.supervisor.working_on().delivered(bot_id, &card);
         }
+    }
+
+    /// The card of the question `msg` settles, when it is one with a card.
+    fn answered_card(&self, msg: &Message) -> Option<String> {
+        let decision = msg.decision_id.as_deref()?;
+        let question = self.db.question_row(decision).ok().flatten()?;
+        let answered = self
+            .db
+            .get_decision(decision)
+            .ok()
+            .flatten()
+            .is_some_and(|d| {
+                matches!(
+                    d.state,
+                    bus::DecisionState::Answered | bus::DecisionState::Settled
+                )
+            });
+        answered.then_some(question.item_id).flatten()
     }
 
     fn render(&self, delivery_id: &str, bot_id: &str, msg: &Message) -> anyhow::Result<String> {

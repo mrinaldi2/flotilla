@@ -299,6 +299,8 @@ export type ServerPush =
       /** The card the turn starting or ending is about, when known (0.19.0). */
       readonly item_id?: string;
       readonly item_title?: string;
+      /** What started the turn (0.22.0): "answer", the owner's answer to its question. */
+      readonly cause?: string;
     }
   | { readonly type: "message_new"; readonly message: BusMessage }
   | { readonly type: "bot_updated"; readonly bot: Bot }

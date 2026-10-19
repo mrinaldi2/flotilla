@@ -333,10 +333,12 @@ breaking wire-shape change; v1 clients must upgrade before connecting.
   `seq` is then the newest read included, and it is the cursor to resume from. A replay
   arrives the same way, so a full ring is a handful of pushes rather than one per read, and
   `attached.seq` still marks where it ends.
-- `bot_state`: `{ "bot_id", "state", "reason", "at", "item_id"?, "item_title"? }` — state ∈ `starting|ready|working|waiting_for_user|waiting_for_approval|rate_limited|auth_failed|crashed|stopping|stopped`.
+- `bot_state`: `{ "bot_id", "state", "reason", "at", "item_id"?, "item_title"?, "cause"? }` — state ∈ `starting|ready|working|waiting_for_user|waiting_for_approval|rate_limited|auth_failed|crashed|stopping|stopped`.
   `item_id` (0.19.0) is the card the turn starting, going on or ending is about, when
-  known: the card a delivery that started it named (`[card …]`, or a task delegated for
-  an item), else the last card the bot changed during it. A chat turn names none.
+  known: the card a delivery that started it named (`[card …]`, a task delegated for
+  an item, the card of a question the owner answered), else the last card the bot changed
+  during it. A chat turn names none. `cause` (0.22.0) is `"answer"` on the push that starts
+  a turn the owner's answer to the bot's question started.
 - `board_activity`: `{ "activity": BoardActivity }` (0.19.0, `flotilla.home.v1` as proto3
   JSON with the proto field names) — someone moved or assigned a card, a bot edited a
   draft, or the guards refused a move. Sent to every connection, whatever it watches; a

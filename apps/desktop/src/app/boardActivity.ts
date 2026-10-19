@@ -207,6 +207,8 @@ export interface BotStatePush {
   readonly state: BotState;
   readonly item_id?: string;
   readonly item_title?: string;
+  /** "answer": the owner's answer to the bot's question started the turn (0.22.0). */
+  readonly cause?: string;
 }
 
 export interface TurnBot {
@@ -217,7 +219,8 @@ export interface TurnBot {
 /**
  * A turn starting or finishing on a card, from a `bot_state` push. `open`
  * holds the card of each bot's running turn, so an approval wait inside a
- * turn isn't a new start. A turn about no card, a chat, says nothing.
+ * turn isn't a new start. A turn about no card, a chat, says nothing. A
+ * turn the owner's answer started says it got the answer.
  */
 export function noticeFromBotState(
   push: BotStatePush,
@@ -232,7 +235,10 @@ export function noticeFromBotState(
   let itemId: string;
   if (inTurn && running === undefined && push.item_id !== undefined) {
     open.set(push.bot_id, push.item_id);
-    line = { glyph: "●", word: "Started", detail: "working on it" };
+    line =
+      push.cause === "answer"
+        ? { glyph: "●", word: "Got your answer", detail: "working on it" }
+        : { glyph: "●", word: "Started", detail: "working on it" };
     itemId = push.item_id;
   } else if (!inTurn && ended !== undefined) {
     open.delete(push.bot_id);

@@ -157,3 +157,91 @@ async fn a_bot_asks_over_mcp_and_the_owner_answers_over_websocket() {
     .await;
     assert_eq!(error_code(refused), "invalid_request");
 }
+
+#[tokio::test]
+async fn the_turn_an_answer_starts_is_on_its_card_and_says_so() {
+    let mut plan = planned().await;
+    let goal = plan.goal("A research of all saints");
+    let init = plan.initiative(&goal.id, "Sources & licensing");
+    let spike = plan.spike(&init, "Sources");
+    for _ in 0..400 {
+        if plan.d.app.supervisor.state(&plan.lead).0 == bus::BotState::Ready {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(25)).await;
+    }
+    assert_eq!(
+        plan.d.app.supervisor.state(&plan.lead).0,
+        bus::BotState::Ready
+    );
+    // The owner's board connection speaks the binary contract; the toasts
+    // the apps show come as JSON pushes.
+    let mut pushes = common::WsClient::connect(&plan.d).await;
+    let token = plan.d.app.secrets.bot_token(&plan.lead).expect("token");
+    let mut lead = McpClient::new(&plan.d, &token);
+    let asked = lead
+        .call(
+            "ask_owner",
+            json!({"item_id": spike, "questions": [
+                {"text": "Italy only?", "why": "It sets which calendars we cite."}
+            ]}),
+        )
+        .await;
+    let id = asked["questions"][0]["id"].as_str().expect("an id");
+    let Response::Questions(page) = response(
+        call(
+            &mut plan.owner,
+            Request::QuestionList(c::QuestionList {
+                project_id: plan.pid.clone(),
+                item_id: Some(spike.clone()),
+                ..Default::default()
+            }),
+        )
+        .await,
+    ) else {
+        panic!("a page");
+    };
+    let q = page.questions.iter().find(|q| q.id == id).expect("asked");
+    let Response::Questioned(result) = response(
+        call(
+            &mut plan.owner,
+            Request::QuestionAnswer(c::QuestionAnswer {
+                id: q.id.clone(),
+                expected_version: q.version,
+                option: None,
+                text: "Italy and the universal calendar".into(),
+            }),
+        )
+        .await,
+    ) else {
+        panic!("questioned");
+    };
+    assert!(matches!(
+        result.outcome,
+        Some(c::question_result::Outcome::Done(_))
+    ));
+    let lead_id = plan.lead.clone();
+    pushes
+        .wait_for_within(Duration::from_secs(10), |v| {
+            v["type"] == "delivery_update"
+                && v["delivery"]["bot_id"] == json!(lead_id)
+                && v["delivery"]["state"] == "delivered"
+        })
+        .await;
+
+    plan.d
+        .app
+        .supervisor
+        .on_hook(&plan.lead, "UserPromptSubmit", None);
+    let working = pushes
+        .wait_for(|v| v["type"] == "bot_state" && v["state"] == "working")
+        .await;
+    assert_eq!(working["item_id"], json!(spike), "{working}");
+    assert_eq!(working["cause"], "answer", "{working}");
+    plan.d.app.supervisor.on_hook(&plan.lead, "Stop", None);
+    let done = pushes
+        .wait_for(|v| v["type"] == "bot_state" && v["state"] == "ready")
+        .await;
+    assert_eq!(done["item_id"], json!(spike), "{done}");
+    assert!(done.get("cause").is_none(), "{done}");
+}
