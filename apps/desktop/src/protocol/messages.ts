@@ -264,6 +264,21 @@ export type ServerReply =
       /** With `limit`: more after this page, from `next_before`. */
       readonly has_more?: boolean;
       readonly next_before?: string | null;
+    })
+  | (ReplyBase & {
+      /** To `artifact_trash` (0.22.0). */
+      readonly type: "artifact_trashed";
+      readonly project_id: string;
+      readonly path: string;
+      /** The OS trash, or Flotilla's own trash folder where there is none. */
+      readonly bin: "os" | "folder";
+    })
+  | (ReplyBase & {
+      /** To `artifact_keep` (0.22.0). */
+      readonly type: "artifact_kept";
+      readonly project_id: string;
+      /** As listed, with `kept`. */
+      readonly artifact: Artifact;
     });
 
 export type ServerReplyType = ServerReply["type"];

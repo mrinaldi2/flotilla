@@ -7,12 +7,17 @@ import type { ReactElement } from "react";
 import type { BoardApi } from "../../protocol/board";
 import type { Bot } from "../../protocol/entities";
 import type { ItemCard } from "../../protocol/gen/flotilla/board/v1/board_pb";
-import type { PlanDoc, PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
+import type {
+  PlanDoc,
+  PlanNode,
+  PlanNodeDetail as PlanNodeDetailMessage,
+} from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import { PlanDocKind, PlanResearchState } from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import Markdown from "../control/Markdown";
 import { typeLabel } from "../board/labels";
 import { SkipResearch } from "./PlanGatePanel";
 import PlanNodeActions from "./PlanNodeActions";
+import PlanNodeQuestions from "./PlanNodeQuestions";
 import { day, historyLine } from "./planHistory";
 import PlanStepper from "./PlanStepper";
 import { docWord, fileName, kindWords, stageChip } from "./planText";
@@ -81,7 +86,7 @@ function CardRow(props: {
 type ResearchProps = Pick<
   PlanNodeDetailProps,
   "api" | "node" | "canRule" | "onOpenItem" | "onOpenDoc" | "onChanged"
-> & { readonly cards: readonly ItemCard[] };
+> & { readonly cards: readonly ItemCard[]; readonly questions: ReactElement | null };
 
 function Research(props: ResearchProps): ReactElement | null {
   const { node } = props;
@@ -122,6 +127,7 @@ function Research(props: ResearchProps): ReactElement | null {
           ))}
         </ul>
       )}
+      {props.questions}
       {props.canRule && research.state === PlanResearchState.OPEN && node.gate === undefined ? (
         <SkipResearch api={props.api} node={node} onSkipped={props.onChanged} />
       ) : null}
@@ -205,6 +211,34 @@ function Header(
   );
 }
 
+/** Research with the node's questions under it, or the questions on their own, then Documents. */
+function Sections(
+  props: PlanNodeDetailProps & { readonly detail: PlanNodeDetailMessage | null },
+): ReactElement {
+  const { node, detail } = props;
+  const questions =
+    detail === null || detail.questions.length === 0 ? null : (
+      <PlanNodeQuestions
+        api={props.api}
+        nodeId={node.id}
+        cards={detail.cards}
+        questions={detail.questions}
+        canAnswer={props.canRule}
+      />
+    );
+  return (
+    <div className="plan-sections">
+      <Research {...props} cards={detail?.cards ?? []} questions={questions} />
+      {node.research === undefined && questions !== null ? (
+        <section className="plan-section" aria-label="Questions for you">
+          {questions}
+        </section>
+      ) : null}
+      <Documents {...props} />
+    </div>
+  );
+}
+
 export default function PlanNodeDetail(props: PlanNodeDetailProps): ReactElement {
   const { node } = props;
   const state = usePlanNode(props.api, node.id, node.version);
@@ -243,10 +277,7 @@ export default function PlanNodeDetail(props: PlanNodeDetailProps): ReactElement
           <Markdown>{node.summary}</Markdown>
         </div>
       )}
-      <div className="plan-sections">
-        <Research {...props} cards={cards} />
-        <Documents {...props} />
-      </div>
+      <Sections {...props} detail={detail} />
       {own.length === 0 ? null : (
         <section className="plan-section" aria-label="Cards">
           <h3>

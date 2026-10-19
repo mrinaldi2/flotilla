@@ -134,6 +134,7 @@ export default function CardDrawer(props: CardDrawerProps): ReactElement | null 
         itemId={top.id}
         bots={props.bots}
         canComment={props.canComment}
+        canAnswer={props.canComment && props.client.hasGrant("approve")}
         onClose={() => drawer.close()}
         back={before ? { id: before.id, onBack: drawer.back } : undefined}
         column={knownColumn(links, top.id)}

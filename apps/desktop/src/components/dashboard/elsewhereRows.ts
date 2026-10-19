@@ -5,7 +5,7 @@
 import type { AttentionRowJson, TypedRowJson } from "../../protocol/dashboard";
 import type { AttentionActions } from "./attentionRows";
 import { attentionRow } from "./attentionRows";
-import type { RowViewProps } from "./NeedsYou";
+import type { RowViewProps } from "./DashRow";
 
 /** The kinds the dashboard's own rows have, as their typed names. */
 const PLAIN: Readonly<

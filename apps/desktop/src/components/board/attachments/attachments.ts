@@ -121,3 +121,21 @@ export function docSource(
   }
   return /^https?:\/\//i.test(value) ? { url: value } : { artifact: value.replace(/^\/+/, "") };
 }
+
+/**
+ * A card's documents (0.22.0, `artifacts_v2`): its attachments with its
+ * artifact links, which the daemon lists as docs, each artifact once.
+ */
+export function documentsOf(attachments: readonly ItemAttachment[]): readonly ItemAttachment[] {
+  const seen = new Set<string>();
+  return attachments.filter((a) => {
+    if (a.kind !== "doc" || a.path === "" || a.removed) {
+      return true;
+    }
+    if (seen.has(a.path)) {
+      return false;
+    }
+    seen.add(a.path);
+    return true;
+  });
+}

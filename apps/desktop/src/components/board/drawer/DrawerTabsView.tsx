@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import type { ReactElement, ReactNode } from "react";
-import { ItemEventKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { ItemEventKind, LinkKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import type { ItemDetail } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { Activity } from "./DrawerActivity";
 import type { PostComment } from "./DrawerActivity";
@@ -19,14 +19,20 @@ export function DrawerTabs(props: {
   readonly onComment?: PostComment;
   /** Overview's description, drawn with its images, and what follows it. */
   readonly overview?: { readonly description: ReactNode; readonly after: ReactNode };
+  /** Artifact links show with the documents (0.22.0): Links leaves them out. */
+  readonly documents?: boolean;
 }): ReactElement {
   const { detail, who } = props;
+  const links =
+    props.documents === true
+      ? detail.links.filter((l) => l.kind !== LinkKind.ARTIFACT)
+      : detail.links;
   const [tab, setTab] = useState<Tab>(props.initialTab ?? "overview");
   // What Activity lists: each comment once, not again as its history event.
   const moves = detail.history.filter((e) => e.kind !== ItemEventKind.COMMENTED).length;
   const tabs: readonly (readonly [Tab, string])[] = [
     ["overview", "Overview"],
-    ["links", `Links ${detail.links.length}`],
+    ["links", `Links ${links.length}`],
     ["activity", `Activity ${moves + detail.comments.length}`],
   ];
   return (
@@ -54,7 +60,7 @@ export function DrawerTabs(props: {
             after={props.overview?.after}
           />
         ) : null}
-        {tab === "links" ? <Links links={detail.links} /> : null}
+        {tab === "links" ? <Links links={links} /> : null}
         {tab === "activity" ? (
           <Activity
             detail={detail}

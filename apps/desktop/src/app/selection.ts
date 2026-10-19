@@ -4,7 +4,8 @@ import type { BotTab } from "../components/bot/BotTabs";
  * The tabs of a project window (UX-024 §2, UX-051 §1): the first six are in
  * the tab bar on ⌘1…⌘6; the rest sit under More. Pull requests shows only when
  * the service serves them, and Plan (0.21.0) only on a project whose plan is
- * on; with both, Meetings moves under More.
+ * on; with both, Meetings moves under More. Questions (0.22.0) sits under
+ * More when the service serves them.
  */
 const PROJECT_TABS = [
   "overview",
@@ -14,6 +15,7 @@ const PROJECT_TABS = [
   "team",
   "releases",
   "meetings",
+  "questions",
   "conversations",
   "settings",
 ] as const;
@@ -25,10 +27,11 @@ const BAR_TABS: readonly ProjectTab[] = PROJECT_TABS.slice(0, 7);
 const ALWAYS_MORE: readonly ProjectTab[] = PROJECT_TABS.slice(7);
 const BAR_SIZE = 6;
 
-/** Which optional tabs show: Pull requests, and the Plan. */
+/** Which optional tabs show: Pull requests, the Plan, and Questions. */
 export interface TabsShown {
   readonly prs: boolean;
   readonly plan: boolean;
+  readonly questions?: boolean;
 }
 
 function shownTabs(shown: TabsShown): readonly ProjectTab[] {
@@ -42,7 +45,8 @@ export function primaryTabs(shown: TabsShown): readonly ProjectTab[] {
 
 /** The tabs under More: what the bar has no room for, then Conversations and Settings. */
 export function moreTabs(shown: TabsShown): readonly ProjectTab[] {
-  return [...shownTabs(shown).slice(BAR_SIZE), ...ALWAYS_MORE];
+  const always = ALWAYS_MORE.filter((tab) => tab !== "questions" || shown.questions === true);
+  return [...shownTabs(shown).slice(BAR_SIZE), ...always];
 }
 
 /** What the main pane is currently showing. */

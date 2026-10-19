@@ -10,6 +10,7 @@ const PROJECT_TAB_LABEL: Readonly<Record<ProjectTab, string>> = {
   team: "Team",
   releases: "Releases",
   meetings: "Meetings",
+  questions: "Questions",
   conversations: "Conversations",
   settings: "Settings",
 };

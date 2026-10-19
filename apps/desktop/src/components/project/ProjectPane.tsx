@@ -26,6 +26,8 @@ import { nodesWhenOn, planOn, usePlan } from "../plan/usePlan";
 import { useMeeting } from "../meetings/useMeetings";
 import type { MeetingSummary } from "../../protocol/meetings";
 import ProjectView from "../ProjectView";
+import QuestionsView from "../questions/QuestionsView";
+import { questionsOn } from "../../protocol/questions";
 import { PULL_REQUESTS } from "../../protocol/prs";
 import PullRequestsView from "../prs/PullRequestsView";
 import ReleasesView from "../releases/ReleasesView";
@@ -273,6 +275,26 @@ function Plan({ ctx }: { readonly ctx: TabContext }): ReactElement {
   );
 }
 
+/** Questions for the owner (0.22.0): each card opens on its board. */
+function Questions({ ctx }: { readonly ctx: TabContext }): ReactElement {
+  const { client, daemon, project } = ctx;
+  if (!questionsOn(client)) {
+    return <NeedsNewer what="Questions" />;
+  }
+  return (
+    <QuestionsView
+      api={client}
+      projectId={project.id}
+      connected={daemon.connected}
+      canAnswer={daemon.connected && client.hasGrant("approve")}
+      nodes={nodesWhenOn(ctx.plan.status)}
+      onOpenItem={(item) =>
+        daemon.select({ kind: "project", projectId: project.id, tab: "board", item })
+      }
+    />
+  );
+}
+
 /** The active tab's view. */
 function TabView({ ctx }: { readonly ctx: TabContext }): ReactElement {
   const { client, daemon, project, bots } = ctx;
@@ -300,6 +322,8 @@ function TabView({ ctx }: { readonly ctx: TabContext }): ReactElement {
           onReply={ctx.onReply}
         />
       );
+    case "questions":
+      return <Questions ctx={ctx} />;
     case "conversations":
       return client.capabilities.includes("agent_conversations") ? (
         <ConversationsView client={client} project={project} bots={bots} connected={connected} />
@@ -341,6 +365,7 @@ export default function ProjectPane(props: ProjectPaneProps): ReactElement {
       tab={tab}
       prs={client.capabilities.includes(PULL_REQUESTS)}
       plan={planOn(plan.status)}
+      questions={questionsOn(client)}
       row={row}
       onHome={() => select({ kind: "home" })}
       onSelectTab={onSelectTab}

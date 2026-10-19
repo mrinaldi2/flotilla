@@ -125,7 +125,12 @@ export interface AttentionRowJson {
      * A plan node waits for the owner (0.21.0, `attention_plan`): a gate, a
      * proposed initiative or a request to skip research; `plan_node_id`.
      */
-    | "plan_gate";
+    | "plan_gate"
+    /**
+     * A bot's question for the owner, one row each (0.22.0, `questions_v1`):
+     * `decision_id` is the question's id, `item_id` its card when it has one.
+     */
+    | "question";
   readonly id: string;
   /** One line, set by the daemon. */
   readonly title: string;
@@ -145,6 +150,10 @@ export interface AttentionRowJson {
   readonly machine?: string;
   /** The plan node whose gate waits (`plan_node_get`, `plan_rule`). */
   readonly plan_node_id?: string;
+  /** The question a `question` row asks (its decision's id). */
+  readonly decision_id?: string;
+  /** A `question` that holds its node's research or gate. */
+  readonly question_blocking?: boolean;
   /** A held or failed cleanup, in fields the app words (UX-055). */
   readonly cleanup?: CleanupFields;
 }

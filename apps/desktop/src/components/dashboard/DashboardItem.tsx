@@ -17,6 +17,8 @@ export default function DashboardItem(props: {
   readonly itemId: string;
   readonly bots: readonly Bot[];
   readonly canComment: boolean;
+  /** The approve grant: answers the card's questions (0.22.0). */
+  readonly canAnswer?: boolean;
   readonly onClose: () => void;
   /** The item's commands for the owner (H-117), above its tabs. */
   readonly children?: ReactNode;
@@ -52,6 +54,7 @@ export default function DashboardItem(props: {
       columns={columns.length === 0 && props.column ? [props.column] : columns}
       bots={props.bots}
       canComment={props.canComment}
+      canAnswer={props.canAnswer}
       onClose={props.onClose}
       back={props.back}
       footer={props.footer}
