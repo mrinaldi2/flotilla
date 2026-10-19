@@ -20,6 +20,10 @@ pub enum Push {
         item_id: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
         item_title: Option<String>,
+        /// What started the turn, when it says more than the card (0.22.0):
+        /// "answer", the owner's answer to the bot's question.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        cause: Option<&'static str>,
     },
     /// Someone moved, assigned or edited a card, or a move was refused
     /// (0.19.0), for the owner's toasts and phone notices.
@@ -176,6 +180,7 @@ impl Push {
             at: chrono::Utc::now().to_rfc3339(),
             item_id: None,
             item_title: None,
+            cause: None,
         }
     }
 
