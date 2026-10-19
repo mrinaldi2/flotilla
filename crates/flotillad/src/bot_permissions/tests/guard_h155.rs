@@ -13,6 +13,8 @@ pub(super) const OWN_WT: &str = "/Users/me/Developer/gravitiOS-wt-iosdev-h134";
 pub(super) fn ios_dev(command: &str) -> Option<String> {
     let ctx = GuardContext {
         bot_slug: Some(slug("iOS Dev")),
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         ..ctx()
     };
     decide(

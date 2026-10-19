@@ -25,6 +25,8 @@ fn a_bot_changes_only_its_own_worktrees() {
     assert_eq!(slug("h031-final"), "h031final");
     let dev = GuardContext {
         bot_slug: Some(slug("Desktop Dev")),
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         ..ctx()
     };
     for command in [
@@ -55,11 +57,15 @@ fn a_bot_changes_only_its_own_worktrees() {
 fn release_worktrees_belong_to_the_publisher() {
     let devops = GuardContext {
         bot_slug: Some(slug("DevOps")),
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         releases: true,
         ..ctx()
     };
     let other = GuardContext {
         bot_slug: Some(slug("Desktop Dev")),
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         ..ctx()
     };
     for command in [
@@ -166,6 +172,8 @@ fn a_glob_through_the_old_home_link_is_denied_before_and_after_the_move() {
             ],
             worktrees: Vec::new(),
             bot_slug: Some("dev".into()),
+            own_names: Vec::new(),
+            other_names: Vec::new(),
             releases: false,
             allow_main: false,
             protect: Vec::new(),
@@ -253,4 +261,48 @@ pub(super) fn link_home(new: &Path, old: &Path) {
             .expect("mklink");
         assert!(status.success(), "mklink /J failed");
     }
+}
+
+/// Claude Code's own worktrees (`<repo>/.claude/worktrees/<name>`) are the
+/// bot's whose folder name the worktree name starts with (0.22.0): PCG
+/// Engineer removes `pcg-engineer-erasure`, the lead its `lead-…` ones, and
+/// a longer name of another bot wins (`unity-dev-2-…` isn't Unity Dev's).
+#[test]
+fn a_bot_changes_its_own_claude_code_worktrees() {
+    let wt = "~/Developer/PhD/Github/maze/.claude/worktrees";
+    let pcg = GuardContext {
+        bot_slug: Some(slug("PCG Engineer")),
+        own_names: vec!["pcg-engineer".into()],
+        other_names: vec!["unity-dev".into(), "unity-dev-2".into(), "lead".into()],
+        ..ctx()
+    };
+    for command in [
+        format!("git -C ~/Developer/PhD/Github/maze worktree remove {wt}/pcg-engineer-erasure"),
+        format!("cd {wt}/pcg-engineer-erasure && git reset --hard origin/develop"),
+        format!("rm -rf {wt}/pcg-engineer"),
+    ] {
+        assert_eq!(as_bot(&command, &pcg), None, "{command} was blocked");
+    }
+    for command in [
+        format!("git -C ~/Developer/PhD/Github/maze worktree remove {wt}/lead-cass037"),
+        format!("rm -rf {wt}/unity-dev-fix"),
+        format!("rm -rf {wt}/pcg-engineerx"),
+        "rm -rf ~/Developer/PhD/Github/maze/.claude/worktrees".to_string(),
+        "rm -rf ~/Developer/.claude/worktrees/pcg-engineer-x".to_string(),
+    ] {
+        assert!(as_bot(&command, &pcg).is_some(), "{command} was allowed");
+    }
+    let unity = GuardContext {
+        own_names: vec!["unity-dev".into()],
+        other_names: vec!["unity-dev-2".into(), "pcg-engineer".into(), "lead".into()],
+        ..ctx()
+    };
+    assert_eq!(as_bot(&format!("rm -rf {wt}/unity-dev-fix"), &unity), None);
+    assert!(as_bot(&format!("rm -rf {wt}/unity-dev-2-fix"), &unity).is_some());
+    let lead = GuardContext {
+        own_names: vec!["new-bot".into(), "lead".into()],
+        other_names: vec!["pcg-engineer".into()],
+        ..ctx()
+    };
+    assert_eq!(as_bot(&format!("rm -rf {wt}/lead-cass037"), &lead), None);
 }

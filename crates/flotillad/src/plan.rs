@@ -24,6 +24,7 @@ use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 use crate::kanban::guards::unmet;
 use crate::kanban::model::Unmet;
 
+pub mod attached;
 mod closure;
 pub mod contract;
 mod create;

@@ -79,6 +79,7 @@ impl Supervisor {
             artifacts: artifacts.as_deref(),
             repo: stored.repo.as_ref(),
             devops: stored.devops,
+            worktree_names: &stored.worktree_names,
         }
         .claude_args(&self.inner.cfg.claude_args)?;
         if resume {

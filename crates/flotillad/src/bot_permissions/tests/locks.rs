@@ -3,6 +3,11 @@
 
 use super::*;
 
+static WORKTREE_NAMES: super::super::WorktreeNames = super::super::WorktreeNames {
+    own: Vec::new(),
+    others: Vec::new(),
+};
+
 /// CE-003 M1: one Read call must not hand a bot the owner's private key.
 #[test]
 fn reading_sensitive_locations_is_denied_by_rule_and_by_the_guard() {
@@ -68,6 +73,7 @@ fn the_guard_is_told_worktrees_not_trusted_paths_are_writable() {
         artifacts: Some(Path::new("/Users/me/.gravity/projects/p/artifacts")),
         repo: None,
         devops: false,
+        worktree_names: &WORKTREE_NAMES,
     };
     let trusted = start(PermissionProfile::Trusted, &[]).guard_command();
     // The trusted path as the platform joins and quotes it.

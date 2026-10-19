@@ -41,9 +41,10 @@ pub(super) const PLAN: &str = "## The plan\n\n\
      straight to Done yourself, not to Review: the owner reviews research at\n\
      the node's gate. Only the owner skips research; the lead may\n\
      ask with `plan_research_skip` and a reason.\n\
-     - Commit and push every gate document to the default branch before\n\
-     `plan_submit`: the owner reads it from the repository, and a document\n\
-     that isn't pushed is refused (`plan.doc_unpushed`).\n\
+     - Attach every gate document to its card (`item_attach` with `file`)\n\
+     before `plan_submit`: the owner reads and approves it from there until\n\
+     it is pushed, so never wait on a push to submit. Commit it to the\n\
+     repository as well, and push it when you may.\n\
      - Ask the owner with `ask_owner` (the spike as `item_id`, one entry per\n\
      question). A `blocking` question holds the node's research and gate\n\
      until it is answered; the answers are added to the research document.\n\
