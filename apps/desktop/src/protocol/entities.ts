@@ -40,6 +40,8 @@ export interface Project {
   readonly lead_bot_id?: string | null;
   /** The shared git repository workers check out and push to; absent on older daemons. */
   readonly repo?: ProjectRepo | null;
+  /** The disk its worktrees and build caches may use (0.23.0, `repo_mirror_v1`); null, no budget. */
+  readonly disk_budget_bytes?: number | null;
   /** Its cards' id prefix (`H` for `H-017`); absent without a board, or on an older service (H-203). */
   readonly item_prefix?: string | null;
   /** What its bots may do without asking (H-031); absent on older daemons. */
@@ -65,7 +67,14 @@ export type BotState =
   | "auth_failed"
   | "crashed"
   | "stopping"
-  | "stopped";
+  | "stopped"
+  /** An on-demand bot with nothing to do: no session, not an error (0.23.0). */
+  | "asleep"
+  /** Woken, and waiting for a running slot (0.23.0). */
+  | "queued";
+
+/** Always on, or asleep when idle and woken by work (0.23.0). */
+export type BotPresence = "always_on" | "on_demand";
 
 export type BotRuntime = "claude_code" | "codex_cli";
 
@@ -98,6 +107,8 @@ export interface Bot {
   readonly permission_extras?: readonly PermissionExtra[];
   /** A temporary worker, archived once its one task closes. */
   readonly temporary?: boolean;
+  /** Absent from a daemon before 0.23: always on. */
+  readonly presence?: BotPresence;
   /**
    * Since when it has been working with no task on the board (H-135 G4);
    * null or absent while it is on the board, and from older daemons.
@@ -282,6 +293,36 @@ export interface DaemonConfig {
   readonly computer_name?: string | null;
   /** `macos`, `windows` or `linux`; absent from older daemons. */
   readonly os?: string;
+  /** How many bots may run at once on this computer (0.23.0); absent from older daemons. */
+  readonly max_running_bots?: number;
+  /** Minutes an on-demand bot stays idle before it sleeps (0.23.0). */
+  readonly idle_sleep_minutes?: number;
+}
+
+/** Why a bot was woken (0.23.0), which sets its place in the queue. */
+type WakeReason = "owner" | "lead" | "card" | "task" | "message" | "review" | "routine";
+
+/** A bot woken while every running slot was taken (0.23.0). */
+interface TeamWake {
+  readonly bot_id: string;
+  readonly project_id: string;
+  readonly reason: WakeReason;
+  /** The card the work is about, when there is one. */
+  readonly item_id?: string;
+  /** That card's priority, `P0` to `P3`. */
+  readonly priority?: string;
+  /** A P0 bug: it went to the front of the queue. */
+  readonly urgent: boolean;
+  readonly queued_at: string;
+}
+
+/** This computer's running bots and the queue for a slot (0.23.0). */
+export interface TeamStatus {
+  readonly running: number;
+  readonly max_running: number;
+  readonly idle_sleep_minutes: number;
+  /** In the order they will start. */
+  readonly queue: readonly TeamWake[];
 }
 
 /** Permission grants attached to a connection (from `hello_ok`) or a device. */

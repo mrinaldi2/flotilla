@@ -48,6 +48,7 @@ pub(super) fn status(state: BotState, waiting: bool) -> BotStatus {
         BotState::WaitingForUser | BotState::WaitingForApproval => BotStatus::Waiting,
         BotState::Stopping | BotState::Stopped => BotStatus::Stopped,
         BotState::Crashed | BotState::AuthFailed | BotState::RateLimited => BotStatus::Failed,
+        BotState::Asleep | BotState::Queued => BotStatus::Asleep,
     }
 }
 
@@ -176,7 +177,7 @@ pub(super) fn merge(
     out
 }
 
-/// The lead first, then waiting, working, failed and stopped, idle,
+/// The lead first, then waiting, working, failed and stopped, idle, asleep,
 /// offline; within a group by name, ignoring case.
 fn sort(briefs: &mut [BotBrief]) {
     let group: HashMap<i32, u8> = [
@@ -185,6 +186,7 @@ fn sort(briefs: &mut [BotBrief]) {
         (BotStatus::Failed, 3),
         (BotStatus::Stopped, 3),
         (BotStatus::Idle, 4),
+        (BotStatus::Asleep, 5),
         (BotStatus::Unspecified, 5),
         (BotStatus::Offline, 6),
     ]

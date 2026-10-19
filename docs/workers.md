@@ -14,10 +14,16 @@ task. It starts, does that task, reports, and is removed.
 ## What a bot does
 
 ```text
-spawn_worker(task, name?, instructions?, description?, runtime?, machine?, deadline_hours?)
+spawn_worker(task, name?, instructions?, description?, runtime?, machine?, deadline_hours?, role?)
 list_workers()
 cancel_worker(name, reason?)
 ```
+
+`role` (0.23.0, `team_on_demand_v1`) makes the worker a copy of the role's
+member: it takes that member's instructions and model, and holds the role on
+the board until it retires. `instructions` given as well are added after the
+role's. This is how the lead adds parallel hands when two cards of one role
+can be worked at once.
 
 `spawn_worker` returns at once with the spawn's `state`:
 

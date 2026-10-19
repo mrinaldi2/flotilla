@@ -49,6 +49,7 @@ import type {
   Routine,
   RoutineRun,
   Signal,
+  TeamStatus,
 } from "./entities";
 
 type ErrorCode =
@@ -152,6 +153,10 @@ export type ServerReply =
   | (ReplyBase & {
       readonly type: "config";
       readonly config: DaemonConfig;
+    })
+  | (ReplyBase & {
+      readonly type: "team";
+      readonly team: TeamStatus;
     })
   | (ReplyBase & {
       readonly type: "device";
@@ -306,6 +311,8 @@ export type ServerPush =
   | { readonly type: "bot_updated"; readonly bot: Bot }
   | { readonly type: "project_updated"; readonly project: Project }
   | { readonly type: "workers_updated"; readonly project_id: string }
+  /** The running count or the queue changed (0.23.0, `team_on_demand_v1`). */
+  | { readonly type: "team_updated"; readonly team: TeamStatus }
   /** A `clone_project_repo` clone started, finished or failed (0.20.0). */
   | {
       readonly type: "repo_clone";

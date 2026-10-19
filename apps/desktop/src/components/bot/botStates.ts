@@ -12,6 +12,8 @@ export const BOT_STATE_LABEL: Readonly<Record<BotState, string>> = {
   crashed: "Crashed",
   stopping: "Stopping",
   stopped: "Stopped",
+  asleep: "Asleep",
+  queued: "Waiting for a slot",
 };
 
 /**

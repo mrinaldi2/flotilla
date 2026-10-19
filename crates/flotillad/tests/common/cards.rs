@@ -80,6 +80,7 @@ impl Fresh {
             id: id.into(),
             expected_version: self.now(id).version,
             bot: bot.map(str::to_string),
+            role: None,
         });
         done(call(&mut self.owner, req).await)
     }

@@ -26,6 +26,8 @@ const STATE_GLYPH: Readonly<Record<BotState, readonly [string, Tone]>> = {
   crashed: ["✗", "bad"],
   stopping: ["◌", "off"],
   stopped: ["○", "off"],
+  asleep: ["◌", "off"],
+  queued: ["◌", "wait"],
 };
 
 /** "◑ Working", in the state's tone. */

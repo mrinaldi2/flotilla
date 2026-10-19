@@ -13,6 +13,7 @@ export function emptyHandlers(): PushHandlerSets {
     bot_updated: new Set(),
     project_updated: new Set(),
     workers_updated: new Set(),
+    team_updated: new Set(),
     repo_clone: new Set(),
     meeting_event: new Set(),
     release_updated: new Set(),
