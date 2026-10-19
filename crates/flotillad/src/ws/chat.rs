@@ -6,6 +6,7 @@ use std::sync::Arc;
 use serde_json::{json, Value};
 
 use crate::app::AppState;
+use crate::chat::artifact_groups::{self, Group};
 use crate::chat::files::{self, Scope};
 
 use super::Conn;
@@ -101,11 +102,21 @@ impl Conn {
             .get("before")
             .and_then(Value::as_str)
             .map(str::to_string);
+        // One kind of file (0.22.0); without it every kind, as before.
+        let group = match req.get("group").and_then(Value::as_str) {
+            None => None,
+            Some(name) => Some(Group::parse(name).ok_or_else(|| {
+                crate::decisions::invalid(format!(
+                    "group {name:?} is not one of shared, uploads, checks"
+                ))
+            })?),
+        };
         self.blocking(req_id, move |app| {
             let project = live_project(app, &project_id)?;
-            let listing = files::list_artifacts(app, &project);
+            let listing = files::list_artifacts(app, &project, group);
             let mut page = files::page(listing, before.as_deref(), limit);
             crate::chat::authors::attribute(app, &project, &mut page.artifacts);
+            artifact_groups::fill_uses(app, &project, &mut page.artifacts);
             Ok(json!({
                 "type": "artifacts", "project_id": project_id, "artifacts": page.artifacts,
                 "has_more": page.next_before.is_some(), "next_before": page.next_before
@@ -239,7 +250,7 @@ fn live_bot(app: &AppState, bot_id: &str) -> anyhow::Result<bus::Bot> {
         .ok_or_else(|| anyhow::anyhow!("bot not found"))
 }
 
-fn live_project(app: &AppState, project_id: &str) -> anyhow::Result<bus::Project> {
+pub(super) fn live_project(app: &AppState, project_id: &str) -> anyhow::Result<bus::Project> {
     app.db
         .get_project(project_id)?
         .filter(|p| p.deleted_at.is_none())

@@ -108,6 +108,9 @@ const APPROVE_ONLY: &[&str] = &[
     "owner_action_reject",
     // Closing an owner question for the owner (H-128 R2.2).
     "attention_dismiss",
+    // Keeping or removing the owner's loose artifacts (0.22.0).
+    "artifact_trash",
+    "artifact_keep",
     // Pairing a device or linking a computer mints an owner credential
     // (CE-030 N1); see `owner_auth::CREDENTIALS`.
     "create_device",
@@ -353,6 +356,8 @@ impl Conn {
             "get_chat_step" => self.get_chat_step(&req_id, req),
             "get_chat_image" => self.get_chat_image(&req_id, req),
             "list_artifacts" => self.list_artifacts(&req_id, req),
+            "artifact_trash" => self.artifact_trash(&req_id, req),
+            "artifact_keep" => self.artifact_keep(&req_id, req),
             "read_file" => self.read_file(&req_id, req),
             "list_permissions" => self.list_permissions(&req_id, req),
             "list_tasks" => self.list_tasks(&req_id, req),

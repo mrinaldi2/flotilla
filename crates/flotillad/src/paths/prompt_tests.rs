@@ -106,6 +106,17 @@ fn points_substance_at_the_artifacts_directory() {
 }
 
 #[test]
+fn gives_each_kind_of_file_one_home() {
+    let md = system_md(&spec(""));
+    assert!(
+        md.contains("attached to that card with `item_attach`"),
+        "{md}"
+    );
+    assert!(md.contains("Files shared across cards"));
+    assert!(md.contains("stay in your own\nworkspace"));
+}
+
+#[test]
 fn points_at_the_fact_file_that_survives_compaction() {
     let md = system_md(&spec(""));
     assert!(md.contains("`workspace/FACTS.md`"));
