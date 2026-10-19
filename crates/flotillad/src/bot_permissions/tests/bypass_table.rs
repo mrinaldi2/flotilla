@@ -267,6 +267,8 @@ fn an_existing_symlink_cannot_launder_a_path() {
         writable: vec![bot.clone()],
         worktrees: Vec::new(),
         bot_slug: None,
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         releases: false,
         allow_main: false,
         protect: Vec::new(),
