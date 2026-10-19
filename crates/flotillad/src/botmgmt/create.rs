@@ -12,6 +12,7 @@ use crate::db::Actor;
 use crate::events::Push;
 use crate::messaging::{self, daemon_sender, Dm};
 use crate::paths;
+use crate::workers::role::RoleCopy;
 
 use super::{
     charter, parse_avatar, provision_spec, validate_bot_name, validate_name, IdentityEdit,
@@ -73,7 +74,15 @@ pub fn create_bot_with_runtime(
     actor: &Actor<'_>,
     runtime: BotRuntime,
 ) -> anyhow::Result<Created> {
-    create(app, project_id, edit, creator, actor, runtime, false)
+    create(
+        app,
+        project_id,
+        edit,
+        creator,
+        actor,
+        runtime,
+        Kind::Permanent,
+    )
 }
 
 /// Create a temporary worker: a bot for one task, counted against the
@@ -87,7 +96,36 @@ pub fn create_worker_bot(
     actor: &Actor<'_>,
     runtime: BotRuntime,
 ) -> anyhow::Result<Created> {
-    create(app, project_id, edit, creator, actor, runtime, true)
+    create_role_worker_bot(app, project_id, edit, creator, actor, runtime, None)
+}
+
+/// A worker that copies a role's member (0.23.0): it holds the role, with
+/// the member's model, from before its first session starts.
+pub fn create_role_worker_bot(
+    app: &Arc<AppState>,
+    project_id: &str,
+    edit: &IdentityEdit<'_>,
+    creator: Option<&Bot>,
+    actor: &Actor<'_>,
+    runtime: BotRuntime,
+    role: Option<&RoleCopy>,
+) -> anyhow::Result<Created> {
+    create(
+        app,
+        project_id,
+        edit,
+        creator,
+        actor,
+        runtime,
+        Kind::Worker(role),
+    )
+}
+
+/// What `create` makes: a permanent bot, or a worker, from a role or not.
+#[derive(Clone, Copy)]
+enum Kind<'a> {
+    Permanent,
+    Worker(Option<&'a RoleCopy>),
 }
 
 /// The worker cap is full on this machine. Typed so a dispatcher can leave
@@ -103,8 +141,9 @@ fn create(
     creator: Option<&Bot>,
     actor: &Actor<'_>,
     runtime: BotRuntime,
-    temporary: bool,
+    kind: Kind<'_>,
 ) -> anyhow::Result<Created> {
+    let temporary = matches!(kind, Kind::Worker(_));
     let raw_name = edit.name.unwrap_or_default();
     // A worker's name was reserved by its own queue entry, so only live bots
     // can clash with it.
@@ -176,6 +215,9 @@ fn create(
     } else {
         bot
     };
+    if let Kind::Worker(Some(role)) = kind {
+        crate::workers::role::apply(app, &bot, role)?;
+    }
 
     // Issuing the token before provisioning means the runtime can authenticate
     // as soon as the files land.
@@ -251,6 +293,10 @@ fn first_lead(app: &Arc<AppState>, bot: &Bot) {
         Ok(true) => {
             if let Ok(Some(project)) = app.db.get_project(&bot.project_id) {
                 app.events.push(Push::ProjectUpdated { project });
+            }
+            // Its prompt says how the lead works, from its next start.
+            if let Err(e) = super::reprovision(app, bot) {
+                tracing::warn!(bot_id = %bot.id, error = %e, "the first lead's prompt not rewritten");
             }
             // Open boards refetch the roles.
             if matches!(app.db.board_settings(&bot.project_id), Ok(Some(_))) {

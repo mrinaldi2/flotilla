@@ -15,13 +15,8 @@ use crate::mcp::tasks::close_cancelled;
 use crate::messaging::{self, daemon_sender, Dm};
 use crate::peer::remote_bots;
 
+use super::role::instructions;
 use super::{release_orphan, HERE};
-
-/// Instructions for a worker spawned without any. Non-empty so the charter
-/// for a bot "created from a name alone" — which tells it to ask what it is
-/// for — never applies: a worker's task is its whole charter.
-const DEFAULT_INSTRUCTIONS: &str =
-    "Do the one task you are given and report it with complete_task.";
 
 /// Place what a project has queued, oldest first, while slots last.
 ///
@@ -243,14 +238,6 @@ pub(super) fn delegation_chain(app: &AppState, parent: &Bot) -> anyhow::Result<(
     Ok((hop + 1, chain))
 }
 
-fn instructions(worker: &Worker) -> &str {
-    if worker.instructions.trim().is_empty() {
-        DEFAULT_INSTRUCTIONS
-    } else {
-        &worker.instructions
-    }
-}
-
 fn start_here(app: &Arc<AppState>, worker: &Worker, parent: &Bot) -> anyhow::Result<()> {
     let chain = delegation_chain(app, parent)?;
     // A worker created for this spawn that never got its task — the daemon
@@ -270,13 +257,15 @@ fn start_here(app: &Arc<AppState>, worker: &Worker, parent: &Bot) -> anyhow::Res
         id: &parent.id,
         project_id: &parent.project_id,
     };
-    let created = botmgmt::create_worker_bot(
+    let copy = super::role::recall(app, worker);
+    let created = botmgmt::create_role_worker_bot(
         app,
         &worker.project_id,
         &edit,
         Some(parent),
         &actor,
         runtime,
+        copy.as_ref(),
     )?;
     hand_over(app, worker, parent, &created.bot, chain)
 }
@@ -319,6 +308,9 @@ async fn start_there(
     }
     let stand_in =
         remote_bots::create(app, &worker.project_id, &peer.id, identity, Some(parent)).await?;
+    if let Some(copy) = super::role::recall(app, worker) {
+        super::role::apply(app, &stand_in, &copy)?;
+    }
     hand_over(app, worker, parent, &stand_in, chain)
 }
 
@@ -349,6 +341,7 @@ fn hand_over(
         app.db.set_task_card(&task.id, &card)?;
     }
     let started = app.db.start_worker(&worker.id, &bot.id, &task.id)?;
+    super::role::forget(app, &worker.id);
     if started {
         let running = Worker {
             task_id: Some(task.id.clone()),
@@ -383,6 +376,7 @@ fn fail(
         return Ok(());
     }
     tracing::warn!(worker = %worker.name, %reason, "worker could not start");
+    super::role::forget(app, &worker.id);
     super::changed(app, &worker.project_id);
     let body = format!(
         "Worker {} could not start, and has been dropped from the queue: {reason}",
