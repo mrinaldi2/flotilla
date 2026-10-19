@@ -205,11 +205,16 @@ fn create(
         ));
     }
 
-    // Bots are always-on, so a new one runs immediately: a bot that builds a
-    // helper can message it in the same turn, and a user never has to start
-    // anything. A failure here is not fatal — the supervision loop retries.
-    if let Err(e) = app.supervisor.start_bot(&bot.id) {
-        tracing::warn!(bot_id = %bot.id, error = %e, "created bot did not start; will retry");
+    // A new bot runs immediately when a slot is free (0.23.0: otherwise it
+    // queues for one): a bot that builds a helper can message it in the same
+    // turn, and a user never has to start anything. An on-demand one sleeps
+    // again once idle. A failure here is not fatal — the supervision loop
+    // retries.
+    let request = crate::supervisor::WakeRequest::new(crate::supervisor::WakeReason::Message);
+    if app.supervisor.take_slot(&bot, request) == Some(crate::supervisor::Woke::Started) {
+        if let Err(e) = app.supervisor.start_bot(&bot.id) {
+            tracing::warn!(bot_id = %bot.id, error = %e, "created bot did not start; will retry");
+        }
     }
 
     if temporary {

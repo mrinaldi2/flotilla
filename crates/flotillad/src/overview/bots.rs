@@ -230,6 +230,17 @@ mod tests {
         assert_eq!(status(BotState::RateLimited, false), BotStatus::Failed);
     }
 
+    /// Asleep or queued for a slot is no failure (0.23.0): the glance shows
+    /// it asleep, and it gets no `bot_stopped` row.
+    #[test]
+    fn an_asleep_or_queued_bot_is_not_down() {
+        for state in [BotState::Asleep, BotState::Queued] {
+            assert_eq!(status(state, false), BotStatus::Asleep);
+            assert_eq!(down_state(state), None);
+        }
+        assert_eq!(down_state(BotState::Stopped), Some(BotState::Stopped));
+    }
+
     #[test]
     fn the_lead_comes_first_then_by_status_and_name() {
         let mut briefs = vec![

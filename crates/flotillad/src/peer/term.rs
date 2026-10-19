@@ -83,7 +83,7 @@ impl Terms {
 // ---- serving this daemon's bots ----
 
 /// The bot a peer means, which must run here and be linked to it.
-fn exposed_bot(app: &AppState, peer: &Peer, frame: &Value) -> anyhow::Result<Bot> {
+pub(super) fn exposed_bot(app: &AppState, peer: &Peer, frame: &Value) -> anyhow::Result<Bot> {
     let bot_id = frame["bot_id"].as_str().unwrap_or_default();
     let bot = app
         .db

@@ -66,6 +66,7 @@ mod routines;
 mod runtime;
 mod session;
 mod tasks;
+pub(crate) mod team;
 mod terminal;
 mod views;
 mod workers;

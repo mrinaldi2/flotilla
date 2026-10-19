@@ -205,6 +205,8 @@ mod symlink_writes;
 mod task_cards;
 mod task_lifecycle;
 mod tasks_view;
+mod team_on_demand;
+mod team_queue;
 mod terminal;
 mod terminal_card_guard;
 mod windows_inbox;

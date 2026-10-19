@@ -41,6 +41,7 @@ mod releases;
 mod review_settings;
 mod reviews;
 mod roles;
+mod team;
 mod trash;
 mod workers;
 
@@ -93,6 +94,7 @@ use releases::{
 use review_settings::{MIGRATION_PR_SHAPE_POLICY, MIGRATION_REVIEW_SETTINGS};
 use reviews::MIGRATION_REVIEWS;
 use roles::MIGRATION_ROLES;
+use team::MIGRATION_BOT_PRESENCE;
 use trash::MIGRATION_PROJECT_TRASH;
 use workers::{MIGRATION_18, MIGRATION_19};
 
@@ -174,6 +176,7 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_PLAN,
     MIGRATION_QUESTIONS,
     MIGRATION_ARTIFACT_KEEP,
+    MIGRATION_BOT_PRESENCE,
 ];
 
 #[cfg(test)]
