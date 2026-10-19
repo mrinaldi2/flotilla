@@ -300,10 +300,10 @@ export interface DaemonConfig {
 }
 
 /** Why a bot was woken (0.23.0), which sets its place in the queue. */
-type WakeReason = "owner" | "lead" | "card" | "task" | "message" | "review" | "routine";
+export type WakeReason = "owner" | "lead" | "card" | "task" | "message" | "review" | "routine";
 
 /** A bot woken while every running slot was taken (0.23.0). */
-interface TeamWake {
+export interface TeamWake {
   readonly bot_id: string;
   readonly project_id: string;
   readonly reason: WakeReason;

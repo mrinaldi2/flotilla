@@ -19,6 +19,17 @@ export interface DiskReport {
   /** Biggest first. */
   readonly uses: readonly DiskUse[];
   readonly as_of: string;
+  /** Each project with a disk budget here (0.23.0, `repo_mirror_v1`). */
+  readonly budgets?: readonly DiskBudget[];
+}
+
+/** A project's disk budget and what it uses against it (0.23.0). */
+export interface DiskBudget {
+  readonly project_id: string;
+  readonly budget_bytes: number;
+  /** Its bots' workspaces, worktrees and caches, its card worktrees and its mirror. */
+  readonly used_bytes: number;
+  readonly card_worktree_bytes: number;
 }
 
 interface CleanupItemJson {

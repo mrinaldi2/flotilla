@@ -6,6 +6,7 @@ import { DaemonError } from "../../protocol/connection";
 import { ProjectRoleSchema, Role } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import type { ProjectRole } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import { applyRoleSet, snapshot } from "../../test/boardFixtures";
+import { TEAM_ON_DEMAND_V1 } from "../../protocol/team";
 import { FakeDaemon } from "../../test/fakeDaemon";
 import { bot } from "../../test/fixtures";
 import BotRoles from "./BotRoles";
@@ -94,5 +95,21 @@ describe("BotRoles", () => {
     await screen.findByText("No role on the board.");
     await user.click(screen.getByRole("button", { name: "Add role" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/paired device/);
+  });
+
+  it("offers Product and Architect only on a 0.23 service", async () => {
+    const old = board([], true);
+    const { unmount } = render(<BotRoles client={old} bot={bot()} connected />);
+    const picker = await screen.findByRole("combobox", { name: "Role to add" });
+    expect(within(picker).queryByRole("option", { name: "Product" })).toBeNull();
+    unmount();
+    const team = board([role(Role.PRODUCT)], true);
+    team.capabilities = [...team.capabilities, TEAM_ON_DEMAND_V1];
+    render(<BotRoles client={team} bot={bot()} connected />);
+    const list = await screen.findByRole("list", { name: "alice's board roles" });
+    expect(within(list).getByText("Product")).toBeInTheDocument();
+    const offered = within(screen.getByRole("combobox", { name: "Role to add" }));
+    expect(offered.getByRole("option", { name: "Product" })).toBeDisabled();
+    expect(offered.getByRole("option", { name: "Architect" })).toBeEnabled();
   });
 });

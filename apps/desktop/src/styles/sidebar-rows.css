@@ -277,6 +277,17 @@
   background: var(--gray);
 }
 
+/* Asleep is not a failure (0.23.0): a hollow ring, as the Team tab's ◌. */
+.dot-asleep,
+.dot-queued {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--gray);
+}
+
+.dot-queued {
+  box-shadow: inset 0 0 0 1.5px var(--amber);
+}
+
 /* Scale 2.11 reproduces the old 5px shadow spread on the 9px base dot. */
 @keyframes dot-pulse {
   0%,

@@ -10,7 +10,9 @@ import { installForRecovery } from "../../app/useServiceRecovery";
 import { localServiceStatus, restartLocalDaemon } from "../../setup";
 import type { ServiceStatus } from "../../setup";
 import { errText } from "../../util";
+import { teamOn } from "../../protocol/team";
 import ConfirmDialog from "../overlay/ConfirmDialog";
+import TeamLimitsForm from "./TeamLimitsForm";
 
 const AUTO_COMPACT_WINDOW_MIN = 100_000;
 const AUTO_COMPACT_WINDOW_MAX = 1_000_000;
@@ -255,7 +257,8 @@ function DaemonLaunchConfig({ config }: { readonly config: DaemonConfig }): Reac
 
 /**
  * Daemon configuration over the control plane, rendered as rows inside the
- * connection pane. Only the auto-compact window is writable; bind/port/runtime
+ * connection pane. The auto-compact window and, from 0.23.0, the running cap
+ * and idle time are writable; bind/port/runtime
  * describe how the daemon was launched and change only via `flotillad.toml`
  * plus a restart.
  */
@@ -313,6 +316,9 @@ export default function DaemonSettings(props: DaemonSettingsProps): ReactElement
   return (
     <>
       {configRows({
+        client,
+        onToast,
+        setConfig,
         canControl,
         config,
         connected,
@@ -330,6 +336,9 @@ export default function DaemonSettings(props: DaemonSettingsProps): ReactElement
 }
 
 interface ConfigRowsProps {
+  readonly client: DaemonApi;
+  readonly onToast: (level: NotifyLevel, title: string, body: string) => void;
+  readonly setConfig: (config: DaemonConfig) => void;
   readonly canControl: boolean;
   readonly config: DaemonConfig | null;
   readonly connected: boolean;
@@ -365,6 +374,16 @@ function configRows(props: ConfigRowsProps): ReactElement {
           void save();
         }}
       />
+      {teamOn(props.client) ? (
+        <TeamLimitsForm
+          client={props.client}
+          config={config}
+          connected={connected}
+          canControl={canControl}
+          onSaved={props.setConfig}
+          onToast={props.onToast}
+        />
+      ) : null}
       <DaemonLaunchConfig config={config} />
     </>
   );

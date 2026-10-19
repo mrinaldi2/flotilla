@@ -48,7 +48,7 @@ export default function BotHeader(props: BotHeaderProps): ReactElement {
         )}
       </div>
       <div className="view-header-actions">
-        {/* Bots are always-on, so there is no start or stop here; Restart
+        {/* There is no start or stop here: Wake now and Sleep now (0.23.0), Restart
             and Clear conversation (in `actions`) bring a running bot back. The
             terminal is the user's whenever they hold `control`; only
             read-only connections need a badge. */}

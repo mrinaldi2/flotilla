@@ -6,6 +6,7 @@ import { fmtTimestamp } from "../util";
 import ProjectPermissionsForm from "./ProjectPermissionsForm";
 import ProjectRepoForm from "./ProjectRepoForm";
 import DeleteProjectDialog, { botsSentence } from "./project/DeleteProjectDialog";
+import DiskBudget from "./project/DiskBudgetForm";
 import PlanningSettings from "./plan/PlanningSettings";
 import type { UsePlan } from "./plan/usePlan";
 import OwnerReviewSettings from "./prs/OwnerReviewSettings";
@@ -141,6 +142,14 @@ export default function ProjectView(props: ProjectViewProps): ReactElement {
         repo={project.repo ?? null}
         disabled={!connected || !canControl}
         onSave={(repo) => onSetRepo(project.id, repo)}
+      />
+
+      <DiskBudget
+        client={client}
+        project={project}
+        connected={connected}
+        canControl={canControl}
+        onToast={onToast}
       />
 
       <PlanningSettings
