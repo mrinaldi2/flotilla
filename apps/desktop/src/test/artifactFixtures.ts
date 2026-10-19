@@ -12,7 +12,7 @@ function file(rel: string, over: Partial<Artifact>): Artifact {
     rel,
     name: rel.slice(rel.lastIndexOf("/") + 1),
     size: 2048,
-    modified: "2026-10-18T08:00:00Z",
+    modified: "2024-05-01T08:00:00Z",
     mime: "text/plain",
     group: "shared",
     used_by: [],
@@ -30,7 +30,7 @@ export const GROUPED_ARTIFACTS: readonly Artifact[] = [
   }),
   file("notes-0917.md", {
     mime: "text/markdown",
-    modified: "2026-09-17T16:20:00Z",
+    modified: "2024-04-17T16:20:00Z",
     created_by: { bot_id: "b-lead", name: "Lead", avatar: "icon:orbit", via: "wrote" },
   }),
   file("runs/frames-run3.csv", { size: 1_830_000, mime: "text/csv" }),
