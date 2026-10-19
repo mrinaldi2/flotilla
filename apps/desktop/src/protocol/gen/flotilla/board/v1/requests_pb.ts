@@ -1809,11 +1809,10 @@ export type ItemAssign = Message<"flotilla.board.v1.ItemAssign"> & {
 
   /**
    * Assign to whoever holds this role instead of a named bot (0.23.0,
-   * capability `team_on_demand_v1`). The daemon picks a holder that is awake
-   * and free, else one that is asleep (and wakes it); `bot` is then ignored.
-   * When every holder is busy, the lead's spawn of a worker from the role is
-   * the way to add hands. A role nobody holds is refused with
-   * `role.unheld`.
+   * capability `team_on_demand_v1`): a holder that is awake and free, else
+   * one that is asleep, which wakes; `bot` is then ignored. When every holder
+   * is busy, spawn a worker from the role to add hands. A role nobody holds
+   * is refused with `role.unheld`.
    *
    * @generated from field: optional flotilla.board.v1.Role role = 4;
    */
