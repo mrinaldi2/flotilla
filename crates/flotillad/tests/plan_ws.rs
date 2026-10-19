@@ -365,24 +365,30 @@ async fn documents_read_the_default_branch_and_a_gate_needs_its_document_pushed(
         .expect("attach");
     let init = plan.node(&init.id);
     let path = "docs/initiatives/combat/never-pushed.md";
+    // Pinned to the lead's own commit, which was never pushed.
+    let local = "0123456789abcdef0123456789abcdef01234567";
     done(plan.lead().submit(&c::PlanSubmit {
         id: init.id.clone(),
         expected_version: init.version,
         doc_path: path.into(),
+        sha: Some(local.into()),
         ..Default::default()
     }));
-    let Response::PlanDoc(doc) = response(
-        call(
-            &mut plan.owner,
-            Request::PlanDocRead(c::PlanDocRead {
-                project_id: plan.pid.clone(),
-                path: path.into(),
-                ..Default::default()
-            }),
-        )
-        .await,
-    ) else {
-        panic!("the attached copy");
-    };
-    assert!(String::from_utf8_lossy(&doc.data).contains("Not pushed yet"));
+    for sha in [None, Some(local.to_string())] {
+        let Response::PlanDoc(doc) = response(
+            call(
+                &mut plan.owner,
+                Request::PlanDocRead(c::PlanDocRead {
+                    project_id: plan.pid.clone(),
+                    path: path.into(),
+                    sha: sha.clone(),
+                    ..Default::default()
+                }),
+            )
+            .await,
+        ) else {
+            panic!("the attached copy at {sha:?}");
+        };
+        assert!(String::from_utf8_lossy(&doc.data).contains("Not pushed yet"));
+    }
 }
