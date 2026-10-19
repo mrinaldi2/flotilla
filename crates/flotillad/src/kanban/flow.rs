@@ -43,7 +43,8 @@ pub enum EntryRule {
         kind: String,
     },
     /// The mover is neither the assignee, nor a bot that ever was, nor
-    /// whoever linked its branch or PR.
+    /// whoever linked its branch or PR. A plan node's research spike is
+    /// exempt: the owner reviews its findings at the node's gate.
     Independent,
     Reason,
     /// A task or bug has its code research recorded (0.21.0,
@@ -272,6 +273,11 @@ fn independent(item: &Item, who: &Who, ctx: &Context) -> Vec<Unmet> {
     let Who::Bot { id, .. } = who else {
         return Vec::new();
     };
+    // A plan node's research spike is reviewed by the owner at the node's
+    // gate, not here: the lead that researched it closes it (0.22.0).
+    if item.item_type == super::model::ItemType::Spike && item.plan_node_id.is_some() {
+        return Vec::new();
+    }
     let author = format!("bot:{id}");
     let linked = ctx
         .links
