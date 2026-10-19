@@ -295,3 +295,45 @@ async fn documents_are_read_from_the_repository_with_their_diff() {
         assert_eq!(error_code(refused), code, "{bad}");
     }
 }
+
+/// A project set to a branch its repository doesn't have (the default
+/// `main` on a repository that uses `develop`) reads the default branch, and
+/// a gate on a document that was never pushed is refused with a reason.
+#[tokio::test]
+async fn documents_read_the_default_branch_and_a_gate_needs_its_document_pushed() {
+    let mut plan = planned().await;
+    let repo = bus::ProjectRepo {
+        url: plan.origin.display().to_string(),
+        branch: "develop".into(),
+    };
+    plan.d
+        .app
+        .db
+        .set_project_repo(&plan.pid, Some(&repo))
+        .expect("repo");
+    let Response::PlanDoc(doc) = response(
+        call(
+            &mut plan.owner,
+            Request::PlanDocRead(c::PlanDocRead {
+                project_id: plan.pid.clone(),
+                path: "docs/initiatives/combat/prd.md".into(),
+                ..Default::default()
+            }),
+        )
+        .await,
+    ) else {
+        panic!("a document");
+    };
+    assert!(String::from_utf8_lossy(&doc.data).contains("First draft"));
+
+    let goal = plan.goal("Make the game");
+    let init = plan.initiative(&goal.id, "Combat");
+    let init = plan.skip(&init);
+    let codes = refused(plan.lead().submit(&c::PlanSubmit {
+        id: init.id.clone(),
+        expected_version: init.version,
+        doc_path: "docs/initiatives/combat/never-pushed.md".into(),
+        ..Default::default()
+    }));
+    assert_eq!(codes, vec!["plan.doc_unpushed".to_string()]);
+}

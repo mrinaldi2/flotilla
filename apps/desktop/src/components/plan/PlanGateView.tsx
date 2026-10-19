@@ -8,6 +8,8 @@ import type { PlanGate, PlanNode } from "../../protocol/gen/flotilla/board/v1/pl
 import Markdown from "../control/Markdown";
 import PlanDocReader from "./PlanDocReader";
 import PlanGatePanel from "./PlanGatePanel";
+import PaneEdge, { GATE_PANEL_WIDTH } from "./PaneEdge";
+import { usePaneWidth } from "../../hooks/usePaneWidth";
 import { stageWord } from "./planText";
 
 interface PlanGateViewProps {
@@ -26,6 +28,7 @@ export default function PlanGateView(props: PlanGateViewProps): ReactElement {
   const { node, gate } = props;
   const path = gate.docPath;
   const approved = node.docs.find((d) => d.path === path)?.approvedSha;
+  const panel = usePaneWidth(GATE_PANEL_WIDTH);
   return (
     <div className="plan-gate">
       <header className="plan-gate-bar">
@@ -62,7 +65,9 @@ export default function PlanGateView(props: PlanGateViewProps): ReactElement {
             <p className="plan-dim">{`In pull request #${gate.prNumber}`}</p>
           )}
         </div>
+        <PaneEdge label="Gate panel width" width={panel} />
         <PlanGatePanel
+          style={panel.style}
           key={`${node.id}-${gate.round}`}
           api={props.api}
           node={node}
