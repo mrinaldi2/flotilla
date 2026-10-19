@@ -103,7 +103,14 @@ impl Worker {
         self.serial += 1;
         let id = self.serial;
         self.write(&json!({ "id": id, "method": method, "params": params }))?;
-        let until = Instant::now() + Duration::from_secs(10);
+        // Starting Codex (Node, its config) can take a cold machine longer
+        // than any later request: give `initialize` the time its caller
+        // waits for it.
+        let wait = match method {
+            "initialize" => 30,
+            _ => 10,
+        };
+        let until = Instant::now() + Duration::from_secs(wait);
         loop {
             let message = match self
                 .rx
