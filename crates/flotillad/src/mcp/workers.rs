@@ -8,6 +8,7 @@ use serde_json::{json, Value};
 
 use crate::app::AppState;
 use crate::botmgmt;
+use crate::kanban::model::Role;
 use crate::workers::{self, SpawnRequest, LISTED_FINISHED};
 
 use super::caller;
@@ -27,6 +28,16 @@ pub(super) async fn intercept(
 
 fn text<'a>(args: &'a Value, key: &str) -> Option<&'a str> {
     args.get(key).and_then(Value::as_str)
+}
+
+/// The role a worker copies (0.23.0), by its short name.
+fn role(args: &Value) -> anyhow::Result<Option<Role>> {
+    let Some(raw) = text(args, "role").map(str::trim).filter(|r| !r.is_empty()) else {
+        return Ok(None);
+    };
+    Role::parse(raw)
+        .map(Some)
+        .ok_or_else(|| anyhow::anyhow!("no role '{raw}'"))
 }
 
 async fn spawn_worker(app: &Arc<AppState>, bot_id: &str, args: &Value) -> anyhow::Result<Value> {
@@ -49,6 +60,7 @@ async fn spawn_worker(app: &Arc<AppState>, bot_id: &str, args: &Value) -> anyhow
             runtime: botmgmt::requested_runtime(args)?,
             machine: text(args, "machine"),
             deadline_hours: args.get("deadline_hours").and_then(Value::as_i64),
+            role: role(args)?,
         },
     )
     .await?;

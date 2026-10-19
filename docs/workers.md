@@ -1,7 +1,8 @@
 # Temporary workers
 
 Status: implemented in the daemon and covered by
-`crates/flotillad/tests/workers.rs` and `crates/flotillad/tests/worker_repo.rs`.
+`crates/flotillad/tests/workers.rs`, `crates/flotillad/tests/worker_repo.rs` and
+`crates/flotillad/tests/role_workers.rs`.
 The desktop app marks workers in the bot list, and its project settings show
 the project's workers (running, queued, recently finished, each cancellable)
 and set the shared repository.
@@ -24,6 +25,18 @@ member: it takes that member's instructions and model, and holds the role on
 the board until it retires. `instructions` given as well are added after the
 role's. This is how the lead adds parallel hands when two cards of one role
 can be worked at once.
+
+- **Who:** only the project's lead spawns from a role; any other bot is
+  refused, and spawns without `role` as before.
+- **Which roles:** any but lead, `devops` and `reviewer.ce`, which stay one
+  bot each. A role no permanent bot here holds is refused.
+- **The member:** the first permanent bot on this computer holding the role,
+  by name. Its pinned model is copied when it has one; a worker placed on a
+  linked computer runs that computer's default model, but still holds the
+  role.
+- **Queued:** what the worker copies is kept with its spawn, so a worker
+  that waits for a slot starts with the role and model it was asked with.
+- **Retiring** archives the worker, which takes its role away.
 
 `spawn_worker` returns at once with the spawn's `state`:
 
