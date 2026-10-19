@@ -72,7 +72,9 @@ pub(super) fn connect(
                 .enable_all()
                 .build()?;
             runtime.block_on(async {
-                let deadline = Instant::now() + Duration::from_secs(10);
+                // A cold Codex App Server (Node) can take a busy machine
+                // longer than 10 s to listen, as `initialize` can to answer.
+                let deadline = Instant::now() + Duration::from_secs(30);
                 let socket = loop {
                     if child.lock().unwrap_or_else(|e| e.into_inner()).try_wait()?.is_some() {
                         anyhow::bail!("Codex App Server exited before accepting connections");
@@ -112,7 +114,7 @@ pub(super) fn connect(
         let _ = tx.send(Wire::Closed);
     });
     ready_rx
-        .recv_timeout(Duration::from_secs(12))
+        .recv_timeout(Duration::from_secs(32))
         .context("connect to Codex App Server")??;
     Ok(RpcWriter::Socket(out))
 }
