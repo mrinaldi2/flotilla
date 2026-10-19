@@ -12,11 +12,11 @@ import {
 } from "../settings";
 import BotHeader from "./bot/BotHeader";
 import BotPanes from "./bot/BotPanes";
-import BotSessionActions from "./bot/BotSessionActions";
 import BotSidePanel from "./bot/BotSidePanel";
 import type { SideTab } from "./bot/BotSidePanel";
 import BotTabs, { botTabs } from "./bot/BotTabs";
 import type { BotTab } from "./bot/BotTabs";
+import { BotHeaderActions } from "./bot/BotWakeActions";
 import { useBotKeys } from "./bot/useBotKeys";
 import { useBrowserWatch } from "./browser/useBrowserWatch";
 
@@ -28,6 +28,8 @@ interface BotViewProps {
   readonly initialTab?: BotTab;
   readonly connected: boolean;
   readonly canControl: boolean;
+  /** It leads its project (0.23.0: always on). */
+  readonly lead?: boolean;
   readonly onBotUpdated: (bot: Bot) => void;
   readonly onRoutinesChanged: (botId: string, routines: readonly Routine[]) => void;
   readonly onToast: AddToast;
@@ -61,7 +63,7 @@ function startTab(tabs: readonly BotTab[], asked: BotTab | undefined): BotTab {
 }
 
 export default function BotView(props: BotViewProps): ReactElement {
-  const { client, bot, bots, connected, canControl, onToast } = props;
+  const { client, bot, bots, connected, canControl, lead, onToast } = props;
   const tabs = botTabs(
     {
       chat: client.capabilities.includes("chat"),
@@ -183,7 +185,7 @@ export default function BotView(props: BotViewProps): ReactElement {
         bot={bot}
         canControl={canControl}
         actions={
-          <BotSessionActions
+          <BotHeaderActions
             client={client}
             bot={bot}
             connected={connected}
@@ -259,6 +261,7 @@ export default function BotView(props: BotViewProps): ReactElement {
             bot={bot}
             connected={connected}
             canControl={canControl}
+            lead={lead}
             side={side}
             onSide={setSide}
             openFile={openFile}

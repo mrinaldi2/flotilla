@@ -4,13 +4,15 @@
 // its page, on Reports. ⋯ holds what the sidebar row's menu did.
 
 import type { ReactElement } from "react";
-import type { Bot, BotActivity, BotState } from "../../protocol/entities";
+import type { Bot, BotActivity, BotState, TeamStatus } from "../../protocol/entities";
 import type { OwnerThread, ProjectRow } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import { fromTheBot } from "../../protocol/home";
+import { canSleep, resting } from "../../protocol/team";
 import BotAvatar from "../BotAvatar";
 import { BOT_STATE_LABEL } from "../bot/botStates";
 import { clock } from "../home/homeText";
 import { useRowMenu } from "../sidebar/useRowMenu";
+import TeamQueue from "./TeamQueue";
 
 type Tone = "acc" | "ok" | "you" | "bad" | "off" | "wait";
 
@@ -62,6 +64,14 @@ interface TeamViewProps {
   readonly onOpenBot: (botId: string) => void;
   readonly onCreateBot: () => void;
   readonly onDeleteBot: (botId: string) => void;
+  /** This computer's running count and queue (0.23.0); none hides the counter. */
+  readonly team?: TeamStatus | null;
+  /** Every bot this app knows, to name a queued bot from another project. */
+  readonly allBots?: readonly Bot[];
+  /** Wake an asleep or queued bot (0.23.0); none hides Wake now. */
+  readonly onWake?: (botId: string) => void;
+  /** Send an on-demand bot to sleep (0.23.0); none hides Sleep now. */
+  readonly onSleep?: (botId: string) => void;
 }
 
 /** ⋯ on a card; deleting is confirmed first. */
@@ -69,9 +79,14 @@ function CardMenu(props: {
   readonly bot: Bot;
   readonly canControl: boolean;
   readonly onDelete: () => void;
+  readonly onSleep?: () => void;
 }): ReactElement | null {
+  const { onSleep } = props;
   const menu = useRowMenu({
-    items: [],
+    items:
+      onSleep !== undefined && canSleep(props.bot)
+        ? [{ label: "Sleep now", onSelect: onSleep }]
+        : [],
     deletion: props.canControl
       ? {
           label: "Delete bot",
@@ -169,8 +184,10 @@ function BotCard(props: {
   readonly canControl: boolean;
   readonly onOpen: () => void;
   readonly onDelete: () => void;
+  readonly onWake?: () => void;
+  readonly onSleep?: () => void;
 }): ReactElement {
-  const { bot } = props;
+  const { bot, onWake } = props;
   return (
     <article className="team-card" aria-label={bot.name} data-testid="team-card">
       <header className="team-card-head">
@@ -178,15 +195,37 @@ function BotCard(props: {
         <h3>{bot.name}</h3>
         <Badges signals={props.signals} />
         <StatePill state={bot.state} />
-        <CardMenu bot={bot} canControl={props.canControl} onDelete={props.onDelete} />
+        <CardMenu
+          bot={bot}
+          canControl={props.canControl}
+          onDelete={props.onDelete}
+          onSleep={props.onSleep}
+        />
       </header>
       <p className="team-line">{props.line.length > 0 ? props.line : "No current item"}</p>
+      {onWake !== undefined && props.canControl && resting(bot) ? (
+        <button type="button" className="btn btn-small team-wake" onClick={onWake}>
+          Wake now
+        </button>
+      ) : null}
       <LastWord thread={props.thread} activity={props.signals.activity} now={props.now} />
       <button type="button" className="btn btn-small home-open" onClick={props.onOpen}>
         Open {bot.name}
       </button>
     </article>
   );
+}
+
+/** Wake now and Sleep now for one bot, when the view offers them. */
+function teamActions(
+  props: TeamViewProps,
+  botId: string,
+): { readonly onWake?: () => void; readonly onSleep?: () => void } {
+  const { onWake, onSleep } = props;
+  return {
+    onWake: onWake === undefined ? undefined : () => onWake(botId),
+    onSleep: onSleep === undefined ? undefined : () => onSleep(botId),
+  };
 }
 
 export default function TeamView(props: TeamViewProps): ReactElement {
@@ -203,6 +242,9 @@ export default function TeamView(props: TeamViewProps): ReactElement {
             </button>
           ) : null}
         </p>
+        {props.team == null ? null : (
+          <TeamQueue team={props.team} bots={props.allBots ?? props.bots} now={props.now} />
+        )}
         {props.bots.length === 0 ? (
           <p className="dash-empty">No bots in this project yet.</p>
         ) : (
@@ -226,6 +268,7 @@ export default function TeamView(props: TeamViewProps): ReactElement {
                 onDelete={() => {
                   props.onDeleteBot(bot.id);
                 }}
+                {...teamActions(props, bot.id)}
               />
             ))}
           </div>

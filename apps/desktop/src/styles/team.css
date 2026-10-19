@@ -178,3 +178,60 @@
 .meeting-reply {
   margin-top: 12px;
 }
+
+/* The team on demand (0.23.0): the running count and the queue for a slot. */
+.team-queue {
+  margin: 0 0 14px;
+}
+
+.team-running {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+
+.team-running-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.team-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0 0 0 20px;
+  font-size: 12.5px;
+}
+
+.team-queue-row {
+  color: var(--text);
+}
+
+.team-queue-row > * + * {
+  margin-left: 8px;
+}
+
+.team-queue-name {
+  font-weight: 600;
+}
+
+.team-queue-why,
+.team-queue-since {
+  color: var(--text-dim);
+}
+
+.team-urgent {
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+/* Above "Open <bot>"'s stretched hit area, like ⋯. */
+.team-wake {
+  position: relative;
+  z-index: 1;
+  align-self: flex-start;
+}

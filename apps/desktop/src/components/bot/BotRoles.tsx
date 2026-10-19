@@ -12,23 +12,9 @@ import { boardCall } from "../../protocol/board";
 import type { Bot } from "../../protocol/entities";
 import { Role } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import type { ProjectRole } from "../../protocol/gen/flotilla/board/v1/board_pb";
+import { teamOn } from "../../protocol/team";
 import { errText } from "../../util";
-
-/** Each role as the owner reads it, in the order the picker lists them. */
-const ROLE_LABEL: ReadonlyMap<Role, string> = new Map([
-  [Role.LEAD, "Lead"],
-  [Role.DEVOPS, "DevOps"],
-  [Role.DEV, "Developer"],
-  [Role.TESTER, "Tester"],
-  [Role.REVIEWER_ARCH, "Reviewer · architecture"],
-  [Role.REVIEWER_UX, "Reviewer · UX"],
-  [Role.REVIEWER_CE, "Reviewer · security (ce)"],
-  [Role.COACH, "Coach"],
-]);
-
-function roleLabel(role: Role): string {
-  return ROLE_LABEL.get(role) ?? "Unknown role";
-}
+import { roleLabel, rolesFor } from "./roleLabels";
 
 /** "Tester · imac": a tester says which machine it verifies on. */
 function chipText(role: ProjectRole): string {
@@ -126,12 +112,13 @@ function RoleChips(props: {
 
 /** The owner's picker: a role, a machine when it is tester, and Add. */
 function AddRole(props: {
+  readonly roles: readonly (readonly [Role, string])[];
   readonly taken: readonly Role[];
   readonly busy: boolean;
   readonly send: SendRole;
   readonly onError: (error: string | null) => void;
 }): ReactElement {
-  const { taken, busy, send, onError } = props;
+  const { roles, taken, busy, send, onError } = props;
   const [role, setRole] = useState<Role>(Role.REVIEWER_CE);
   const [machine, setMachine] = useState("");
   const tester = role === Role.TESTER;
@@ -151,7 +138,7 @@ function AddRole(props: {
   };
 
   const pick = (value: string): void => {
-    const picked = [...ROLE_LABEL.keys()].find((r) => String(r) === value);
+    const picked = roles.map(([r]) => r).find((r) => String(r) === value);
     if (picked !== undefined) {
       setRole(picked);
     }
@@ -169,7 +156,7 @@ function AddRole(props: {
             pick(event.target.value);
           }}
         >
-          {[...ROLE_LABEL].map(([value, label]) => (
+          {roles.map(([value, label]) => (
             <option key={value} value={value} disabled={taken.includes(value)}>
               {label}
             </option>
@@ -240,7 +227,13 @@ export default function BotRoles({ client, bot, connected }: BotRolesProps): Rea
         <RoleChips botName={bot.name} mine={mine} canSet={canSet} busy={busy} send={send} />
       )}
       {canSet ? (
-        <AddRole taken={mine.map((r) => r.role)} busy={busy} send={send} onError={setError} />
+        <AddRole
+          roles={rolesFor(teamOn(client))}
+          taken={mine.map((r) => r.role)}
+          busy={busy}
+          send={send}
+          onError={setError}
+        />
       ) : null}
       {loaded !== null && !loaded.canSet ? (
         <p className="field-hint">

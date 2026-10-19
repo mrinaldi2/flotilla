@@ -178,6 +178,19 @@
   width: 80px;
 }
 
+/* "bots", "minutes" after a number (0.23.0). */
+.settings-unit {
+  align-self: center;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* A second field in the same row starts a little lower. */
+.settings-row-next {
+  display: block;
+  margin-top: 14px;
+}
+
 .settings-inline-fields .settings-tokens {
   flex: none;
   width: 140px;

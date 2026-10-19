@@ -10,6 +10,7 @@ import BotAvatar from "./BotAvatar";
 import { BOT_ICONS } from "./botIcons";
 import BotHistory from "./bot/BotHistory";
 import BotChromeSwitch from "./bot/BotChromeSwitch";
+import BotPresenceSwitch from "./bot/BotPresenceSwitch";
 import BotPermissionExtras from "./bot/BotPermissionExtras";
 import BotRoles from "./bot/BotRoles";
 import BotRuntimePicker from "./bot/BotRuntimePicker";
@@ -19,6 +20,8 @@ interface InfoPanelProps {
   readonly bot: Bot;
   readonly connected: boolean;
   readonly canControl: boolean;
+  /** It leads its project (0.23.0: always on). */
+  readonly lead?: boolean;
   readonly onBotUpdated: (bot: Bot) => void;
   readonly onToast: (level: NotifyLevel, title: string, body: string) => void;
 }
@@ -91,6 +94,7 @@ export default function InfoPanel({
   bot,
   connected,
   canControl,
+  lead = false,
   onBotUpdated,
   onToast,
 }: InfoPanelProps): ReactElement {
@@ -255,6 +259,16 @@ export default function InfoPanel({
         key={`${bot.id}:${bot.runtime ?? "claude_code"}`}
         client={client}
         bot={bot}
+        connected={connected}
+        canControl={canControl}
+        onBotUpdated={onBotUpdated}
+        onToast={onToast}
+      />
+
+      <BotPresenceSwitch
+        client={client}
+        bot={bot}
+        lead={lead}
         connected={connected}
         canControl={canControl}
         onBotUpdated={onBotUpdated}

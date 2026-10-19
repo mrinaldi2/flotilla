@@ -30,6 +30,8 @@ interface BotSidePanelProps {
   readonly bot: Bot;
   readonly connected: boolean;
   readonly canControl: boolean;
+  /** It leads its project (0.23.0: always on). */
+  readonly lead?: boolean;
   readonly side: SideTab;
   readonly onSide: (side: SideTab) => void;
   readonly openFile: string | null;
@@ -63,6 +65,7 @@ export default function BotSidePanel(props: BotSidePanelProps): ReactElement {
           bot={bot}
           connected={connected}
           canControl={props.canControl}
+          lead={props.lead}
           onBotUpdated={props.onBotUpdated}
           onToast={props.onToast}
         />
