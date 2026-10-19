@@ -52,6 +52,30 @@ pub(super) fn question_open(t: &BoardTx<'_>, node: &Node) -> anyhow::Result<Opti
 }
 
 impl Planner<'_> {
+    /// A refusal when the project has a repository and the document isn't
+    /// in it at `sha`: the owner reads it from the repository, so a gate on
+    /// a document that was never pushed would show the owner nothing.
+    fn unpushed(&self, project_id: &str, doc_path: &str, sha: Option<&str>) -> Option<Planned> {
+        self.app.db.project_repo(project_id).ok()??;
+        let why = match super::docs::head(self.app, project_id, false) {
+            None => "The project's repository can't be read, so the owner couldn't read the document. Check the repository and try again.".to_string(),
+            Some((cache, head)) => {
+                let at = sha.unwrap_or(&head);
+                match crate::releases::git_cache::bytes_at(&cache, at, doc_path) {
+                    Ok(Some(Ok(_))) => return None,
+                    _ => format!(
+                        "{doc_path} isn't in the project's repository at {}. Commit it and push it to the default branch, then submit again.",
+                        &at[..at.len().min(8)]
+                    ),
+                }
+            }
+        };
+        Some(Planned {
+            outcome: super::Outcome::Refused(vec![unmet("plan.doc_unpushed", why, None)]),
+            created: Vec::new(),
+        })
+    }
+
     /// The lead submitting the document of the node's gate stage. Research
     /// must be over; the commit defaults to the default branch's head.
     pub fn submit(&self, r: &c::PlanSubmit) -> anyhow::Result<Planned> {
@@ -76,6 +100,9 @@ impl Planner<'_> {
                     .map(str::to_string),
             })
             .collect();
+        if let Some(unpushed) = self.unpushed(&project_id, &doc_path, sha.as_deref()) {
+            return Ok(unpushed);
+        }
         if children.iter().any(|c| c.title.is_empty()) {
             return Ok(Planned {
                 outcome: super::Outcome::Refused(vec![unmet(

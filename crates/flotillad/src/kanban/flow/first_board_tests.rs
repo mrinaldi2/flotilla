@@ -152,3 +152,16 @@ fn a_lead_that_held_the_card_doesnt_approve_it_once_it_hands_it_on() {
     )
     .is_empty());
 }
+
+/// A plan node's research spike closes when the lead that researched it
+/// moves it to Done: the owner reviews the findings at the node's gate
+/// (0.22.0). A spike outside the plan still needs someone independent.
+#[test]
+fn the_lead_closes_its_own_plan_research_spike() {
+    let lead = bot("lead", &[Role::Lead]);
+    let mut spike = item("review", Some("lead"));
+    spike.item_type = super::super::model::ItemType::Spike;
+    assert_eq!(codes(&spike, "done", &lead), ["rule.independent"]);
+    spike.plan_node_id = Some("P-PL-2".into());
+    assert!(codes(&spike, "done", &lead).is_empty());
+}

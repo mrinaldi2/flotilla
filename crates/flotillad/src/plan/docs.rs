@@ -106,7 +106,10 @@ pub fn head(app: &AppState, project_id: &str, fetch: bool) -> Option<(PathBuf, S
     } else {
         branch.trim()
     };
-    let sha = git_cache::resolve(&cache, &format!("refs/heads/{branch}"))?;
+    // A project set to a branch its repository doesn't have (the default
+    // `main` where the repository uses `develop`) reads the default branch.
+    let sha = git_cache::resolve(&cache, &format!("refs/heads/{branch}"))
+        .or_else(|| git_cache::resolve(&cache, "HEAD"))?;
     Some((cache, sha))
 }
 
