@@ -37,6 +37,7 @@ pub use releases::NewRelease;
 pub use routines::RoutineLimits;
 pub use runs::NewRun;
 pub use signals::NewSignal;
+pub use team::OpenWork;
 pub use trash_orders::TrashOrder;
 pub use workers::NewWorker;
 
@@ -157,6 +158,7 @@ mod tags;
 mod tags_tests;
 mod task_views;
 mod tasks;
+mod team;
 #[cfg(test)]
 mod tests;
 mod trash_orders;

@@ -529,8 +529,9 @@ Timestamps are RFC 3339 UTC strings. IDs are UUIDv4 strings.
 - `set_config` (advertised as the `config` capability, requires the `control`
   grant) writes `auto_compact_window`: a number in 100000–1000000, or
   `null` for the model default; and from 0.23.0 `max_running_bots` (1–32,
-  default 6) and `idle_sleep_minutes` (1–1440, default 10). Fields left out
-  are unchanged. The value is persisted in the daemon's database
+  default 6) and `idle_sleep_minutes` (1–1440, default 10), both applied at
+  once and echoed in the `config` reply. Fields left out are unchanged; at
+  least one is required. The value is persisted in the daemon's database
   — layered over `flotillad.toml`, which stays untouched — and takes effect the
   next time each bot's session starts. `bind`, `port` and `runtime` in the
   `config` reply are read-only: they describe how the daemon was launched and
@@ -1400,13 +1401,20 @@ is asleep or queued.
   Wake.
 
 Waking resumes the bot's conversation (`--continue`), and the delivery that
-woke it is delivered once its session is up.
+woke it is delivered once its session is up. A routine wakes its bot through
+the delivery of its prompt. At boot, an on-demand bot that still has an open
+task or a card in an active column wakes to pick it back up. A linked bot is
+woken, or sent to sleep, on its own computer (peer requests `wake_bot` and
+`sleep_bot`); its presence is set there too, and `set_bot_presence` for it
+answers `conflict`.
 
 **The running cap.** At most `max_running_bots` sessions (default 6) run at
 once on this computer, counting always-on bots. A wake with no free slot
 queues: `bot_state` is `queued`, and it starts when a slot frees. The queue is
 ordered as follows:
-1. **The owner:** `wake_bot` comes first.
+1. **The owner:** `wake_bot` comes first, and so does the owner's own chat
+   to the bot. An always-on bot other than a lead that waits for a slot
+   queues here too, as `owner`: the owner chose to keep it on.
 2. **The lead.**
 3. **Card work,** in the board's order at the moment it queued: priority, then
    the card's age. Work that queues later waits behind work already queued,
@@ -1416,7 +1424,9 @@ ordered as follows:
 5. **Everything else** (messages and routines without a card), in the order
    it came.
 
-A task's deadline doesn't count time spent queued.
+A task's deadline doesn't count time spent queued. Lowering
+`max_running_bots` stops no running bot: it only holds new starts until the
+count is under the cap. Both settings take effect at once.
 
 **Team status.** `team_status` → `team: TeamStatus`, and a `team_updated`
 push whenever it changes:

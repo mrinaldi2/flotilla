@@ -1,4 +1,4 @@
-use bus::{new_id, now, Bot, BotRuntime, BotState};
+use bus::{new_id, now, Bot, BotPresence, BotRuntime, BotState};
 use rusqlite::params;
 
 use super::{ts, Db};
@@ -58,7 +58,8 @@ impl Db {
             created_by_bot_id: created_by_bot_id.map(|s| s.to_string()),
             deleted_at: None,
             peer_id: None,
-            presence: Default::default(),
+            // The column's default: a new bot sleeps when idle (0.23.0).
+            presence: BotPresence::OnDemand,
             remote_bot_id: None,
             user_chrome: false,
             temporary: false,
@@ -97,6 +98,17 @@ impl Db {
         let changed = self.lock().execute(
             "UPDATE bot SET runtime = ?2 WHERE id = ?1 AND deleted_at IS NULL",
             params![bot_id, runtime.as_str()],
+        )?;
+        anyhow::ensure!(changed == 1, "bot not found or archived");
+        Ok(())
+    }
+
+    /// Keeps the bot running, or lets it sleep when idle (0.23.0). The
+    /// caller refuses it for a lead, which is always on.
+    pub fn set_bot_presence(&self, bot_id: &str, presence: BotPresence) -> anyhow::Result<()> {
+        let changed = self.lock().execute(
+            "UPDATE bot SET presence = ?2 WHERE id = ?1 AND deleted_at IS NULL",
+            params![bot_id, presence.as_str()],
         )?;
         anyhow::ensure!(changed == 1, "bot not found or archived");
         Ok(())

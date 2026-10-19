@@ -7,6 +7,7 @@ use crate::app::{DAEMON_VERSION, PROTOCOL_VERSION};
 use crate::config::{AUTO_COMPACT_WINDOW_MAX, AUTO_COMPACT_WINDOW_MIN};
 use crate::events::Push;
 use crate::releases::machines;
+use crate::supervisor::{IDLE_SLEEP_RANGE, MAX_RUNNING_RANGE};
 
 use super::Conn;
 
@@ -96,6 +97,7 @@ impl Conn {
     // ---- config ----
 
     fn config_json(&self) -> Value {
+        let team = self.app.supervisor.team_status();
         json!({
             "bind": self.app.cfg.bind,
             "port": self.app.cfg.port,
@@ -104,6 +106,9 @@ impl Conn {
             "configured_port": self.app.cfg.configured_port,
             "runtime": self.app.cfg.runtime,
             "auto_compact_window": self.app.auto_compact.effective(&self.app.cfg),
+            // The team on demand (0.23.0).
+            "max_running_bots": team.max_running,
+            "idle_sleep_minutes": team.idle_sleep_minutes,
             // What a phone's pairing link names this computer: its name as
             // releases know it, and its OS (`macos`, `windows`, `linux`).
             "computer_name": self.app.db.board_read(machines::this_computer).ok(),
@@ -116,24 +121,18 @@ impl Conn {
         Ok(())
     }
 
-    /// Updates `auto_compact_window` (`null` = model default) and persists it
-    /// in the `meta` table; bots pick the new value up on their next start.
-    /// Everything else in the config describes how the daemon was launched
-    /// and stays read-only here.
+    /// Updates `auto_compact_window` (`null` = model default), and from
+    /// 0.23.0 `max_running_bots` and `idle_sleep_minutes`, each persisted in
+    /// the `meta` table. Fields left out are unchanged; one out of range
+    /// changes nothing. Everything else in the config describes how the
+    /// daemon was launched and stays read-only here.
     pub(super) fn set_config(&self, req_id: &Value, req: &Value) -> anyhow::Result<()> {
-        let Some(field) = req.get("auto_compact_window") else {
-            self.reply_err(
-                req_id,
-                "invalid_request",
-                "'auto_compact_window' is required",
-            );
-            return Ok(());
-        };
-        let window = match field {
-            Value::Null => None,
-            Value::Number(n) => match n.as_u64().and_then(|w| u32::try_from(w).ok()) {
+        let window = match req.get("auto_compact_window") {
+            None => None,
+            Some(Value::Null) => Some(None),
+            Some(field) => match field.as_u64().and_then(|w| u32::try_from(w).ok()) {
                 Some(w) if (AUTO_COMPACT_WINDOW_MIN..=AUTO_COMPACT_WINDOW_MAX).contains(&w) => {
-                    Some(w)
+                    Some(Some(w))
                 }
                 _ => {
                     self.reply_err(
@@ -146,16 +145,42 @@ impl Conn {
                     return Ok(());
                 }
             },
-            _ => {
-                self.reply_err(
-                    req_id,
-                    "invalid_request",
-                    "auto_compact_window must be a number or null",
-                );
-                return Ok(());
-            }
         };
-        self.app.auto_compact.persist(&self.app.db, window)?;
+        let mut team = [None, None];
+        for (at, (name, range)) in [
+            ("max_running_bots", MAX_RUNNING_RANGE),
+            ("idle_sleep_minutes", IDLE_SLEEP_RANGE),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let Some(field) = req.get(name) else {
+                continue;
+            };
+            match field.as_u64().filter(|v| range.contains(v)) {
+                Some(v) => team[at] = Some(v),
+                None => {
+                    let (min, max) = range.into_inner();
+                    let why = format!("{name} must be a number from {min} to {max}");
+                    self.reply_err(req_id, "invalid_request", &why);
+                    return Ok(());
+                }
+            }
+        }
+        if window.is_none() && team.iter().all(Option::is_none) {
+            let why = "set auto_compact_window, max_running_bots or idle_sleep_minutes";
+            self.reply_err(req_id, "invalid_request", why);
+            return Ok(());
+        }
+        if let Some(window) = window {
+            self.app.auto_compact.persist(&self.app.db, window)?;
+        }
+        if let Some(max) = team[0] {
+            self.app.supervisor.set_max_running(max as usize)?;
+        }
+        if let Some(minutes) = team[1] {
+            self.app.supervisor.set_idle_sleep_minutes(minutes as u32)?;
+        }
         self.get_config(req_id)
     }
 

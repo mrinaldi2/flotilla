@@ -105,6 +105,8 @@ pub(crate) fn bot_view(app: &AppState, bot: &bus::Bot) -> Value {
         "user_chrome": bot.user_chrome,
         "permission_extras": app.db.bot_permission_extras(&bot.id).unwrap_or_default(),
         "temporary": bot.temporary,
+        // Always on, or asleep when idle (0.23.0).
+        "presence": bot.presence.as_str(),
         "state": state.as_str(),
         "state_reason": reason,
         "unread_count": unread,

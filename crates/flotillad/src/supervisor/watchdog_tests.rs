@@ -49,6 +49,8 @@ impl Fixture {
             ..Config::default()
         };
         cfg.startup.connect_timeout_ms = 50;
+        // Staggering, not the running cap (0.23.0), is what these test.
+        cfg.team.max_running_bots = 32;
         tweak(&mut cfg);
         let db = Db::open(&home.path().join("bus.sqlite")).expect("db");
         let project_id = db.create_project("p", "p").expect("project").id;
@@ -71,13 +73,15 @@ impl Fixture {
         }
     }
 
-    /// A bot whose workspace does not exist, so no trust step runs.
+    /// An always-on bot whose workspace does not exist, so no trust step
+    /// runs.
     fn bot(&self, name: &str, runtime: bus::BotRuntime) -> String {
         let workspace = self
             .home
             .path()
             .join(format!("projects/p/bots/{name}/workspace"));
-        self.db
+        let id = self
+            .db
             .create_bot_with_runtime(
                 &self.project_id,
                 name,
@@ -90,7 +94,10 @@ impl Fixture {
                 runtime,
             )
             .expect("bot")
-            .id
+            .id;
+        let on = bus::BotPresence::AlwaysOn;
+        self.db.set_bot_presence(&id, on).expect("presence");
+        id
     }
 
     fn starts(&self) -> usize {
@@ -310,6 +317,10 @@ async fn a_hung_start_stops_holding_its_slot_after_the_warmup() {
             .id
         })
         .collect();
+    for id in &ids {
+        db.set_bot_presence(id, bus::BotPresence::AlwaysOn)
+            .expect("presence");
+    }
     let starts = || adapter.starts.load(Ordering::SeqCst);
 
     let hung = {

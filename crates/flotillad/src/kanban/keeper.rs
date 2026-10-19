@@ -215,8 +215,17 @@ fn pass(
             continue;
         }
         let reachable = reach.of(app, &project.id, card.assignee.as_deref());
-        let facts = loaded.facts(card, keeper, reachable);
-        let plan = rules::judge(&facts, &loaded.marks_of(card), clock, &settings.limits);
+        let mut facts = loaded.facts(card, keeper, reachable);
+        // Asleep, or waiting for a slot (0.23.0): nothing to nag it about.
+        let resting = card
+            .assignee
+            .as_deref()
+            .is_some_and(|bot| app.supervisor.resting(bot));
+        facts.busy |= resting;
+        let mut plan = rules::judge(&facts, &loaded.marks_of(card), clock, &settings.limits);
+        if resting {
+            plan.acts.retain(|act| !matches!(act, rules::Act::Say(..)));
+        }
         if plan.is_empty() {
             continue;
         }

@@ -120,3 +120,27 @@ impl Default for TrashConfig {
         }
     }
 }
+
+/// The team on demand (0.23.0): how many bots run at once on this computer,
+/// and how long an on-demand bot stays idle before it sleeps. `set_config`
+/// overrides both, persisted in the daemon's database.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TeamConfig {
+    pub max_running_bots: usize,
+    pub idle_sleep_minutes: u32,
+    /// Seconds in place of `idle_sleep_minutes`, for tests only: never read
+    /// from a config file.
+    #[serde(skip)]
+    pub idle_sleep_seconds_for_tests: Option<u64>,
+}
+
+impl Default for TeamConfig {
+    fn default() -> Self {
+        Self {
+            max_running_bots: 6,
+            idle_sleep_minutes: 10,
+            idle_sleep_seconds_for_tests: None,
+        }
+    }
+}

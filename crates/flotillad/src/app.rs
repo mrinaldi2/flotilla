@@ -190,11 +190,15 @@ impl AppState {
             started_at: Instant::now(),
             started_wall: SystemTime::now(),
         });
-        // Every session start picks up what the last one left unfinished.
+        // Every session start picks up what the last one left unfinished;
+        // a bot waking from sleep (0.23.0) into its conversation left nothing.
         let weak = Arc::downgrade(&app);
         app.supervisor.on_start(Box::new(move |bot_id, continues| {
             if let Some(app) = weak.upgrade() {
-                crate::resume::pick_up(&app, bot_id, continues);
+                let slept = app.supervisor.waking_from_sleep(bot_id);
+                if !(slept && continues) {
+                    crate::resume::pick_up(&app, bot_id, continues);
+                }
             }
         }));
         Ok(app)

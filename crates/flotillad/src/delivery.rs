@@ -6,7 +6,7 @@
 use std::sync::Arc;
 
 use bus::envelope::{render_message, render_routine};
-use bus::{DeliveryState, Message};
+use bus::{Bot, DeliveryState, Message};
 use chrono::Duration as ChronoDuration;
 
 use crate::app::AppState;
@@ -81,26 +81,40 @@ impl DeliveryWorker {
         }
         self.db.recover_expired_leases()?;
         let due = self.db.lease_due_deliveries(self.cfg.lease_seconds, 20)?;
+        let mut asleep = Vec::new();
         for delivery in due {
-            self.attempt(&delivery.id).await?;
+            asleep.extend(self.attempt(&delivery.id).await?);
         }
+        // Work for a bot that isn't running wakes it (0.23.0); the step's
+        // wakes queue together, in the board's order.
+        let wakes = asleep
+            .into_iter()
+            .map(|(bot, msg)| {
+                let request = crate::supervisor::wake_for_message(&self.db, &bot, &msg);
+                (bot, request)
+            })
+            .collect();
+        self.supervisor.wake_batch(wakes);
         Ok(())
     }
 
-    async fn attempt(&self, delivery_id: &str) -> anyhow::Result<()> {
+    /// One attempt. A local bot that isn't running is returned with the
+    /// message, to be woken (0.23.0).
+    async fn attempt(&self, delivery_id: &str) -> anyhow::Result<Option<(Bot, Message)>> {
         let Some(delivery) = self.db.get_delivery(delivery_id)? else {
-            return Ok(());
+            return Ok(None);
         };
         let Some(msg) = self.db.get_message(&delivery.message_id)? else {
             self.db
                 .mark_delivery_retry(delivery_id, "message missing", chrono::Utc::now(), 0)?;
-            return Ok(());
+            return Ok(None);
         };
         self.note_card(&delivery.bot_id, &msg);
-        let outcome = match self.db.get_bot(&delivery.bot_id)? {
+        let target = self.db.get_bot(&delivery.bot_id)?;
+        let outcome = match &target {
             // A bot that runs on a peer: the peer stores and delivers it.
             Some(target) if target.is_linked() => {
-                match crate::peer::forward(&self.app, &target, &msg).await {
+                match crate::peer::forward(&self.app, target, &msg).await {
                     Ok(()) => Ok(()),
                     Err(crate::peer::ForwardError::Offline) => Err(
                         crate::supervisor::DeliverError::NotReady("peer offline".to_string()),
@@ -115,7 +129,7 @@ impl DeliveryWorker {
                 .await?
             {
                 Typed::Handled(outcome) => outcome,
-                Typed::Done => return Ok(()),
+                Typed::Done => return Ok(None),
                 Typed::NotOwners => {
                     let text = self.render(delivery_id, &delivery.bot_id, &msg)?;
                     self.supervisor.deliver(&delivery.bot_id, &text)
@@ -141,7 +155,7 @@ impl DeliveryWorker {
                     chrono::Utc::now() + ChronoDuration::seconds(backoff),
                 )?;
                 tracing::debug!(delivery_id, reason, backoff, "delivery deferred");
-                return Ok(());
+                return Ok(target.filter(|t| !t.is_linked()).map(|t| (t, msg)));
             }
             Err(crate::supervisor::DeliverError::Failed(e)) => {
                 let backoff = self.cfg.base_backoff_seconds
@@ -166,7 +180,7 @@ impl DeliveryWorker {
         if let Some(updated) = self.db.get_delivery(delivery_id)? {
             self.events.push(Push::DeliveryUpdate { delivery: updated });
         }
-        Ok(())
+        Ok(None)
     }
 
     /// The owner's own chat (H-195 D1) typed into the bot's composer as their

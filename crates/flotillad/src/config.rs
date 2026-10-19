@@ -11,7 +11,7 @@ mod task_limits;
 mod test_support;
 
 pub use overridden::{home_notice, home_override_var};
-pub use sections::{DeliveryConfig, RetentionConfig, SchedulerConfig, TrashConfig};
+pub use sections::{DeliveryConfig, RetentionConfig, SchedulerConfig, TeamConfig, TrashConfig};
 pub use task_limits::{TaskLimits, TaskLimitsConfig};
 
 #[cfg(test)]
@@ -146,6 +146,8 @@ pub struct Config {
     pub supervision_interval_ms: u64,
     /// Start staggering and the connect watchdog; see [`StartupConfig`].
     pub startup: crate::supervisor::StartupConfig,
+    /// The running cap and idle sleep of the team on demand (0.23.0).
+    pub team: TeamConfig,
     /// Terminal scrollback ring size per bot, in bytes.
     pub scrollback_bytes: usize,
     /// Extra allowed WebSocket Origin values. Requests without an Origin
@@ -223,6 +225,7 @@ impl Default for Config {
             scheduler: SchedulerConfig::default(),
             supervision_interval_ms: 5_000,
             startup: Default::default(),
+            team: TeamConfig::default(),
             scrollback_bytes: 1_048_576,
             allowed_origins: Vec::new(),
             retention: RetentionConfig::default(),

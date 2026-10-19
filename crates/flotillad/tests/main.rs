@@ -208,6 +208,8 @@ mod symlink_writes;
 mod task_cards;
 mod task_lifecycle;
 mod tasks_view;
+mod team_on_demand;
+mod team_queue;
 mod team_roles;
 mod terminal;
 mod terminal_card_guard;

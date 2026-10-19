@@ -28,6 +28,7 @@ pub mod grants;
 pub mod ios_targets;
 pub mod k9;
 pub mod keeper;
+pub mod on_demand;
 pub mod peer_board;
 pub mod peer_files;
 pub mod peers;
