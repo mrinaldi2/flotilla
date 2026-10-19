@@ -139,7 +139,9 @@ fn checks(plan: &Plan, state: Option<&State>, before_stop: Option<&Owned>) -> Ve
         }
     }
     let home = if moved { &plan.to } else { &plan.from };
-    let running = home.exists() && daemon_stopped(home, Duration::ZERO).is_err();
+    // A lock held for a moment is no daemon: a process forked elsewhere
+    // holds the lock file's descriptor until it execs.
+    let running = home.exists() && daemon_stopped(home, Duration::from_secs(1)).is_err();
     if running && before_stop.is_none() {
         blockers.push(format!("{DAEMON_RUNNING} {}", home.display()));
     } else if !moved && plan.source_is_real_home() {

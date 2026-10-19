@@ -2,7 +2,7 @@
 // features, each with its stage chip; All, Needs you and Done; + Goal and
 // + Initiative for the owner; the project's guidelines at the foot.
 
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import type { PlanDoc, PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import type { TreeFilter } from "./planText";
 import {
@@ -27,6 +27,8 @@ interface PlanTreePaneProps {
   readonly onOpenDoc: (doc: PlanDoc) => void;
   /** + Goal and + Initiative; absent without the control grant. */
   readonly onCreate?: (kind: CreateKind) => void;
+  /** Its width, which the owner drags (0.22.0). */
+  readonly style?: CSSProperties;
 }
 
 function FilterButton(props: {
@@ -109,7 +111,7 @@ export default function PlanTreePane(props: PlanTreePaneProps): ReactElement {
   const waiting = props.nodes.filter((n) => n.gate !== undefined).length;
   const create = props.onCreate;
   return (
-    <aside className="plan-tree" aria-label="Plan tree">
+    <aside className="plan-tree" aria-label="Plan tree" style={props.style}>
       <div className="plan-tree-head">
         <h2>Plan</h2>
         {create === undefined ? null : (

@@ -6,7 +6,7 @@
 // reason, recorded on the node.
 
 import { useState } from "react";
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import type { BoardApi } from "../../protocol/board";
 import type { PlanGate, PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import {
@@ -116,6 +116,8 @@ interface PanelProps {
   readonly who: (actor: string) => string;
   /** The node after a ruling. */
   readonly onRuled: (node: PlanNode) => void;
+  /** Its width, which the owner drags (0.22.0). */
+  readonly style?: CSSProperties;
 }
 
 function useRuling(props: PanelProps) {
@@ -156,7 +158,7 @@ export default function PlanGatePanel(props: PanelProps): ReactElement {
   const creating = r.kept.filter(Boolean).length;
   const by = [props.who(gate.submittedBy), day(gate.submittedAt), roundWords(gate.round)];
   return (
-    <aside className="plan-gate-panel" aria-label="Gate">
+    <aside className="plan-gate-panel" aria-label="Gate" style={props.style}>
       <div className="plan-gate-head">
         <h2>{words.question}</h2>
         <span className="plan-dim">{`Submitted by ${by.filter(Boolean).join(" · ")}`}</span>
