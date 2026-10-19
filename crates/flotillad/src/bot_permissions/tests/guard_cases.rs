@@ -19,6 +19,8 @@ pub(super) fn ctx() -> GuardContext {
         ],
         worktrees: vec![PathBuf::from("/Users/me/Developer")],
         bot_slug: None,
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         releases: false,
         allow_main: false,
         protect: Vec::new(),
