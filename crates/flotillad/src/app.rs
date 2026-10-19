@@ -239,8 +239,9 @@ mod capability_tests {
 
     /// Contract strings the daemon doesn't serve yet: each joins the list
     /// once it does. Every 0.21 string is served from #43's step 3, and
-    /// every 0.22 one from its daemon steps.
-    const NOT_SERVED_YET: &[&str] = &[];
+    /// every 0.22 one from its daemon steps. The 0.23 ones join from its
+    /// daemon steps.
+    const NOT_SERVED_YET: &[&str] = &[capability::TEAM_ON_DEMAND_V1, capability::REPO_MIRROR_V1];
 
     /// The 0.19, 0.20 and 0.21 board and home additions are all served.
     #[test]

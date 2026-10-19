@@ -492,6 +492,13 @@ message ItemAssign {
   uint64 expected_version = 2;
   // A bot id or name; left out, unassigned.
   optional string bot = 3;
+  // Assign to whoever holds this role instead of a named bot (0.23.0,
+  // capability `team_on_demand_v1`). The daemon picks a holder that is awake
+  // and free, else one that is asleep (and wakes it); `bot` is then ignored.
+  // When every holder is busy, the lead's spawn of a worker from the role is
+  // the way to add hands. A role nobody holds is refused with
+  // `role.unheld`.
+  optional Role role = 4;
 }
 
 // Lead: place an item between two others in its column.

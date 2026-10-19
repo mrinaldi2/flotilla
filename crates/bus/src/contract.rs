@@ -130,6 +130,14 @@ pub mod capability {
     pub const ARTIFACTS_V2: &str = "artifacts_v2";
 
     /// Every string above, in the order listed.
+    /// The on-demand team (0.23.0): bot `presence`, the `asleep` and `queued`
+    /// states, `set_bot_presence`, `wake_bot`, `sleep_bot`, `team_status`, the
+    /// `team_updated` push, the `max_running_bots` and `idle_sleep_minutes`
+    /// settings, `ROLE_PRODUCT`/`ROLE_ARCHITECT` and assigning by role.
+    pub const TEAM_ON_DEMAND_V1: &str = "team_on_demand_v1";
+    /// Lighter checkouts (0.23.0): the project's mirror, worktrees per card,
+    /// the read-only repo tools and the project's disk budget.
+    pub const REPO_MIRROR_V1: &str = "repo_mirror_v1";
     pub const ALL: &[&str] = &[
         BOARDS_0_19,
         BOARD_PRESETS,
@@ -145,6 +153,8 @@ pub mod capability {
         ATTENTION_PLAN,
         QUESTIONS_V1,
         ARTIFACTS_V2,
+        TEAM_ON_DEMAND_V1,
+        REPO_MIRROR_V1,
     ];
 }
 

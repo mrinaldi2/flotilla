@@ -78,7 +78,7 @@ fn project<'a>(overview: &'a ProjectsOverview, id: &str) -> &'a ProjectRow {
 }
 
 /// `bot_list`'s group order (home.proto): the lead, then waiting, working,
-/// failed and stopped, idle, offline.
+/// failed and stopped, idle, asleep, offline.
 fn group(bot: &BotBrief) -> u8 {
     if bot.lead {
         return 0;
@@ -88,7 +88,8 @@ fn group(bot: &BotBrief) -> u8 {
         BotStatus::Working => 2,
         BotStatus::Failed | BotStatus::Stopped => 3,
         BotStatus::Idle => 4,
-        BotStatus::Offline => 5,
+        BotStatus::Asleep => 5,
+        BotStatus::Offline => 6,
         BotStatus::Unspecified => panic!("{} has no status", bot.name),
     }
 }

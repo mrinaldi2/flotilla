@@ -58,6 +58,7 @@ impl Db {
             created_by_bot_id: created_by_bot_id.map(|s| s.to_string()),
             deleted_at: None,
             peer_id: None,
+            presence: Default::default(),
             remote_bot_id: None,
             user_chrome: false,
             temporary: false,

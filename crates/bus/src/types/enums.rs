@@ -17,6 +17,11 @@ pub enum BotState {
     Crashed,
     Stopping,
     Stopped,
+    /// An on-demand bot with nothing to do (0.23.0): no session, and not an
+    /// error. Work for it wakes it.
+    Asleep,
+    /// Woken, and waiting for one of the computer's running slots (0.23.0).
+    Queued,
 }
 
 impl BotState {
@@ -32,14 +37,42 @@ impl BotState {
             BotState::Crashed => "crashed",
             BotState::Stopping => "stopping",
             BotState::Stopped => "stopped",
+            BotState::Asleep => "asleep",
+            BotState::Queued => "queued",
         }
     }
 
     pub fn is_running(self) -> bool {
         !matches!(
             self,
-            BotState::Stopped | BotState::Crashed | BotState::AuthFailed
+            BotState::Stopped
+                | BotState::Crashed
+                | BotState::AuthFailed
+                | BotState::Asleep
+                | BotState::Queued
         )
+    }
+}
+
+/// Whether a bot runs all the time or only while there is work for it
+/// (0.23.0, capability `team_on_demand_v1`).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BotPresence {
+    /// Runs all the time, as every bot did before 0.23: the lead, and bots
+    /// the owner keeps on.
+    #[default]
+    AlwaysOn,
+    /// Sleeps when idle and wakes when work arrives.
+    OnDemand,
+}
+
+impl BotPresence {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            BotPresence::AlwaysOn => "always_on",
+            BotPresence::OnDemand => "on_demand",
+        }
     }
 }
 

@@ -172,6 +172,7 @@ pub async fn step4(k: &mut K9, board_id: &str, todo: &str) -> String {
         id: id.clone(),
         expected_version: live.version,
         bot: Some(k.cook_on_mac.clone()),
+        role: None,
     });
     edited(call(&mut k.p.mac_client, assign).await);
     k.lead
