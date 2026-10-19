@@ -42,6 +42,8 @@ import { AttachDesign, DesignSection } from "./DesignSection";
 import DrawerBody from "./DrawerBody";
 import { DrawerHeader } from "./DrawerParts";
 import type { Tab } from "./DrawerTabsView";
+import type { DrawerSize } from "./useDrawerSize";
+import { DRAWER_MIN, useDrawerSize } from "./useDrawerSize";
 import { useItemDetail } from "./useItemDetail";
 
 export interface ItemDrawerProps {
@@ -68,6 +70,8 @@ export interface ItemDrawerProps {
   readonly now?: () => number;
   /** The tab it opens on; Overview unless a story shows another. */
   readonly initialTab?: Tab;
+  /** Its width; the owner's last one unless a story pins it (0.22.0). */
+  readonly initialSize?: DrawerSize;
   /** Shown above the tabs: the item's commands for the owner (H-117). */
   readonly children?: ReactNode;
   /** The card shown before, for `‹ Back` (UX-035 §4). */
@@ -332,12 +336,31 @@ export default function ItemDrawer(props: ItemDrawerProps): ReactElement {
   const item = d.state.detail?.item;
   const isDraft = d.draft.isDraft;
   const canEdit = d.editable && item !== undefined && !d.editing;
+  const sizing = useDrawerSize(props.initialSize);
+  const classes = [
+    "item-drawer",
+    isDraft ? "item-drawer-draft" : "",
+    sizing.wide ? "item-drawer-wide" : "",
+  ];
   return (
     <aside
-      className={isDraft ? "item-drawer item-drawer-draft" : "item-drawer"}
+      className={classes.filter(Boolean).join(" ")}
+      style={sizing.style}
       aria-label={`${isDraft ? "Draft" : "Item"} ${itemId}`}
       {...(d.editable ? d.files.dropTarget : {})}
     >
+      {sizing.wide ? null : (
+        <div
+          className="drawer-edge"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Drawer width"
+          aria-valuemin={DRAWER_MIN}
+          tabIndex={0}
+          title="Drag to resize · double-click to reset"
+          {...sizing.edge}
+        />
+      )}
       <DrawerHeader
         itemId={itemId}
         item={item}
@@ -346,6 +369,7 @@ export default function ItemDrawer(props: ItemDrawerProps): ReactElement {
         onEdit={canEdit ? () => d.setEditing(true) : undefined}
         onClose={props.onClose}
         back={props.back}
+        wide={{ on: sizing.wide, onToggle: sizing.onToggleWide }}
       />
       <DrawerMain p={props} d={d} />
       {isDraft ? d.draft.footer : props.footer}

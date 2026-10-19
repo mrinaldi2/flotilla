@@ -10,11 +10,16 @@ import { ARTIFACTS_V2 } from "../../../protocol/chat";
 import { ItemAttachmentSchema } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { licensingQuestion, questionsClient, saintsQuestion } from "../../../test/questionFixtures";
 import ItemDrawer from "./ItemDrawer";
+import type { DrawerSize } from "./useDrawerSize";
+import { DRAWER_DEFAULT } from "./useDrawerSize";
 
 const BOTS = [...DASH_BOTS, bot({ id: "lead", name: "Team Lead" })];
 const noop = (): void => {};
 
-function Drawer(props: { readonly tab: "overview" | "links" | "activity" }): ReactElement {
+function Drawer(props: {
+  readonly tab: "overview" | "links" | "activity";
+  readonly size?: DrawerSize;
+}): ReactElement {
   const client = new FakeDaemon()
     .onBoard("itemGet", () => ({ case: "item", value: itemDetail() }))
     .onBoard("itemMoveCheck", () => ({ case: "moveCheck", value: drawerCheck() }));
@@ -30,6 +35,7 @@ function Drawer(props: { readonly tab: "overview" | "links" | "activity" }): Rea
         onMove={noop}
         now={() => DRAWER_NOW}
         initialTab={props.tab}
+        initialSize={props.size ?? { width: DRAWER_DEFAULT, wide: false }}
       />
     </div>
   );
@@ -41,6 +47,12 @@ export const Overview: Story = () => <Drawer tab="overview" />;
 export const Links: Story = () => <Drawer tab="links" />;
 /** Comments and moves as one timeline, with the owner's composer. */
 export const Activity: Story = () => <Drawer tab="activity" />;
+/** Dragged wider from its left edge, for long specs and comments. */
+export const Resized: Story = () => <Drawer tab="overview" size={{ width: 720, wide: false }} />;
+/** Widened over the whole board from the header. */
+export const Wide: Story = () => (
+  <Drawer tab="overview" size={{ width: DRAWER_DEFAULT, wide: true }} />
+);
 
 function QuestionsDrawer(): ReactElement {
   const detail = itemDetail();

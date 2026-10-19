@@ -1,5 +1,6 @@
 /* The item drawer (U4, H-018 §3.6): 440px on the right, over the board or
-   the dashboard, which stay visible behind it. */
+   the dashboard, which stay visible behind it. Its left edge drags it wider
+   and the header's widen button covers the whole board (0.22.0). */
 
 .board-view {
   position: relative;
@@ -11,10 +12,31 @@
   z-index: 6;
   display: flex;
   flex-direction: column;
-  width: min(440px, 100%);
+  width: min(var(--drawer-width, 440px), 100%);
   background: var(--bg);
   border-left: 1px solid var(--border);
   box-shadow: -8px 0 24px rgb(0 0 0 / 35%);
+}
+
+.item-drawer-wide {
+  width: 100%;
+  box-shadow: none;
+}
+
+.drawer-edge {
+  position: absolute;
+  inset: 0 auto 0 -3px;
+  z-index: 1;
+  width: 6px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.drawer-edge:hover,
+.drawer-edge:focus-visible {
+  background: var(--accent);
+  opacity: 0.5;
+  outline: none;
 }
 
 .drawer-head {
