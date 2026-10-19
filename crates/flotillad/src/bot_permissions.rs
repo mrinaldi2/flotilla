@@ -35,6 +35,36 @@ pub struct Stored {
     /// The project's DevOps here: the one bot without the installer deny
     /// rules (B8).
     pub devops: bool,
+    /// Whose Claude Code worktrees are whose (0.22.0).
+    pub worktree_names: WorktreeNames,
+}
+
+/// The names a bot's Claude Code worktrees (`<repo>/.claude/worktrees/<name>`)
+/// start with, and the project's other bots' names, which the guard compares.
+#[derive(Default)]
+pub struct WorktreeNames {
+    pub own: Vec<String>,
+    pub others: Vec<String>,
+}
+
+impl WorktreeNames {
+    fn of(db: &crate::db::Db, bot: &bus::Bot) -> anyhow::Result<Self> {
+        let lead = db.get_project(&bot.project_id)?.and_then(|p| p.lead_bot_id);
+        let is_lead = lead.as_deref() == Some(bot.id.as_str());
+        let mut names = Self::default();
+        for other in db.list_bots(Some(&bot.project_id))? {
+            if other.id != bot.id && !other.dir_name.is_empty() {
+                names.others.push(other.dir_name);
+            }
+        }
+        names.own.push(bot.dir_name.clone());
+        if is_lead {
+            names.own.push("lead".to_string());
+        } else if lead.is_some() {
+            names.others.push("lead".to_string());
+        }
+        Ok(names)
+    }
 }
 
 /// Full is not selectable yet (CE-004 (b)): the guard can't cover its own
@@ -70,6 +100,7 @@ impl Stored {
                 .project_roles(&bot.project_id)?
                 .iter()
                 .any(|r| r.role == crate::kanban::model::Role::Devops && r.bot_id == bot.id),
+            worktree_names: WorktreeNames::of(db, bot)?,
         })
     }
 }
@@ -94,6 +125,7 @@ pub struct BotStart<'a> {
     pub artifacts: Option<&'a Path>,
     pub repo: Option<&'a bus::ProjectRepo>,
     pub devops: bool,
+    pub worktree_names: &'a WorktreeNames,
 }
 
 impl BotStart<'_> {
@@ -175,6 +207,13 @@ impl BotStart<'_> {
         if !self.bot_name.is_empty() {
             parts.push("--bot".to_string());
             parts.push(quote(self.bot_name));
+        }
+        let names = self.worktree_names;
+        for (flag, name) in (names.own.iter().map(|n| ("--worktree-name", n)))
+            .chain(names.others.iter().map(|n| ("--other-worktree-name", n)))
+        {
+            parts.push(flag.to_string());
+            parts.push(quote(name));
         }
         // DevOps cleans and resets the `<repo>-rel-*` release trees.
         if self.extras.contains(&PermissionExtra::Publish)

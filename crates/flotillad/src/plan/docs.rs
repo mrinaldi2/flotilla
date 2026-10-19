@@ -160,19 +160,25 @@ pub fn read(app: &AppState, r: &c::PlanDocRead) -> anyhow::Result<c::PlanDocCont
         return Err(not_found("this project has no repository"));
     }
     // The first chunk reads the remote's latest; the rest, the same commit.
-    let (cache, head) = head(app, &r.project_id, r.offset == 0)
-        .ok_or_else(|| not_found("the project's repository can't be read now"))?;
+    let Some((cache, head)) = head(app, &r.project_id, r.offset == 0) else {
+        return attached_copy(app, r, path)
+            .ok_or_else(|| not_found("the project's repository can't be read now"));
+    };
     let sha = match r.sha.as_deref().filter(|s| !s.trim().is_empty()) {
-        Some(sha) => commit(&cache, check_sha(sha)?)?,
+        // A commit that was never pushed (the lead's own, a gate submitted
+        // before its push) reads the copy attached to the node's card.
+        Some(sha) => match commit(&cache, check_sha(sha)?) {
+            Ok(full) => full,
+            Err(unknown) => return attached_copy(app, r, path).ok_or(unknown),
+        },
         None => head,
     };
     let bytes = match git_cache::bytes_at(&cache, &sha, path)? {
         Some(Ok(bytes)) => bytes,
         Some(Err(why)) => return Err(invalid(why)),
         None => {
-            return Err(not_found(format!(
-                "{path} isn't in the repository at {sha}"
-            )))
+            return attached_copy(app, r, path)
+                .ok_or_else(|| not_found(format!("{path} isn't in the repository at {sha}")))
         }
     };
     let total = bytes.len() as u64;
@@ -211,3 +217,29 @@ fn commit(cache: &Path, sha: &str) -> anyhow::Result<String> {
 #[cfg(test)]
 #[path = "docs_tests.rs"]
 mod tests;
+
+/// A gate's document not pushed yet, read from the copy attached to its
+/// node's document card (0.22.0), a chunk at a time as from the repository.
+fn attached_copy(app: &AppState, r: &c::PlanDocRead, path: &str) -> Option<c::PlanDocContent> {
+    let (bytes, mime) = super::attached::bytes(app, &r.project_id, path)?;
+    let total = bytes.len() as u64;
+    let limit = match r.limit {
+        0 => CHUNK_MAX,
+        n => (n as usize).min(CHUNK_MAX),
+    };
+    let start = r.offset.min(total) as usize;
+    let end = (start + limit).min(bytes.len());
+    Some(c::PlanDocContent {
+        path: path.to_string(),
+        sha: String::new(),
+        offset: start as u64,
+        data: bytes[start..end].to_vec(),
+        total,
+        mime: if mime.is_empty() {
+            mime_of(path).to_string()
+        } else {
+            mime
+        },
+        diff: None,
+    })
+}
