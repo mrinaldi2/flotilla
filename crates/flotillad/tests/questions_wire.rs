@@ -220,11 +220,25 @@ async fn the_turn_an_answer_starts_is_on_its_card_and_says_so() {
         result.outcome,
         Some(c::question_result::Outcome::Done(_))
     ));
-    let lead_id = plan.lead.clone();
+    // The lead also hears of its research kickoff (another card): wait for
+    // the answer's own delivery, so the turn below is the one it starts.
+    let db = &plan.d.app.db;
+    let conv = db
+        .dm_conversation(&plan.lead)
+        .unwrap()
+        .expect("the lead's DM");
+    let answer = db
+        .list_messages(&conv.id, None, 100)
+        .unwrap()
+        .into_iter()
+        .rev()
+        .find(|m| m.decision_id.as_deref() == Some(id))
+        .expect("the answer's message")
+        .id;
     pushes
         .wait_for_within(Duration::from_secs(10), |v| {
             v["type"] == "delivery_update"
-                && v["delivery"]["bot_id"] == json!(lead_id)
+                && v["delivery"]["message_id"] == json!(answer)
                 && v["delivery"]["state"] == "delivered"
         })
         .await;

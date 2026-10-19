@@ -68,8 +68,13 @@ jobs:
           tool: cargo-nextest@0.9.146
       # Every shard builds every test target, as `cargo test --all-targets`
       # does, and runs a round-robin share of each target's tests.
+      # A hosted Windows runner is slow and uneven: the tests' waits get
+      # three times their local bound, and a test that fails once runs once
+      # more (nextest reports it as flaky rather than hiding it).
       - name: Test daemon
-        run: cargo nextest run --locked --workspace --all-targets --no-fail-fast --partition count:${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          FLOTILLA_TEST_TIMEOUT_SCALE: "3"
+        run: cargo nextest run --locked --workspace --all-targets --no-fail-fast --retries 1 --partition count:${{ matrix.shard }}/${{ strategy.job-total }}
 
   shell:
     name: native shell
