@@ -68,6 +68,7 @@ mod check_runner;
 mod check_runner_peer;
 mod check_tree;
 mod check_unroutable;
+mod checkouts;
 mod checks;
 mod checks_head_defs;
 mod claude_native;

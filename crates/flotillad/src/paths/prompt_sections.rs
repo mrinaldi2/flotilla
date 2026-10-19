@@ -103,12 +103,13 @@ pub(super) fn repo(
     } else {
         format!(
             "## The project repository\n\n\
-             This project shares {url} (branch `{branch}`). Every worker clones the \
-             branch tip when it starts and pushes its work to a branch of its own, \
-             which its result names. `{branch}` moves only through a PR, so a \
-             worker's branch lands when a PR from it is merged. Keep a clone in your \
-             workspace to read or build on that work, and `git fetch` before you \
-             start and after each worker reports.\n\n"
+             This project shares {url} (branch `{branch}`). For a card's code, call \
+             `worktree_for` with the card: its worktree on the card's branch, shared \
+             by every bot on the card and removed once its PR merges. Don't make your \
+             own; one you made before is yours to remove. To only read, use \
+             `repo_file`, `repo_diff`, `repo_log` or `repo_grep`: no checkout needed. \
+             Each worker pushes to a branch of its own, which its result names; \
+             `{branch}` moves only through a PR.\n\n"
         )
     }
 }
@@ -317,8 +318,8 @@ pub(super) fn shared_computer() -> String {
          else. Leave it alone even when it is in your way, and ask its owner.\n\
          - Never check out, reset, rebase, clean or delete anything in another\n\
          bot's checkout, worktree or branch.\n\
-         - Use one git worktree per task. Once its work is pushed, run\n\
-         `git worktree remove <path>`. Do not keep idle worktrees.\n\
+         - Work on a card in the worktree `worktree_for` gives you. A worktree\n\
+         you made yourself: once its work is pushed, `git worktree remove` it.\n\
          - Before a large build, check free space with `df -h`. If it is under\n\
          20 GB, free your own space first (your old worktrees, `cargo clean` or\n\
          the equivalent in your own checkouts) and report it if that is not\n\
@@ -371,7 +372,7 @@ mod tests {
         assert!(worker.contains("Nobody pushes to `main` directly"));
         let parent = repo(Some(&shared), false, "lead", "b2");
         assert!(parent.contains("git@host:me/book.git (branch `main`)"));
-        assert!(parent.contains("`git fetch`"));
+        assert!(parent.contains("`worktree_for` with the card"));
         assert!(parent.contains("`main` moves only through a PR"));
     }
 

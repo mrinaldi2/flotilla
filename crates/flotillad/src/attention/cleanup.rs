@@ -1,6 +1,8 @@
 //! Cleanups and disk space that need the owner (H-275; H-261 §15.6): a job
 //! held for 3 days or failed, on the board's home, which keeps every
-//! computer's jobs; and this computer's own disk under 20 GB free.
+//! computer's jobs; this computer's own disk under 20 GB free; and the
+//! project over its disk budget here once merged cards' worktrees went
+//! (0.23.0).
 
 use bus::contract::home::{attention_row::Target, AttentionKind, BotRef, CleanupRow};
 use chrono::Utc;
@@ -146,6 +148,31 @@ pub(super) fn disk_low(app: &AppState, b: &mut Builder<'_>) {
         kind: AttentionKind::DiskLow,
         target_id: machine.clone(),
         title,
+        created_at: at,
+        target: Some(Target::Machine(machine)),
+    };
+    b.push(part, weight(AttentionKind::DiskLow), None);
+}
+
+/// "Over its disk budget on mac: 41 GB used of 40 GB": the project's row,
+/// a `disk_low` one aimed at the computer (its Clean up and disk report).
+pub(super) fn over_budget(app: &AppState, b: &mut Builder<'_>) {
+    let Some((report, at)) = disk::kept(app) else {
+        return;
+    };
+    let machine = report["machine"].as_str().unwrap_or_default().to_string();
+    let over = crate::checkouts::budget::over(&report);
+    let Some((_, budget, used)) = over.iter().find(|(p, _, _)| p == b.project_id) else {
+        return;
+    };
+    let part = Part {
+        kind: AttentionKind::DiskLow,
+        target_id: format!("{machine}:budget:{}", b.project_id),
+        title: format!(
+            "Over its disk budget on {machine}: {} used of {}",
+            human_bytes(*used),
+            human_bytes(*budget)
+        ),
         created_at: at,
         target: Some(Target::Machine(machine)),
     };

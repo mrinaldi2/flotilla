@@ -39,6 +39,7 @@ pub fn bot_env(home: &Path, bot: &bus::Bot) -> Vec<(String, String)> {
     let mut env = session_env(home, workspace, bot.temporary);
     // Its own Cargo target, unless it shares the workers' one (H-029).
     super::target::with_bot_target(&mut env, workspace);
+    super::target::with_shared_caches(&mut env, home);
     env
 }
 

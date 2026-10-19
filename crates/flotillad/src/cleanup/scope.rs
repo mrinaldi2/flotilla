@@ -1,8 +1,11 @@
 //! Where the daemon may remove a bot's worktree (H-261 §15.1, §15.3 rule 2),
 //! checked when the bot reports it and again right before each delete.
 //!
-//! A path is in scope only inside the bot's own workspace, or inside one of
-//! its `<repo>-wt-<slug>[-…]` folders directly under a trusted path. It must
+//! A path is in scope only inside the bot's own workspace, inside one of
+//! its `<repo>-wt-<slug>[-…]` folders directly under a trusted path, or
+//! inside a card worktree the daemon made in its home
+//! (`<home>/projects/<project>/worktrees/<card>`, 0.23.0), which is any of
+//! the project's bots' as much as another's. It must
 //! be spelled from that root down with no link or junction in any part:
 //! each part below the root is looked at without following it. Never the
 //! daemon's home outside that workspace, and never a root itself.
@@ -95,6 +98,28 @@ impl Roots {
                 return Some((root.clone(), rest));
             }
         }
+        self.card_root(path)
+    }
+
+    /// `<home>/projects` when `path` is below a card's worktree in
+    /// `<project>/worktrees` there, and the rest of it below that.
+    fn card_root<'a>(&self, path: &'a Path) -> Option<(PathBuf, &'a Path)> {
+        for home in &self.home {
+            let Ok(rest) = path.strip_prefix(home) else {
+                continue;
+            };
+            let parts: Vec<Component<'_>> = rest.components().take(4).collect();
+            let [Component::Normal(projects), Component::Normal(_), Component::Normal(cards), Component::Normal(_)] =
+                parts.as_slice()
+            else {
+                continue;
+            };
+            if *projects == "projects" && *cards == crate::paths::CARD_WORKTREES {
+                // Links are looked for from `projects` down.
+                let root = home.join(projects);
+                return Some((root.clone(), path.strip_prefix(&root).ok()?));
+            }
+        }
         None
     }
 
@@ -116,7 +141,7 @@ impl Roots {
                 self.slug
             ));
         };
-        let in_workspace = self.workspace.contains(&root);
+        let in_workspace = self.workspace.contains(&root) || self.card_root(path).is_some();
         if !in_workspace && self.home.iter().any(|h| path.starts_with(h)) {
             return Err(format!("{shown} is in the daemon's home"));
         }

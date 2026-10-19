@@ -102,6 +102,7 @@ pub(crate) fn rows(
     if scope.local {
         serving_off(app, &mut b);
         super::cleanup::disk_low(app, &mut b);
+        super::cleanup::over_budget(app, &mut b);
     }
     if scope.home {
         awaiting_releases(&releases, &mut b, release_json)?;

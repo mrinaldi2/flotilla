@@ -313,7 +313,7 @@ const TRUSTED_ALLOW: &[&str] = &[
 /// profile (the folder sits outside the workspace).
 fn artifacts_allow(artifacts: Option<&Path>) -> Vec<String> {
     artifacts
-        .map(crate::paths::artifacts_allow_rules)
+        .map(crate::paths::shared_allow_rules)
         .unwrap_or_default()
 }
 

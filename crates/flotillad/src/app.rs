@@ -79,6 +79,8 @@ pub const CAPABILITIES: &[&str] = &[
     // Artifacts by kind (0.22.0): `list_artifacts` groups and `used_by`,
     // and a card's linked artifacts among its documents.
     bus::contract::capability::ARTIFACTS_V2,
+    // Lighter checkouts (0.23.0): the mirror, card worktrees, repo tools.
+    bus::contract::capability::REPO_MIRROR_V1,
 ];
 
 pub struct AppState {
@@ -241,7 +243,7 @@ mod capability_tests {
     /// once it does. Every 0.21 string is served from #43's step 3, and
     /// every 0.22 one from its daemon steps. The 0.23 ones join from its
     /// daemon steps.
-    const NOT_SERVED_YET: &[&str] = &[capability::TEAM_ON_DEMAND_V1, capability::REPO_MIRROR_V1];
+    const NOT_SERVED_YET: &[&str] = &[capability::TEAM_ON_DEMAND_V1];
 
     /// The 0.19, 0.20 and 0.21 board and home additions are all served.
     #[test]

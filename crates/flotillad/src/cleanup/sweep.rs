@@ -351,9 +351,9 @@ pub fn spawn(app: Arc<AppState>) {
             if let Err(error) = super::sweep_remote::if_due(&app, Utc::now()).await {
                 tracing::warn!(%error, "the daily worktree sweep failed");
             }
-            // The hourly disk report (§15.6).
+            // The hourly disk report (§15.6), with the projects' budgets.
             let a = app.clone();
-            match tokio::task::spawn_blocking(move || super::disk::refresh(&a)).await {
+            match tokio::task::spawn_blocking(move || crate::checkouts::budget::hourly(&a)).await {
                 Ok(Err(error)) => tracing::warn!(%error, "the disk report failed"),
                 Err(error) => tracing::warn!(%error, "the disk report failed"),
                 Ok(Ok(_)) => {}

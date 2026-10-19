@@ -123,6 +123,7 @@ pub fn take(app: &AppState) -> anyhow::Result<Value> {
             .sum::<u64>()
     };
     uses.sort_by_key(|u| std::cmp::Reverse(total(u)));
+    let budgets = crate::checkouts::budget::usage(app, &uses);
     let home = &app.cfg.home;
     let free_now = free(app, home).unwrap_or(0);
     Ok(json!({
@@ -131,6 +132,8 @@ pub fn take(app: &AppState) -> anyhow::Result<Value> {
         // Never less than what's free (a test daemon's free is made up).
         "total_bytes": total_bytes(home).unwrap_or(0).max(free_now),
         "uses": uses,
+        // Each project with a disk budget, and what it uses here (0.23.0).
+        "budgets": budgets,
         "as_of": Utc::now(),
     }))
 }
@@ -138,9 +141,14 @@ pub fn take(app: &AppState) -> anyhow::Result<Value> {
 /// Takes this computer's report and keeps it.
 pub fn refresh(app: &AppState) -> anyhow::Result<Value> {
     let report = take(app)?;
-    let here = report["machine"].as_str().unwrap_or_default().to_string();
-    app.db.board_tx(|t| t.set_disk_report(&here, &report))?;
+    keep(app, &report)?;
     Ok(report)
+}
+
+/// Keeps `report` as this computer's last.
+pub fn keep(app: &AppState, report: &Value) -> anyhow::Result<()> {
+    let here = report["machine"].as_str().unwrap_or_default().to_string();
+    app.db.board_tx(|t| t.set_disk_report(&here, report))
 }
 
 /// This computer's last report, taken again when older than `fresh`.
