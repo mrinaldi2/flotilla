@@ -165,7 +165,12 @@ pub fn read(app: &AppState, r: &c::PlanDocRead) -> anyhow::Result<c::PlanDocCont
             .ok_or_else(|| not_found("the project's repository can't be read now"));
     };
     let sha = match r.sha.as_deref().filter(|s| !s.trim().is_empty()) {
-        Some(sha) => commit(&cache, check_sha(sha)?)?,
+        // A commit that was never pushed (the lead's own, a gate submitted
+        // before its push) reads the copy attached to the node's card.
+        Some(sha) => match commit(&cache, check_sha(sha)?) {
+            Ok(full) => full,
+            Err(unknown) => return attached_copy(app, r, path).ok_or(unknown),
+        },
         None => head,
     };
     let bytes = match git_cache::bytes_at(&cache, &sha, path)? {
