@@ -84,6 +84,15 @@ pub fn artifacts_dir(cfg: &Config, project_dir_name: &str) -> PathBuf {
     project_dir(cfg, project_dir_name).join("artifacts")
 }
 
+/// The folder this computer's card worktrees of the project live in
+/// (0.23.0, `worktree_for`): one per card, shared by the bots on it.
+pub fn card_worktrees_dir(cfg: &Config, project_dir_name: &str) -> PathBuf {
+    project_dir(cfg, project_dir_name).join(CARD_WORKTREES)
+}
+
+/// [`card_worktrees_dir`]'s name in the project's folder.
+pub const CARD_WORKTREES: &str = "worktrees";
+
 pub fn provision_project(
     cfg: &Config,
     project_id: &str,
@@ -93,6 +102,7 @@ pub fn provision_project(
     let dir = project_dir(cfg, dir_name);
     fs::create_dir_all(dir.join("bots"))?;
     fs::create_dir_all(dir.join("artifacts"))?;
+    fs::create_dir_all(dir.join(CARD_WORKTREES))?;
     write_project_manifest(cfg, project_id, dir_name, name)
 }
 
@@ -316,6 +326,16 @@ pub fn write_hook_settings(
 /// The paths are anchored with `//` (absolute). A single leading `/` means
 /// "relative to the settings file", so the rules used to match nothing.
 /// `Edit(path)` covers every file-editing tool, `Write` included.
+/// [`artifacts_allow_rules`] and the same for the project's card worktrees
+/// beside them (0.23.0): every bot of the project works in those.
+pub fn shared_allow_rules(artifacts_dir: &Path) -> Vec<String> {
+    let mut rules = artifacts_allow_rules(artifacts_dir);
+    if let Some(project) = artifacts_dir.parent() {
+        rules.extend(artifacts_allow_rules(&project.join(CARD_WORKTREES)));
+    }
+    rules
+}
+
 pub fn artifacts_allow_rules(artifacts_dir: &Path) -> Vec<String> {
     let dir = crate::bot_permissions::rule_path(artifacts_dir);
     vec![format!("Read({dir}/**)"), format!("Edit({dir}/**)")]

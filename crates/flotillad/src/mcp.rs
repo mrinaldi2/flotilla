@@ -27,6 +27,7 @@ mod board_remote_files;
 mod board_roles;
 mod board_schema;
 mod board_structure;
+mod checkouts;
 mod decisions;
 pub(crate) mod meetings;
 mod owner_actions;
@@ -279,6 +280,9 @@ fn tool_call(app: &Arc<AppState>, bot_id: &str, params: &Value) -> Result<Value,
         "retire_tag" => retire_tag(app, bot_id, &args),
         board_tool if board::is_board_tool(board_tool) => {
             board::call(app, bot_id, board_tool, &args)
+        }
+        repo if checkouts::handles(repo) => {
+            caller(app, bot_id).and_then(|bot| checkouts::call(app, &bot, repo, &args))
         }
         other => Err(anyhow::anyhow!("unknown tool: {other}")),
     };

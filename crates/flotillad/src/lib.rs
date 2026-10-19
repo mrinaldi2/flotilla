@@ -22,6 +22,7 @@ pub mod channel;
 pub mod chat;
 pub mod check_exec;
 pub mod check_tree;
+pub mod checkouts;
 pub mod cleanup;
 pub mod compat018;
 pub mod config;

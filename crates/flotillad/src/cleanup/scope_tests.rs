@@ -58,3 +58,31 @@ fn a_link_in_any_part_is_refused() {
     assert!(r.check(&ws.join("repo/tree")).is_err());
     assert!(r.check(&ws.join("repo")).is_err());
 }
+
+/// 0.23.0: a card worktree the daemon made is any bot's of the project to
+/// report and to have removed; the folder that holds them, the project's
+/// other folders and a link on the way are not.
+#[test]
+fn a_card_worktree_in_the_home_is_in_scope() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = crate::safe_git::canonical(tmp.path()).unwrap();
+    let r = roots(&dir);
+    let cards = dir.join("home/projects/p/worktrees");
+    std::fs::create_dir_all(cards.join("h-1/src")).unwrap();
+    assert!(r.check(&cards.join("h-1")).is_ok());
+    assert!(r.check(&cards.join("h-1/src")).is_ok());
+    for refused in [
+        cards.clone(),
+        dir.join("home/projects/p/artifacts/h-1"),
+        dir.join("home/projects/p/bots/arch/workspace/x"),
+        dir.join("home/repos/p.git"),
+    ] {
+        assert!(r.check(&refused).is_err(), "{}", refused.display());
+    }
+    #[cfg(unix)]
+    {
+        std::fs::create_dir_all(dir.join("outside")).unwrap();
+        std::os::unix::fs::symlink(dir.join("outside"), cards.join("h-2")).unwrap();
+        assert!(r.check(&cards.join("h-2")).is_err());
+    }
+}

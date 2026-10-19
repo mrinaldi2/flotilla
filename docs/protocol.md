@@ -1465,6 +1465,34 @@ role's member's instructions and model.
   it, the hourly disk report cleans the worktrees of merged cards first and
   raises a Needs-you row for the rest.
 
+**Served (0.23.0 step 4).** `hello_ok` advertises `repo_mirror_v1`.
+- **The mirror** keeps the remote's branches as `refs/remotes/origin/*`
+  (never pruned, so a fetch can't move a branch a worktree has checked out),
+  and its tags. New work starts from the project's branch, or from the
+  remote's default branch when the project's doesn't exist there.
+- **`worktree_for {item_id, paths?}`** answers `{item_id, path, branch, base,
+  paths, created}`. The tree is `<home>/projects/<project dir>/worktrees/<card>`,
+  on the branch linked on the card, else `flotilla/<card>-<title>`. `paths`
+  are folders (cone mode); asking again adds folders, and `[]` makes it
+  whole. A card in Done or Cancelled gets none. The cleanup after merge
+  finds it on the PR's branch in the mirror (reported to `pr_open` or not)
+  and the daily sweep covers it; a cancelled card's is salvaged to
+  `<home>/salvage/<project>/<card>` and removed within 10 minutes.
+- **The read tools** cut a file at 512 KB (none over 32 MB is read), a patch
+  at 256 KB, a log at 200 commits and a search at 300 lines. A ref is a
+  branch of the remote, a tag or a commit; paths are relative with no `..`.
+- **Caches:** each bot's session gets `RUSTC_WRAPPER` (the `sccache` found on
+  the tools' PATH) and `SCCACHE_DIR=<home>/cache/sccache` when `sccache` is
+  installed, and `npm_config_store_dir=<home>/cache/pnpm-store`, unless it
+  sets its own. The seed is `node_modules` of the newest sibling worktree,
+  cloned on macOS only.
+- **The budget:** `disk_report` gains `budgets[{project_id, budget_bytes,
+  used_bytes, card_worktree_bytes}]`, used being the project's bots'
+  workspaces, worktrees and caches, its card worktrees and its mirror. A
+  project still over after the merged cards' worktrees went gets a
+  `DISK_LOW` row, target `machine`, titled "Over its disk budget on
+  <machine>: … used of …".
+
 ## Pull requests and checks (H-261)
 
 The typed surface `flotilla.pr.v1` (`proto/flotilla/pr/v1/pr.proto`, contract `pr` 1, capabilities `pull_requests` and `checks`). It's the same shape as the projects home:
@@ -1508,7 +1536,7 @@ The typed surface `flotilla.pr.v1` (`proto/flotilla/pr/v1/pr.proto`, contract `p
   - `remove` works only on a tree whose work was salvaged. It saves the tree's work again, refuses if any file can't be saved, then runs `git worktree remove --force` under rules 2 and 3. A tree on a linked computer is removed by that computer: the home sends the peer request `cleanup_force`, and the computer answers with the event `cleanup_forced`.
   - That computer refuses unless nothing in the tree changed for 3 days (the newest mtime in it, links not followed), so a forged home can't take a tree in use (ARCH S1). The job stays held with why, and keeps its salvage note so the owner can ask again.
   - It answers `{type: "cleanup_item", cleanup_item}`.
-- **`disk_report {machine?, refresh?}`** (read) → `{type: "disk_report", disk_report: {machine, free_bytes, total_bytes, uses[{bot, workspace_bytes, worktree_bytes, cache_bytes, reclaimable_bytes}], as_of}}`.
+- **`disk_report {machine?, refresh?}`** (read) → `{type: "disk_report", disk_report: {machine, free_bytes, total_bytes, uses[{bot, workspace_bytes, worktree_bytes, cache_bytes, reclaimable_bytes}], budgets[] (0.23.0), as_of}}`.
   - Each daemon takes its own report hourly and keeps it.
   - A linked computer's report is asked with the peer request `disk_report_get`.
 - **`cleanup_now {machine?}`** (control) runs the sweep plus the §15.2 cache trims and answers `{type: "cleanup_done", trees, freed_bytes, disk_report}`. On a linked computer it is the peer request `cleanup_now`, accepted only from a board home of a project linked there. It does only what the daily sweep and the cache rules already allow, so it needs no owner proof.

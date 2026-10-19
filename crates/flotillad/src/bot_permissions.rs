@@ -105,6 +105,14 @@ impl BotStart<'_> {
             .filter(|b| *b != "main")
     }
 
+    /// The project's card worktrees (0.23.0), beside its artifacts: every
+    /// bot of the project may work in them.
+    fn card_worktrees(&self) -> Option<PathBuf> {
+        self.artifacts
+            .and_then(Path::parent)
+            .map(|project| project.join(crate::paths::CARD_WORKTREES))
+    }
+
     /// The trusted paths from config, with `~` expanded.
     pub fn trusted_paths(&self) -> Vec<PathBuf> {
         self.cfg
@@ -147,6 +155,7 @@ impl BotStart<'_> {
         // (CE-003 M4, CE-004 F2).
         let writable = std::iter::once(self.bot_root.to_path_buf())
             .chain(self.artifacts.map(Path::to_path_buf))
+            .chain(self.card_worktrees())
             // Installing a build replaces the app in /Applications.
             .chain(
                 (cfg!(target_os = "macos") && self.extras.contains(&PermissionExtra::Install))
@@ -193,6 +202,13 @@ impl BotStart<'_> {
             // Outside the workspace, so the session needs it as a directory.
             args.push("--add-dir".to_string());
             args.push(artifacts.display().to_string());
+        }
+        if let Some(cards) = self.card_worktrees() {
+            // Made before the session starts, so it can be added.
+            if std::fs::create_dir_all(&cards).is_ok() {
+                args.push("--add-dir".to_string());
+                args.push(cards.display().to_string());
+            }
         }
         let trusted = self.trusted_paths();
         let extra_environment: Vec<String> = self
