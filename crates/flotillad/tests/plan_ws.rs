@@ -336,4 +336,53 @@ async fn documents_read_the_default_branch_and_a_gate_needs_its_document_pushed(
         ..Default::default()
     }));
     assert_eq!(codes, vec!["plan.doc_unpushed".to_string()]);
+
+    // Attached to the node's document card, it goes through, and the owner
+    // reads the attached copy until it is pushed.
+    let card = plan
+        .kickoff(&init.id, "Write the PRD")
+        .expect("the PRD's card");
+    let artifacts =
+        flotillad::kanban::attach::artifacts_of(&plan.d.app, &plan.pid).expect("artifacts");
+    let rel = format!("items/{card}/prd-draft.md");
+    std::fs::create_dir_all(artifacts.join(format!("items/{card}"))).expect("dir");
+    std::fs::write(artifacts.join(&rel), "# Combat PRD\n\nNot pushed yet.\n").expect("write");
+    let new = flotillad::db::NewAttachment {
+        item_id: &card,
+        kind: flotillad::kanban::model::AttachmentKind::File,
+        name: "prd-draft.md",
+        mime: "text/markdown",
+        bytes: 31,
+        sha256: "",
+        path: &rel,
+        url: "",
+        caption: "",
+    };
+    plan.d
+        .app
+        .db
+        .board_tx(|t| t.add_attachment(&new, &flotillad::actor::Actor::User))
+        .expect("attach");
+    let init = plan.node(&init.id);
+    let path = "docs/initiatives/combat/never-pushed.md";
+    done(plan.lead().submit(&c::PlanSubmit {
+        id: init.id.clone(),
+        expected_version: init.version,
+        doc_path: path.into(),
+        ..Default::default()
+    }));
+    let Response::PlanDoc(doc) = response(
+        call(
+            &mut plan.owner,
+            Request::PlanDocRead(c::PlanDocRead {
+                project_id: plan.pid.clone(),
+                path: path.into(),
+                ..Default::default()
+            }),
+        )
+        .await,
+    ) else {
+        panic!("the attached copy");
+    };
+    assert!(String::from_utf8_lossy(&doc.data).contains("Not pushed yet"));
 }
