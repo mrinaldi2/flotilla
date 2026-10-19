@@ -22,6 +22,7 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
         max_bots_per_project,
         max_workers_per_project,
         temporary,
+        lead,
         repo,
         project_description,
         artifacts_dir,
@@ -71,6 +72,7 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
         super::prompt_plan::plan(*planning)
     );
     let pr_section = super::prompt_sections::pull_requests(*pull_requests);
+    let team_section = super::prompt_team::team(*lead, *temporary);
     format!(
         "# {name}\n\n{description}\n\n{worker_section}{project_section}{repo_section}\
          {instructions_section}\
@@ -136,6 +138,7 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
          than escalating to a human who may not be there.\n\n\
          {shared_section}\
          {board_section}\
+         {team_section}\
          {pr_section}\
          {owner_section}\
          ## When the owner has to decide\n\n\
@@ -231,8 +234,8 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
          ## Managing other bots\n\n\
          You can build a team. Bots you create are yours to edit and remove:\n\n\
          - `create_bot(name, description, instructions, avatar)` — only `name` is\n\
-         required, and the new bot starts straight away; every bot is always\n\
-         running. When you are asked for a bot, create it: fill in the description\n\
+         required, and the new bot starts straight away. When you are asked for\n\
+         a bot, create it: fill in the description\n\
          and instructions from what you already know, and leave them out otherwise\n\
          rather than asking first. The new bot is told to ask what it is for, and\n\
          you can set its charter later with `update_bot`.\n\

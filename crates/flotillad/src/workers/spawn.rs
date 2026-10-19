@@ -8,10 +8,12 @@ use bus::{Bot, BotRuntime, Worker, WorkerState};
 use crate::app::AppState;
 use crate::botmgmt;
 use crate::db::NewWorker;
+use crate::kanban::model::Role;
 use crate::mcp::bot_sender;
 use crate::mcp::tasks::close_cancelled;
 
 use super::place::{delegation_chain, linked_peer_named};
+use super::role;
 use super::{place_queued, HERE};
 
 /// Spawns one project may hold in its queue, so a runaway loop cannot fill
@@ -31,6 +33,8 @@ pub struct SpawnRequest<'a> {
     /// [`HERE`], a peer's name, or `None` for any machine with a free slot.
     pub machine: Option<&'a str>,
     pub deadline_hours: Option<i64>,
+    /// A role to copy (0.23.0): the lead's extra hands for that role.
+    pub role: Option<Role>,
 }
 
 /// Queue a spawn and try to place it at once. Returns the spawn as it stands
@@ -83,17 +87,33 @@ pub async fn spawn(
         .filter(|d| !d.is_empty())
         .map(str::to_string)
         .unwrap_or_else(|| format!("Worker for {}: {}", parent.name, headline(req.brief)));
+    let (instructions, copy) = match req.role {
+        Some(role) => {
+            let (instructions, copy) = role::from_member(app, parent, role, req.instructions)?;
+            (instructions, Some(copy))
+        }
+        None => (
+            req.instructions
+                .map(str::trim)
+                .unwrap_or_default()
+                .to_string(),
+            None,
+        ),
+    };
     let worker = app.db.insert_worker(&NewWorker {
         project_id: &parent.project_id,
         parent_bot_id: &parent.id,
         name: &name,
         brief: req.brief,
         description: &description,
-        instructions: req.instructions.map(str::trim).unwrap_or_default(),
+        instructions: &instructions,
         runtime: req.runtime,
         machine: machine.as_deref(),
         deadline_hours,
     })?;
+    if let Some(copy) = &copy {
+        role::remember(app, &worker.id, copy)?;
+    }
     super::changed(app, &parent.project_id);
     place_queued(app, &parent.project_id).await;
     Ok(app.db.get_worker(&worker.id)?.unwrap_or(worker))
@@ -141,6 +161,7 @@ pub fn cancel_spawn(
         );
         close_cancelled(app, sender, &task, &body)?;
     }
+    role::forget(app, &worker.id);
     if app
         .db
         .finish_worker(&worker.id, WorkerState::Cancelled, Some(reason))?

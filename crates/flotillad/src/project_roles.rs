@@ -13,10 +13,18 @@ use crate::kanban::feed::{Change, ChangeKind};
 use crate::kanban::model::{ProjectRole, Role};
 use crate::releases::machines::IOS_TEST;
 
-/// The roles the lead may give or take away over MCP. Lead, DevOps and
-/// tester are the owner's alone (ARCH-R30 M1), and so is reviewer.ce: the
-/// security review is independent of the lead.
-const LEAD_ASSIGNS: [Role; 4] = [Role::Dev, Role::Coach, Role::ReviewerArch, Role::ReviewerUx];
+/// The roles the lead may give or take away over MCP: the team's working
+/// roles, Product and Architect (0.23.0) as Dev. Lead, DevOps and tester are
+/// the owner's alone (ARCH-R30 M1), and so is reviewer.ce: the security
+/// review is independent of the lead.
+const LEAD_ASSIGNS: [Role; 6] = [
+    Role::Dev,
+    Role::Product,
+    Role::Architect,
+    Role::Coach,
+    Role::ReviewerArch,
+    Role::ReviewerUx,
+];
 
 /// Who assigns a role.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -88,7 +96,7 @@ pub fn set_role(
         app.db.set_project_role(&ProjectRole {
             project_id: project_id.to_string(),
             role,
-            bot_id,
+            bot_id: bot_id.clone(),
             machine: machine.map(str::to_string),
         })?;
     }
@@ -99,6 +107,13 @@ pub fn set_role(
         card: None,
         from_column: None,
     });
+    drop(feed);
+    // Its prompt says whether it has a browser, which its roles decide.
+    if let Some(bot) = app.db.get_live_bot(&bot_id)? {
+        if let Err(error) = crate::botmgmt::reprovision(app, &bot) {
+            tracing::warn!(bot_id, %error, "system.md not rewritten for the role");
+        }
+    }
     Ok(())
 }
 

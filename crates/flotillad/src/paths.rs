@@ -35,6 +35,7 @@ mod own;
 mod prompt;
 mod prompt_plan;
 mod prompt_sections;
+mod prompt_team;
 #[cfg(test)]
 mod tests;
 mod trust;
@@ -161,6 +162,9 @@ pub struct BotProvision<'a> {
     pub max_workers_per_project: usize,
     /// Whether this bot is a temporary worker, here for one task.
     pub temporary: bool,
+    /// Whether this bot leads its project (0.23.0): its prompt says how the
+    /// team works on demand.
+    pub lead: bool,
     /// The project's shared git repository, when it has one.
     pub repo: Option<bus::ProjectRepo>,
     /// What the project is for, in the owner's words; empty when unset.

@@ -174,6 +174,9 @@ async fn the_turn_an_answer_starts_is_on_its_card_and_says_so() {
         plan.d.app.supervisor.state(&plan.lead).0,
         bus::BotState::Ready
     );
+    // The lead's own kickoff for the research card is delivered first, so
+    // the answer's delivery is the newest when its turn starts.
+    let delivered_before = settled_deliveries(&plan.d, &plan.lead).await;
     // The owner's board connection speaks the binary contract; the toasts
     // the apps show come as JSON pushes.
     let mut pushes = common::WsClient::connect(&plan.d).await;
@@ -220,14 +223,13 @@ async fn the_turn_an_answer_starts_is_on_its_card_and_says_so() {
         result.outcome,
         Some(c::question_result::Outcome::Done(_))
     ));
-    let lead_id = plan.lead.clone();
-    pushes
-        .wait_for_within(Duration::from_secs(10), |v| {
-            v["type"] == "delivery_update"
-                && v["delivery"]["bot_id"] == json!(lead_id)
-                && v["delivery"]["state"] == "delivered"
-        })
-        .await;
+    for _ in 0..400 {
+        if settled_deliveries(&plan.d, &plan.lead).await > delivered_before {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(25)).await;
+    }
+    assert!(settled_deliveries(&plan.d, &plan.lead).await > delivered_before);
 
     plan.d
         .app
@@ -244,4 +246,35 @@ async fn the_turn_an_answer_starts_is_on_its_card_and_says_so() {
         .await;
     assert_eq!(done["item_id"], json!(spike), "{done}");
     assert!(done.get("cause").is_none(), "{done}");
+}
+
+/// How many deliveries to the bot were delivered (or acknowledged), once none waits: waits for
+/// the queued and leased ones to go first.
+async fn settled_deliveries(d: &common::TestDaemon, bot_id: &str) -> usize {
+    for _ in 0..400 {
+        let all = d
+            .app
+            .db
+            .list_deliveries(Some(bot_id), None)
+            .expect("deliveries");
+        let waiting = all.iter().any(|x| {
+            matches!(
+                x.state,
+                bus::DeliveryState::Queued | bus::DeliveryState::Leased
+            )
+        });
+        if !waiting {
+            return all
+                .iter()
+                .filter(|x| {
+                    matches!(
+                        x.state,
+                        bus::DeliveryState::Delivered | bus::DeliveryState::Acknowledged
+                    )
+                })
+                .count();
+        }
+        tokio::time::sleep(Duration::from_millis(25)).await;
+    }
+    panic!("deliveries to {bot_id} never settled");
 }

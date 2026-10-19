@@ -55,6 +55,7 @@ impl Supervisor {
         // installed since the last start is picked up.
         let browser = bot_root
             .as_deref()
+            .filter(|_| crate::browser::wanted(&self.inner.db, &bot))
             .and_then(|root| crate::browser::setup::server(&self.inner.cfg, root, composer));
         if let Some(root) = &bot_root {
             let bus = crate::bus_auth::server_entry(&self.inner.cfg, composer);

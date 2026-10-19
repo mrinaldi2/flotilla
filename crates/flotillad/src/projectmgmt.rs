@@ -171,7 +171,21 @@ pub fn make_lead(app: &Arc<AppState>, project_id: &str, bot_id: &str) -> anyhow:
     if let Some(project) = app.db.get_project(project_id)? {
         app.events.push(Push::ProjectUpdated { project });
     }
+    lead_changed(app, project_id);
     Ok(())
+}
+
+/// Rewrite the prompts of the project's bots here after its lead changed:
+/// the lead's says how it leads, the others' how they are woken (0.23.0).
+pub fn lead_changed(app: &Arc<AppState>, project_id: &str) {
+    for bot in app.db.list_bots(Some(project_id)).unwrap_or_default() {
+        if bot.is_linked() {
+            continue;
+        }
+        if let Err(error) = botmgmt::reprovision(app, &bot) {
+            tracing::warn!(bot_id = %bot.id, %error, "system.md not rewritten for the lead");
+        }
+    }
 }
 
 /// Delete a project: tell its linked computers (before the links go),

@@ -1450,9 +1450,21 @@ revision below 2) is sent `BOT_STATUS_STOPPED` instead.
 2. otherwise a holder that is asleep, which it wakes;
 3. otherwise the first holder (its work queues).
 
-A role nobody holds is refused with `role.unheld`. To add parallel hands, the
-lead spawns a worker from a role (`spawn_worker {role}`), which takes that
-role's member's instructions and model.
+Holders are taken in name order, so the pick is deterministic:
+- **Awake and free:** running and idle (`ready`), with no open task and no
+  other card in an active column.
+- **Asleep:** `asleep` or `queued`; the assignment notice wakes it.
+- **Otherwise:** busy, stopped, or on a linked computer.
+
+A role nobody holds is refused with `role.unheld` (an unmet guard, after the
+check that the caller may assign at all). The owner assigns by role over the
+WebSocket as the lead does over MCP. To add parallel hands, the lead spawns a
+worker from a role (`spawn_worker {role}`), which takes that role's member's
+instructions and model (see [workers](workers.md)).
+
+**Browsers by role.** On a project with a board here, only a tester, a UX
+reviewer or a bot allowed the owner's Chrome gets a browser of its own (see
+[the bot's browser](bot-browser.md)).
 
 **Lighter checkouts (`repo_mirror_v1`).** For a project with a repository:
 - **The mirror:** the daemon keeps one bare mirror at

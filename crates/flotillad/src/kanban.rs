@@ -11,6 +11,7 @@ pub mod admin;
 pub mod api;
 pub mod attach;
 pub mod attachments;
+pub mod by_role;
 pub mod contract;
 pub mod defaults;
 pub mod draft_talk;
