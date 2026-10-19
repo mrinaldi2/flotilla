@@ -289,6 +289,8 @@ fn only_the_daemon_writes_the_served_builds() {
     let inside = "/Users/me/.gravity/projects/p/artifacts/served";
     let devops = GuardContext {
         bot_slug: Some("devops".into()),
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         releases: true,
         served: vec![PathBuf::from(served), PathBuf::from(inside)],
         ..ctx()

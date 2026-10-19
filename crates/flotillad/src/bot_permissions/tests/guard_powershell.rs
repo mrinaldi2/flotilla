@@ -216,6 +216,8 @@ fn only_the_daemon_writes_the_served_builds_and_the_run_folder() {
     let served = "/Users/me/.gravity/releases";
     let devops = GuardContext {
         bot_slug: Some("devops".into()),
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         releases: true,
         served: vec![PathBuf::from(served)],
         ..ctx()
@@ -240,6 +242,8 @@ fn only_the_daemon_writes_the_served_builds_and_the_run_folder() {
 fn a_bot_changes_only_its_own_worktrees() {
     let dev = GuardContext {
         bot_slug: Some(slug("Desktop Dev")),
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         ..ctx()
     };
     for command in [

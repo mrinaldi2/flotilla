@@ -25,6 +25,8 @@ fn a_bot_changes_only_its_own_worktrees() {
     assert_eq!(slug("h031-final"), "h031final");
     let dev = GuardContext {
         bot_slug: Some(slug("Desktop Dev")),
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         ..ctx()
     };
     for command in [
@@ -55,11 +57,15 @@ fn a_bot_changes_only_its_own_worktrees() {
 fn release_worktrees_belong_to_the_publisher() {
     let devops = GuardContext {
         bot_slug: Some(slug("DevOps")),
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         releases: true,
         ..ctx()
     };
     let other = GuardContext {
         bot_slug: Some(slug("Desktop Dev")),
+        own_names: Vec::new(),
+        other_names: Vec::new(),
         ..ctx()
     };
     for command in [
