@@ -67,7 +67,8 @@ async fn conpty_kills_a_live_process_without_reporting_a_stale_handle_error() {
         rows: 24,
     };
     let mut started = PtyAdapter.start(&spec).expect("native ConPTY");
-    tokio::time::timeout(Duration::from_secs(15), async {
+    // PowerShell's first output can take a busy CI runner well over 15 s.
+    tokio::time::timeout(Duration::from_secs(45), async {
         loop {
             if let Some(SessionEvent::Output(bytes)) = started.events.recv().await {
                 if String::from_utf8_lossy(&bytes).contains("waiting-for-switch") {

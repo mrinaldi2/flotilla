@@ -21,7 +21,7 @@ function Panel(props: { readonly click?: string }): ReactElement {
         project_id: "p1",
         artifacts: GROUPED_ARTIFACTS.filter((a) => a.group === group),
         has_more: group === "shared",
-        next_before: group === "shared" ? "2026-09-17T16:20:00Z|notes-0917.md" : null,
+        next_before: group === "shared" ? "2024-04-17T16:20:00Z|notes-0917.md" : null,
       };
     });
     fake.capabilities = [...fake.capabilities, ARTIFACTS_V2];
