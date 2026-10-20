@@ -1,6 +1,7 @@
 //! Worktrees of a merged branch that nobody reported (H-261 §15.1): `git
 //! worktree list` on every main clone of the repository in the allowed
-//! roots of this computer, the trusted paths and the bots' workspaces.
+//! roots of this computer, the trusted paths and the bots' workspaces, and
+//! on the project mirrors here (0.23.0), whose worktrees are the cards'.
 
 use std::path::{Path, PathBuf};
 
@@ -137,6 +138,66 @@ pub fn worktrees(app: &AppState, url: &str, bots: &[BotHere]) -> Vec<(Found, Str
                 Found {
                     path,
                     main_clone: main.clone(),
+                    bot: bot.cloned(),
+                },
+                on,
+            ));
+        }
+    }
+    out.extend(card_worktrees(app, url, bots, &mut seen));
+    out
+}
+
+/// The mirrors of `url` in `<home>/repos`: bare, not links.
+fn mirrors_of(app: &AppState, url: &str) -> Vec<PathBuf> {
+    let Ok(entries) = std::fs::read_dir(app.cfg.home.join("repos")) else {
+        return Vec::new();
+    };
+    entries
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|x| x == "git"))
+        .filter(|p| {
+            std::fs::symlink_metadata(p).is_ok_and(|m| m.is_dir() && !super::scope::is_link(&m))
+        })
+        .filter(|p| {
+            git(p, &["config", "--get", "remote.origin.url"]).is_some_and(|o| repo::same(&o, url))
+        })
+        .collect()
+}
+
+/// The card worktrees of the mirrors of `url`, each the bot's that asked
+/// for it (else any bot whose roots hold it).
+fn card_worktrees(
+    app: &AppState,
+    url: &str,
+    bots: &[BotHere],
+    seen: &mut Vec<PathBuf>,
+) -> Vec<(Found, String)> {
+    let rows = app.db.card_worktrees(None).unwrap_or_default();
+    let mut out = Vec::new();
+    for mirror in mirrors_of(app, url) {
+        for (path, on) in linked(&mirror) {
+            let real = crate::safe_git::canonical(&path).unwrap_or(path.clone());
+            if seen.contains(&real) {
+                continue;
+            }
+            seen.push(real.clone());
+            let asked = rows
+                .iter()
+                .find(|t| Path::new(&t.path) == real || Path::new(&t.path) == path)
+                .and_then(|t| bots.iter().find(|b| b.id == t.bot_id));
+            let bot = asked.or_else(|| {
+                bots.iter().find(|b| {
+                    Roots::of(app, b.workspace.as_deref(), &b.name)
+                        .check(&path)
+                        .is_ok()
+                })
+            });
+            out.push((
+                Found {
+                    path,
+                    main_clone: mirror.clone(),
                     bot: bot.cloned(),
                 },
                 on,

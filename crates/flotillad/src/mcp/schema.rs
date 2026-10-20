@@ -21,6 +21,7 @@ pub(super) fn tool_list(board_tools: &[Value]) -> Value {
     tools.extend(super::schema_decisions::decision_tools());
     tools.extend(super::owner_actions::tools());
     tools.extend(super::owner_threads::tools());
+    tools.extend(super::checkouts::tools());
     tools.extend_from_slice(board_tools);
     json!({ "tools": tools })
 }
@@ -177,7 +178,8 @@ fn core_tools() -> Vec<Value> {
                  "runtime": {"type": "string", "enum": ["claude_code", "codex_cli"], "description": "Optional. Defaults to your runtime here, or the other machine's default there."},
                  "machine": {"type": "string", "description": "Optional. 'here', or a linked machine's name, to pin the worker; omitted runs it on whichever machine has a free slot first."},
                  "deadline_hours": {"type": "integer", "description": "Optional. Hours before the task expires (default 24, max 168)."},
-                 "item": {"type": "string", "description": "Board card the worker works on (e.g. RB-12): required unless you hold a task, whose card it then inherits. Its task is linked there once it starts, as send_message's item does."}
+                 "item": {"type": "string", "description": "Board card the worker works on (e.g. RB-12): required unless you hold a task, whose card it then inherits. Its task is linked there once it starts, as send_message's item does."},
+                 "role": {"type": "string", "enum": ["product", "architect", "dev", "tester", "coach", "reviewer.arch", "reviewer.ux"], "description": "Lead only. Make the worker a copy of the bot holding this role: it takes that bot's instructions (yours are added after) and model, and holds the role until it retires. Use it to add parallel hands when two cards of one role can be worked at once."}
              }),
              vec!["task"]),
         tool("list_workers",

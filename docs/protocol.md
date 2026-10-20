@@ -46,7 +46,9 @@ and `project_repo_clone`, each advertised once the daemon serves it (see
 [the Board glance and project setup](#the-board-glance-and-project-setup-0200)). The
 0.21 plan adds `plan_v1`, `item_types_v2`, `column_research` and `attention_plan`
 (see [the plan](#the-plan-0210)). 0.22 adds `questions_v1` and `artifacts_v2` (see
-[questions and artifacts](#questions-and-artifacts-0220)). The strings are
+[questions and artifacts](#questions-and-artifacts-0220)). 0.23 adds
+`team_on_demand_v1` and `repo_mirror_v1` (see [the team on demand and lighter
+checkouts](#the-team-on-demand-and-lighter-checkouts-0230)). The strings are
 `bus::contract::capability`.
 
 `hello_ok.contracts` maps each typed surface to its contract version, e.g.
@@ -190,6 +192,11 @@ Codes: `auth_failed`, `unsupported_version`, `not_found`, `invalid_request`,
 | `create_bot` | `project_id, name?, description?, instructions?, avatar?, runtime?, peer_id?, lead?` | `bot` (starts running immediately). `lead: true` (capability `create_bot_lead`, 0.20.0) also makes it the project's lead, as `set_project_lead` would, and gives it `ROLE_LEAD` when the project has a board. With `peer_id`, the peer creates the bot in the project linked with this one (`runtime` defaults to the peer's `default_bot_runtime`), and the reply is its stand-in here, with `peer` set; `not_linked` when the project is not linked through that peer, `unavailable` when it is offline |
 | `set_bot_runtime` | `bot_id, runtime` | `bot` (requires `control`; restarts when changed) |
 | `restart_bot` | `bot_id` | `ok`: the bot's session restarts and picks its conversation back up, and is told what it left unfinished (see Semantics). On a linked bot, restarted on its machine. Requires `control` |
+| `set_bot_presence` | `bot_id, presence` (`always_on` \| `on_demand`) | `bot`. Requires `control`, capability `team_on_demand_v1` (0.23.0); see [the team on demand](#the-team-on-demand-and-lighter-checkouts-0230) |
+| `wake_bot` | `bot_id` | `ok`: the bot wakes ahead of board work, or queues for a slot. Requires `control` (0.23.0) |
+| `sleep_bot` | `bot_id` | `ok`: an on-demand bot sleeps once its running turn ends; `conflict` for an always-on one. Requires `control` (0.23.0) |
+| `team_status` | – | `team`: `{ team: TeamStatus }` (0.23.0) |
+| `set_project_disk_budget` | `project_id, bytes \| null` | `project` (`disk_budget_bytes`). Owner only, capability `repo_mirror_v1` (0.23.0) |
 | `clear_bot_session` | `bot_id` | `ok`: the bot restarts with a fresh conversation, without the old one's history (which leaves the chat); its workspace, memory files and tasks are kept, and it is told what it was working on. On a linked bot, done on its machine. Requires `control` |
 | `set_bot_user_chrome` | `bot_id, enabled` | `bot`: whether the bot may also drive the owner's own Chrome (Claude in Chrome). Off by default; restarts the session. See [bot-browser.md](bot-browser.md) |
 | `update_bot` | `bot_id, name?, description?, instructions?, avatar?` | `bot`; on a stand-in in a linked project, forwarded to its machine |
@@ -215,7 +222,7 @@ Codes: `auth_failed`, `unsupported_version`, `not_found`, `invalid_request`,
 | `search` | `query, project_id?` | `search_results` |
 | `diagnostics` | – | `diagnostics` |
 | `get_config` | – | `config` |
-| `set_config` | `auto_compact_window` (number or `null`) | `config` |
+| `set_config` | `auto_compact_window?` (number or `null`), `max_running_bots?`, `idle_sleep_minutes?` (0.23.0) | `config` |
 | `list_devices` | – | `devices` |
 | `create_device` | `name, capabilities` (array of `"read"`/`"control"`/`"approve"`) | `device` (includes `token`, shown once) |
 | `revoke_device` | `device_id` | `device` |
@@ -333,7 +340,7 @@ breaking wire-shape change; v1 clients must upgrade before connecting.
   `seq` is then the newest read included, and it is the cursor to resume from. A replay
   arrives the same way, so a full ring is a handful of pushes rather than one per read, and
   `attached.seq` still marks where it ends.
-- `bot_state`: `{ "bot_id", "state", "reason", "at", "item_id"?, "item_title"?, "cause"? }` — state ∈ `starting|ready|working|waiting_for_user|waiting_for_approval|rate_limited|auth_failed|crashed|stopping|stopped`.
+- `bot_state`: `{ "bot_id", "state", "reason", "at", "item_id"?, "item_title"?, "cause"? }` — state ∈ `starting|ready|working|waiting_for_user|waiting_for_approval|rate_limited|auth_failed|crashed|stopping|stopped|asleep|queued` (the last two from 0.23.0, `team_on_demand_v1`).
   `item_id` (0.19.0) is the card the turn starting, going on or ending is about, when
   known: the card a delivery that started it named (`[card …]`, a task delegated for
   an item, the card of a question the owner answered), else the last card the bot changed
@@ -390,7 +397,9 @@ ProjectLink { "peer_id", "peer_name", "online", "remote_project_id",
            "remote_project_name", "linked_at" }
 Bot      { "id", "project_id", "name", "description", "avatar", "instructions",
            "state", "state_reason", "unread_count", "workspace_path", "dir_name",
-           "created_by_bot_id"?, "user_chrome", "temporary", "deleted_at"?, "created_at" }
+           "created_by_bot_id"?, "user_chrome", "temporary", "presence"?, "deleted_at"?,
+           "created_at" }
+           // presence (0.23.0): "always_on" | "on_demand"; absent before it, always on
 BotRevision { "id", "bot_id", "changed_by", "field", "old_value", "new_value",
            "created_at" }
 Conversation { "id", "project_id", "bot_id", "title" }
@@ -478,7 +487,10 @@ Timestamps are RFC 3339 UTC strings. IDs are UUIDv4 strings.
 
 ## Semantics
 
-- Bots are always-on: there is no `start_bot`/`stop_bot`. The daemon starts
+- Before 0.23 bots are always-on: there is no `start_bot`/`stop_bot`. From
+  0.23 (`team_on_demand_v1`) an on-demand bot sleeps and wakes as [the team on
+  demand](#the-team-on-demand-and-lighter-checkouts-0230) describes; what
+  follows still holds for always-on bots. The daemon starts
   every live bot when it boots, starts a newly created bot straight away, and
   restarts crashes with backoff (2s doubling to 5 minutes), so `bot_state` is
   something clients observe, never something they drive. A bot only reaches
@@ -515,8 +527,11 @@ Timestamps are RFC 3339 UTC strings. IDs are UUIDv4 strings.
   so no push.
 
 - `set_config` (advertised as the `config` capability, requires the `control`
-  grant) writes only `auto_compact_window`: a number in 100000–1000000, or
-  `null` for the model default. The value is persisted in the daemon's database
+  grant) writes `auto_compact_window`: a number in 100000–1000000, or
+  `null` for the model default; and from 0.23.0 `max_running_bots` (1–32,
+  default 6) and `idle_sleep_minutes` (1–1440, default 10), both applied at
+  once and echoed in the `config` reply. Fields left out are unchanged; at
+  least one is required. The value is persisted in the daemon's database
   — layered over `flotillad.toml`, which stays untouched — and takes effect the
   next time each bot's session starts. `bind`, `port` and `runtime` in the
   `config` reply are read-only: they describe how the daemon was launched and
@@ -1356,6 +1371,150 @@ advertises its capability.
 
 Without a board, `metrics` is null. Off the board's home, the daemon asks the home (peer request `metrics_get {project_id, days}`) and answers once it has. If the home can't be reached, `metrics` is null and `note` names it.
 
+### The team on demand and lighter checkouts (0.23.0)
+
+Capabilities `team_on_demand_v1` and `repo_mirror_v1`. Before 0.23 every bot
+runs all the time; from 0.23 most of a team sleeps until there is work.
+
+**Presence.** A bot is `always_on` or `on_demand` (`Bot.presence`,
+`set_bot_presence`). The project's lead is always on and can't be switched.
+Upgrading makes every other existing bot on demand. A new bot is on demand
+unless `create_bot` is followed by `set_bot_presence`. A temporary worker is
+on demand and retires as before.
+
+**Sleeping.** An on-demand bot goes to sleep (`bot_state` `asleep`, no session
+and no processes) after `idle_sleep_minutes` (default 10) with:
+- no turn running;
+- no open task;
+- no card of its in an active column;
+- nothing queued for it.
+
+`sleep_bot` sends it to sleep once its running turn ends. Asleep is not a
+failure: it raises no `bot_stopped` row, and the keeper doesn't nag a bot that
+is asleep or queued.
+
+**Waking.** A bot wakes on any of these:
+- a delivery to it (a DM, a task, the lead's message, a card notice or an
+  assignment, a review request);
+- a routine falling due;
+- `wake_bot`, which the app sends when the owner opens its chat or presses
+  Wake.
+
+Waking resumes the bot's conversation (`--continue`), and the delivery that
+woke it is delivered once its session is up. A routine wakes its bot through
+the delivery of its prompt. At boot, an on-demand bot that still has an open
+task or a card in an active column wakes to pick it back up. A linked bot is
+woken, or sent to sleep, on its own computer (peer requests `wake_bot` and
+`sleep_bot`); its presence is set there too, and `set_bot_presence` for it
+answers `conflict`.
+
+**The running cap.** At most `max_running_bots` sessions (default 6) run at
+once on this computer, counting always-on bots. A wake with no free slot
+queues: `bot_state` is `queued`, and it starts when a slot frees. The queue is
+ordered as follows:
+1. **The owner:** `wake_bot` comes first, and so does the owner's own chat
+   to the bot. An always-on bot other than a lead that waits for a slot
+   queues here too, as `owner`: the owner chose to keep it on.
+2. **The lead.**
+3. **Card work,** in the board's order at the moment it queued: priority, then
+   the card's age. Work that queues later waits behind work already queued,
+   even at a higher priority.
+4. **An urgent bug,** the one exception: a P0 card of type bug goes to the
+   front of the card work.
+5. **Everything else** (messages and routines without a card), in the order
+   it came.
+
+A task's deadline doesn't count time spent queued. Lowering
+`max_running_bots` stops no running bot: it only holds new starts until the
+count is under the cap. Both settings take effect at once.
+
+**Team status.** `team_status` → `team: TeamStatus`, and a `team_updated`
+push whenever it changes:
+
+```jsonc
+TeamStatus { "running", "max_running", "idle_sleep_minutes",
+             "queue": [TeamWake] }   // in the order they will start
+TeamWake   { "bot_id", "project_id",
+             "reason": "owner"|"lead"|"card"|"task"|"message"|"review"|"routine",
+             "item_id"?, "priority"?, "urgent", "queued_at" }
+```
+
+The Board glance shows an asleep or queued bot as `BOT_STATUS_ASLEEP`, sorted
+after idle bots. A linked computer from before 0.23 (`ProjectAttentionRequest`
+revision below 2) is sent `BOT_STATUS_STOPPED` instead.
+
+**Roles and assigning by role.** The board gains `ROLE_PRODUCT` and
+`ROLE_ARCHITECT`, which the lead may set, as it sets Dev. `item_assign` takes a
+`role` instead of a `bot`. The daemon resolves it in this order:
+1. a holder that is awake and free;
+2. otherwise a holder that is asleep, which it wakes;
+3. otherwise the first holder (its work queues).
+
+Holders are taken in name order, so the pick is deterministic:
+- **Awake and free:** running and idle (`ready`), with no open task and no
+  other card in an active column.
+- **Asleep:** `asleep` or `queued`; the assignment notice wakes it.
+- **Otherwise:** busy, stopped, or on a linked computer.
+
+A role nobody holds is refused with `role.unheld` (an unmet guard, after the
+check that the caller may assign at all). The owner assigns by role over the
+WebSocket as the lead does over MCP. To add parallel hands, the lead spawns a
+worker from a role (`spawn_worker {role}`), which takes that role's member's
+instructions and model (see [workers](workers.md)).
+
+**Browsers by role.** On a project with a board here, only a tester, a UX
+reviewer or a bot allowed the owner's Chrome gets a browser of its own (see
+[the bot's browser](bot-browser.md)).
+
+**Lighter checkouts (`repo_mirror_v1`).** For a project with a repository:
+- **The mirror:** the daemon keeps one bare mirror at
+  `<home>/repos/<project dir>.git`, fetched on a timer and before each new
+  worktree.
+- **Worktrees per card:** a bot asks for a card's worktree with the MCP tool
+  `worktree_for {item_id, paths?}`. The daemon creates it from the mirror on
+  the card's branch, sparse to `paths` when given, and returns its path. It
+  removes the worktree once the card's PR merges, or salvages it when the card
+  is cancelled. Bots no longer create or remove worktrees themselves.
+- **Read-only tools:** roles that only read use `repo_file {path, ref?}`,
+  `repo_diff {base, head?, path?}`, `repo_log {ref?, path?, limit?}` and
+  `repo_grep {pattern, ref?, path?}` against the mirror, with no worktree.
+- **Shared build caches:**
+  - Rust builds go through one `sccache` per computer;
+  - Node installs share pnpm's content store;
+  - a new worktree starts from a warm seed copied with APFS `clonefile` where
+    the disk supports it.
+- **Disk budget:** `set_project_disk_budget` sets the project's budget. Over
+  it, the hourly disk report cleans the worktrees of merged cards first and
+  raises a Needs-you row for the rest.
+
+**Served (0.23.0 step 4).** `hello_ok` advertises `repo_mirror_v1`.
+- **The mirror** keeps the remote's branches as `refs/remotes/origin/*`
+  (never pruned, so a fetch can't move a branch a worktree has checked out),
+  and its tags. New work starts from the project's branch, or from the
+  remote's default branch when the project's doesn't exist there.
+- **`worktree_for {item_id, paths?}`** answers `{item_id, path, branch, base,
+  paths, created}`. The tree is `<home>/projects/<project dir>/worktrees/<card>`,
+  on the branch linked on the card, else `flotilla/<card>-<title>`. `paths`
+  are folders (cone mode); asking again adds folders, and `[]` makes it
+  whole. A card in Done or Cancelled gets none. The cleanup after merge
+  finds it on the PR's branch in the mirror (reported to `pr_open` or not)
+  and the daily sweep covers it; a cancelled card's is salvaged to
+  `<home>/salvage/<project>/<card>` and removed within 10 minutes.
+- **The read tools** cut a file at 512 KB (none over 32 MB is read), a patch
+  at 256 KB, a log at 200 commits and a search at 300 lines. A ref is a
+  branch of the remote, a tag or a commit; paths are relative with no `..`.
+- **Caches:** each bot's session gets `RUSTC_WRAPPER` (the `sccache` found on
+  the tools' PATH) and `SCCACHE_DIR=<home>/cache/sccache` when `sccache` is
+  installed, and `npm_config_store_dir=<home>/cache/pnpm-store`, unless it
+  sets its own. The seed is `node_modules` of the newest sibling worktree,
+  cloned on macOS only.
+- **The budget:** `disk_report` gains `budgets[{project_id, budget_bytes,
+  used_bytes, card_worktree_bytes}]`, used being the project's bots'
+  workspaces, worktrees and caches, its card worktrees and its mirror. A
+  project still over after the merged cards' worktrees went gets a
+  `DISK_LOW` row, target `machine`, titled "Over its disk budget on
+  <machine>: … used of …".
+
 ## Pull requests and checks (H-261)
 
 The typed surface `flotilla.pr.v1` (`proto/flotilla/pr/v1/pr.proto`, contract `pr` 1, capabilities `pull_requests` and `checks`). It's the same shape as the projects home:
@@ -1399,7 +1558,7 @@ The typed surface `flotilla.pr.v1` (`proto/flotilla/pr/v1/pr.proto`, contract `p
   - `remove` works only on a tree whose work was salvaged. It saves the tree's work again, refuses if any file can't be saved, then runs `git worktree remove --force` under rules 2 and 3. A tree on a linked computer is removed by that computer: the home sends the peer request `cleanup_force`, and the computer answers with the event `cleanup_forced`.
   - That computer refuses unless nothing in the tree changed for 3 days (the newest mtime in it, links not followed), so a forged home can't take a tree in use (ARCH S1). The job stays held with why, and keeps its salvage note so the owner can ask again.
   - It answers `{type: "cleanup_item", cleanup_item}`.
-- **`disk_report {machine?, refresh?}`** (read) → `{type: "disk_report", disk_report: {machine, free_bytes, total_bytes, uses[{bot, workspace_bytes, worktree_bytes, cache_bytes, reclaimable_bytes}], as_of}}`.
+- **`disk_report {machine?, refresh?}`** (read) → `{type: "disk_report", disk_report: {machine, free_bytes, total_bytes, uses[{bot, workspace_bytes, worktree_bytes, cache_bytes, reclaimable_bytes}], budgets[] (0.23.0), as_of}}`.
   - Each daemon takes its own report hourly and keeps it.
   - A linked computer's report is asked with the peer request `disk_report_get`.
 - **`cleanup_now {machine?}`** (control) runs the sweep plus the §15.2 cache trims and answers `{type: "cleanup_done", trees, freed_bytes, disk_report}`. On a linked computer it is the peer request `cleanup_now`, accepted only from a board home of a project linked there. It does only what the daily sweep and the cache rules already allow, so it needs no owner proof.

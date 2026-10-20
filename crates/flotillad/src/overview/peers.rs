@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use bus::contract::home::{
-    project_attention::Part, source::State, AttentionKind, ProjectAttention,
+    project_attention::Part, source::State, AttentionKind, BotStatus, ProjectAttention,
     ProjectAttentionRequest,
 };
 use bus::Peer;
@@ -20,8 +20,9 @@ use crate::peer::PeerError;
 const UNKNOWN_REQUEST: &str = "unknown peer request";
 
 /// The `ProjectAttentionRequest.revision` this daemon decodes: 1, the 0.20
-/// additions (`Part.bots`, `bot_stopped` rows).
-const REVISION: u32 = 1;
+/// additions (`Part.bots`, `bot_stopped` rows); 2, `BOT_STATUS_ASLEEP`
+/// (0.23.0).
+const REVISION: u32 = 2;
 
 /// Asks the peer for its part in the background, unless that is under way.
 pub fn refresh(app: Arc<AppState>, peer_id: String) {
@@ -158,12 +159,24 @@ pub fn serve(app: &AppState, peer: &Peer, frame: &Value) -> anyhow::Result<Value
         };
         let mut part = super::part(app, project_id)?;
         part.project_id = link.remote_project_id;
-        if request.revision < REVISION {
+        if request.revision < 1 {
             for_old_caller(&mut part);
+        } else if request.revision < REVISION {
+            asleep_as_stopped(&mut part);
         }
         parts.push(part);
     }
     Ok(serde_json::to_value(ProjectAttention { parts })?)
+}
+
+/// A part as a caller before 0.23 can read it: its strict decoding knows no
+/// `BOT_STATUS_ASLEEP`, and to it an asleep bot is stopped.
+fn asleep_as_stopped(part: &mut Part) {
+    for bot in &mut part.bots {
+        if bot.status == BotStatus::Asleep as i32 {
+            bot.status = BotStatus::Stopped as i32;
+        }
+    }
 }
 
 /// A part as a caller before 0.20 can read it: no bots, no `bot_stopped`

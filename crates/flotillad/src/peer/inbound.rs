@@ -24,6 +24,7 @@ pub(super) fn handle(app: &Arc<AppState>, peer_id: &str, frame: &Value) -> anyho
         }
         "term_attach" => super::term::serve_attach(app, &peer, frame),
         "restart_bot" | "clear_bot_session" => super::term::serve_session(app, &peer, frame),
+        "wake_bot" | "sleep_bot" => serve_wake(app, &peer, frame),
         "browser_watch" => super::browser::serve_watch(app, &peer, frame),
         "term_detach" => super::term::serve_detach(app, &peer, frame),
         "list_projects" => super::links::serve_list(app, &peer),
@@ -69,6 +70,17 @@ pub(super) fn handle(app: &Arc<AppState>, peer_id: &str, frame: &Value) -> anyho
         "test_panic" => panic!("a test peer handler panicked"),
         other => anyhow::bail!("unknown peer request '{other}'"),
     }
+}
+
+/// The peer's owner wakes a bot linked to it, or sends it to sleep (0.23.0).
+fn serve_wake(app: &AppState, peer: &Peer, frame: &Value) -> anyhow::Result<Value> {
+    let bot = super::term::exposed_bot(app, peer, frame)?;
+    if frame["type"] == "sleep_bot" {
+        crate::ws::team::sleep(app, &bot)?;
+    } else {
+        crate::ws::team::wake(app, &bot);
+    }
+    Ok(json!({}))
 }
 
 /// Test events applied, to show the event feed outlives one that panicked.

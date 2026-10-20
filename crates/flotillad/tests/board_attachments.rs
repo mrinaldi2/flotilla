@@ -237,6 +237,7 @@ async fn the_assignee_hears_of_the_owners_edits_and_a_detached_file_is_a_placeho
             id: item.id.clone(),
             expected_version: item.version,
             bot: Some("Builder".into()),
+            role: None,
         }),
     )
     .await;

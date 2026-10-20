@@ -30,6 +30,7 @@ mod cleanup;
 mod git;
 mod place;
 pub mod repo;
+pub mod role;
 pub mod scratch;
 mod spawn;
 pub mod target;

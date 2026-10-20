@@ -48,6 +48,7 @@ pub(super) fn status(state: BotState, waiting: bool) -> BotStatus {
         BotState::WaitingForUser | BotState::WaitingForApproval => BotStatus::Waiting,
         BotState::Stopping | BotState::Stopped => BotStatus::Stopped,
         BotState::Crashed | BotState::AuthFailed | BotState::RateLimited => BotStatus::Failed,
+        BotState::Asleep | BotState::Queued => BotStatus::Asleep,
     }
 }
 
@@ -176,7 +177,7 @@ pub(super) fn merge(
     out
 }
 
-/// The lead first, then waiting, working, failed and stopped, idle,
+/// The lead first, then waiting, working, failed and stopped, idle, asleep,
 /// offline; within a group by name, ignoring case.
 fn sort(briefs: &mut [BotBrief]) {
     let group: HashMap<i32, u8> = [
@@ -185,6 +186,7 @@ fn sort(briefs: &mut [BotBrief]) {
         (BotStatus::Failed, 3),
         (BotStatus::Stopped, 3),
         (BotStatus::Idle, 4),
+        (BotStatus::Asleep, 5),
         (BotStatus::Unspecified, 5),
         (BotStatus::Offline, 6),
     ]
@@ -226,6 +228,17 @@ mod tests {
         );
         assert_eq!(status(BotState::Stopping, false), BotStatus::Stopped);
         assert_eq!(status(BotState::RateLimited, false), BotStatus::Failed);
+    }
+
+    /// Asleep or queued for a slot is no failure (0.23.0): the glance shows
+    /// it asleep, and it gets no `bot_stopped` row.
+    #[test]
+    fn an_asleep_or_queued_bot_is_not_down() {
+        for state in [BotState::Asleep, BotState::Queued] {
+            assert_eq!(status(state, false), BotStatus::Asleep);
+            assert_eq!(down_state(state), None);
+        }
+        assert_eq!(down_state(BotState::Stopped), Some(BotState::Stopped));
     }
 
     #[test]

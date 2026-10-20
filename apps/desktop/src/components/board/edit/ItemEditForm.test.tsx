@@ -1,9 +1,11 @@
 import { create } from "@bufbuild/protobuf";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { DaemonError } from "../../../protocol/connection";
+import { Role } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { EditResultSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
+import { TEAM_ON_DEMAND_V1 } from "../../../protocol/team";
 import { unmet } from "../../../test/boardFixtures";
 import { draftItem } from "../../../test/boardsFixtures";
 import { STORY_BOTS } from "../../../test/boardStory";
@@ -110,5 +112,45 @@ describe("the owner's edit form", () => {
       types: ["Files"],
     } as unknown as DataTransfer);
     expect(await screen.findByDisplayValue(/attachment:a1/)).toBeInTheDocument();
+  });
+
+  it("assigns to whoever holds a role, on a 0.23 service", async () => {
+    const user = userEvent.setup();
+    const fake = new FakeDaemon().onBoard("itemAssign", () => ({ case: "edited", value: done() }));
+    fake.capabilities = [...fake.capabilities, TEAM_ON_DEMAND_V1];
+    const onSaved = renderForm(fake);
+    const assignee = screen.getByRole("combobox", { name: "Assignee" });
+    expect(within(assignee).getByRole("group", { name: "Assign to role…" })).toBeInTheDocument();
+    await user.selectOptions(assignee, "Architect");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(fake.boardCalls[0]).toMatchObject({
+      case: "itemAssign",
+      value: { id: "RB-20", role: Role.ARCHITECT },
+    });
+    expect(fake.boardCalls[0]?.value).not.toHaveProperty("bot");
+    expect(onSaved).toHaveBeenCalled();
+  });
+
+  it("says what to do when nobody holds the role", async () => {
+    const user = userEvent.setup();
+    const fake = new FakeDaemon().onBoard("itemAssign", () => ({
+      case: "edited",
+      value: create(EditResultSchema, {
+        outcome: { case: "refused", value: { unmet: [unmet("role.unheld", "role unheld")] } },
+      }),
+    }));
+    fake.capabilities = [...fake.capabilities, TEAM_ON_DEMAND_V1];
+    const onSaved = renderForm(fake);
+    await user.selectOptions(screen.getByRole("combobox", { name: "Assignee" }), "Product");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Nobody on this board holds Product yet. Give a bot the role on its page, under Board roles, then assign again.",
+    );
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it("offers no roles before 0.23", () => {
+    renderForm(new FakeDaemon());
+    expect(screen.queryByRole("group", { name: "Assign to role…" })).toBeNull();
   });
 });

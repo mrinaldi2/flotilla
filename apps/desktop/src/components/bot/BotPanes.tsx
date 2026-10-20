@@ -14,6 +14,7 @@ import TerminalPane from "../TerminalPane";
 import type { BotTab } from "./BotTabs";
 import BotChat from "./BotChat";
 import { doElsewhere } from "./doElsewhere";
+import { useWakeOnOpen } from "./useWakeOnOpen";
 import ReportsPane from "./ReportsPane";
 
 interface BotPanesProps {
@@ -205,6 +206,8 @@ export default function BotPanes(props: BotPanesProps): ReactElement {
   const linked = bot.peer != null;
   const refusal = doElsewhere(bot);
   const permissions = usePermissions(client, bot.id, connected && !linked);
+  // Opening an asleep bot's conversation wakes it (0.23.0).
+  useWakeOnOpen(client, bot, active, connected, canControl);
   return (
     <>
       {/* Above every tab: a prompt waits whether the owner reads the chat or the terminal. */}

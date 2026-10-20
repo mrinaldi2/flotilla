@@ -23,7 +23,10 @@ mod revert;
 mod runtime;
 
 pub use archive::{archive_bot, prune_archived_workspaces};
-pub use create::{create_bot, create_bot_with_runtime, create_worker_bot, Created, WorkersFull};
+pub use create::{
+    create_bot, create_bot_with_runtime, create_role_worker_bot, create_worker_bot, Created,
+    WorkersFull,
+};
 pub use revert::revert_revision;
 pub use runtime::{
     check_runtime_available, requested_runtime, set_bot_runtime, set_bot_user_chrome,
@@ -109,13 +112,14 @@ pub(super) fn provision_spec<'a>(
         max_bots_per_project: app.cfg.max_bots_per_project,
         max_workers_per_project: app.cfg.max_workers_per_project,
         temporary: bot.temporary,
+        lead: project.lead_bot_id.as_deref() == Some(bot.id.as_str()),
         repo: app.db.project_repo(&project.id).ok().flatten(),
         project_description: app.db.project_description(&project.id).unwrap_or_default(),
         artifacts_dir: paths::artifacts_dir(&app.cfg, &project.dir_name)
             .display()
             .to_string(),
         linked_machines: linked_machines(app, &project.id),
-        own_browser: app.cfg.browser.enabled,
+        own_browser: app.cfg.browser.enabled && crate::browser::wanted(&app.db, bot),
         user_chrome: bot.user_chrome,
         task_limits: app.cfg.tasks.for_project(&project.name),
         pull_requests: app.cfg.pr_flow(&project.name),

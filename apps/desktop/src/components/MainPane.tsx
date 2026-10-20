@@ -114,6 +114,7 @@ export default function MainPane(props: MainPaneProps): ReactElement {
         initialTab={selection.tab}
         connected={connected}
         canControl={canControl}
+        lead={daemon.projects.some((p) => p.id === bot.project_id && p.lead_bot_id === bot.id)}
         onBotUpdated={daemon.applyBotUpdate}
         onRoutinesChanged={daemon.updateBotRoutines}
         onToast={addToast}

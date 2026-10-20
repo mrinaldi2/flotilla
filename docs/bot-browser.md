@@ -1,7 +1,8 @@
 # Each bot's own browser
 
 Status: implemented in the daemon (`crates/flotillad/src/browser/`) and the
-desktop app (the bot's Browser tab). Tests: `crates/flotillad/tests/agent_browser.rs`.
+desktop app (the bot's Browser tab). Tests: `crates/flotillad/tests/agent_browser.rs` and
+`crates/flotillad/tests/browser_roles.rs`.
 
 ## Why
 
@@ -13,7 +14,14 @@ there with nothing saying which bot opened them, or why.
 
 ## What a bot gets
 
-- **A browser of its own.** Each bot session runs the
+- **A browser of its own, where its work needs one** (0.23.0). Each browser
+  costs about 85 MB, so on a project with a board here only a tester, a UX
+  reviewer (`reviewer.ux`), or a bot the owner allowed their own Chrome gets
+  one. On a project with no board here (none yet, or its board lives on a
+  linked computer, which keeps the roles) every bot keeps its browser. A role
+  given or taken applies from the bot's next session. Watching a bot with
+  no browser shows no tabs (`browser_tabs` with `open: false`). That bot's
+  session runs the
   [Playwright MCP](https://github.com/microsoft/playwright-mcp) server as
   `playwright`, against a Chrome whose profile lives in the bot's directory
   (`<bot>/browser/profile`). Logins persist between sessions and are the bot's
@@ -78,7 +86,7 @@ Streaming happens only while some client watches that bot.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `enabled` | `true` | Give every bot a browser of its own. |
+| `enabled` | `true` | Give bots a browser of their own (the ones whose work needs one, above). |
 | `node_dir` | found | The directory holding `node` and `npx`. The daemon looks on PATH, then in mise, nvm, asdf, fnm, Volta, Homebrew and, on Windows, Program Files, scoop and nvm-windows. Set it if Node lives elsewhere. |
 | `channel` | found | `chrome`, `msedge` or `chromium`: Chrome when installed, else Edge, else Playwright's own Chromium. |
 | `headless` | `true` | Set `false` to see the bots' browser windows on the desktop. |

@@ -20,6 +20,7 @@ const AFTER_THE_RENAME: &[&str] = &[
     "request.board_enable.columns",
     "request.board_enable.preset",
     "request.board_enable.release_gated",
+    "request.item_assign.role",
     "request.item_create.task",
     "request.item_query.plan",
     "request.item_update.plan",

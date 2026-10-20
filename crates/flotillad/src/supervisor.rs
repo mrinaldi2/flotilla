@@ -2,10 +2,10 @@
 //! restart with backoff, and channel delivery through each session's inbox
 //! socket.
 //!
-//! Bots are always-on. Nothing starts them by hand: the daemon reconciles
-//! every live bot into a running session at boot and on every supervision
-//! tick, so the only way a bot is not running is that it just crashed and is
-//! waiting out its backoff.
+//! Nothing starts a bot by hand: the daemon reconciles every bot holding a
+//! running slot into a session at boot and on every supervision tick. An
+//! always-on bot always asks for one; an on-demand bot is woken by work and
+//! sleeps when idle (0.23.0, see [`team`]).
 //!
 //! Terminal input goes straight to the PTY (grant-gated at the control
 //! plane); bus deliveries go through the inbox socket and never touch the
@@ -39,6 +39,10 @@ mod restart;
 mod session_events;
 mod session_hooks;
 mod start;
+mod team;
+mod team_ops;
+mod team_settings;
+mod team_wake;
 mod termio;
 mod typing;
 mod typing_kinds;
@@ -46,6 +50,9 @@ mod watchdog;
 mod working_on;
 
 pub use composer::{digest as prompt_digest, typed_body};
+pub use team::{TeamStatus, TeamWake, WakeCard, WakeReason, WakeRequest, Woke};
+pub use team_settings::{IDLE_SLEEP_RANGE, MAX_RUNNING_RANGE};
+pub use team_wake::{for_message as wake_for_message, request as wake_request};
 pub use typing_kinds::{opens_modal, Outcome, TypeError};
 pub use watchdog::{StartupConfig, DIDNT_CONNECT};
 pub use working_on::{card_named, WorkingOn};
@@ -141,6 +148,8 @@ struct BotHandle {
     /// Set when the daemon asked for the stop (archival), so exit is not a
     /// crash and the reconciler leaves the bot alone.
     stopping: bool,
+    /// Set with `stopping` when the bot is going to sleep (0.23.0).
+    sleeping: bool,
     restart_pending: bool,
     /// Set while one `start_bot` call is bringing the runtime up, so a second
     /// caller does not launch another runtime against the same conversation.
@@ -183,6 +192,7 @@ impl BotHandle {
             repaint_restore: None,
             repaint_generation: 0,
             stopping: false,
+            sleeping: false,
             restart_pending: false,
             starting: false,
             starting_since: Instant::now(),
@@ -223,6 +233,11 @@ struct SupervisorInner {
     composers: Mutex<HashMap<String, Arc<typing::BotComposer>>>,
     /// The card each bot's turn is about, for `bot_state` (0.19.0).
     working: WorkingOn,
+    /// Running slots and the queue for one (0.23.0).
+    team: Mutex<team::Team>,
+    team_settings: team_settings::TeamSettings,
+    /// The first tick, which wakes on-demand bots that still have work.
+    booted: std::sync::atomic::AtomicBool,
 }
 
 /// What runs before a bot's session starts: the bot id, and whether the
@@ -238,6 +253,7 @@ impl Supervisor {
         secrets: Arc<Secrets>,
         auto_compact: AutoCompactOverride,
     ) -> Self {
+        let team_settings = team_settings::TeamSettings::load(&cfg.team, &db);
         Self {
             inner: Arc::new(SupervisorInner {
                 adapter,
@@ -252,6 +268,9 @@ impl Supervisor {
                 gave_up: Mutex::new(watchdog::GaveUp::default()),
                 composers: Mutex::new(HashMap::new()),
                 working: WorkingOn::default(),
+                team: Mutex::default(),
+                team_settings,
+                booted: Default::default(),
             }),
         }
     }
@@ -295,6 +314,7 @@ impl Supervisor {
             std::mem::replace(&mut h.state, state)
         };
         tracing::info!(bot_id, state = state.as_str(), reason, "bot state");
+        self.team_on_state(bot_id, state);
         let item_id = self.inner.working.on_state(bot_id, from, state);
         let starts = !working_on::in_turn(from) && working_on::in_turn(state);
         let cause = (starts && self.inner.working.answering(bot_id)).then_some("answer");

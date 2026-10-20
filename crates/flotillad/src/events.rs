@@ -52,6 +52,11 @@ pub enum Push {
     WorkersUpdated {
         project_id: String,
     },
+    /// This computer's running count or its queue for a slot changed
+    /// (0.23.0, `team_on_demand_v1`).
+    TeamUpdated {
+        team: crate::supervisor::TeamStatus,
+    },
     /// A `clone_project_repo` clone started (`cloning`), finished (`done`,
     /// with the clone's `path`) or failed (`failed`, with an `error` to
     /// show) (0.20.0).

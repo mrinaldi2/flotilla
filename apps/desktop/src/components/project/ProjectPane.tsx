@@ -31,7 +31,7 @@ import { questionsOn } from "../../protocol/questions";
 import { PULL_REQUESTS } from "../../protocol/prs";
 import PullRequestsView from "../prs/PullRequestsView";
 import ReleasesView from "../releases/ReleasesView";
-import TeamView from "../team/TeamView";
+import TeamTab from "../team/TeamTab";
 import ProjectWindow from "./ProjectWindow";
 
 /** What the owner can change about a project, from its window. */
@@ -52,15 +52,6 @@ interface ProjectPaneProps extends ProjectActions {
   readonly tab: ProjectTab;
   /** Answers a bot, quoting a report of its own. */
   readonly onReply: (botId: string, quote: string) => void;
-}
-
-/** Failed deliveries per bot, for the Team cards' badge. */
-function failedByBot(deliveries: readonly { readonly bot_id: string }[]): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const delivery of deliveries) {
-    counts[delivery.bot_id] = (counts[delivery.bot_id] ?? 0) + 1;
-  }
-  return counts;
 }
 
 function NeedsNewer({ what }: { readonly what: string }): ReactElement {
@@ -125,21 +116,18 @@ function Overview({ ctx }: { readonly ctx: TabContext }): ReactElement {
 }
 
 function Team({ ctx }: { readonly ctx: TabContext }): ReactElement {
-  const { daemon, project } = ctx;
   return (
-    <TeamView
+    <TeamTab
+      client={ctx.client}
+      daemon={ctx.daemon}
+      project={ctx.project}
       bots={ctx.bots}
       row={ctx.row}
       threads={ctx.threads}
-      unread={daemon.unreadBots}
-      failed={failedByBot(daemon.failedDeliveries)}
-      activity={daemon.activityByBot}
-      leadBotId={project.lead_bot_id}
       now={ctx.now}
-      canControl={daemon.canControl}
-      onOpenBot={(botId) => daemon.select({ kind: "bot", botId })}
-      onCreateBot={() => void ctx.onCreateBot(project.id)}
-      onDeleteBot={(botId) => void ctx.onDeleteBot(botId)}
+      addToast={ctx.addToast}
+      onCreateBot={ctx.onCreateBot}
+      onDeleteBot={ctx.onDeleteBot}
     />
   );
 }

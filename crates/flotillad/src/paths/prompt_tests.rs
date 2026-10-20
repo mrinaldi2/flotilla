@@ -14,6 +14,7 @@ fn spec<'a>(instructions: &'a str) -> BotProvision<'a> {
         max_bots_per_project: 12,
         max_workers_per_project: 4,
         temporary: false,
+        lead: false,
         repo: None,
         project_description: String::new(),
         artifacts_dir: "/home/u/.gravity/projects/proj/artifacts".to_string(),
@@ -220,4 +221,31 @@ fn the_plan_section_is_there_only_when_planning_is_on() {
     ] {
         assert!(on[at..].contains(tool), "{tool}");
     }
+}
+
+/// 0.23.0: the lead hears how it leads a team of roles, a member that work
+/// wakes it, and a worker neither.
+#[test]
+fn the_lead_and_the_members_hear_how_the_team_works() {
+    let lead = system_md(&BotProvision {
+        lead: true,
+        ..spec("")
+    });
+    let at = lead
+        .find("## Leading the team")
+        .expect("the lead's section");
+    assert!(lead.find("## Work is on the board").unwrap() < at);
+    assert!(!lead.contains("## Woken by work"));
+    let member = system_md(&spec(""));
+    assert!(member.contains("## Woken by work"));
+    assert!(!member.contains("## Leading the team"));
+    let worker = system_md(&BotProvision {
+        temporary: true,
+        lead: true,
+        ..spec("")
+    });
+    assert!(!worker.contains("## Leading the team"));
+    assert!(!worker.contains("## Woken by work"));
+    // A bot's prompt no longer promises every bot runs all the time.
+    assert!(!member.contains("always\nrunning"));
 }

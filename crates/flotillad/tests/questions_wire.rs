@@ -174,6 +174,8 @@ async fn the_turn_an_answer_starts_is_on_its_card_and_says_so() {
         plan.d.app.supervisor.state(&plan.lead).0,
         bus::BotState::Ready
     );
+    // The lead's own kickoff for the research card is delivered first, so
+    // the answer's delivery is the newest when its turn starts.
     // The owner's board connection speaks the binary contract; the toasts
     // the apps show come as JSON pushes.
     let mut pushes = common::WsClient::connect(&plan.d).await;

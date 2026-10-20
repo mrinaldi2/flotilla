@@ -42,6 +42,8 @@ pub(crate) fn project_view(app: &AppState, project: &bus::Project) -> Value {
         "permission_profile": app.db.project_permission_profile(&project.id).unwrap_or_default(),
         // What it is for (0.20.0, `project_description`); "" when unset.
         "description": app.db.project_description(&project.id).unwrap_or_default(),
+        // What its worktrees and caches may use here (0.23.0); null, none.
+        "disk_budget_bytes": app.db.project_disk_budget(&project.id).ok().flatten(),
         "deleted_at": project.deleted_at.map(|t| t.to_rfc3339()),
         "created_at": project.created_at.to_rfc3339()
     })
@@ -103,6 +105,8 @@ pub(crate) fn bot_view(app: &AppState, bot: &bus::Bot) -> Value {
         "user_chrome": bot.user_chrome,
         "permission_extras": app.db.bot_permission_extras(&bot.id).unwrap_or_default(),
         "temporary": bot.temporary,
+        // Always on, or asleep when idle (0.23.0).
+        "presence": bot.presence.as_str(),
         "state": state.as_str(),
         "state_reason": reason,
         "unread_count": unread,

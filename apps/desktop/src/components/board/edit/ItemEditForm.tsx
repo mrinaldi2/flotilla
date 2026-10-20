@@ -2,17 +2,20 @@
 // priority, size, assignee, labels, description and acceptance criteria.
 // An image pasted into the description is attached and placed inline.
 // Saved as one `item_update` (and `item_assign` when the assignee changed);
-// a refusal lists its reasons, a conflict asks to look again.
+// a refusal lists its reasons, a conflict asks to look again. From 0.23.0
+// the assignee can be a role: the service picks whoever holds it.
 
 import { useState } from "react";
 import type { ClipboardEvent, FormEvent, ReactElement } from "react";
 import type { BoardApi } from "../../../protocol/board";
 import { boardCall } from "../../../protocol/board";
 import type { Bot } from "../../../protocol/entities";
-import type { Item } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { Item, Role, Unmet } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { Priority, Size } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import type { EditResult } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
+import { teamOn } from "../../../protocol/team";
 import { errText } from "../../../util";
+import { assignableRoles, roleLabel } from "../../bot/roleLabels";
 import { typeLabel } from "../labels";
 import type { ItemForm } from "./itemEdit";
 import { editTypes, formOf, formProblem, PRIORITIES, SIZES, updateFor } from "./itemEdit";
@@ -33,10 +36,44 @@ function notDone(item: Item, result: EditResult): string | null {
     case "done":
       return null;
     case "refused":
-      return result.outcome.value.unmet.map((u) => u.text).join(" ");
+      return result.outcome.value.unmet.map(unmetText).join(" ");
     default:
       return `${item.id} changed while you edited it. Cancel to see it as it is now.`;
   }
+}
+
+/** The assignee select's value for a role: "role:9". */
+const ROLE_PREFIX = "role:";
+
+/** The role an assignee value names, or undefined for a bot or nobody. */
+function roleOf(assignee: string): Role | undefined {
+  return assignee.startsWith(ROLE_PREFIX)
+    ? (Number(assignee.slice(ROLE_PREFIX.length)) as Role)
+    : undefined;
+}
+
+/** A refusal's reason; nobody holding the role says what to do about it. */
+function unmetText(unmet: Unmet, role?: Role): string {
+  if (unmet.code !== "role.unheld") {
+    return unmet.text;
+  }
+  const which = role === undefined ? "that role" : roleLabel(role);
+  return `Nobody on this board holds ${which} yet. Give a bot the role on its page, under Board roles, then assign again.`;
+}
+
+async function assign(api: BoardApi, item: Item, version: bigint, assignee: string) {
+  const role = roleOf(assignee);
+  const bot = assignee === "" || role !== undefined ? undefined : assignee;
+  const value = {
+    id: item.id,
+    expectedVersion: version,
+    ...(role === undefined ? { bot } : { role }),
+  };
+  const result = await boardCall(api, { case: "itemAssign", value }, "edited");
+  if (result.outcome.case === "refused") {
+    return result.outcome.value.unmet.map((u) => unmetText(u, role)).join(" ");
+  }
+  return notDone(item, result);
 }
 
 async function save(api: BoardApi, item: Item, form: ItemForm): Promise<string | null> {
@@ -51,15 +88,22 @@ async function save(api: BoardApi, item: Item, form: ItemForm): Promise<string |
     version = result.outcome.value.version;
   }
   if (form.assignee !== (item.assignee ?? "")) {
-    const bot = form.assignee === "" ? undefined : form.assignee;
-    const result = await boardCall(
-      api,
-      { case: "itemAssign", value: { id: item.id, expectedVersion: version, bot } },
-      "edited",
-    );
-    return notDone(item, result);
+    return assign(api, item, version, form.assignee);
   }
   return null;
+}
+
+/** "Assign to role…": whoever holds it, awake and free first (0.23.0). */
+function RoleOptions(): ReactElement {
+  return (
+    <optgroup label="Assign to role…">
+      {assignableRoles().map(([role, label]) => (
+        <option key={role} value={`${ROLE_PREFIX}${role}`}>
+          {label}
+        </option>
+      ))}
+    </optgroup>
+  );
 }
 
 export default function ItemEditForm(props: ItemEditFormProps): ReactElement {
@@ -182,6 +226,7 @@ export default function ItemEditForm(props: ItemEditFormProps): ReactElement {
                 {b.name}
               </option>
             ))}
+            {teamOn(props.api) ? <RoleOptions /> : null}
           </select>
         </label>
         <label className="field">

@@ -10,6 +10,7 @@ pub(super) const KINDS: &[&str] = &[
     "set_project_repo",
     "set_project_extra_repos",
     "clone_project_repo",
+    "set_project_disk_budget",
 ];
 
 impl Conn {
@@ -22,6 +23,7 @@ impl Conn {
         match kind {
             "set_project_repo" => self.set_project_repo(req_id, req),
             "set_project_extra_repos" => self.set_project_extra_repos(req_id, req),
+            "set_project_disk_budget" => self.set_project_disk_budget(req_id, req),
             _ => self.clone_project_repo(req_id, req),
         }
     }
@@ -125,6 +127,56 @@ impl Conn {
         let mut view = super::project_view(&self.app, &project);
         view["extra_repos"] = json!(self.app.db.extra_repos(&project.id)?);
         self.send(json!({ "type": "project", "req_id": req_id, "project": view }));
+        Ok(())
+    }
+
+    /// `set_project_disk_budget {project_id, bytes | null}` (0.23.0): what
+    /// the project's worktrees and build caches may use on this computer;
+    /// `null` takes the budget away. The owner's alone, like the extra
+    /// repositories: approve, from a device or the app's ticket.
+    pub(super) fn set_project_disk_budget(
+        &self,
+        req_id: &Value,
+        req: &Value,
+    ) -> anyhow::Result<()> {
+        let project_id = Self::str_field(req, "project_id")?;
+        let Some(project) = self.app.db.get_live_project(project_id)? else {
+            self.reply_err(req_id, "not_found", "project not found or already deleted");
+            return Ok(());
+        };
+        match self.owner_proof() {
+            Some(crate::db::OwnerProof::Device { .. } | crate::db::OwnerProof::Ticket) => {}
+            _ => {
+                self.reply_err(
+                    req_id,
+                    "forbidden",
+                    "only the owner's app or a paired device sets this, on the project's own computer",
+                );
+                return Ok(());
+            }
+        }
+        let bytes = match req.get("bytes") {
+            None | Some(Value::Null) => None,
+            Some(v) => match v.as_u64().filter(|b| *b > 0 && i64::try_from(*b).is_ok()) {
+                Some(b) => Some(b),
+                None => {
+                    self.reply_err(
+                        req_id,
+                        "invalid_request",
+                        "bytes must be a positive number or null",
+                    );
+                    return Ok(());
+                }
+            },
+        };
+        self.app.db.set_project_disk_budget(&project.id, bytes)?;
+        self.app.events.push(crate::events::Push::ProjectUpdated {
+            project: project.clone(),
+        });
+        self.send(json!({
+            "type": "project", "req_id": req_id,
+            "project": super::project_view(&self.app, &project)
+        }));
         Ok(())
     }
 

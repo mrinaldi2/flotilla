@@ -15,6 +15,7 @@ import type { PrOwnerRequestBody } from "./prOwner";
 import type { ProjectTrashRequestBody } from "./projectTrash";
 import type { ReleaseRequestBody } from "./releases";
 import type {
+  BotPresence,
   BotRuntime,
   DeliveryState,
   DeviceCapability,
@@ -195,7 +196,11 @@ export type ClientRequestBody =
   | {
       readonly type: "set_config";
       /** Null clears the override so Claude Code uses the model default. */
-      readonly auto_compact_window: number | null;
+      readonly auto_compact_window?: number | null;
+      /** 0.23.0 (`team_on_demand_v1`): at least 1. */
+      readonly max_running_bots?: number;
+      /** 0.23.0 (`team_on_demand_v1`): at least 1. */
+      readonly idle_sleep_minutes?: number;
     }
   | { readonly type: "list_devices" }
   | {
@@ -251,6 +256,20 @@ export type ClientRequestBody =
   | { readonly type: "restart_bot"; readonly bot_id: string }
   /** Restarts with a fresh conversation; work, memory and tasks are kept. */
   | { readonly type: "clear_bot_session"; readonly bot_id: string }
+  /** Always on, or asleep when idle (0.23.0, `team_on_demand_v1`). */
+  | { readonly type: "set_bot_presence"; readonly bot_id: string; readonly presence: BotPresence }
+  /** Wakes an asleep bot ahead of board work; queued while every slot is taken. */
+  | { readonly type: "wake_bot"; readonly bot_id: string }
+  /** Puts an on-demand bot to sleep once its running turn ends. */
+  | { readonly type: "sleep_bot"; readonly bot_id: string }
+  /** The running count and the queue for a slot. */
+  | { readonly type: "team_status" }
+  /** The disk the project's worktrees and caches may use (0.23.0, `repo_mirror_v1`); null, none. */
+  | {
+      readonly type: "set_project_disk_budget";
+      readonly project_id: string;
+      readonly bytes: number | null;
+    }
   /** Streams `browser_tabs` and `browser_frame`; `tab_id` pins a tab, else it follows the bot. */
   | { readonly type: "watch_browser"; readonly bot_id: string; readonly tab_id?: string }
   | { readonly type: "unwatch_browser" }

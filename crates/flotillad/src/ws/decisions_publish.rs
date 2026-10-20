@@ -164,6 +164,7 @@ impl Conn {
             }
         }
         self.app.db.set_project_lead(project_id, bot_id)?;
+        crate::projectmgmt::lead_changed(&self.app, project_id);
         let project = self
             .app
             .db

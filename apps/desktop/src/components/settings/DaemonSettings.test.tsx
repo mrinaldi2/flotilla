@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { DaemonConfig } from "../../protocol/entities";
@@ -269,5 +269,16 @@ describe("DaemonSettings", () => {
     expect(
       await screen.findByRole("button", { name: "Restart Flotilla service" }),
     ).toBeInTheDocument();
+  });
+
+  it("shows the running cap next to auto-compact only on a 0.23 service", async () => {
+    renderPane(baseDaemon());
+    expect(await screen.findByRole("textbox", { name: "Auto-compact window" })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Bots running at once" })).toBeNull();
+    cleanup();
+    const team = baseDaemon();
+    team.capabilities = [...team.capabilities, "team_on_demand_v1"];
+    renderPane(team);
+    expect(await screen.findByRole("textbox", { name: "Bots running at once" })).toHaveValue("6");
   });
 });

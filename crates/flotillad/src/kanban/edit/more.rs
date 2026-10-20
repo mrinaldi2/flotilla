@@ -7,6 +7,7 @@ use bus::contract::board as c;
 
 use super::{project_bot, Edited, Editor};
 use crate::db::Write;
+use crate::kanban::by_role;
 use crate::kanban::guards::{self, Who};
 use crate::kanban::model::Item;
 use crate::releases::post_install;
@@ -35,13 +36,28 @@ impl Editor<'_> {
         })
     }
 
+    /// Assign a bot by name, or whichever holder of a role is readiest
+    /// (`by_role`). A role nobody holds is refused once the caller may
+    /// assign at all.
     pub fn assign(&self, req: &c::ItemAssign) -> anyhow::Result<Edited> {
-        let assignee = req
-            .bot
-            .as_deref()
-            .map(|b| project_bot(self.app, self.project_id, b))
-            .transpose()?;
-        let guard = |_: &Item, who: &Who| guards::check_lead(who);
+        let (assignee, unheld) = match by_role::requested(req)? {
+            Some(role) => match by_role::holder(self.app, self.project_id, role, &req.id)? {
+                Some(bot) => (Some(bot), None),
+                None => (None, Some(by_role::unheld(role))),
+            },
+            None => {
+                let bot = req.bot.as_deref();
+                let bot = bot.map(|b| project_bot(self.app, self.project_id, b));
+                (bot.transpose()?, None)
+            }
+        };
+        let guard = |_: &Item, who: &Who| {
+            let mut unmet = guards::check_lead(who);
+            if unmet.is_empty() {
+                unmet.extend(unheld);
+            }
+            unmet
+        };
         self.guarded(&req.id, req.expected_version, false, guard, |t| {
             t.assign_item(
                 &req.id,

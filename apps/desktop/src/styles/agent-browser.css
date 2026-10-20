@@ -283,7 +283,8 @@
   padding: 10px 14px;
 }
 
-.bot-chrome {
+.bot-chrome,
+.bot-presence {
   margin-top: 12px;
 }
 

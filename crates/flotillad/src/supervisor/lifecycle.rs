@@ -55,6 +55,7 @@ impl Supervisor {
         // installed since the last start is picked up.
         let browser = bot_root
             .as_deref()
+            .filter(|_| crate::browser::wanted(&self.inner.db, &bot))
             .and_then(|root| crate::browser::setup::server(&self.inner.cfg, root, composer));
         if let Some(root) = &bot_root {
             let bus = crate::bus_auth::server_entry(&self.inner.cfg, composer);
@@ -226,9 +227,9 @@ impl Supervisor {
         Ok(())
     }
 
-    /// Bring every live bot into a running session. Called at boot and on
-    /// every supervision tick, so a bot is running unless it is waiting out a
-    /// crash backoff — there is nothing for a user to start.
+    /// Bring every bot holding a running slot into a session. Called at boot
+    /// and on every supervision tick, so such a bot is running unless it is
+    /// waiting out a crash backoff — there is nothing for a user to start.
     pub fn reconcile(&self) {
         let bots = match self.inner.db.list_bots(None) {
             Ok(bots) => bots,
@@ -237,7 +238,8 @@ impl Supervisor {
                 return;
             }
         };
-        for bot in bots.into_iter().filter(|b| !b.is_linked()) {
+        let wanted = self.team_tick(&bots);
+        for bot in bots.into_iter().filter(|b| wanted.contains(&b.id)) {
             if !self.wants_start(&bot.id) {
                 continue;
             }
@@ -379,7 +381,7 @@ impl Supervisor {
             (was_stopping, h.consecutive_crashes)
         };
         if was_stopping {
-            self.set_state(bot_id, BotState::Stopped, "Stopped by the Flotilla service");
+            self.stopped(bot_id);
             return;
         }
         let reason = code.map_or_else(

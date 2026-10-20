@@ -114,7 +114,7 @@ impl ColumnCategory {
 text_enum!(Role {
     Lead => "lead", Coach => "coach", Devops => "devops", ReviewerArch => "reviewer.arch",
     ReviewerUx => "reviewer.ux", Tester => "tester", Dev => "dev",
-    ReviewerCe => "reviewer.ce",
+    ReviewerCe => "reviewer.ce", Product => "product", Architect => "architect",
 });
 // Features and epics live in the plan, and chores became tasks (0.21.0).
 text_enum!(ItemType { Task => "task", Design => "design", Bug => "bug", Spike => "spike" });

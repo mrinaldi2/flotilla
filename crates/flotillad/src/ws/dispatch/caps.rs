@@ -44,6 +44,7 @@ const READ_ONLY: &[&str] = &[
     "list_tasks",
     "get_task",
     "list_workers",
+    "team_status",
     "list_releases",
     "release_machines",
     "get_release",
@@ -126,6 +127,8 @@ const APPROVE_ONLY: &[&str] = &[
     "pr_comment_resolve",
     "release_leave_out",
     "cleanup_resolve",
+    // The disk a project may use (0.23.0): the owner's to set.
+    "set_project_disk_budget",
 ];
 
 /// Capability required for each request type.

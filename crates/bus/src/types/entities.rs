@@ -4,8 +4,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use super::{
-    BotState, DeliveryState, Id, MessageKind, OverlapPolicy, RoutineRunState, RunSource,
-    SignalSource, Trigger,
+    BotPresence, BotState, DeliveryState, Id, MessageKind, OverlapPolicy, RoutineRunState,
+    RunSource, SignalSource, Trigger,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,6 +66,9 @@ pub struct Bot {
     /// Counted against the project's worker cap, not its bot cap.
     #[serde(default)]
     pub temporary: bool,
+    /// Always on, or on demand (0.23.0). Older daemons omit it: always on.
+    #[serde(default)]
+    pub presence: BotPresence,
     pub created_at: DateTime<Utc>,
 }
 

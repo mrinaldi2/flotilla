@@ -103,7 +103,9 @@ map_enum!(Role {
     ReviewerUx,
     Tester,
     Dev,
-    ReviewerCe
+    ReviewerCe,
+    Product,
+    Architect
 });
 map_enum!(ItemType {
     Task,
