@@ -160,8 +160,61 @@ fn a_lead_that_held_the_card_doesnt_approve_it_once_it_hands_it_on() {
 fn the_lead_closes_its_own_plan_research_spike() {
     let lead = bot("lead", &[Role::Lead]);
     let mut spike = item("review", Some("lead"));
-    spike.item_type = super::super::model::ItemType::Spike;
+    spike.item_type = ItemType::Spike;
     assert_eq!(codes(&spike, "done", &lead), ["rule.independent"]);
     spike.plan_node_id = Some("P-PL-2".into());
     assert!(codes(&spike, "done", &lead).is_empty());
+}
+
+/// A bot's code card reaches Review only with its work where others can
+/// read it (0.23.1): a pushed branch linked, or its PR. A project without a
+/// repository, a spike, a design card and the owner aren't held to it.
+#[test]
+fn a_code_card_needs_its_branch_or_pr_for_review() {
+    let me = bot("helper", &[]);
+    let card = item("doing", Some("helper"));
+    let from = column("doing");
+    let to = column("review");
+    let mv = Move {
+        to: &to,
+        reason: None,
+        override_reason: None,
+    };
+    let run = |item: &Item, who: &Who, ctx: &Context| -> Vec<String> {
+        evaluate(item, &from, &to.policy, &mv, who, ctx)
+            .into_iter()
+            .map(|u| u.code)
+            .collect()
+    };
+    let repo = Context {
+        has_repo: true,
+        ..Context::default()
+    };
+    assert_eq!(run(&card, &me, &repo), ["review.unpushed"]);
+    assert!(
+        run(&card, &me, &Context::default()).is_empty(),
+        "no repository"
+    );
+    assert!(
+        run(&card, &Who::Owner, &repo).is_empty(),
+        "the owner moves freely"
+    );
+    let mut spike = card.clone();
+    spike.item_type = ItemType::Spike;
+    assert!(run(&spike, &me, &repo).is_empty(), "a spike isn't code");
+    let linked = Context {
+        links: vec![super::super::model::ItemLink {
+            item_id: card.id.clone(),
+            kind: LinkKind::Branch,
+            target: "helper/fix".into(),
+            label: None,
+            created_by: "bot:helper".into(),
+            at: Utc::now(),
+        }],
+        ..repo.clone()
+    };
+    assert!(
+        run(&card, &me, &linked).is_empty(),
+        "a linked branch is enough"
+    );
 }

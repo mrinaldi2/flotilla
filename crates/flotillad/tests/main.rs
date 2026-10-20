@@ -199,6 +199,7 @@ mod release_tester_targets;
 mod releases;
 mod repo_clone;
 mod resume;
+mod review_needs_code;
 mod role_workers;
 mod routines;
 mod scratch_safety;

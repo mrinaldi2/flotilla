@@ -21,3 +21,9 @@ CREATE TABLE IF NOT EXISTS card_worktree (
     PRIMARY KEY (project_id, item_id)
 );
 "#;
+
+/// `project.pr_flow` (0.23.1): the owner turned the project's pull requests
+/// on in the app, beside the daemon config's `pr_flow_projects`.
+pub(super) const MIGRATION_PROJECT_PR_FLOW: &str = r#"
+ALTER TABLE project ADD COLUMN pr_flow INTEGER NOT NULL DEFAULT 0;
+"#;

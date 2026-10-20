@@ -270,6 +270,8 @@ export type ClientRequestBody =
       readonly project_id: string;
       readonly bytes: number | null;
     }
+  /** Code goes through pull requests (0.23.1); the owner's alone. */
+  | { readonly type: "set_project_pr_flow"; readonly project_id: string; readonly enabled: boolean }
   /** Streams `browser_tabs` and `browser_frame`; `tab_id` pins a tab, else it follows the bot. */
   | { readonly type: "watch_browser"; readonly bot_id: string; readonly tab_id?: string }
   | { readonly type: "unwatch_browser" }

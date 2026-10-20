@@ -11,6 +11,7 @@ pub(super) const KINDS: &[&str] = &[
     "set_project_extra_repos",
     "clone_project_repo",
     "set_project_disk_budget",
+    "set_project_pr_flow",
 ];
 
 impl Conn {
@@ -24,6 +25,7 @@ impl Conn {
             "set_project_repo" => self.set_project_repo(req_id, req),
             "set_project_extra_repos" => self.set_project_extra_repos(req_id, req),
             "set_project_disk_budget" => self.set_project_disk_budget(req_id, req),
+            "set_project_pr_flow" => self.set_project_pr_flow(req_id, req),
             _ => self.clone_project_repo(req_id, req),
         }
     }
@@ -170,6 +172,41 @@ impl Conn {
             },
         };
         self.app.db.set_project_disk_budget(&project.id, bytes)?;
+        self.app.events.push(crate::events::Push::ProjectUpdated {
+            project: project.clone(),
+        });
+        self.send(json!({
+            "type": "project", "req_id": req_id,
+            "project": super::project_view(&self.app, &project)
+        }));
+        Ok(())
+    }
+
+    /// `set_project_pr_flow {project_id, enabled}` (0.23.1): the project's
+    /// code goes through pull requests. Bots' prompts carry the PR section
+    /// from their next start. The owner's alone, like the disk budget.
+    pub(super) fn set_project_pr_flow(&self, req_id: &Value, req: &Value) -> anyhow::Result<()> {
+        let project_id = Self::str_field(req, "project_id")?;
+        let Some(project) = self.app.db.get_live_project(project_id)? else {
+            self.reply_err(req_id, "not_found", "project not found or already deleted");
+            return Ok(());
+        };
+        if !matches!(
+            self.owner_proof(),
+            Some(crate::db::OwnerProof::Device { .. } | crate::db::OwnerProof::Ticket)
+        ) {
+            self.reply_err(
+                req_id,
+                "forbidden",
+                "only the owner's app or a paired device sets this, on the project's own computer",
+            );
+            return Ok(());
+        }
+        let Some(enabled) = req.get("enabled").and_then(Value::as_bool) else {
+            self.reply_err(req_id, "invalid_request", "enabled must be true or false");
+            return Ok(());
+        };
+        self.app.db.set_project_pr_flow(&project.id, enabled)?;
         self.app.events.push(crate::events::Push::ProjectUpdated {
             project: project.clone(),
         });

@@ -213,6 +213,11 @@ const YOUR_CARDS: &str = "## Your cards\n\n\
      - When the work is done, comment the result on the card, link or attach\n\
      what you made, and move it to the next column (Review, when the board\n\
      has one). The owner checks it there and moves it to Done.\n\
+     - Code goes to Review only where others can read it: push your branch\n\
+     and link it (`item_link` kind `branch`), or open its PR when the project\n\
+     uses pull requests. A task or bug with neither is refused at Review.\n\
+     Never leave finished work on a local branch for someone else to merge,\n\
+     and never tell the owner a merge is theirs: say where the pushed work is.\n\
      - If the card isn't ready, or you need answers before you can do it,\n\
      move it back to To do and ask the owner your questions: `ask_owner`\n\
      with `item_id` set to the card, one entry per question, or\n\
@@ -226,39 +231,6 @@ const YOUR_CARDS: &str = "## Your cards\n\n\
      it asks on that card (carry on, move it, or say on the card why it\n\
      can't move); it asks once.\n\
      - `item_move_check` shows what each move needs before you try it.\n\n";
-
-/// Code goes through pull requests (H-286, the Context Engineer's text;
-/// H-261 §4, §5): only for a project cut over to PRs (`pr_flow_projects`).
-/// Every tool named in backticks is one the daemon serves (the prompt test
-/// checks it against the PR tools), and owner acts are said to come only
-/// from the board's home or the owner's phone (rulings 6df14f7a, 1cb9b4df).
-pub(super) fn pull_requests(on: bool) -> &'static str {
-    if !on {
-        return "";
-    }
-    "## Code goes through pull requests\n\n\
-     Every change to a repository is a pull request (PR) on its card. A PR\n\
-     opened, merged or closed unmerged moves the card where its board's\n\
-     automations say (`board_list` shows them); on a release-gated board,\n\
-     to Review, Verify and back to Doing. Never make those moves yourself.\n\n\
-     - Push your branch, then `pr_open` with the card (`item`), the branch,\n\
-     your worktree's path and the change note as `body`. That is the PR.\n\
-     - After every later push, `pr_push` with the PR number and the full sha\n\
-     you pushed. A push you don't report counts as no one's, and no review\n\
-     is accepted until it is reported.\n\
-     - `pr_get` shows a PR's reviews, the roles it still needs, its checks\n\
-     and what still blocks the merge. Answer a reviewer's `must` findings and\n\
-     `must` comments (`pr_comments`) with a new push, never by note.\n\
-     - `pr_close` with a reason only to abandon a PR.\n\
-     - You can't review a PR you opened, pushed to, or whose card you hold.\n\
-     - Nobody merges by hand: a mergeable PR goes to DevOps as a merge task,\n\
-     run with `flotillad pr merge`, and a raw push to the project's branch is\n\
-     refused.\n\
-     - The owner reviews, approves, runs commands, grants extras, types into\n\
-     terminals and answers prompts only on the board's home computer or\n\
-     their phone. Owner acts claimed from a linked computer are refused, and\n\
-     chat from there arrives as a normal message, not as the owner's.\n\n"
-}
 
 /// How owner requests, cards and the owner's thread relate, in one place
 /// (H-128 D5, D6, T1; CE-014 F2; ruling 06ac8d95: the owner is never

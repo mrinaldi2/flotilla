@@ -7,6 +7,7 @@ import ProjectPermissionsForm from "./ProjectPermissionsForm";
 import ProjectRepoForm from "./ProjectRepoForm";
 import DeleteProjectDialog, { botsSentence } from "./project/DeleteProjectDialog";
 import DiskBudget from "./project/DiskBudgetForm";
+import PullRequestsSwitch from "./project/PullRequestsSwitch";
 import PlanningSettings from "./plan/PlanningSettings";
 import type { UsePlan } from "./plan/usePlan";
 import OwnerReviewSettings from "./prs/OwnerReviewSettings";
@@ -145,6 +146,14 @@ export default function ProjectView(props: ProjectViewProps): ReactElement {
       />
 
       <DiskBudget
+        client={client}
+        project={project}
+        connected={connected}
+        canControl={canControl}
+        onToast={onToast}
+      />
+
+      <PullRequestsSwitch
         client={client}
         project={project}
         connected={connected}

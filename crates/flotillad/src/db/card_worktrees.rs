@@ -64,6 +64,28 @@ impl Db {
         Ok(())
     }
 
+    /// Whether the owner turned the project's pull requests on in the app
+    /// (0.23.1).
+    pub fn project_pr_flow(&self, project_id: &str) -> anyhow::Result<bool> {
+        Ok(self
+            .lock()
+            .query_row(
+                "SELECT pr_flow FROM project WHERE id = ?1",
+                params![project_id],
+                |r| r.get(0),
+            )
+            .optional()?
+            .unwrap_or(false))
+    }
+
+    pub fn set_project_pr_flow(&self, project_id: &str, on: bool) -> anyhow::Result<()> {
+        self.lock().execute(
+            "UPDATE project SET pr_flow = ?2 WHERE id = ?1",
+            params![project_id, on],
+        )?;
+        Ok(())
+    }
+
     pub fn card_worktree(
         &self,
         project_id: &str,

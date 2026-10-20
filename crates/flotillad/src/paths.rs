@@ -34,6 +34,7 @@ pub mod no_follow;
 mod own;
 mod prompt;
 mod prompt_plan;
+mod prompt_prs;
 mod prompt_sections;
 mod prompt_team;
 #[cfg(test)]

@@ -129,6 +129,7 @@ const APPROVE_ONLY: &[&str] = &[
     "cleanup_resolve",
     // The disk a project may use (0.23.0): the owner's to set.
     "set_project_disk_budget",
+    "set_project_pr_flow",
 ];
 
 /// Capability required for each request type.

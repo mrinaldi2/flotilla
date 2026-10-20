@@ -278,6 +278,10 @@ impl Editor<'_> {
             self.own_item(&req.r#ref)?;
             anyhow::ensure!(req.r#ref != req.id, "an item can't link to itself");
         }
+        // A bot's branch is reviewable only once pushed (0.23.1).
+        if kind == LinkKind::Branch && matches!(self.actor, Actor::Bot { .. }) {
+            super::pushed::check_branch(self.app, self.project_id, &req.r#ref)?;
+        }
         self.published(ChangeKind::ItemUpserted, None, || {
             let label = req.label.as_deref();
             let link = self
