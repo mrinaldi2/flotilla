@@ -103,7 +103,8 @@ export const Held: Story = () => (
     value={release({
       status: "held",
       held_note: "after the trip",
-      remind_at: "2026-10-20T09:00:00Z",
+      // A year in the past, so it is never today and always reads "Oct 20 09:00 AM".
+      remind_at: "2024-10-20T09:00:00Z",
     })}
   />
 );
