@@ -1033,7 +1033,7 @@ dependencies = [
 
 [[package]]
 name = "flotilla-desktop"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "block2",
  "objc2",
