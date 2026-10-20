@@ -197,6 +197,7 @@ Codes: `auth_failed`, `unsupported_version`, `not_found`, `invalid_request`,
 | `sleep_bot` | `bot_id` | `ok`: an on-demand bot sleeps once its running turn ends; `conflict` for an always-on one. Requires `control` (0.23.0) |
 | `team_status` | – | `team`: `{ team: TeamStatus }` (0.23.0) |
 | `set_project_disk_budget` | `project_id, bytes \| null` | `project` (`disk_budget_bytes`). Owner only, capability `repo_mirror_v1` (0.23.0) |
+| `set_project_pr_flow` | `project_id, enabled` | `project` (`pr_flow`). Owner only (0.23.1): the project's code goes through pull requests, as `pr_flow_projects` in the config says for a project; bots' prompts carry the PR section from their next start |
 | `clear_bot_session` | `bot_id` | `ok`: the bot restarts with a fresh conversation, without the old one's history (which leaves the chat); its workspace, memory files and tasks are kept, and it is told what it was working on. On a linked bot, done on its machine. Requires `control` |
 | `set_bot_user_chrome` | `bot_id, enabled` | `bot`: whether the bot may also drive the owner's own Chrome (Claude in Chrome). Off by default; restarts the session. See [bot-browser.md](bot-browser.md) |
 | `update_bot` | `bot_id, name?, description?, instructions?, avatar?` | `bot`; on a stand-in in a linked project, forwarded to its machine |
@@ -1466,6 +1467,13 @@ instructions and model (see [workers](workers.md)).
 reviewer or a bot allowed the owner's Chrome gets a browser of its own (see
 [the bot's browser](bot-browser.md)).
 
+**Code for review (0.23.1).** In a project with a repository, a bot moving a
+task or a bug into a Review or Verify column (by category, or a column keyed
+or named so) needs a branch or a PR linked to the card; otherwise the move is
+refused with `review.unpushed`. A bot's `item_link {kind: branch}` checks the
+branch is on the project's remote (the mirror, fetched), and refuses one that
+was never pushed. The owner's moves aren't held to it.
+
 **Lighter checkouts (`repo_mirror_v1`).** For a project with a repository:
 - **The mirror:** the daemon keeps one bare mirror at
   `<home>/repos/<project dir>.git`, fetched on a timer and before each new
@@ -1539,7 +1547,7 @@ The typed surface `flotilla.pr.v1` (`proto/flotilla/pr/v1/pr.proto`, contract `p
 - **Linked computers (B9):** PRs live on the board's home. A computer that mirrors the board forwards the reads to the home as the peer request `pr_read {project_id, request}` and answers in its own project id. The home relays each change as the peer event `pr_event {project_id, push}`, which is published there in the linked project. While the home can't be reached, a read answers `unavailable`. A linked bot's PR tools go through `board_call` like every board tool.
 
 **Bots' prompts for PRs (PR-10, H-286).**
-- **The flag:** a project in the daemon config's `pr_flow_projects` (names, matched without case) has cut over to pull requests (H-279). Its bots' prompts carry a "Code goes through pull requests" section after "Work is on the board", from each bot's next start.
+- **The flag:** a project in the daemon config's `pr_flow_projects` (names, matched without case), or one whose owner turned **Pull requests** on in the app (`set_project_pr_flow`, `Project.pr_flow`, 0.23.1), has cut over to pull requests (H-279). Its bots' prompts carry a "Code goes through pull requests" section after "Work is on the board", from each bot's next start.
 - **What the section says:**
   - `pr_open` with the worktree; `pr_push` after every push;
   - `pr_get` and `pr_comments` for what blocks a merge; `pr_close` to abandon;

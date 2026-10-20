@@ -34,6 +34,7 @@ const OWNER_DRIVEN: &[&str] = &[
     "set_project_repo",
     "set_project_extra_repos",
     "set_project_disk_budget",
+    "set_project_pr_flow",
     // A one-tap install offer on the owner's phone (CE review of H-229, M2).
     "release_send_to_device",
 ];

@@ -117,6 +117,8 @@ pub struct Context {
     /// Every bot the item was ever assigned to, from its history: one that
     /// held it did its work, so it isn't independent of it.
     pub past_assignees: Vec<String>,
+    /// The project has a repository: code work is reviewed from it (0.23.1).
+    pub has_repo: bool,
 }
 
 impl Context {

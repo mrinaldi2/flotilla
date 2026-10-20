@@ -44,6 +44,9 @@ pub(crate) fn project_view(app: &AppState, project: &bus::Project) -> Value {
         "description": app.db.project_description(&project.id).unwrap_or_default(),
         // What its worktrees and caches may use here (0.23.0); null, none.
         "disk_budget_bytes": app.db.project_disk_budget(&project.id).ok().flatten(),
+        // Code goes through pull requests (0.23.1): the owner's switch, or the
+        // daemon config's `pr_flow_projects`.
+        "pr_flow": crate::botmgmt::pr_flow(app, project),
         "deleted_at": project.deleted_at.map(|t| t.to_rfc3339()),
         "created_at": project.created_at.to_rfc3339()
     })

@@ -149,6 +149,11 @@ impl BoardTx<'_> {
             task_holders: self.task_holders(&item.id)?,
             ever_had_code: self.ever_had_code(&item.id)?,
             past_assignees: self.past_assignees(&item.id)?,
+            has_repo: self.conn.query_row(
+                "SELECT EXISTS(SELECT 1 FROM project_repo WHERE project_id = ?1)",
+                params![project_id],
+                |r| r.get(0),
+            )?,
         })
     }
 

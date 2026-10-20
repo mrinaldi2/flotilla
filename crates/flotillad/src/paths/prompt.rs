@@ -71,7 +71,7 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
         super::prompt_plan::CARD_TYPES,
         super::prompt_plan::plan(*planning)
     );
-    let pr_section = super::prompt_sections::pull_requests(*pull_requests);
+    let pr_section = super::prompt_prs::pull_requests(*pull_requests);
     let team_section = super::prompt_team::team(*lead, *temporary);
     format!(
         "# {name}\n\n{description}\n\n{worker_section}{project_section}{repo_section}\

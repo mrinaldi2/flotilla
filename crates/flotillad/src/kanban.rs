@@ -35,6 +35,7 @@ pub mod moves;
 pub mod notice_text;
 pub mod notices;
 pub mod presets;
+pub mod pushed;
 pub mod rank;
 pub mod retired;
 pub mod starts;

@@ -42,6 +42,8 @@ export interface Project {
   readonly repo?: ProjectRepo | null;
   /** The disk its worktrees and build caches may use (0.23.0, `repo_mirror_v1`); null, no budget. */
   readonly disk_budget_bytes?: number | null;
+  /** Code goes through pull requests (0.23.1); absent from an older service. */
+  readonly pr_flow?: boolean;
   /** Its cards' id prefix (`H` for `H-017`); absent without a board, or on an older service (H-203). */
   readonly item_prefix?: string | null;
   /** What its bots may do without asking (H-031); absent on older daemons. */

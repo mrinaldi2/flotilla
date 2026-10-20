@@ -134,7 +134,52 @@ pub fn evaluate(
     if !is_return(from, to) && over_limit(item, to, ctx).is_some() {
         out.extend(wip_unmet(item, mv, who, ctx));
     }
+    out.extend(code_for_review(item, to, who, ctx));
     out
+}
+
+/// A Review or Verify column: by category, or by its key or name on a board
+/// whose Review is filed under Doing (the Simple + Review preset).
+fn is_review(column: &BoardColumn) -> bool {
+    if matches!(
+        column.category,
+        ColumnCategory::Review | ColumnCategory::Verify
+    ) {
+        return true;
+    }
+    [&column.key, &column.name].iter().any(|word| {
+        let word = word.to_ascii_lowercase();
+        word.contains("review") || word.contains("verify")
+    })
+}
+
+/// A bot's code card (a task or a bug) reaches Review or Verify only with
+/// its work where a reviewer can read it (0.23.1): its pushed branch linked
+/// (`item_link` checks the push), or its PR. Work left on a local branch
+/// isn't reviewable, and nobody else can merge it. The owner moves freely.
+fn code_for_review(item: &Item, to: &BoardColumn, who: &Who, ctx: &Context) -> Vec<Unmet> {
+    let reviewing = is_review(to);
+    let code = matches!(
+        item.item_type,
+        super::model::ItemType::Task | super::model::ItemType::Bug
+    );
+    if !reviewing || !code || !ctx.has_repo || !matches!(who, Who::Bot { .. }) {
+        return Vec::new();
+    }
+    if ctx.has_link(&[LinkKind::Branch, LinkKind::Pr]) {
+        return Vec::new();
+    }
+    vec![unmet(
+        "review.unpushed",
+        format!(
+            "{} has no pushed branch or PR, so nobody can review or merge its work.",
+            item.id
+        ),
+        Some(
+            "Push your branch, then link it with item_link (kind branch), or open its PR, \
+             and move it again.",
+        ),
+    )]
 }
 
 /// Who may move the item in, when `who` may not.

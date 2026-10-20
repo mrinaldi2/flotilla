@@ -122,7 +122,7 @@ pub(super) fn provision_spec<'a>(
         own_browser: app.cfg.browser.enabled && crate::browser::wanted(&app.db, bot),
         user_chrome: bot.user_chrome,
         task_limits: app.cfg.tasks.for_project(&project.name),
-        pull_requests: app.cfg.pr_flow(&project.name),
+        pull_requests: pr_flow(app, project),
         planning: app
             .db
             .board_read(|t| t.plan_settings(&project.id))
@@ -309,4 +309,10 @@ fn notify_running_session(app: &Arc<AppState>, bot: &Bot, actor: &Actor<'_>) -> 
         Dm::new(&bot.id, &daemon_sender(), MessageKind::Note, &body),
     )?;
     Ok(())
+}
+
+/// Whether the project's code goes through pull requests: the owner's
+/// switch in the app (0.23.1) or the daemon config's `pr_flow_projects`.
+pub fn pr_flow(app: &AppState, project: &bus::Project) -> bool {
+    app.cfg.pr_flow(&project.name) || app.db.project_pr_flow(&project.id).unwrap_or(false)
 }
