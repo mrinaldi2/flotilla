@@ -20,7 +20,7 @@ list_workers()
 cancel_worker(name, reason?)
 ```
 
-`role` (0.23.0, `team_on_demand_v1`) makes the worker a copy of the role's
+`role` (0.23.0, `team_on_demand_v1`; see [the team on demand](team.md)) makes the worker a copy of the role's
 member: it takes that member's instructions and model, and holds the role on
 the board until it retires. `instructions` given as well are added after the
 role's. This is how the lead adds parallel hands when two cards of one role
