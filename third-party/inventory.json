@@ -11,8 +11,8 @@
     "apps/desktop/src-tauri/Cargo.lock": "5de1fd2f7c958f1a7de97170b686b520f95f713d4d0bb05a049c5ab90bd1a5ea",
     "apps/desktop/src-tauri/Cargo.toml": "e44c8b2bee5c5db80e69a5a8fbccd555487a9f224e442fd0c1b44747615b6338",
     "apps/desktop/src-tauri/tauri.conf.json": "82250c2dcd8bf82721c7577a1b670d8bf598967a33c8248f8d6fac5d5564490a",
-    "apps/desktop/package.json": "30914243c27320681e5fce8cc3690a7cc17858a37899fff0f8302201102079df",
-    "apps/desktop/pnpm-lock.yaml": "d69d5d8452a548eb61481d44aa0e31adcfe4c35853b456fc85722bab287027d2",
+    "apps/desktop/package.json": "562a50847e97a0e2592218761eac218072e0faa9ab2f6bb3c0a6d8b2114e03bf",
+    "apps/desktop/pnpm-lock.yaml": "9e25c16c5f757ecbf56c2e0d5d8460b795abaa422c0497d1cd3c2653893732a2",
     "apps/desktop/vite.config.ts": "676d9f32ac22ce3ccddede20ecf6000ffd062e78bf699b9c031851fc0f5fd49b",
     "apps/marketing/package.json": "6dd271de88fabf9c7cf20389a44415872f5800c65820317e61953b67dccde3be",
     "apps/marketing/pnpm-lock.yaml": "8bac14609a15069e41ebb8c00a9a53075dc1c66cd6fd351fc39dd7b1b1d4e759",
@@ -61,7 +61,7 @@
   },
   "outputs": {
     "third-party/DAEMON_NOTICES.txt": "017bf863a763038dd3140d032e27a7152f8ffb9fd5ef08974a2be2e87aa4b9ca",
-    "third-party/DESKTOP_NOTICES.txt": "602d99b42e507f08011c273daf02844854cc8409f4422d3693d12561985fc76d",
+    "third-party/DESKTOP_NOTICES.txt": "88f7cf1611987bcf0c78a4cb29b15bd83a40b4b25724d37fe77e7f3b2bcc8177",
     "apps/marketing/public/THIRD_PARTY_NOTICES.txt": "f9e1ca1d1471053baa6e874130438f03fc2ff76ce441239ff2161d4522b57f0b"
   },
   "packages": [
@@ -1131,6 +1131,22 @@
     },
     {
       "ecosystem": "JavaScript",
+      "name": "escape-string-regexp",
+      "version": "5.0.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/escape-string-regexp/-/escape-string-regexp-5.0.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
       "name": "estree-util-is-identifier-name",
       "version": "3.0.0",
       "license": "MIT",
@@ -1491,6 +1507,38 @@
     },
     {
       "ecosystem": "JavaScript",
+      "name": "markdown-table",
+      "version": "3.0.4",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/markdown-table/-/markdown-table-3.0.4.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "dd1081884a92952802f4803110a6bb543acea9a814c786d58605b4c1219b5ebb"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "mdast-util-find-and-replace",
+      "version": "3.0.2",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/mdast-util-find-and-replace/-/mdast-util-find-and-replace-3.0.2.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "dd1081884a92952802f4803110a6bb543acea9a814c786d58605b4c1219b5ebb"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
       "name": "mdast-util-from-markdown",
       "version": "2.0.3",
       "license": "MIT",
@@ -1502,6 +1550,102 @@
         {
           "path": "license",
           "sha256": "dd1081884a92952802f4803110a6bb543acea9a814c786d58605b4c1219b5ebb"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "mdast-util-gfm",
+      "version": "3.1.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/mdast-util-gfm/-/mdast-util-gfm-3.1.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "dd1081884a92952802f4803110a6bb543acea9a814c786d58605b4c1219b5ebb"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "mdast-util-gfm-autolink-literal",
+      "version": "2.0.1",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/mdast-util-gfm-autolink-literal/-/mdast-util-gfm-autolink-literal-2.0.1.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "mdast-util-gfm-footnote",
+      "version": "2.1.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/mdast-util-gfm-footnote/-/mdast-util-gfm-footnote-2.1.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "dd1081884a92952802f4803110a6bb543acea9a814c786d58605b4c1219b5ebb"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "mdast-util-gfm-strikethrough",
+      "version": "2.0.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/mdast-util-gfm-strikethrough/-/mdast-util-gfm-strikethrough-2.0.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "mdast-util-gfm-table",
+      "version": "2.0.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/mdast-util-gfm-table/-/mdast-util-gfm-table-2.0.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "mdast-util-gfm-task-list-item",
+      "version": "2.0.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/mdast-util-gfm-task-list-item/-/mdast-util-gfm-task-list-item-2.0.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
         }
       ]
     },
@@ -1646,6 +1790,118 @@
         {
           "path": "license",
           "sha256": "dd1081884a92952802f4803110a6bb543acea9a814c786d58605b4c1219b5ebb"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "micromark-extension-gfm",
+      "version": "3.0.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/micromark-extension-gfm/-/micromark-extension-gfm-3.0.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "micromark-extension-gfm-autolink-literal",
+      "version": "2.1.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/micromark-extension-gfm-autolink-literal/-/micromark-extension-gfm-autolink-literal-2.1.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "micromark-extension-gfm-footnote",
+      "version": "2.1.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/micromark-extension-gfm-footnote/-/micromark-extension-gfm-footnote-2.1.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "807a88522a850092aece49486207c17c313c4d5708ac276524840fe1caa0b0fa"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "micromark-extension-gfm-strikethrough",
+      "version": "2.1.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/micromark-extension-gfm-strikethrough/-/micromark-extension-gfm-strikethrough-2.1.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "micromark-extension-gfm-table",
+      "version": "2.1.1",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/micromark-extension-gfm-table/-/micromark-extension-gfm-table-2.1.1.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "dd1081884a92952802f4803110a6bb543acea9a814c786d58605b4c1219b5ebb"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "micromark-extension-gfm-tagfilter",
+      "version": "2.0.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/micromark-extension-gfm-tagfilter/-/micromark-extension-gfm-tagfilter-2.0.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "micromark-extension-gfm-task-list-item",
+      "version": "2.1.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/micromark-extension-gfm-task-list-item/-/micromark-extension-gfm-task-list-item-2.1.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "536804b3adbff17dbbb9ed0d2bf9655b78f07640278581e37e3d7475282d5e61"
         }
       ]
     },
@@ -2209,6 +2465,22 @@
     },
     {
       "ecosystem": "JavaScript",
+      "name": "remark-gfm",
+      "version": "4.0.1",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/remark-gfm/-/remark-gfm-4.0.1.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "dd1081884a92952802f4803110a6bb543acea9a814c786d58605b4c1219b5ebb"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
       "name": "remark-parse",
       "version": "11.0.0",
       "license": "MIT",
@@ -2236,6 +2508,22 @@
         {
           "path": "license",
           "sha256": "dd1081884a92952802f4803110a6bb543acea9a814c786d58605b4c1219b5ebb"
+        }
+      ]
+    },
+    {
+      "ecosystem": "JavaScript",
+      "name": "remark-stringify",
+      "version": "11.0.0",
+      "license": "MIT",
+      "components": {
+        "desktop": "runtime dependency closure"
+      },
+      "source": "https://registry.npmjs.org/remark-stringify/-/remark-stringify-11.0.0.tgz",
+      "notices": [
+        {
+          "path": "license",
+          "sha256": "413654b0a78b98661dce96d2aff2e4d075603d220b8483e28b1aa010ccc138b4"
         }
       ]
     },
