@@ -394,20 +394,3 @@
   justify-content: space-between;
   gap: 8px;
 }
-
-/* The edge between the Plan tab's tree or gate panel and the page
-   (0.22.0): drag it, or use ←/→ when it has focus; double-click resets. */
-.pane-edge {
-  flex: 0 0 6px;
-  margin: 0 -3px;
-  z-index: 1;
-  cursor: col-resize;
-  touch-action: none;
-}
-
-.pane-edge:hover,
-.pane-edge:focus-visible {
-  background: var(--accent);
-  opacity: 0.5;
-  outline: none;
-}
