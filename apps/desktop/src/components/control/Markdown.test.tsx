@@ -9,6 +9,20 @@ describe("Markdown", () => {
     expect(container.querySelectorAll("li")).toHaveLength(2);
   });
 
+  // PRDs, designs and research carry tables (0.23.0, GitHub's Markdown).
+  it("renders a table, and a bare URL in it stays inert", () => {
+    const md = "| Lane | Owner |\n|---|:-:|\n| A | https://evil.example |\n| ~~B~~ | Dev |";
+    const { container } = render(<Markdown>{md}</Markdown>);
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getAllByRole("columnheader").map((h) => h.textContent)).toEqual([
+      "Lane",
+      "Owner",
+    ]);
+    expect(screen.getAllByRole("row")).toHaveLength(3);
+    expect(container.querySelector("a")).toBeNull();
+    expect(container.querySelector("del")?.textContent).toBe("B");
+  });
+
   // A decision body is model output rendered into the owner's window.
   it("does not pass raw HTML through", () => {
     const { container } = render(

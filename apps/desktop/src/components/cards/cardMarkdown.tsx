@@ -6,6 +6,7 @@
 import { useMemo } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { defaultUrlTransform } from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { isCardId, splitCardIds } from "./cardIds";
 import CardLink from "./CardLink";
 import { useCardLinks } from "./CardLinks";
@@ -80,6 +81,8 @@ export function useCardMarkdown(inert: Anchor) {
         inert({ children, href })
       );
     };
-    return { remarkPlugins: [remarkCardIds(pattern)], urlTransform, a };
+    // GitHub's Markdown (0.23.0): tables, task lists and strikethrough in
+    // PRDs, designs and research. The links it finds in text stay inert.
+    return { remarkPlugins: [remarkGfm, remarkCardIds(pattern)], urlTransform, a };
   }, [pattern, inert]);
 }
