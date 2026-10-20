@@ -189,6 +189,22 @@ impl BoardTx<'_> {
         Ok(events)
     }
 
+    /// The project's node whose gate or documents are at `path` (0.22.0).
+    pub fn plan_node_of_doc(&self, project_id: &str, path: &str) -> anyhow::Result<Option<String>> {
+        Ok(self
+            .conn
+            .query_row(
+                "SELECT n.id FROM plan_node n
+                  WHERE n.project_id = ?1
+                    AND (EXISTS (SELECT 1 FROM plan_gate g WHERE g.node_id = n.id AND g.doc_path = ?2)
+                      OR EXISTS (SELECT 1 FROM plan_doc d WHERE d.node_id = n.id AND d.path = ?2))
+                  ORDER BY n.updated_at DESC LIMIT 1",
+                params![project_id, path],
+                |r| r.get(0),
+            )
+            .optional()?)
+    }
+
     /// The live cards of a node, in column then rank order.
     pub fn plan_cards(&self, project_id: &str, node_id: &str) -> anyhow::Result<Vec<ItemCard>> {
         cards_in(

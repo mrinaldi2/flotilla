@@ -9,7 +9,7 @@ import type { AttentionRowJson } from "../../protocol/dashboard";
 import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import { botsDone, recheckBase, reviewRowMeta } from "../prs/ownerText";
 import { sha7 } from "../prs/prText";
-import type { RowViewProps } from "./NeedsYou";
+import type { RowViewProps } from "./DashRow";
 
 export interface PrRowActions {
   /** The project's PRs by number, to say who approved and spot a re-check. */

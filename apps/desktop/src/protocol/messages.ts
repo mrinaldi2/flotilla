@@ -261,6 +261,24 @@ export type ServerReply =
       readonly type: "artifacts";
       readonly project_id: string;
       readonly artifacts: readonly Artifact[];
+      /** With `limit`: more after this page, from `next_before`. */
+      readonly has_more?: boolean;
+      readonly next_before?: string | null;
+    })
+  | (ReplyBase & {
+      /** To `artifact_trash` (0.22.0). */
+      readonly type: "artifact_trashed";
+      readonly project_id: string;
+      readonly path: string;
+      /** The OS trash, or Flotilla's own trash folder where there is none. */
+      readonly bin: "os" | "folder";
+    })
+  | (ReplyBase & {
+      /** To `artifact_keep` (0.22.0). */
+      readonly type: "artifact_kept";
+      readonly project_id: string;
+      /** As listed, with `kept`. */
+      readonly artifact: Artifact;
     });
 
 export type ServerReplyType = ServerReply["type"];
@@ -281,6 +299,8 @@ export type ServerPush =
       /** The card the turn starting or ending is about, when known (0.19.0). */
       readonly item_id?: string;
       readonly item_title?: string;
+      /** What started the turn (0.22.0): "answer", the owner's answer to its question. */
+      readonly cause?: string;
     }
   | { readonly type: "message_new"; readonly message: BusMessage }
   | { readonly type: "bot_updated"; readonly bot: Bot }

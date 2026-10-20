@@ -190,6 +190,26 @@ describe("turn notices", () => {
     expect([done?.line.word, done?.itemId, done?.pref]).toEqual(["Finished", "P2-001", "turns"]);
   });
 
+  it("say the bot got the owner's answer when the answer started the turn", () => {
+    const open = new Map<string, string>();
+    const start = noticeFromBotState(
+      { bot_id: "b1", state: "working", item_id: "ASL-004", cause: "answer" },
+      open,
+      bot,
+    );
+    expect([start?.line.word, start?.line.detail, start?.itemId]).toEqual([
+      "Got your answer",
+      "working on it",
+      "ASL-004",
+    ]);
+    const done = noticeFromBotState(
+      { bot_id: "b1", state: "ready", item_id: "ASL-004" },
+      open,
+      bot,
+    );
+    expect(done?.line.word).toBe("Finished");
+  });
+
   it("say nothing about a turn on no card", () => {
     const open = new Map<string, string>();
     expect(noticeFromBotState({ bot_id: "b1", state: "working" }, open, bot)).toBeNull();

@@ -125,7 +125,19 @@ export interface Artifact {
   readonly title?: string;
   /** Who made the file, when the daemon can tell. */
   readonly created_by?: FileCreator;
+  /** Which kind of file it is (0.22.0, `artifacts_v2`). */
+  readonly group?: ArtifactGroup;
+  /** The live cards that attach or link it (0.22.0). */
+  readonly used_by?: readonly string[];
+  /** The owner kept it: Tidy up leaves it out (0.22.0, `artifact_keep`). */
+  readonly kept?: boolean;
 }
+
+/** Artifacts by kind (0.22.0): `group` and `used_by`, and a card's artifact links as documents. */
+export const ARTIFACTS_V2 = "artifacts_v2";
+
+/** `shared`: no single card owns it; `uploads`: the owner's; `checks`: check logs. */
+export type ArtifactGroup = "shared" | "uploads" | "checks";
 
 /** The bot (or the owner) a file came from, and how. */
 export interface FileCreator {

@@ -48,6 +48,7 @@ mod cargo;
 mod cargo_alias;
 mod cd;
 mod changes;
+mod claude_worktrees;
 mod cmdlets;
 mod commands;
 mod daemon_cli;
@@ -86,6 +87,14 @@ pub struct GuardContext {
     /// and `<repo>-wt-<slug>-*` are its worktrees, not another bot's
     /// (CE-004 F2). `None`: any `-wt-` folder.
     pub bot_slug: Option<String>,
+    /// The names Claude Code's own worktrees of this bot start with
+    /// (`<repo>/.claude/worktrees/<name>`): its folder name, and `lead` for
+    /// the project's lead (0.22.0).
+    pub own_names: Vec<String>,
+    /// The same names of the project's other bots: a worktree name is the
+    /// bot's whose name it starts with the longest (`unity-dev-2-…` is
+    /// Unity Dev 2's, not Unity Dev's).
+    pub other_names: Vec<String>,
     /// The bot publishes releases: the `<repo>-rel-*` release worktrees in
     /// the trusted paths are its to clean and reset (CE-004 R1).
     pub releases: bool,
@@ -225,6 +234,12 @@ pub fn run(args: &[String]) -> i32 {
             .map(|pair| PathBuf::from(&pair[1]))
             .collect()
     };
+    let names_of = |flag: &str| -> Vec<String> {
+        args.windows(2)
+            .filter(|pair| pair[0] == flag)
+            .map(|pair| pair[1].to_ascii_lowercase())
+            .collect()
+    };
     let (Some(home), Some(user_home)) = (value_of("--home"), value_of("--user-home")) else {
         eprintln!(
             "usage: flotillad guard --home <dir> --user-home <dir> [--writable <dir>]… \
@@ -250,6 +265,8 @@ pub fn run(args: &[String]) -> i32 {
             .and_then(|i| args.get(i + 1))
             .map(|name| slug(name))
             .filter(|slug| !slug.is_empty()),
+        own_names: names_of("--worktree-name"),
+        other_names: names_of("--other-worktree-name"),
         releases: args.iter().any(|a| a == "--releases"),
         allow_main: args.iter().any(|a| a == "--allow-main"),
         protect: args

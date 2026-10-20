@@ -94,3 +94,87 @@
   font-size: 11px;
   color: var(--text-dim);
 }
+
+/* Artifacts by kind (0.22.0): the groups, the cards using a file, Tidy up. */
+.files-groups {
+  display: flex;
+  gap: 2px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.files-group {
+  padding: 3px 8px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-dim);
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.files-group:hover {
+  background: var(--bg-hover);
+}
+
+.files-group-on {
+  color: var(--text-strong);
+  background: var(--bg-active);
+}
+
+.files-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.files-cards {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 0 14px 6px;
+  font-size: 11px;
+}
+
+.files-cards-word {
+  color: var(--text-faint);
+}
+
+.files-card-chip {
+  padding: 0 6px;
+  background: var(--bg-active);
+  border-radius: 4px;
+}
+
+.files-more {
+  align-self: center;
+  margin: 8px;
+}
+
+.files-tidy {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.files-tidy-intro,
+.files-tidy-note {
+  margin: 0;
+  padding: 10px 14px 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.files-loose-actions,
+.files-attach {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 14px 8px;
+}
+
+.files-attach input {
+  flex: 1;
+  min-width: 120px;
+}

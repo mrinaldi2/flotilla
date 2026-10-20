@@ -4,7 +4,7 @@
 
 import type { AttentionRowJson } from "../../protocol/dashboard";
 import { cleanupWords, whose } from "./cleanupText";
-import type { RowViewProps } from "./NeedsYou";
+import type { RowViewProps } from "./DashRow";
 
 export interface CleanupRowActions {
   /** Opens the choice for a held or failed cleanup; `opener` gets focus back. */

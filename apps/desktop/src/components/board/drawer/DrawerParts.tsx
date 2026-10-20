@@ -1,7 +1,7 @@
 // The item drawer's fixed parts: the header with Move to…, the
 // state stepper, the meta line and the next step.
 
-import { Pencil, X } from "lucide-react";
+import { Maximize2, Minimize2, Pencil, X } from "lucide-react";
 import type { ReactElement } from "react";
 import type { BoardColumn, Item, Unmet } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { Priority, Size } from "../../../protocol/gen/flotilla/board/v1/board_pb";
@@ -21,6 +21,8 @@ export function DrawerHeader(props: {
   readonly onClose: () => void;
   /** The card shown before this one, when the drawer has one (UX-035 §4). */
   readonly back?: { readonly id: string; readonly onBack: () => void };
+  /** Widens the drawer over the whole board (0.22.0). */
+  readonly wide?: { readonly on: boolean; readonly onToggle: () => void };
 }): ReactElement {
   const type = props.item ? typeLabel(props.item.type) : null;
   const move = props.onMove;
@@ -64,6 +66,7 @@ export function DrawerHeader(props: {
           Move to…
         </button>
       ) : null}
+      {props.wide ? <WideToggle on={props.wide.on} onToggle={props.wide.onToggle} /> : null}
       <button
         type="button"
         className="drawer-close"
@@ -73,6 +76,22 @@ export function DrawerHeader(props: {
         <X size={16} aria-hidden="true" />
       </button>
     </header>
+  );
+}
+
+function WideToggle(props: { readonly on: boolean; readonly onToggle: () => void }): ReactElement {
+  const Icon = props.on ? Minimize2 : Maximize2;
+  return (
+    <button
+      type="button"
+      className="drawer-close"
+      aria-label={props.on ? "Narrow the drawer" : "Widen the drawer"}
+      aria-pressed={props.on}
+      title={props.on ? "Narrow" : "Widen over the board"}
+      onClick={props.onToggle}
+    >
+      <Icon size={14} aria-hidden="true" />
+    </button>
   );
 }
 

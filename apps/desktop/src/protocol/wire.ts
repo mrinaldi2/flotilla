@@ -85,6 +85,8 @@ const REPLY_TYPES: ReadonlySet<string> = new Set(
     chat_step: true,
     file: true,
     artifacts: true,
+    artifact_trashed: true,
+    artifact_kept: true,
     permissions: true,
     permission: true,
     tasks: true,

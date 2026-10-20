@@ -6,6 +6,17 @@ import { afterEach, beforeEach, vi } from "vitest";
 Element.prototype.scrollIntoView = function scrollIntoView(): void {
   // no-op
 };
+// Nor pointer capture, which the drawer's resize edge uses (0.22.0).
+const captured = new WeakMap<Element, Set<number>>();
+Element.prototype.setPointerCapture = function setPointerCapture(id: number): void {
+  captured.set(this, (captured.get(this) ?? new Set()).add(id));
+};
+Element.prototype.releasePointerCapture = function releasePointerCapture(id: number): void {
+  captured.get(this)?.delete(id);
+};
+Element.prototype.hasPointerCapture = function hasPointerCapture(id: number): boolean {
+  return captured.get(this)?.has(id) === true;
+};
 globalThis.requestAnimationFrame = (callback: FrameRequestCallback): number => {
   callback(0);
   return 0;

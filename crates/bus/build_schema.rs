@@ -30,6 +30,10 @@ const MAY_OMIT: &[(&str, &str)] = &[
     ("PrComment", "line"),
     ("PrComment", "side"),
     ("PrComment", "severity"),
+    // A question blocks only when it says so, and a list pages at 50
+    // (0.22.0).
+    ("QuestionAsk", "blocking"),
+    ("QuestionList", "limit"),
 ];
 
 pub fn message_schemas(set: &FileDescriptorSet) -> Value {

@@ -3,6 +3,7 @@
 
 import type { MessageInitShape } from "@bufbuild/protobuf";
 import type { PlanChange } from "./gen/flotilla/board/v1/plan_pb";
+import type { QuestionChange } from "./gen/flotilla/board/v1/questions_pb";
 import type {
   BoardEvent,
   BoardRequestSchema,
@@ -35,6 +36,8 @@ export interface BoardApi {
   onBoardEvent(handler: (event: BoardEvent) => void): () => void;
   /** Subscribes to plan node changes (0.21.0) for every watched project. */
   onPlanChange(handler: (change: PlanChange) => void): () => void;
+  /** Subscribes to questions asked, answered or dismissed (0.22.0) for every watched project. */
+  onQuestionChange(handler: (change: QuestionChange) => void): () => void;
 }
 
 // A oneof is tagged by `case`, so the tag alone decides the value's type;

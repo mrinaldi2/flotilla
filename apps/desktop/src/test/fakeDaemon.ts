@@ -3,6 +3,7 @@ import type { BoardCall, BoardReply } from "../protocol/board";
 import type { ConnectionStatus, Endpoint } from "../protocol/connection";
 import type { Grant } from "../protocol/entities";
 import type { PlanChange } from "../protocol/gen/flotilla/board/v1/plan_pb";
+import type { QuestionChange } from "../protocol/gen/flotilla/board/v1/questions_pb";
 import type { BoardEvent } from "../protocol/gen/flotilla/board/v1/requests_pb";
 import type { PrPush } from "../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { PrCall, PrReply } from "../protocol/prs";
@@ -64,6 +65,7 @@ export class FakeDaemon implements DaemonApi {
   private readonly boardResponders = new Map<string, BoardResponder>();
   private readonly boardHandlers = new Set<(event: BoardEvent) => void>();
   private readonly planHandlers = new Set<(change: PlanChange) => void>();
+  private readonly questionHandlers = new Set<(change: QuestionChange) => void>();
   private readonly prResponders = new Map<string, PrResponder>();
   private readonly prHandlers = new Set<(push: PrPush) => void>();
   private readonly statusListeners = new Set<(status: ConnectionStatus) => void>();
@@ -88,6 +90,12 @@ export class FakeDaemon implements DaemonApi {
 
   emitPlanChange(change: PlanChange): void {
     for (const handler of this.planHandlers) {
+      handler(change);
+    }
+  }
+
+  emitQuestionChange(change: QuestionChange): void {
+    for (const handler of this.questionHandlers) {
       handler(change);
     }
   }
@@ -189,6 +197,14 @@ export class FakeDaemon implements DaemonApi {
     this.planHandlers.add(handler);
     return () => {
       this.planHandlers.delete(handler);
+    };
+  }
+
+  // fallow-ignore-next-line unused-class-member -- reached through BoardApi and the question tests
+  onQuestionChange(handler: (change: QuestionChange) => void): () => void {
+    this.questionHandlers.add(handler);
+    return () => {
+      this.questionHandlers.delete(handler);
     };
   }
 

@@ -78,7 +78,8 @@ fn tells_bots_where_a_question_for_the_owner_goes() {
     let md = system_md(&spec(""));
     assert!(md.contains("## When the owner has to decide"));
     assert!(md.contains("raise_decision"));
-    assert!(md.contains("ask it\nonly in your terminal"), "{md}");
+    assert!(md.contains("ask it only in your terminal"), "{md}");
+    assert!(md.contains("`ask_owner`"), "{md}");
     // The registry only replaces the hand-kept ledgers if a settled
     // ruling is read as authority rather than as one more opinion.
     assert!(md.contains("is authority"));
@@ -102,6 +103,17 @@ fn points_substance_at_the_artifacts_directory() {
     assert!(md.contains("## Artifacts over messages"));
     assert!(md.contains("/home/u/.gravity/projects/proj/artifacts"));
     assert!(md.contains("pointer, not the deliverable"));
+}
+
+#[test]
+fn gives_each_kind_of_file_one_home() {
+    let md = system_md(&spec(""));
+    assert!(
+        md.contains("attached to that card with `item_attach`"),
+        "{md}"
+    );
+    assert!(md.contains("Files shared across cards"));
+    assert!(md.contains("stay in your own\nworkspace"));
 }
 
 #[test]

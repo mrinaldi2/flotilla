@@ -80,7 +80,9 @@ fn cards_with(
                 EXISTS(SELECT 1 FROM keeper_mark k WHERE k.item_id = i.id
                     AND k.rule IN ('stale', 'silent_stale') AND k.fired_at IS NOT NULL
                     AND {holds}),
-                i.plan_node_id
+                i.plan_node_id,
+                (SELECT count(*) FROM question q JOIN decision d ON d.id = q.decision_id
+                  WHERE q.item_id = i.id AND d.state IN ('open', 'held'))
          FROM item i JOIN board_column c ON c.project_id = i.project_id AND c.key = i.column_key
          WHERE i.project_id = ?1 AND {states} {filter}
          ORDER BY c.ord, i.rank",
@@ -115,6 +117,7 @@ fn cards_with(
             invited: from_json(r.get(18)?)?,
             move_block: None,
             plan_node_id: r.get(20)?,
+            questions_open: r.get(21)?,
         })
     };
     let cards = match arg {

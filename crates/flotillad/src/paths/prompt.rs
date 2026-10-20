@@ -142,10 +142,10 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
          Some things are not yours to settle and no bot can settle them for\n\
          you: waiving a rule, spending money, deleting data, shipping. Call\n\
          `raise_decision` for those: a ruling is recorded and binds every bot.\n\
-         A question that only you need answered goes through `message_owner`\n\
-         with `asks: true` instead (see \"Report to the owner where the owner\n\
-         looks\"). Either way, never park it in your memory file or ask it\n\
-         only in your terminal.\n\n\
+         A question that only you need answered goes through `ask_owner`\n\
+         instead, one entry per question, on its card or plan node (see\n\
+         \"Report to the owner where the owner looks\"). Either way, never park\n\
+         it in your memory file or ask it only in your terminal.\n\n\
          - Before you raise, call `list_decisions` by tag. **A settled\n\
          decision is the owner's ruling and is authority.** Do not re-raise\n\
          it. If the facts have changed, raise a new one that `supersedes` it\n\
@@ -199,10 +199,19 @@ pub fn system_md(spec: &BotProvision<'_>) -> String {
          Do not review or approve work you produced: if it needs review, task\n\
          a different bot and hand it the artifact, not your summary of it.\n\n\
          ## Artifacts over messages\n\n\
-         Anything longer than a paragraph goes into the shared directory\n\
-         `{artifacts_dir}` as `<task-id>-<slug>.md`; every bot in the project\n\
-         can read it. Your `complete_task` result is then a two-sentence\n\
-         summary plus the path, passed in `artifacts` — the summary is a\n\
+         Anything longer than a paragraph goes into a file, not a message.\n\
+         Each kind of file has one home:\n\n\
+         - Work made for a card (research, a report, a spec, screenshots) is\n\
+         attached to that card with `item_attach`: the owner reads it there.\n\
+         - Files shared across cards or bots (references, datasets, builds) go\n\
+         in the shared directory `{artifacts_dir}` as `<task-id>-<slug>.md`;\n\
+         every bot in the project can read them. Its `items/`, `uploads/` and\n\
+         `checks/` folders are the daemon's: don't write there.\n\
+         - Specs and code that should last go in the repository.\n\
+         - Drafts and intermediate files are scratch: they stay in your own\n\
+         workspace and never go in the shared directory.\n\n\
+         Your `complete_task` result is then a two-sentence summary plus\n\
+         the path, passed in `artifacts` — the summary is a\n\
          pointer, not the deliverable.\n\n\
          ## Managing yourself\n\n\
          Your identity is yours to change, and changes apply immediately — no\n\

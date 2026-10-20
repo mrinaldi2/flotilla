@@ -2,7 +2,7 @@
 
 import type { BrowserInputEvent } from "./agents";
 import type { CleanupRequestBody } from "./cleanup";
-import type { PermissionAnswer } from "./chat";
+import type { ArtifactGroup, PermissionAnswer } from "./chat";
 import type { DashboardRequestBody } from "./dashboard";
 import type { MeetingRequestBody } from "./meetings";
 import type { OwnerActionRequestBody } from "./ownerActions";
@@ -213,7 +213,14 @@ export type ClientRequestBody =
     }
   | { readonly type: "get_chat_step"; readonly bot_id: string; readonly item_id: string }
   | { readonly type: "get_chat_image"; readonly bot_id: string; readonly image_id: string }
-  | { readonly type: "list_artifacts"; readonly project_id: string }
+  | {
+      readonly type: "list_artifacts";
+      readonly project_id: string;
+      /** 0.22.0, `artifacts_v2`; an older daemon lists everything. */
+      readonly group?: ArtifactGroup;
+      readonly limit?: number;
+      readonly before?: string;
+    }
   | {
       readonly type: "read_file";
       readonly path: string;
@@ -264,6 +271,24 @@ export type ClientRequestBody =
       /** A message `num`: the page ends just before it. */
       readonly before?: number;
       readonly limit?: number;
+    }
+  | {
+      /**
+       * Moves a shared file no live card uses to the trash (0.22.0, `artifacts_v2`;
+       * approve). A file a live card uses is refused with `conflict`, naming the cards.
+       */
+      readonly type: "artifact_trash";
+      readonly project_id: string;
+      /** The artifact's `rel`. */
+      readonly path: string;
+    }
+  | {
+      /** Marks a shared file as kept, or not: Tidy up leaves it out (0.22.0; approve). */
+      readonly type: "artifact_keep";
+      readonly project_id: string;
+      /** The artifact's `rel`. */
+      readonly path: string;
+      readonly keep: boolean;
     }
   | {
       readonly type: "write_artifact";

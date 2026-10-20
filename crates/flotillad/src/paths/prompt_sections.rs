@@ -213,9 +213,9 @@ const YOUR_CARDS: &str = "## Your cards\n\n\
      what you made, and move it to the next column (Review, when the board\n\
      has one). The owner checks it there and moves it to Done.\n\
      - If the card isn't ready, or you need answers before you can do it,\n\
-     move it back to To do and ask the owner your questions: `message_owner`\n\
-     with `asks: true` and `item` set to the card, or `raise_decision` when\n\
-     only the owner can settle it. When they answer, move it to Doing again\n\
+     move it back to To do and ask the owner your questions: `ask_owner`\n\
+     with `item_id` set to the card, one entry per question, or\n\
+     `raise_decision` when only the owner can settle it. When they answer, move it to Doing again\n\
      yourself and carry on.\n\
      - A notice about a card whose work you already finished asks for\n\
      nothing: don't redo the work.\n\
@@ -275,17 +275,20 @@ pub(super) fn owner_reporting() -> &'static str {
      The owner reads the project's dashboard, the board, releases, meeting\n\
      summaries and the main chat. They don't read your terminal, so anything\n\
      the owner should see must land in one of those:\n\n\
-     - Work results go on the card: `item_comment`, and every artifact linked\n\
-     to the card. A release carries its changes in `changelog` and\n\
+     - Work results go on the card: `item_comment`, and every file you made\n\
+     for it attached (`item_attach`). A release carries its changes in `changelog` and\n\
      `how_to_test`, written for the owner, not for bots. A meeting ends with\n\
      its `summary`.\n\
      - Something the owner should read now that has no card (a heads-up, a\n\
      blocker, a finding): `message_owner`, short, with `item` when it is about\n\
      a card. Long content goes in an artifact; send the path.\n\
-     - A question for the owner: `message_owner` with `asks: true`, or\n\
-     `item_comment` with `asks_owner: true` when it is about a card. Ask one\n\
-     clear question with your recommended answer, then carry on with\n\
-     whatever doesn't depend on it.\n\
+     - A question for the owner: `ask_owner`, one entry per question, with\n\
+     `item_id` (its card) or `plan_node_id`, its options and the one you\n\
+     recommend, and `why` in a line. The owner answers each on the card or in\n\
+     Needs you, and you are told each answer. Mark `blocking` only what a\n\
+     node's research or document can't go on without. Never ask questions\n\
+     inside a comment. A question about no card or node: `message_owner` with\n\
+     `asks: true`. Then carry on with whatever doesn't depend on it.\n\
      - When the owner writes to you in the main chat, answer with\n\
      `message_owner`, so your answer shows in their thread. The thread is\n\
      where they read you; text you only print in your terminal is lost to them.\n\
@@ -378,7 +381,8 @@ mod tests {
         let md = owner_reporting();
         assert!(md.contains("## Report to the owner where the owner looks"));
         assert!(md.contains("answer with\n`message_owner`"));
-        assert!(md.contains("`asks_owner: true`"));
+        assert!(md.contains("`ask_owner`, one entry per question"));
+        assert!(md.contains("Never ask questions\ninside a comment"));
         assert!(md.contains("Never leave owner-facing content only in your chat or terminal."));
         // One place says how owner requests and cards relate (CE-014 F2).
         assert!(md.contains("needs no card\nuntil it becomes work"));

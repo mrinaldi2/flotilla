@@ -31,6 +31,15 @@ keeps its boards, and cards still have the four 0.21 types.
   `plan_node_id` set to the node) is done with a research document attached
   (`item_attach`), which the owner reads on the card. Only the owner skips
   research, with a reason. The lead may ask (`plan_research_skip`).
+- **Questions (0.22.0).** A bot asks the owner with `ask_owner`, one
+  record per question, on a card and/or a node. The owner answers each once
+  on the card, the plan node, the project's Questions list or in Needs you,
+  or dismisses it with a reason. The bot that asked is told, and so is the
+  lead for plan work. An answer on a research spike is added under "Answers
+  from the owner" in its research document, as a new revision of an
+  attached file. A `blocking` question keeps the node's research from
+  closing and refuses `plan_submit` (`plan.question_open`) until it is
+  answered or dismissed.
 - **Kickoffs.** Whatever a node waits on the lead for comes to the lead as
   a card assigned to it, labelled `kickoff`: "Propose initiatives for" an
   active goal (on the project's default board), "Research" for an

@@ -254,7 +254,7 @@ impl GuardContext {
                 path.strip_prefix(real(root)).is_ok_and(|rest| {
                     rest.components().next().is_some_and(|first| {
                         self.owns_worktree(&first.as_os_str().to_string_lossy())
-                    })
+                    }) || super::claude_worktrees::owns(&self.own_names, &self.other_names, rest)
                 })
             })
     }

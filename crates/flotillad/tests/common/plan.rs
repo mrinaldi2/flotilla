@@ -151,8 +151,20 @@ impl Plan {
         }))
     }
 
-    /// The lead submits the node's gate document with `children`.
+    /// The lead submits the node's gate document with `children`, pushing
+    /// the document first when the repository doesn't have it: a gate needs
+    /// its document in the repository.
     pub fn submit(&self, node: &Node, path: &str, children: &[&str]) -> Node {
+        let origin = self._remote.path().join("origin.git");
+        let spec = format!("main:{path}");
+        let present = std::process::Command::new("git")
+            .args(["cat-file", "-e", &spec])
+            .current_dir(&origin)
+            .status()
+            .is_ok_and(|s| s.success());
+        if !present {
+            push_doc(self, path, &format!("# {path}\n"));
+        }
         done(
             self.lead().submit(&c::PlanSubmit {
                 id: node.id.clone(),

@@ -118,6 +118,16 @@ pub mod capability {
     pub const COLUMN_RESEARCH: &str = "column_research";
     /// `AttentionKind::PlanGate` rows targeting `plan_node_id` (0.21.0).
     pub const ATTENTION_PLAN: &str = "attention_plan";
+    /// Questions for the owner (0.22.0, questions.proto): `ask_owner`,
+    /// `question_list`, `question_answer` and `question_dismiss`, the
+    /// `questions` and `questioned` answers, the `question_change` push,
+    /// `questions` on item and plan node details, the open counts on cards
+    /// and nodes, `AttentionKind::Question` rows, and `plan.question_open`.
+    pub const QUESTIONS_V1: &str = "questions_v1";
+    /// Artifacts by kind (0.22.0): `list_artifacts {group}`, each file's
+    /// `group` and `used_by`, the storage folders left out, and a card's
+    /// artifact links listed with its documents.
+    pub const ARTIFACTS_V2: &str = "artifacts_v2";
 
     /// Every string above, in the order listed.
     pub const ALL: &[&str] = &[
@@ -133,6 +143,8 @@ pub mod capability {
         ITEM_TYPES_V2,
         COLUMN_RESEARCH,
         ATTENTION_PLAN,
+        QUESTIONS_V1,
+        ARTIFACTS_V2,
     ];
 }
 

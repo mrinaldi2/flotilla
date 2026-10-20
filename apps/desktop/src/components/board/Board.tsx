@@ -198,6 +198,7 @@ function Side(p: Parts & { readonly moves: BoardMoves }): ReactElement {
         columns={columns}
         bots={props.bots}
         canControl={canControl}
+        canAnswer={canControl && client.hasGrant("approve")}
         connected={props.connected}
         leadId={project.lead_bot_id ?? undefined}
         onOpen={view.openItem}

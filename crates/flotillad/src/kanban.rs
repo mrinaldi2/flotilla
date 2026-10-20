@@ -26,6 +26,7 @@ pub mod handback;
 pub mod keeper;
 pub mod kickoffs;
 pub mod labels;
+pub mod linked_docs;
 pub mod metrics;
 pub mod mirror;
 pub mod model;

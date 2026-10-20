@@ -29,6 +29,8 @@ interface BoardDrawerProps {
   readonly columns: readonly BoardColumn[];
   readonly bots: readonly Bot[];
   readonly canControl: boolean;
+  /** The approve grant: answers the card's questions (0.22.0). */
+  readonly canAnswer?: boolean;
   readonly connected?: boolean;
   readonly leadId?: string;
   readonly onOpen: (id: string | null) => void;
@@ -81,6 +83,7 @@ export default function BoardDrawer(props: BoardDrawerProps): ReactElement | nul
       columns={props.columns}
       bots={props.bots}
       canComment={props.canControl}
+      canAnswer={props.canAnswer}
       connected={props.connected}
       leadId={props.leadId}
       onClose={() => {

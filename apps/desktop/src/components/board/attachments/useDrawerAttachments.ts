@@ -1,12 +1,14 @@
 // What the item drawer does with attachments (0.19.0): files from "+ Add
 // file", a drop on the drawer or a paste into the description; a linked
-// document; detaching. Each answer is the item as it is now.
+// document; detaching, or unlinking an artifact link listed as a document
+// (0.22.0). Each answer is the item as it is now.
 
 import { useCallback, useMemo } from "react";
 import type { DragEvent } from "react";
 import type { BoardApi } from "../../../protocol/board";
 import { boardCall } from "../../../protocol/board";
 import type { ItemAttachment } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { LinkKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import type { ItemDetail } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import { DaemonError } from "../../../protocol/connection";
 import { docSource, inlineImage } from "./attachments";
@@ -27,6 +29,24 @@ export interface DrawerAttachments {
 
 function hasFiles(event: DragEvent<HTMLElement>): boolean {
   return [...event.dataTransfer.types].includes("Files");
+}
+
+/**
+ * The artifact a card's link lists as a document (0.22.0, `artifacts_v2`):
+ * its id is `link:<target>`, and it goes with the link, not a detach.
+ */
+function linkedArtifact(attachment: ItemAttachment): string | null {
+  return attachment.id.startsWith("link:") ? attachment.id.slice("link:".length) : null;
+}
+
+/** Removes the card's artifact link `ref`, and reads the card again. */
+async function unlink(api: BoardApi, itemId: string, ref: string): Promise<ItemDetail> {
+  await boardCall(
+    api,
+    { case: "itemUnlink", value: { id: itemId, kind: LinkKind.ARTIFACT, ref } },
+    "edited",
+  );
+  return boardCall(api, { case: "itemGet", value: { id: itemId } }, "item");
 }
 
 export function useDrawerAttachments(
@@ -51,11 +71,16 @@ export function useDrawerAttachments(
   );
   const onDetach = useCallback(
     (attachment: ItemAttachment): void => {
-      boardCall(
-        api,
-        { case: "itemDetach", value: { id: itemId, attachmentId: attachment.id } },
-        "item",
-      ).then(setDetail, () => {
+      const ref = linkedArtifact(attachment);
+      const detached =
+        ref === null
+          ? boardCall(
+              api,
+              { case: "itemDetach", value: { id: itemId, attachmentId: attachment.id } },
+              "item",
+            )
+          : unlink(api, itemId, ref);
+      detached.then(setDetail, () => {
         // Still attached: the list shows it as it was.
       });
     },

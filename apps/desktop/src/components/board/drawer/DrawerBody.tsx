@@ -56,6 +56,10 @@ export interface DrawerBodyProps {
   readonly onPasteImage: (file: File) => Promise<string | null>;
   readonly onComment?: PostComment;
   readonly initialTab?: Tab;
+  /** The card's questions for the owner, above the tabs and their comments (0.22.0). */
+  readonly questions?: ReactNode;
+  /** Artifact links listed with the documents, so the Links tab leaves them out. */
+  readonly documents?: boolean;
   /** The item's commands for the owner (H-117). */
   readonly children?: ReactNode;
 }
@@ -84,6 +88,7 @@ export default function DrawerBody(props: DrawerBodyProps): ReactElement {
       )}
       {props.children}
       {props.review}
+      {props.editing ? null : props.questions}
       {props.editing ? (
         <ItemEditForm
           api={props.api}
@@ -101,6 +106,7 @@ export default function DrawerBody(props: DrawerBodyProps): ReactElement {
           columnName={columnName}
           onComment={props.onComment}
           overview={props.overview}
+          documents={props.documents}
         />
       )}
     </div>

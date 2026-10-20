@@ -23,8 +23,10 @@ fn research_open(t: &BoardTx<'_>, wrote: &mut Wrote, node: &Node) -> anyhow::Res
     if close_if_done(t, wrote, node)? {
         return Ok(None);
     }
-    let text =
-        still_open(&t.plan_spikes(&node.id)?).unwrap_or_else(|| "Research is open.".to_string());
+    let Some(text) = still_open(&t.plan_spikes(&node.id)?) else {
+        // The spikes are done: a blocking question holds it.
+        return question_open(t, node);
+    };
     Ok(Some(Step::Refused(vec![unmet(
         "plan.research_open",
         text,
@@ -32,7 +34,59 @@ fn research_open(t: &BoardTx<'_>, wrote: &mut Wrote, node: &Node) -> anyhow::Res
     )])))
 }
 
+/// Why a blocking question stops the node, if one does (0.22.0).
+pub(super) fn question_open(t: &BoardTx<'_>, node: &Node) -> anyhow::Result<Option<Step>> {
+    let open = t.blocking_questions(&node.id)?;
+    if open.is_empty() {
+        return Ok(None);
+    }
+    let list: Vec<String> = open
+        .iter()
+        .map(|(id, text)| format!("“{text}” ({id})"))
+        .collect();
+    Ok(Some(Step::Refused(vec![unmet(
+        "plan.question_open",
+        format!("Waiting on the owner's answer to {}.", list.join(", ")),
+        Some("The owner answers it on the card, the plan node or in Needs you."),
+    )])))
+}
+
 impl Planner<'_> {
+    /// A refusal when the project has a repository, the document isn't in
+    /// it at `sha`, and the node's document card has no copy attached: the
+    /// owner reads the gate's document from one of the two, so a gate on
+    /// neither would show the owner nothing. An attached copy is enough: the
+    /// owner approves from it until it is pushed (0.22.0).
+    fn unpushed(
+        &self,
+        project_id: &str,
+        node_id: &str,
+        doc_path: &str,
+        sha: Option<&str>,
+    ) -> Option<Planned> {
+        self.app.db.project_repo(project_id).ok()??;
+        if super::attached::of_node(self.app, project_id, node_id).is_some() {
+            return None;
+        }
+        let why = match super::docs::head(self.app, project_id, false) {
+            None => "The project's repository can't be read, so the owner couldn't read the document. Attach it to the node's document card, or check the repository, and submit again.".to_string(),
+            Some((cache, head)) => {
+                let at = sha.unwrap_or(&head);
+                match crate::releases::git_cache::bytes_at(&cache, at, doc_path) {
+                    Ok(Some(Ok(_))) => return None,
+                    _ => format!(
+                        "{doc_path} isn't in the project's repository at {}. Attach it to the node's document card (or push it to the default branch), then submit again.",
+                        &at[..at.len().min(8)]
+                    ),
+                }
+            }
+        };
+        Some(Planned {
+            outcome: super::Outcome::Refused(vec![unmet("plan.doc_unpushed", why, None)]),
+            created: Vec::new(),
+        })
+    }
+
     /// The lead submitting the document of the node's gate stage. Research
     /// must be over; the commit defaults to the default branch's head.
     pub fn submit(&self, r: &c::PlanSubmit) -> anyhow::Result<Planned> {
@@ -57,6 +111,9 @@ impl Planner<'_> {
                     .map(str::to_string),
             })
             .collect();
+        if let Some(unpushed) = self.unpushed(&project_id, &r.id, &doc_path, sha.as_deref()) {
+            return Ok(unpushed);
+        }
         if children.iter().any(|c| c.title.is_empty()) {
             return Ok(Planned {
                 outcome: super::Outcome::Refused(vec![unmet(
@@ -88,6 +145,9 @@ impl Planner<'_> {
             }
             // Research that just closed moved the node on.
             let node = t.plan_node(&node.id)?.expect("read above");
+            if let Some(open) = question_open(t, &node)? {
+                return Ok(open);
+            }
             if !node.kind.gates_at(node.stage) {
                 return Ok(refused(
                     "plan.stage",

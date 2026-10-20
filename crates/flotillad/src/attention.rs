@@ -54,6 +54,8 @@ pub(crate) fn weight(kind: AttentionKind) -> u32 {
         | AttentionKind::BotWaiting
         | AttentionKind::OffBoard
         | AttentionKind::OwnerQuestion
+        // A question for the owner (0.22.0), as a card question was.
+        | AttentionKind::Question
         | AttentionKind::CleanupHeld
         | AttentionKind::DraftUpdated
         | AttentionKind::CardWaiting => 1,

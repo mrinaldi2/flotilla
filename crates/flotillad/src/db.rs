@@ -27,6 +27,7 @@ pub use owner_messages::{OwnerProof, OwnerVia};
 pub use owner_threads::{Asked, OwnerQuestion};
 pub use peer_grants::{GrantEnd, GrantRuling, PeerGrant};
 pub use plan_gates::Spike;
+pub use questions::{Anchor, NewQuestion, QuestionFilter, QuestionRow};
 pub use quiesce::{NewQuiesce, Quiesce};
 pub use release_cut::{LeaveOut, NewCut};
 pub use release_life::NewReleaseTest;
@@ -40,6 +41,7 @@ pub use trash_orders::TrashOrder;
 pub use workers::NewWorker;
 
 pub mod agent_talk;
+mod artifact_uses;
 mod board;
 mod board_admin;
 mod board_attachments;
@@ -111,6 +113,7 @@ mod permissions;
 mod plan;
 mod plan_gates;
 mod plan_kickoff;
+mod questions;
 pub use plan_kickoff::NodeCard;
 #[cfg(test)]
 mod plan_tests;

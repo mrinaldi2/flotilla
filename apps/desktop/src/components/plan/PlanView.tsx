@@ -17,6 +17,8 @@ import PlanNodeDetail from "./PlanNodeDetail";
 import type { TreeFilter } from "./planText";
 import { actorName, ancestorsOf, fileName, treeRows } from "./planText";
 import PlanTreePane from "./PlanTreePane";
+import PaneEdge, { TREE_WIDTH } from "./PaneEdge";
+import { usePaneWidth } from "../../hooks/usePaneWidth";
 
 /** What the right side shows. */
 type PlanPane =
@@ -151,19 +153,24 @@ export default function PlanView(props: PlanViewProps): ReactElement {
   const [filter, setFilter] = useState<TreeFilter>(props.initial?.filter ?? "all");
   const [creating, setCreating] = useState<CreateKind | null>(props.initial?.create ?? null);
   const selectedNode = props.tree.nodes.find((n) => n.id === opened.selected);
+  const tree = usePaneWidth(TREE_WIDTH);
   return (
     <div className="plan-view">
       {opened.pane.kind === "gate" && selectedNode?.gate !== undefined ? null : (
-        <PlanTreePane
-          nodes={props.tree.nodes}
-          guidelines={props.tree.guidelines}
-          selected={opened.selected}
-          filter={filter}
-          onFilter={setFilter}
-          onSelect={(id) => opened.open(id)}
-          onOpenDoc={(doc) => opened.setPane({ kind: "doc", doc })}
-          onCreate={props.canCreate ? setCreating : undefined}
-        />
+        <>
+          <PlanTreePane
+            style={tree.style}
+            nodes={props.tree.nodes}
+            guidelines={props.tree.guidelines}
+            selected={opened.selected}
+            filter={filter}
+            onFilter={setFilter}
+            onSelect={(id) => opened.open(id)}
+            onOpenDoc={(doc) => opened.setPane({ kind: "doc", doc })}
+            onCreate={props.canCreate ? setCreating : undefined}
+          />
+          <PaneEdge label="Plan tree width" width={tree} />
+        </>
       )}
       <Right {...props} {...opened} />
       {creating === null ? null : (
