@@ -7,7 +7,7 @@ use std::path::Path;
 
 /// Folds the complete lines after `offset` into the builder and returns the
 /// offset of the first line not yet complete.
-pub(super) fn read_from(
+pub(crate) fn read_from(
     path: &Path,
     offset: u64,
     mut push: impl FnMut(u64, &str),

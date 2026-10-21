@@ -39,6 +39,8 @@ pub use runs::NewRun;
 pub use signals::NewSignal;
 pub use team::OpenWork;
 pub use trash_orders::TrashOrder;
+pub use usage::{Tokens, UsageEntry, UsageRow};
+pub use usage_settings::{StoredBudget, UsagePrice};
 pub use workers::NewWorker;
 
 pub mod agent_talk;
@@ -163,6 +165,8 @@ mod team;
 mod tests;
 mod trash_orders;
 mod typed_prompts;
+pub mod usage;
+pub mod usage_settings;
 mod workers;
 #[cfg(test)]
 mod workers_tests;
