@@ -63,6 +63,7 @@ fn plan(gate: &Value) -> Plan {
     Plan {
         head: text("head_sha"),
         branch: text("branch"),
+        base: text("base_branch"),
         repo: text("repo"),
         repo_url: text("repo_url"),
         dry_run: false,

@@ -105,8 +105,7 @@ pub fn executor(
     if method == GATE {
         // Main as the revert starts from it: what the pushed branch must be
         // the exact revert of (H-272 M1).
-        let main_at = git_cache::resolve(&cache, "refs/heads/main")
-            .ok_or_else(|| conflict(format!("{} has no main branch", repo.name)))?;
+        let main_at = repo.base_tip(&cache).map_err(|e| conflict(e.to_string()))?;
         app.db
             .board_tx(|t| t.set_leave_out_main(&lo.id, &main_at))?;
         return Ok(json!({
@@ -127,7 +126,7 @@ pub fn executor(
         )));
     }
     let expected = expected_tree(&cache, &lo, &left, head)?;
-    let facts = repo::facts(&cache, head)?;
+    let facts = repo.facts(&cache, head)?;
     let required = checks::required(&cache, &facts.base_sha, head)?;
     let card = left.last().map(|p| p.item_id.clone()).unwrap_or_default();
     let names: Vec<String> = left

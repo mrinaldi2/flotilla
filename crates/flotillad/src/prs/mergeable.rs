@@ -166,8 +166,9 @@ pub fn compute(app: &AppState, pr: &Pr, exact: bool) -> anyhow::Result<Mergeable
         }
     }
     // 5. The head descends from main's tip: main fast-forwards to it.
-    let cache = repo::of_project(app, &pr.project_id, Some(&pr.repo))?.cached(app);
-    if let Some(main) = git_cache::resolve(&cache, "refs/heads/main") {
+    let repo = repo::of_project(app, &pr.project_id, Some(&pr.repo))?;
+    let cache = repo.cached(app);
+    if let Some(main) = git_cache::resolve(&cache, &repo.base_ref()) {
         if !git_cache::contains(&cache, &pr.head_sha, &main)? {
             let paths = if exact {
                 git_cache::conflicts(&cache, &main, &pr.head_sha).unwrap_or_default()

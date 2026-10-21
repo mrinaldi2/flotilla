@@ -1,5 +1,6 @@
 //! `flotillad pr merge <n> [--dry-run]` (H-284; H-261 §5.2): DevOps, on the
-//! daemon's `pr_merge` task, fast-forwards `main` to exactly the PR's head.
+//! daemon's `pr_merge` task, fast-forwards the project's branch (`main`
+//! unless the owner set another) to exactly the PR's head.
 //!
 //! The daemon checks first (`flotilla/pr_merge`, see `prs::merge`): the
 //! `pr_merge` extra, the DevOps role, the task, and every §5.1 condition
@@ -111,6 +112,8 @@ fn parse(args: &[String]) -> anyhow::Result<(u32, bool)> {
 pub struct Plan {
     pub head: String,
     pub branch: String,
+    /// The branch the PR lands on.
+    pub base: String,
     /// "owner/name".
     pub repo: String,
     /// Where the result is checked.
@@ -131,6 +134,8 @@ impl Plan {
         Ok(Self {
             head: text("head_sha")?,
             branch: text("branch")?,
+            // A daemon from before 0.23.2 named no base: its PRs land on main.
+            base: text("base_branch").unwrap_or_else(|_| "main".into()),
             repo: text("repo")?,
             repo_url: text("repo_url")?,
             dry_run,
@@ -168,7 +173,8 @@ pub fn merge_in(checkout: &Path, plan: &Plan) -> anyhow::Result<Done> {
         "this checkout's origin is {origin}, not {}; run it in a checkout of that repo",
         plan.repo
     );
-    let transport = git::fetch(checkout, &["main", &plan.branch])?;
+    let base = plan.base.as_str();
+    let transport = git::fetch(checkout, &[base, &plan.branch])?;
     let tip = run_git(
         checkout,
         &[
@@ -190,11 +196,11 @@ pub fn merge_in(checkout: &Path, plan: &Plan) -> anyhow::Result<Done> {
             &[
                 "merge-base",
                 "--is-ancestor",
-                "refs/remotes/origin/main",
+                &format!("refs/remotes/origin/{base}"),
                 &plan.head
             ]
         ),
-        "main has commits that {} lacks: not a fast-forward, so nothing was pushed",
+        "{base} has commits that {} lacks: not a fast-forward, so nothing was pushed",
         plan.head
     );
     if plan.dry_run {
@@ -204,11 +210,11 @@ pub fn merge_in(checkout: &Path, plan: &Plan) -> anyhow::Result<Done> {
             branch_note: "dry run".to_string(),
         });
     }
-    let transport = git::push(checkout, &[format!("{}:refs/heads/main", plan.head)])?;
-    let main = remote_tip(&plan.repo_url, "main")?;
+    let transport = git::push(checkout, &[format!("{}:refs/heads/{base}", plan.head)])?;
+    let main = remote_tip(&plan.repo_url, base)?;
     anyhow::ensure!(
         main.as_deref() == Some(plan.head.as_str()),
-        "pushed, but {} has main at {}, not {}; nothing recorded",
+        "pushed, but {} has {base} at {}, not {}; nothing recorded",
         plan.repo,
         main.as_deref().unwrap_or("nothing"),
         plan.head
