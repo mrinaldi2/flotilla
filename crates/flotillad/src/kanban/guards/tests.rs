@@ -51,6 +51,7 @@ fn column(category: Cat) -> BoardColumn {
         wip_scope: d.wip_scope,
         visible: d.visible,
         policy: Default::default(),
+        on_entry: None,
     }
 }
 

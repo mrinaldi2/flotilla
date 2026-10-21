@@ -187,6 +187,9 @@ pub struct BoardColumn {
     /// A custom board's rules for entering the column; unused on a
     /// release-gated board.
     pub policy: super::flow::ColumnPolicy,
+    /// The role a card entering the column is assigned to (0.24.0,
+    /// `board_flow_v1`); `None`: nobody, the card keeps its assignee.
+    pub on_entry: Option<Role>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

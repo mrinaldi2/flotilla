@@ -34,6 +34,7 @@ pub mod model;
 pub mod moves;
 pub mod notice_text;
 pub mod notices;
+pub mod on_entry;
 pub mod presets;
 pub mod pushed;
 pub mod rank;

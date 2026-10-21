@@ -171,6 +171,7 @@ fn custom(preset: Preset, specs: &[c::ColumnSpec]) -> Result<Start, String> {
                 visible: true,
                 policy: ColumnPolicy::default(),
                 research: false,
+                on_entry: None,
             },
         };
         columns.push(column);

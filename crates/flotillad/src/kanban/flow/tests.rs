@@ -30,6 +30,7 @@ fn column(key: &str) -> (BoardColumn, ColumnPolicy) {
         wip_scope: c.wip_scope,
         visible: c.visible,
         policy: c.policy.clone(),
+        on_entry: c.on_entry,
     };
     (column, c.policy)
 }

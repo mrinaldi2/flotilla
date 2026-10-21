@@ -18,7 +18,7 @@ use crate::decisions::{conflict, invalid, not_found};
 use crate::kanban::facts::Fact;
 use crate::kanban::flow::tokens;
 use crate::kanban::labels;
-use crate::kanban::model::{Board, BoardColumn, BoardFlow, ColumnKind, StructurePolicy};
+use crate::kanban::model::{Board, BoardColumn, BoardFlow, ColumnKind, Role, StructurePolicy};
 use crate::kanban::presets::category_of;
 
 impl BoardTx<'_> {
@@ -119,6 +119,7 @@ impl BoardTx<'_> {
         let movers = tokens::movers(&req.movers).map_err(invalid)?;
         let rules = tokens::rules(&req.rules).map_err(invalid)?;
         sources_exist(&columns, &req.allowed_from)?;
+        let on_entry = req.on_entry.map(on_entry_role).transpose()?.flatten();
         let key = self.free_column_key(&board, name)?;
         let ord = match req.after.as_deref() {
             Some(after) => column(&columns, after)?.ord + 1,
@@ -135,8 +136,9 @@ impl BoardTx<'_> {
             .unwrap_or(crate::kanban::model::WipScope::Column);
         self.conn.execute(
             "INSERT INTO board_column(project_id, key, name, ord, category, wip_limit, wip_scope,
-                                      visible, board_id, kind, movers, rules, allowed_from)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 1, ?8, ?9, ?10, ?11, ?12)",
+                                      visible, board_id, kind, movers, rules, allowed_from,
+                                      on_entry)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 1, ?8, ?9, ?10, ?11, ?12, ?13)",
             params![
                 board.project_id,
                 key,
@@ -151,7 +153,8 @@ impl BoardTx<'_> {
                     .then(|| serde_json::to_string(&movers))
                     .transpose()?,
                 serde_json::to_string(&rules)?,
-                serde_json::to_string(&req.allowed_from)?
+                serde_json::to_string(&req.allowed_from)?,
+                on_entry.map(Role::as_str)
             ],
         )?;
         self.bump_board(&board.id)?;
@@ -210,6 +213,14 @@ impl BoardTx<'_> {
                     serde_json::to_string(&rules)?,
                     serde_json::to_string(&req.allowed_from)?
                 ],
+            )?;
+        }
+        // Any board, release-gated too: the role is told after the move,
+        // whichever rules allowed it (0.24.0).
+        if let Some(role) = req.on_entry {
+            self.conn.execute(
+                "UPDATE board_column SET on_entry = ?3 WHERE board_id = ?1 AND key = ?2",
+                params![board.id, col.key, on_entry_role(role)?.map(Role::as_str)],
             )?;
         }
         if let Some(after) = &req.after {
@@ -351,6 +362,16 @@ pub(super) fn column<'c>(columns: &'c [BoardColumn], key: &str) -> anyhow::Resul
         .iter()
         .find(|c| c.key == key)
         .ok_or_else(|| invalid(format!("this board has no column {key}")))
+}
+
+/// A column's `on_entry` from the wire: `ROLE_UNSPECIFIED` is none.
+fn on_entry_role(wire: i32) -> anyhow::Result<Option<Role>> {
+    if wire == c::Role::Unspecified as i32 {
+        return Ok(None);
+    }
+    Role::from_wire(wire)
+        .map(Some)
+        .map_err(|_| invalid("pick a known role for the column's on-entry assignment"))
 }
 
 fn sources_exist(columns: &[BoardColumn], keys: &[String]) -> anyhow::Result<()> {

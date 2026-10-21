@@ -118,6 +118,9 @@ mod plan_gates;
 mod plan_kickoff;
 mod questions;
 pub use plan_kickoff::NodeCard;
+mod chain_backfill;
+#[cfg(test)]
+mod chain_backfill_tests;
 #[cfg(test)]
 mod plan_tests;
 #[cfg(test)]
@@ -139,6 +142,8 @@ mod releases;
 #[cfg(test)]
 mod releases_tests;
 mod research_columns;
+mod role_waits;
+pub use role_waits::RoleWait;
 #[cfg(test)]
 mod research_columns_tests;
 pub mod review_settings;
@@ -289,7 +294,9 @@ impl Db {
         migrate::migrate(&mut self.lock())?;
         // What the 0.21 card types migration leaves to the daemon.
         self.backfill_card_type_templates()?;
-        self.backfill_research_columns()
+        self.backfill_research_columns()?;
+        // The 0.24 default chain, once Research is on every board.
+        self.backfill_board_chain()
     }
 
     pub fn integrity_check(&self) -> anyhow::Result<bool> {

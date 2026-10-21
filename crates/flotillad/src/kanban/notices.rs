@@ -68,6 +68,15 @@ pub fn tell_reassigned(app: &AppState, before: Option<&str>, item: &Item, by: &A
     tell_assignee(app, item, by, Notice::Assigned);
 }
 
+/// Tell `bot_id` that `item` is no longer theirs: a column gave it to
+/// another bot on entry (0.24.0). Like any notice, not when `by` is that
+/// bot or the daemon.
+pub fn tell_off(app: &AppState, bot_id: &str, item: &Item, by: &Actor<'_>) {
+    if item.assignee.as_deref() != Some(bot_id) {
+        tell(app, item, bot_id, by, Notice::Unassigned);
+    }
+}
+
 fn tell(app: &AppState, item: &Item, bot_id: &str, by: &Actor<'_>, notice: Notice<'_>) {
     if item.state != ItemState::Live || matches!(by, Actor::Daemon) || by.bot_id() == Some(bot_id) {
         return;

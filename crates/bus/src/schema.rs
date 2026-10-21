@@ -14,6 +14,7 @@ mod base;
 mod board;
 mod board_flow;
 mod board_links;
+mod board_on_entry;
 mod board_proposals;
 mod boards;
 mod card_types;
@@ -54,6 +55,7 @@ use board_links::{
     MIGRATION_AC_POST_INSTALL, MIGRATION_BOARD_LINKS, MIGRATION_BOARD_WORKFLOW,
     MIGRATION_GUARDRAILS_2, MIGRATION_TASK_CARDS, MIGRATION_TASK_RELEASE, MIGRATION_TASK_TARGET,
 };
+use board_on_entry::MIGRATION_BOARD_ON_ENTRY;
 use board_proposals::MIGRATION_BOARD_PROPOSALS;
 use boards::MIGRATION_BOARDS;
 use card_types::MIGRATION_CARD_TYPES;
@@ -182,6 +184,7 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_BOT_PRESENCE,
     MIGRATION_PROJECT_PR_FLOW,
     MIGRATION_PR_BASE_LABEL,
+    MIGRATION_BOARD_ON_ENTRY,
 ];
 
 #[cfg(test)]

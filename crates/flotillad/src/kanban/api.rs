@@ -132,6 +132,8 @@ pub fn publish_moves(
             from_column: Some(from.clone()),
         });
     }
+    // Each card entered its new column (0.24.0).
+    super::on_entry::entered_all(app, feed, moved);
 }
 
 /// Push the cards another module changed without moving them (a release's
