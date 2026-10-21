@@ -1629,6 +1629,7 @@ The typed surface `flotilla.pr.v1` (`proto/flotilla/pr/v1/pr.proto`, contract `p
   - The bot must hold the role's board role, and `sha` must be the head.
   - It is refused while the PR is `moved_unreported`; the pusher reports the tip first.
   - `changes_requested` needs at least one `must` finding.
+  - **Who fixes it (0.23.5):** the bot that opened the PR gets a task naming the reviewer and the summary, and the card's assignee, when it is another bot, gets a note.
   - The `owner` role is refused over MCP.
   - The verdict is stored with the head's patch-id. `stale` is computed as the review's patch-id ≠ the PR's head patch-id, so an update with main keeps it and a fix-up or a conflict resolution doesn't.
 - **Who may not review it (§4.4):**
@@ -1663,7 +1664,8 @@ The typed surface `flotilla.pr.v1` (`proto/flotilla/pr/v1/pr.proto`, contract `p
 - **`pr_review_submit {project_id, number, sha, verdict, summary?, findings?}`** (approve; device or ticket only):
   - records the owner's verdict on the head, with provenance `device:<id>` or `ticket`;
   - is refused while the branch moved unreported;
-  - `changes_requested` needs a `summary`, and sends the card back to Doing.
+  - `changes_requested` needs a `summary`, and sends the card back to Doing. A custom board whose automations map no column for `pr.changes_requested` sends it to the nearest Doing column before the one it is in, when that column's rules hold (0.23.5).
+  - The PR's author is tasked with the changes and the card's assignee is told, as for a bot reviewer's request (0.23.5).
   - Answers `{type: "pr", pr, review}`.
 - **`pr_comment_add {project_id, number, sha, path, line, side?, body, severity?, reply_to?}`** (approve; device or ticket only) stores an owner line comment on a commit of the PR. Bots' comments and re-anchoring come in H-282.
 - **`pr_flag`:**
