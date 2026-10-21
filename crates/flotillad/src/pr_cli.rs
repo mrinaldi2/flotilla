@@ -45,8 +45,8 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
     let done = merge_in(&here, &plan)?;
     if dry_run {
         println!(
-            "dry run: would fast-forward main on {} to {}",
-            plan.repo, plan.head
+            "dry run: would fast-forward {} on {} to {}",
+            plan.base, plan.repo, plan.head
         );
         return Ok(());
     }
@@ -68,8 +68,8 @@ pub async fn run(cfg: &Config, args: &[String]) -> anyhow::Result<()> {
         );
     }
     println!(
-        "PR #{number}: main on {} is at {} (pushed over {})",
-        plan.repo, plan.head, done.transport
+        "PR #{number}: {} on {} is at {} (pushed over {})",
+        plan.base, plan.repo, plan.head, done.transport
     );
     println!("branch {}: {}", plan.branch, done.branch_note);
     if reply["moved"].as_bool() == Some(true) {
