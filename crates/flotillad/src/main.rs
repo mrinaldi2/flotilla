@@ -130,6 +130,10 @@ async fn main() -> anyhow::Result<()> {
     ) {
         flotillad::migrate_home::refuse_unmigrated(&cfg)?;
     }
+    // Every command names the home, not only the daemon: `pr merge` and the
+    // release commands run as a bot's own process and keep git's empty
+    // config under `<home>/run/git` too (0.23.4).
+    flotillad::safe_git::set_home(&cfg.home);
 
     match args.first().map(String::as_str) {
         Some("migrate-home") => {
