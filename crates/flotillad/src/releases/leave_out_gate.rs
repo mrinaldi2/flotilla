@@ -127,6 +127,7 @@ pub fn executor(
     }
     let expected = expected_tree(&cache, &lo, &left, head)?;
     let facts = repo.facts(&cache, head)?;
+    let base = repo.base_name(&cache).unwrap_or_else(|| "main".into());
     let required = checks::required(&cache, &facts.base_sha, head)?;
     let card = left.last().map(|p| p.item_id.clone()).unwrap_or_default();
     let names: Vec<String> = left
@@ -141,6 +142,7 @@ pub fn executor(
             repo: &repo.name,
             item_id: &card,
             branch: &branch,
+            base: &base,
             base_sha: &facts.base_sha,
             head_sha: head,
             patch_id: &facts.patch_id,

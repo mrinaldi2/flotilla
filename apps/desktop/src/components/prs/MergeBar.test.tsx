@@ -72,6 +72,17 @@ describe("The merge bar's announcements (UX-053 should-fix 2 and 3)", () => {
     expect(live()).toHaveTextContent(/^Merged\.$/);
   });
 
+  it("says nobody holds DevOps when the window ended with no one to merge it", () => {
+    const merging = mergingPr(7);
+    const { rerender } = render(bar(merging));
+    rerender(bar({ ...mergingPr(-1), base: "develop", mergeWaiting: "no_devops" }));
+    expect(live()).toHaveTextContent(/^Nobody holds DevOps to merge #42\.$/);
+    expect(screen.getByText(/nobody in this project holds DevOps/)).toHaveTextContent(
+      "into develop",
+    );
+    expect(screen.queryByText(/Waiting for DevOps/)).toBeNull();
+  });
+
   it("says nothing for a PR that was never in a window", () => {
     render(bar(settled(mergingPr(7), PrState.MERGED)));
     expect(live()).toHaveTextContent(/^$/);

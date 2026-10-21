@@ -90,6 +90,7 @@ pub fn open(app: &Arc<AppState>, bot: &bus::Bot, req: &Open<'_>) -> anyhow::Resu
     let head = repo::tip(&cache, branch)
         .ok_or_else(|| conflict(format!("{branch} isn't on {}; push it first", repo.name)))?;
     let facts = repo.facts(&cache, &head)?;
+    let base = repo.base_name(&cache).unwrap_or_else(|| "main".into());
     let required = checks::required(&cache, &facts.base_sha, &head)?;
     let title = req.title.map(str::trim).filter(|t| !t.is_empty());
     let mut feed = app.board.writer();
@@ -122,6 +123,7 @@ pub fn open(app: &Arc<AppState>, bot: &bus::Bot, req: &Open<'_>) -> anyhow::Resu
             repo: &repo.name,
             item_id: &item.id,
             branch,
+            base: &base,
             base_sha: &facts.base_sha,
             head_sha: &head,
             patch_id: &facts.patch_id,

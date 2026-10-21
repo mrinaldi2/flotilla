@@ -138,6 +138,7 @@ fn only_a_heads_author_or_pusher_wrote_it() {
             repo: "o/r",
             item_id: &item,
             branch: "one",
+            base: "main",
             base_sha: "b",
             head_sha: "h",
             patch_id: "p",

@@ -1,7 +1,8 @@
 // The 10 s Undo (H-261 §16, ruling 7629a873; H-271): once your Approve makes
 // a PR mergeable it waits 10 s before the merge is handed to DevOps, and
 // nothing is pushed meanwhile, so Undo withdraws your approval with main
-// untouched. After the window it says it waits for DevOps (H-284 S3).
+// untouched. After the window it says it waits for DevOps (H-284 S3), or
+// that nobody holds DevOps to merge it (0.23.3).
 // Screen readers hear it once when the window opens and once on the outcome,
 // not every second: the counter is aria-hidden (UX-053 should-fix 2).
 
@@ -28,6 +29,11 @@ function useSeconds(on: boolean, start: number): number {
 
 type Stage = "undo" | "devops" | "merged" | null;
 
+/** The window ended with nobody in the project holding DevOps, the role that merges. */
+function noDevops(pr: PullRequest): boolean {
+  return pr.mergeWaiting === "no_devops";
+}
+
 function stageOf(pr: PullRequest, phase: MergeWindow): Stage {
   if (phase !== null) {
     return phase.kind;
@@ -43,7 +49,9 @@ function announcement(pr: PullRequest, phase: MergeWindow, from: Stage, undo: bo
     return `Merging #${pr.number} into ${pr.base || "main"} in ${seconds}.${then}`;
   }
   if (phase?.kind === "devops") {
-    return `Waiting for DevOps to merge #${pr.number}.`;
+    return noDevops(pr)
+      ? `Nobody holds DevOps to merge #${pr.number}.`
+      : `Waiting for DevOps to merge #${pr.number}.`;
   }
   if (from === null) {
     return "";
@@ -119,9 +127,16 @@ export default function MergeBar(props: {
       {phase?.kind === "undo" ? (
         <UndoBar pr={pr} seconds={phase.seconds} undo={undo} owner={owner} />
       ) : null}
-      {phase?.kind === "devops" ? (
+      {phase?.kind === "devops" && !noDevops(pr) ? (
         <div className="pr-merge-bar">
           ◌ Waiting for DevOps to merge #{pr.number} into {pr.base || "main"}.
+        </div>
+      ) : null}
+      {phase?.kind === "devops" && noDevops(pr) ? (
+        <div className="pr-merge-bar">
+          ◌ Approved, but nobody in this project holds DevOps, the role that merges #{pr.number}{" "}
+          into {pr.base || "main"}. Give a bot the DevOps role and the pr_merge extra: it merges as
+          soon as one holds them.
         </div>
       ) : null}
     </>

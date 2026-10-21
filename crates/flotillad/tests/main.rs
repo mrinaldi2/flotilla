@@ -153,6 +153,7 @@ mod pr_base_branch;
 mod pr_comments;
 mod pr_executor;
 mod pr_merge;
+mod pr_no_devops;
 mod pr_owner;
 mod pr_peers;
 mod pr_policy_owner;
