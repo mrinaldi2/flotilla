@@ -227,6 +227,12 @@ pub fn finalize(
             card: card_after_commit(&app.db, &item.id),
             from_column: None,
         });
+        let entry = super::on_entry::Entry {
+            from: None,
+            reason: None,
+            by: actor,
+        };
+        super::on_entry::entered(app, &mut feed, &item.id, entry);
         drop(feed);
         tell_invited(
             app,

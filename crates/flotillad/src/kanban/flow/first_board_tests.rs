@@ -28,6 +28,7 @@ fn column(key: &str) -> BoardColumn {
         wip_scope: c.wip_scope,
         visible: c.visible,
         policy: c.policy,
+        on_entry: c.on_entry,
     }
 }
 

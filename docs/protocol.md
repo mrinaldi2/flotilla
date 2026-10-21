@@ -1537,12 +1537,18 @@ was never pushed. The owner's moves aren't held to it.
 
 The owner's plan (`.scratch/plan-0.24.md`, answered 2026-10-21). Five capabilities, each advertised once its daemon step serves it: `board_flow_v1`, `commands_v1`, `push_requests_v1`, `research_gate_v1` and `usage_v1`.
 
-**The board runs the SDLC (`board_flow_v1`).** `BoardColumn.on_entry` names a role; `column_add` and `column_update` take it, and `ROLE_UNSPECIFIED` clears it.
-- **On entry:** when a card enters such a column, by any move (a bot's, the owner's, or a fact such as `pr.opened`), the daemon assigns it to a holder of the role, picked as `item_assign {role}` picks one, and tells the holder exactly as an assignment does. A card already assigned to a holder of that role keeps its assignee.
-- **Nobody holds it:** the card keeps whoever moved it and the move succeeds. Needs you shows a `ROLE_UNHELD` row (weight 2, target `role`, e.g. `"architect"`), one per board and role, titled "Nobody holds Architect: <card> waits in <column>". It clears once a bot holds the role. The app offers Create a bot with that role.
-- **The default chain:** the Simple + Review and Software presets, and existing boards made from them, get To do or Inbox → Product, Research → Architect, Doing → Developer, Review → Tester and Verify → Tester. A custom board's columns start with none.
-- **Sending back:** a move from Review or Verify back to Doing re-assigns a Developer, and the mover's `reason` is posted on the card.
-- **Closing:** the Tester may move a passed card to Done. The Done column's movers gain `roles:tester`, and `independent` already holds for a Tester that didn't work on the card.
+**The board runs the SDLC (`board_flow_v1`).** `BoardColumn.on_entry` names a role; `column_add` and `column_update` take it, and `ROLE_UNSPECIFIED` clears it. `column_update` sets it on any board, a release-gated one too, without `set_policy`.
+- **On entry:** when a card enters such a column, by any move (a bot's, the owner's, or a fact such as `pr.opened`), the daemon assigns it to a holder of the role and tells the holder, as an assignment does. A new card entering its first column counts, as does a finalized draft. A card already assigned to a holder of that role keeps its assignee.
+  - **The holder:** the bot that last held the card, if it still holds the role, so a card sent back goes to its Developer again. Otherwise the one `item_assign {role}` picks: awake and free, then asleep, which wakes it.
+  - **Recorded as:** the daemon's `assigned` event, with `field: "on_entry"` and the role as its `note`. Its old assignee hears the card isn't theirs any more, unless it moved the card itself.
+  - **A read doesn't start it:** a column's own role works the card there, so the holder's `item_get` of a card in To do no longer moves it to Research (`work.started`). Any other assignee's read still does.
+- **Nobody holds it:** the move succeeds and the card keeps its assignee, usually whoever moved it. Needs you shows a `ROLE_UNHELD` row (weight 2, target `role`, e.g. `"architect"`), one per board and role, titled "Nobody holds Architect: <card> waits in <column>" after the card that has waited longest. The app offers Create a bot with that role.
+  - **It clears** once a bot holds the role. The waiting cards then go to a holder: `role_set`, or a role worker taking its role, assigns them as if they had just entered.
+- **The default chain:** the Simple + Review and Software presets get To do or Inbox → Product, Research → Architect, Doing → Developer, Review → Tester and Verify → Tester (neither preset has Verify). A custom board's columns, and a release-gated board's, start with none.
+  - **Existing boards:** a startup backfill, once per database, gives the chain to every custom board made from those two presets: one whose columns' keys, without the board's prefix and but for Cancelled, are the preset's. A column that already assigns a role keeps it.
+- **Sending back:** a move to an earlier active column, from one that assigns the Tester (or a release-gated Review or Verify), is a send-back. The mover's `reason` is posted on the card as its comment, "Sent back to Doing: <reason>", and the Developer it goes to is told it.
+- **Closing:** the Tester may move a passed card to Done. The Done column's movers gain `roles:tester`, and Software's Ready gains `roles:product`, so the Product moves a shaped card there.
+  - **`independent`:** a Tester the column gave the card to only checked it. Neither that assignment nor holding the card in Review counts as working on it, so it may close the card.
 - **The lead's prompt:** plan the board, set the roles and spawn role workers for parallel cards. The lead no longer hand-assigns each step.
 
 **Commands (`commands_v1`).** One list of every bot's commands, in place of Main chat (the ⌘J panel and the phone's Chat tab, which are removed). A project's bot-to-bot Conversations stay.

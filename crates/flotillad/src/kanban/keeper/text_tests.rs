@@ -19,6 +19,7 @@ fn column(name: &str, kind: ColumnKind) -> BoardColumn {
         wip_scope: WipScope::Column,
         visible: true,
         policy: Default::default(),
+        on_entry: None,
     }
 }
 

@@ -21,6 +21,7 @@ mod board_drafts;
 mod board_edit;
 mod board_import;
 mod board_listing;
+mod board_moves;
 mod board_output;
 mod board_remote;
 mod board_remote_files;

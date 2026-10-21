@@ -330,7 +330,9 @@ fn independent(item: &Item, who: &Who, ctx: &Context) -> Vec<Unmet> {
         .any(|l| matches!(l.kind, LinkKind::Branch | LinkKind::Pr) && l.created_by == author);
     // A bot that held the card did its work, even once it hands it on.
     let held = ctx.past_assignees.iter().any(|b| who.is(Some(b)));
-    if who.is(item.assignee.as_deref()) || held || linked {
+    // A Tester the column gave the card to checked it (0.24.0).
+    let assignee = who.is(item.assignee.as_deref()) && !who.is(ctx.checker.as_deref());
+    if assignee || held || linked {
         vec![unmet(
             "rule.independent",
             "The mover can't be its assignee, now or before, or an author of its branch.",

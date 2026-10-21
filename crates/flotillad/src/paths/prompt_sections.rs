@@ -212,7 +212,12 @@ const YOUR_CARDS: &str = "## Your cards\n\n\
      until the owner says otherwise.\n\
      - When the work is done, comment the result on the card, link or attach\n\
      what you made, and move it to the next column (Review, when the board\n\
-     has one). The owner checks it there and moves it to Done.\n\
+     has one). A Tester, or the owner, checks it there and moves it to Done.\n\
+     - A column may assign a role on entry: moving the card on hands it to\n\
+     that column's role (Architect, Developer, Tester), and you are told it\n\
+     isn't yours any more. Your step is done then: stop work on it. A Tester\n\
+     that fails a card moves it back to Doing with a `reason`, which its\n\
+     Developer gets with the card.\n\
      - Code goes to Review only where others can read it: push your branch\n\
      and link it (`item_link` kind `branch`), or open its PR when the project\n\
      uses pull requests. A task or bug with neither is refused at Review.\n\

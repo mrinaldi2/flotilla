@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 use super::defaults::COLUMNS;
 use super::facts::Fact;
 use super::flow::{ColumnPolicy, EntryRule, Mover};
-use super::model::{BoardFlow, ColumnCategory, ColumnKind, Size, WipScope};
+use super::model::{BoardFlow, ColumnCategory, ColumnKind, Role, Size, WipScope};
 
 mod start;
 #[cfg(test)]
@@ -20,7 +20,7 @@ pub use start::Start;
 pub enum Preset {
     Simple,
     /// A project's first board: the bot works a card and moves it to
-    /// Review; the owner checks it and moves it to Done.
+    /// Review; the Tester (or the owner) checks it and moves it to Done.
     SimpleReview,
     Software,
     ReleaseGated,
@@ -38,6 +38,9 @@ pub struct PresetColumn {
     /// The Research column (0.21.0): an active column whose category is
     /// `research`, where a task or bug's assignee reads the code first.
     pub research: bool,
+    /// The role a card entering it is assigned to (0.24.0): the default
+    /// chain on Simple + Review and Software, none elsewhere.
+    pub on_entry: Option<Role>,
 }
 
 /// The category a custom column carries for the code that still reads
@@ -92,6 +95,22 @@ impl Preset {
     }
 
     pub fn columns(self) -> Vec<PresetColumn> {
+        let mut columns = self.plain_columns();
+        if matches!(self, Preset::SimpleReview | Preset::Software) {
+            for column in &mut columns {
+                column.on_entry = chain(&column.key);
+                if let Some(role) = chain_mover(&column.key) {
+                    column
+                        .policy
+                        .movers
+                        .push(Mover::Roles(vec![role.as_str().into()]));
+                }
+            }
+        }
+        columns
+    }
+
+    fn plain_columns(self) -> Vec<PresetColumn> {
         match self {
             Preset::Simple => vec![
                 col(
@@ -199,6 +218,7 @@ impl Preset {
                     visible: c.visible,
                     policy: ColumnPolicy::default(),
                     research: c.category == ColumnCategory::Research,
+                    on_entry: None,
                 })
                 .collect(),
         }
@@ -233,6 +253,31 @@ impl Preset {
     }
 }
 
+/// The default chain (0.24.0): the role a column of Simple + Review or
+/// Software assigns a card entering it, by its key. Each role moves the card
+/// on to the next column, which assigns the next role; the Tester closes a
+/// passed card in Done, which its movers then list.
+pub fn chain(key: &str) -> Option<Role> {
+    Some(match key {
+        "todo" | "inbox" => Role::Product,
+        "research" => Role::Architect,
+        "doing" => Role::Dev,
+        "review" | "verify" => Role::Tester,
+        _ => return None,
+    })
+}
+
+/// The role the chain adds to a column's movers, by its key, so the role
+/// before it can move a card on: the Tester closes a passed card in Done,
+/// and Software's Product moves a shaped card to Ready.
+pub fn chain_mover(key: &str) -> Option<Role> {
+    Some(match key {
+        "done" => Role::Tester,
+        "ready" => Role::Product,
+        _ => return None,
+    })
+}
+
 fn col(
     key: &'static str,
     name: &'static str,
@@ -249,6 +294,7 @@ fn col(
         visible: true,
         policy,
         research: false,
+        on_entry: None,
     }
 }
 

@@ -18,6 +18,7 @@ use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 use crate::kanban::guards::{self, unmet, Who};
 use crate::kanban::model::{Item, ItemLink, ItemState, ItemType, LinkKind, Priority, Size, Unmet};
 use crate::kanban::moves::load_in;
+use crate::kanban::on_entry;
 
 mod more;
 
@@ -183,14 +184,39 @@ impl Editor<'_> {
             acceptance_criteria: &req.acceptance_criteria,
             plan_node_id,
         };
-        self.published(ChangeKind::ItemUpserted, None, || {
+        let created = self.published(ChangeKind::ItemUpserted, None, || {
             let item = self.app.db.board_tx(|t| match draft {
                 true => t.create_draft(&new, &self.actor),
                 false => t.create_item(&new, &self.actor),
             })?;
             let id = item.id.clone();
             Ok((Edited::Done(Box::new(item)), Some(id)))
-        })
+        })?;
+        match created {
+            Edited::Done(item) if !draft => Ok(Edited::Done(Box::new(self.entered(*item)))),
+            other => Ok(other),
+        }
+    }
+
+    /// A new card entered its column (0.24.0): assigned as the column says,
+    /// and answered as it is now.
+    fn entered(&self, item: Item) -> Item {
+        let entry = on_entry::Entry {
+            from: None,
+            reason: None,
+            by: &self.actor,
+        };
+        let routed = on_entry::entered(self.app, &mut self.app.board.writer(), &item.id, entry);
+        match routed.reassigned() {
+            true => self
+                .app
+                .db
+                .get_item(&item.id)
+                .ok()
+                .flatten()
+                .unwrap_or(item),
+            false => item,
+        }
     }
 
     pub fn update(&self, req: &c::ItemUpdate) -> anyhow::Result<Edited> {

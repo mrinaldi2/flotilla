@@ -10,7 +10,9 @@
 //! was assigned (the bot back to To do because it isn't ready, the owner
 //! because it isn't wanted yet), reads no longer start it: whoever moves it
 //! on does so with `item_move`. A release-gated board never maps the fact,
-//! so its guards decide every move as before.
+//! so its guards decide every move as before. Nor does a read start a card
+//! for the holder of its column's on-entry role (0.24.0): that role works
+//! there, as the Product shapes a card in To do, and moves it on itself.
 
 use std::sync::Arc;
 
@@ -119,8 +121,14 @@ fn start(app: &Arc<AppState>, bot: &bus::Bot, item_id: &str) -> anyhow::Result<T
         kind: ChangeKind::ItemMoved,
         item_id,
         card: card_after_commit(&app.db, item_id),
-        from_column: Some(from),
+        from_column: Some(from.clone()),
     });
+    let entry = crate::kanban::on_entry::Entry {
+        from: Some(&from),
+        reason: None,
+        by: &Actor::Daemon,
+    };
+    crate::kanban::on_entry::entered(app, &mut feed, item_id, entry);
     let research = matches!(
         app.db.get_item(item_id),
         Ok(Some(item)) if item.category == crate::kanban::model::ColumnCategory::Research
@@ -167,7 +175,20 @@ fn startable(t: &BoardTx<'_>, bot: &bus::Bot, item_id: &str) -> anyhow::Result<S
     let (Some(here), Some(to)) = (here, to) else {
         return Ok(Start::No);
     };
-    if here.kind != ColumnKind::Open || here.key == to.key || !armed(t, item_id, &bot.id)? {
+    // A column's own role (0.24.0) works the card where it is, and its
+    // holder moves it on itself.
+    let works_here = match here.on_entry {
+        Some(role) => t
+            .roles(&project_id)?
+            .iter()
+            .any(|r| r.role == role && r.bot_id == bot.id),
+        None => false,
+    };
+    if here.kind != ColumnKind::Open
+        || here.key == to.key
+        || works_here
+        || !armed(t, item_id, &bot.id)?
+    {
         return Ok(Start::No);
     }
     // The assignee's own move, made for it: only one it may make itself.

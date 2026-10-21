@@ -35,10 +35,7 @@ fn link(kind: LinkKind, by: &str) -> ItemLink {
 }
 
 fn column(category: Cat) -> BoardColumn {
-    let d = COLUMNS
-        .iter()
-        .find(|c| c.category == category)
-        .expect("default column");
+    let d = COLUMNS.iter().find(|c| c.category == category).unwrap();
     BoardColumn {
         project_id: "p".into(),
         board_id: "p/main".into(),
@@ -51,6 +48,7 @@ fn column(category: Cat) -> BoardColumn {
         wip_scope: d.wip_scope,
         visible: d.visible,
         policy: Default::default(),
+        on_entry: None,
     }
 }
 

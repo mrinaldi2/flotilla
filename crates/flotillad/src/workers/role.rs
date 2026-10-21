@@ -139,6 +139,7 @@ pub fn apply(app: &AppState, bot: &Bot, copy: &RoleCopy) -> anyhow::Result<()> {
         card: None,
         from_column: None,
     });
+    crate::kanban::on_entry::role_held(app, &mut feed, &bot.project_id, copy.role);
     drop(feed);
     if !bot.is_linked() {
         if let Some(model) = &copy.model {

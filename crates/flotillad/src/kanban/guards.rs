@@ -117,6 +117,10 @@ pub struct Context {
     /// Every bot the item was ever assigned to, from its history: one that
     /// held it did its work, so it isn't independent of it.
     pub past_assignees: Vec<String>,
+    /// The assignee, when a column assigning the Tester gave it the card
+    /// (0.24.0): it checks the card, it didn't work on it. A Tester's
+    /// on-entry assignments are not in `past_assignees` either.
+    pub checker: Option<String>,
     /// The project has a repository: code work is reviewed from it (0.23.1).
     pub has_repo: bool,
 }

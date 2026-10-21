@@ -13,9 +13,6 @@ use crate::app::AppState;
 use crate::kanban::contract::model_list;
 use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 use crate::kanban::model::{Item, ItemType, Priority, Role, Unmet};
-use crate::kanban::moves::{item_move as move_item, item_move_check, MoveRequest, Moved};
-use crate::kanban::notice_text::Notice;
-use crate::kanban::notices::tell_assignee;
 
 use super::board_drafts::OWN_ITEM_TOOLS;
 pub(super) use super::board_output::conflict;
@@ -91,8 +88,10 @@ pub(super) fn call(
         "board_get" => board_get(app, &me),
         "item_get" => item_get(app, &me, decode("ItemGet", args, project)?),
         "item_query" => item_query(app, &me, decode("ItemQuery", args, project)?),
-        "item_move" => item_move(app, &me, decode("ItemMove", args, project)?),
-        "item_move_check" => check(app, &me, decode("ItemMoveCheck", args, project)?),
+        "item_move" => super::board_moves::item_move(app, &me, decode("ItemMove", args, project)?),
+        "item_move_check" => {
+            super::board_moves::check(app, &me, decode("ItemMoveCheck", args, project)?)
+        }
         "role_set" => super::board_roles::role_set(app, &me, decode("RoleSet", args, project)?),
         board if super::board_structure::handles(board) => {
             super::board_structure::call(app, &me, &roles, board, args)
@@ -347,54 +346,4 @@ fn item_query(app: &Arc<AppState>, me: &Me, req: c::ItemQuery) -> anyhow::Result
         .map(c::ItemCard::from)
         .collect();
     Ok(json!({ "cards": out(cards)? }))
-}
-
-fn item_move(app: &Arc<AppState>, me: &Me, req: c::ItemMove) -> anyhow::Result<Value> {
-    own_item(app, me, &req.id)?;
-    let request = MoveRequest {
-        id: &req.id,
-        to: &req.to,
-        expected_version: req.expected_version,
-        reason: req.reason.as_deref(),
-        override_reason: req.override_reason.as_deref(),
-    };
-    let from = app.db.get_item(&req.id)?.map(|item| item.column_key);
-    let project = me.bot.project_id.as_str();
-    let mut after = None;
-    let reply = published(
-        app,
-        project,
-        ChangeKind::ItemMoved,
-        from,
-        || match move_item(&app.db, &request, &me.actor())? {
-            Moved::Done(item) => {
-                after = Some((*item).clone());
-                Ok((super::board_edit::moved(*item)?, req.id.clone()))
-            }
-            Moved::Refused(unmet) => {
-                crate::kanban::activity::refused(app, &req.id, &req.to, &me.actor(), &unmet);
-                Err(refused(unmet))
-            }
-            Moved::Conflict(current) => Err(conflict(*current)),
-        },
-    );
-    if let Some(item) = &after {
-        tell_assignee(app, item, &me.actor(), Notice::Moved);
-    } else if reply.is_err() {
-        // A refused move shows on its card ("can't move: …").
-        crate::kanban::stuck::publish_card(app, project, &req.id);
-    }
-    reply
-}
-
-fn check(app: &Arc<AppState>, me: &Me, req: c::ItemMoveCheck) -> anyhow::Result<Value> {
-    own_item(app, me, &req.id)?;
-    let columns = item_move_check(&app.db, &req.id, &me.actor())?
-        .into_iter()
-        .map(|(col, unmet)| {
-            let unmet: Vec<c::Unmet> = unmet.into_iter().map(c::Unmet::from).collect();
-            Ok(json!({ "column": col.key, "allowed": unmet.is_empty(), "unmet": out(unmet)? }))
-        })
-        .collect::<anyhow::Result<Vec<_>>>()?;
-    Ok(json!({ "columns": columns }))
 }

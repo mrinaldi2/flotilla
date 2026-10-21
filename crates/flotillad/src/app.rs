@@ -84,6 +84,8 @@ pub const CAPABILITIES: &[&str] = &[
     bus::contract::capability::TEAM_ON_DEMAND_V1,
     // Usage and budgets (0.24.0).
     bus::contract::capability::USAGE_V1,
+    // The board runs the SDLC (0.24.0): columns assign roles on entry.
+    bus::contract::capability::BOARD_FLOW_V1,
 ];
 
 pub struct AppState {
@@ -254,7 +256,6 @@ mod capability_tests {
     /// every 0.22 one from its daemon steps. The 0.23 ones join from its
     /// daemon steps, and the 0.24 ones from theirs (steps 2 to 4).
     const NOT_SERVED_YET: &[&str] = &[
-        capability::BOARD_FLOW_V1,
         capability::COMMANDS_V1,
         capability::PUSH_REQUESTS_V1,
         capability::RESEARCH_GATE_V1,
