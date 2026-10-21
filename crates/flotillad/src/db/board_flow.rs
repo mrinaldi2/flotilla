@@ -62,8 +62,8 @@ pub(super) fn insert_columns(
         tx.execute(
             "INSERT INTO board_column(project_id, key, name, ord, category, wip_limit,
                                       wip_scope, visible, board_id, kind, movers, rules,
-                                      allowed_from)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+                                      allowed_from, on_entry)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
             params![
                 project_id,
                 rename(&c.key),
@@ -77,7 +77,8 @@ pub(super) fn insert_columns(
                 to_text(&c.kind),
                 movers,
                 serde_json::to_string(&c.policy.rules)?,
-                serde_json::to_string(&allowed)?
+                serde_json::to_string(&allowed)?,
+                c.on_entry.map(|r| r.as_str())
             ],
         )?;
     }

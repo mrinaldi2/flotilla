@@ -184,6 +184,7 @@ mod tests {
             wip_scope: super::super::model::WipScope::Column,
             visible: true,
             policy: Default::default(),
+            on_entry: None,
         };
         let say_why = [
             unmet("reason.required", "Say why."),

@@ -98,8 +98,7 @@ impl From<m::BoardColumn> for c::BoardColumn {
             movers: v.policy.movers.iter().map(|m| m.token()).collect(),
             rules: v.policy.rules.iter().map(|r| r.token()).collect(),
             allowed_from: v.policy.allowed_from,
-            // Served from 0.24 step 2 (`board_flow_v1`).
-            on_entry: 0,
+            on_entry: v.on_entry.map_or(c::Role::Unspecified as i32, |r| r.into()),
         }
     }
 }
@@ -129,6 +128,11 @@ impl TryFrom<c::BoardColumn> for m::BoardColumn {
                 movers: tokens::movers(&v.movers).map_err(|_| MapError::UnknownEnum("Mover"))?,
                 rules: tokens::rules(&v.rules).map_err(|_| MapError::UnknownEnum("EntryRule"))?,
                 allowed_from: v.allowed_from,
+            },
+            // A mirror's columns: the home assigns on entry, never a mirror.
+            on_entry: match v.on_entry {
+                0 => None,
+                role => m::Role::from_wire(role).ok(),
             },
         })
     }

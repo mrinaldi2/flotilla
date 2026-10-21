@@ -63,10 +63,10 @@ async fn the_assignee_owns_its_card_without_a_board_role() {
     assert_ne!(doing["isError"], json!(true), "{doing}");
     let review = f.bot_move(1, &mine.id, "review").await;
     assert_ne!(review["isError"], json!(true), "{review}");
-    // Done is the owner's, or a lead's who didn't do it.
+    // Done is the owner's, or a lead's or a Tester's who didn't do it.
     let done = f.bot_move(1, &mine.id, "done").await;
     assert!(
-        error_text(&done).contains("Only the lead, the owner can move it to Done"),
+        error_text(&done).contains("Only the lead, tester, the owner can move it to Done"),
         "{done}"
     );
 

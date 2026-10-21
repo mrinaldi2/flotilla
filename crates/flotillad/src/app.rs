@@ -84,6 +84,8 @@ pub const CAPABILITIES: &[&str] = &[
     bus::contract::capability::TEAM_ON_DEMAND_V1,
     // Usage and budgets (0.24.0).
     bus::contract::capability::USAGE_V1,
+    // The board runs the SDLC (0.24.0): columns assign roles on entry.
+    bus::contract::capability::BOARD_FLOW_V1,
     // Commands, push requests and the research gate (0.24.0, step 3).
     bus::contract::capability::COMMANDS_V1,
     bus::contract::capability::PUSH_REQUESTS_V1,
@@ -257,7 +259,7 @@ mod capability_tests {
     /// once it does. Every 0.21 string is served from #43's step 3, and
     /// every 0.22 one from its daemon steps. The 0.23 ones join from its
     /// daemon steps, and the 0.24 ones from theirs (steps 2 to 4).
-    const NOT_SERVED_YET: &[&str] = &[capability::BOARD_FLOW_V1];
+    const NOT_SERVED_YET: &[&str] = &[];
 
     /// The 0.19, 0.20 and 0.21 board and home additions are all served.
     #[test]

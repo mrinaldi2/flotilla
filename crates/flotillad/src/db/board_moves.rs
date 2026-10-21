@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 
 use crate::kanban::guards::{Blocker, ColumnLoad, Context};
-use crate::kanban::model::{BoardColumn, Item, ItemLink, ProjectRole};
+use crate::kanban::model::{BoardColumn, Item, ItemLink, ProjectRole, Role};
 use rusqlite::{params, OptionalExtension};
 
 use super::board::{columns_in, roles_in, settings_in};
@@ -149,6 +149,10 @@ impl BoardTx<'_> {
             task_holders: self.task_holders(&item.id)?,
             ever_had_code: self.ever_had_code(&item.id)?,
             past_assignees: self.past_assignees(&item.id)?,
+            checker: match self.on_entry_role(&item.id)? {
+                Some(Role::Tester) => item.assignee.clone(),
+                _ => None,
+            },
             has_repo: self.conn.query_row(
                 "SELECT EXISTS(SELECT 1 FROM project_repo WHERE project_id = ?1)",
                 params![project_id],
@@ -157,13 +161,15 @@ impl BoardTx<'_> {
         })
     }
 
-    /// The bots the item was ever assigned to, from its history.
+    /// The bots the item was ever assigned to, from its history, but for a
+    /// Tester a column gave it to on entry, which only checked it (0.24.0).
     fn past_assignees(&self, item_id: &str) -> anyhow::Result<Vec<String>> {
         let rows = self
             .conn
             .prepare(
                 r#"SELECT DISTINCT "to" FROM item_event
-                   WHERE item_id = ?1 AND kind = 'assigned' AND "to" IS NOT NULL"#,
+                   WHERE item_id = ?1 AND kind = 'assigned' AND "to" IS NOT NULL
+                     AND NOT (coalesce(field, '') = 'on_entry' AND coalesce(note, '') = 'tester')"#,
             )?
             .query_map(params![item_id], |r| r.get(0))?
             .collect::<Result<_, _>>()?;

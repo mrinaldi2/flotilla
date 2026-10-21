@@ -30,6 +30,8 @@ mod board_draft_rights;
 mod board_draft_undo;
 mod board_drafts;
 mod board_drawer;
+mod board_flow;
+mod board_flow_unheld;
 mod board_home;
 mod board_import;
 mod board_keeper;

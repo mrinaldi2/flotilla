@@ -1,9 +1,11 @@
 //! How a project's team works on demand (0.23.0): the lead's way of working
-//! with a roster of roles, and what a member woken by work does. A worker
+//! with a roster of roles, which the board's columns hand cards between
+//! (0.24.0), and what a member woken by work does. A worker
 //! hears neither: its own section says it lives for one task.
 
-/// The lead's way of working: a card goes to the role that owns its next
-/// step, the holder is woken for it, and workers only add parallel hands.
+/// The lead's way of working (0.24.0, `board_flow_v1`): it plans the
+/// board and its roles, the columns hand each card from role to role, and
+/// workers only add parallel hands.
 pub(super) fn lead() -> String {
     let short = crate::brand::SHORT_NAME;
     format!(
@@ -13,24 +15,30 @@ pub(super) fn lead() -> String {
          criteria), Architect designs it (how, and what it touches),\n\
          Developer builds it and Tester verifies it. Reviewers, DevOps and\n\
          the coach keep their own jobs.\n\n\
-         - Assign each card to the role that owns its next step:\n\
-         `item_assign` with `role` (`product`, `architect`, `dev`, `tester`)\n\
-         instead of `bot`. {short} gives it to a holder who is free, wakes\n\
-         one who is asleep, and tells whoever got it; `item_get` shows the\n\
-         `assignee`. When a step is done, assign the card to the next\n\
-         step's role.\n\
-         - A role nobody holds is refused (`role.unheld`). Give it to a bot\n\
-         with `role_set` (you may set product, architect and dev), or ask\n\
-         the owner.\n\
+         - Plan the board: break the work into cards, in order, with what\n\
+         each needs. The board then runs the steps. Each column assigns a\n\
+         role on entry (`board_get` shows each column's `on_entry`): To do\n\
+         goes to Product, Research to Architect, Doing to Developer and\n\
+         Review to Tester. {short} gives the card to a holder who is free,\n\
+         wakes one who is asleep and tells it; each role moves the card on\n\
+         when its step is done, and the Tester moves a passed card to Done or\n\
+         sends it back to Doing with its reason.\n\
+         - Don't hand-assign each step. Set the roles instead: give each role\n\
+         a bot with `role_set` (you may set product, architect and dev; ask\n\
+         the owner for a tester), and change a column's role with\n\
+         `column_update` `on_entry`. A card that enters a column whose role\n\
+         nobody holds stays where it is, and the owner sees it in Needs you\n\
+         until a bot holds the role. Use `item_assign` (with `role`, or\n\
+         `bot`) only for what the columns don't cover.\n\
          - Members sleep when they have nothing to do and keep their memory\n\
          and conversation. Work for them wakes them: a card, a task, a\n\
          message. Never keep a member busy just to keep it awake: no\n\
          filler tasks, pings or routines for that.\n\
-         - Spawn workers only to add parallel hands, when two cards of one\n\
-         role can be worked at once: `spawn_worker` with `role` makes a\n\
-         copy of that role's member (its instructions and model) that holds\n\
-         the role until its task closes. A member that is only asleep needs\n\
-         no worker: assigning the card wakes it.\n\n"
+         - Spawn role workers for parallel cards: when two cards of one role\n\
+         can be worked at once, `spawn_worker` with `role` makes a copy of\n\
+         that role's member (its instructions and model) that holds the role\n\
+         until its task closes, and takes the cards waiting for it. A member\n\
+         that is only asleep needs no worker: the card wakes it.\n\n"
     )
 }
 
@@ -63,18 +71,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_lead_assigns_to_roles_and_spawns_only_for_parallel_hands() {
+    fn the_lead_plans_the_board_sets_the_roles_and_spawns_for_parallel_cards() {
         let md = team(true, false);
         assert!(md.contains("## Leading the team"));
         assert!(md.contains("roster of roles"));
         assert!(md.contains("Product shapes a card"));
         assert!(md.contains("Architect designs it"));
         assert!(md.contains("Developer builds it and Tester verifies it"));
-        assert!(md.contains("`item_assign` with `role`"));
-        assert!(md.contains("`role.unheld`"));
+        assert!(md.contains("Plan the board"));
+        assert!(md.contains("Each column assigns a\nrole on entry"));
+        assert!(md.contains("Don't hand-assign each step"));
+        assert!(md.contains("`column_update` `on_entry`"));
         assert!(md.contains("Never keep a member busy just to keep it awake"));
-        assert!(md.contains("Spawn workers only to add parallel hands"));
+        assert!(md.contains("Spawn role workers for parallel cards"));
         assert!(md.contains("`spawn_worker` with `role`"));
+        assert!(!md.contains("When a step is done, assign the card"));
         assert!(!md.contains("## Woken by work"));
     }
 

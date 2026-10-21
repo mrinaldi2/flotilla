@@ -27,6 +27,7 @@ fn columns(preset: Preset) -> Vec<BoardColumn> {
             wip_scope: c.wip_scope,
             visible: c.visible,
             policy: c.policy,
+            on_entry: c.on_entry,
         })
         .collect()
 }

@@ -10,6 +10,7 @@ use crate::kanban::feed::{card_after_commit, Change, ChangeKind};
 use crate::kanban::moves::{self, MoveRequest, Moved};
 use crate::kanban::notice_text::Notice;
 use crate::kanban::notices::{tell_assignee, tell_reassigned};
+use crate::kanban::on_entry;
 use crate::messaging;
 use crate::ws::Conn;
 
@@ -139,10 +140,14 @@ impl Conn {
                 kind: ChangeKind::ItemMoved,
                 item_id: &item.id,
                 card,
-                from_column: Some(from),
+                from_column: Some(from.clone()),
             });
-            drop(feed);
-            tell_assignee(&self.app, item, &self.actor(), Notice::Moved);
+            let entry = on_entry::Entry {
+                from: Some(&from),
+                reason: r.reason.as_deref(),
+                by: &self.actor(),
+            };
+            on_entry::after_move(&self.app, &mut feed, item, entry);
         } else if let Moved::Refused(_) = &moved {
             // The refusal shows on the card ("can't move: …").
             feed.publish(Change {

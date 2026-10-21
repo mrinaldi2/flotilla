@@ -19,6 +19,7 @@ mod keeper;
 mod legacy;
 mod plan;
 mod prs;
+mod roles;
 mod rows;
 mod stopped;
 #[cfg(test)]

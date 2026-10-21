@@ -300,7 +300,7 @@ pub(super) fn columns_in(
     let rows = conn
         .prepare(
             "SELECT project_id, key, name, ord, category, wip_limit, wip_scope, visible,
-                    board_id, kind, movers, rules, allowed_from
+                    board_id, kind, movers, rules, allowed_from, on_entry
              FROM board_column WHERE project_id = ?1 ORDER BY ord",
         )?
         .query_map(params![project_id], |r| {
@@ -329,6 +329,11 @@ pub(super) fn columns_in(
                     rules: from_json(r.get(11)?)?,
                     allowed_from: from_json(r.get(12)?)?,
                 },
+                // A role this build doesn't know (a newer daemon's) assigns
+                // nobody here.
+                on_entry: r
+                    .get::<_, Option<String>>(13)?
+                    .and_then(|role| crate::kanban::model::Role::parse(&role)),
             })
         })?
         .collect::<Result<_, _>>()?;

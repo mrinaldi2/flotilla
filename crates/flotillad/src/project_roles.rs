@@ -107,6 +107,9 @@ pub fn set_role(
         card: None,
         from_column: None,
     });
+    if req.remove != Some(true) {
+        crate::kanban::on_entry::role_held(app, &mut feed, project_id, role);
+    }
     drop(feed);
     // Its prompt says whether it has a browser, which its roles decide.
     if let Some(bot) = app.db.get_live_bot(&bot_id)? {
