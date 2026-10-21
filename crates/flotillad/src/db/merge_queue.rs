@@ -157,6 +157,15 @@ impl BoardTx<'_> {
         Ok(rows)
     }
 
+    /// The PR is no longer stuck: a DevOps took it after none held the role.
+    pub fn clear_merge_stuck(&self, pr_id: &str) -> anyhow::Result<()> {
+        self.conn.execute(
+            "DELETE FROM pr_merge_stuck WHERE pr_id = ?1",
+            params![pr_id],
+        )?;
+        Ok(())
+    }
+
     /// Records one more timeout of a handed merge first handed at `since`.
     pub fn mark_merge_stuck(
         &self,

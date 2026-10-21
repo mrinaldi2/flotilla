@@ -34,6 +34,7 @@ fn new_pr<'a>(project: &'a str, item: &'a str, branch: &'a str) -> NewPr<'a> {
         repo: "mrinaldi2/gravity",
         item_id: item,
         branch,
+        base: "main",
         base_sha: "b",
         head_sha: "h",
         patch_id: "p",

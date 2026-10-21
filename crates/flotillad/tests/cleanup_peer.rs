@@ -61,6 +61,7 @@ async fn the_computer_holding_a_worktree_removes_it_and_an_offline_one_waits() {
                 repo: &url,
                 item_id: &b.item,
                 branch: "H-1-peer",
+                base: "main",
                 base_sha: &base,
                 head_sha: &sha,
                 patch_id: "p",

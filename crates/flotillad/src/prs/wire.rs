@@ -255,6 +255,7 @@ pub fn pull_request(app: &dyn Names, v: &Value) -> p::PullRequest {
         item_title,
         owner_flag_reason: text(v, "owner_flag_reason"),
         merge_at: stamp(&merge, "merge_at"),
+        merge_waiting: text(&merge, "waiting"),
         closed_at: stamp(v, "closed_at"),
         repo: text(v, "repo"),
         cleanup: v

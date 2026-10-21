@@ -27,3 +27,19 @@ CREATE TABLE IF NOT EXISTS card_worktree (
 pub(super) const MIGRATION_PROJECT_PR_FLOW: &str = r#"
 ALTER TABLE project ADD COLUMN pr_flow INTEGER NOT NULL DEFAULT 0;
 "#;
+
+/// 0.23.3: a PR on the project's own repository lands on that repository's
+/// branch, but every PR was recorded as landing on `main`. Its label takes
+/// the branch the owner set; PRs on added repositories keep theirs.
+pub(super) const MIGRATION_PR_BASE_LABEL: &str = r#"
+UPDATE pr SET base = (
+    SELECT r.branch FROM project_repo r WHERE r.project_id = pr.project_id
+)
+WHERE base = 'main'
+  AND EXISTS (
+    SELECT 1 FROM project_repo r
+    WHERE r.project_id = pr.project_id
+      AND r.branch NOT IN ('', 'main')
+      AND lower(replace(rtrim(r.url, '/'), '.git', '')) LIKE '%' || lower(pr.repo)
+  );
+"#;

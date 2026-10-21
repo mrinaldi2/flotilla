@@ -129,20 +129,24 @@ pub fn tick(app: &Arc<AppState>, project: &str, now: DateTime<Utc>) -> anyhow::R
     for row in queue.iter().filter(|r| r.state == "window") {
         if row.merge_at.is_some_and(|end| end <= now) {
             if let Some(pr) = prs.iter().find(|p| p.id == row.pr_id) {
-                hand_off(app, pr, row.patch_id.as_str(), now)?;
+                // Handed at last: a wait for DevOps is over.
+                if hand_off(app, pr, row.patch_id.as_str(), now)? {
+                    app.db.board_tx(|t| t.clear_merge_stuck(&pr.id))?;
+                }
             }
         }
     }
     Ok(())
 }
 
-/// The window ended: DevOps gets the `pr_merge` task.
+/// The window ended: DevOps gets the `pr_merge` task. False when nobody
+/// holds DevOps, so the PR stays in its window and is tried again next tick.
 fn hand_off(
     app: &Arc<AppState>,
     pr: &Pr,
     patch_id: &str,
     now: DateTime<Utc>,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<bool> {
     let devops = app
         .db
         .project_roles(&pr.project_id)?
@@ -150,16 +154,17 @@ fn hand_off(
         .find(|r| r.role == Role::Devops)
         .map(|r| r.bot_id);
     let Some(devops) = devops else {
-        tracing::warn!(
-            pr = pr.number,
-            "no DevOps to merge it; the PR waits in its window"
-        );
-        return Ok(());
+        return no_devops(app, pr, now).map(|()| false);
     };
     let body = format!(
-        "Merge PR #{} ({}: {}) into main: main fast-forwards to {}. Run `flotillad pr merge {}` \
+        "Merge PR #{} ({}: {}) into {base}: {base} fast-forwards to {}. Run `flotillad pr merge {}` \
          in your checkout; it checks the PR is still mergeable first.",
-        pr.number, pr.item_id, pr.title, pr.head_sha, pr.number
+        pr.number,
+        pr.item_id,
+        pr.title,
+        pr.head_sha,
+        pr.number,
+        base = pr.base
     );
     let sender = daemon_sender();
     let msg = messaging::send_dm(
@@ -173,7 +178,40 @@ fn hand_off(
         .create_task(&msg.id, None, &devops, Some(deadline), 1, "")?;
     app.db.link_task_item(&task.id, &pr.item_id, &Actor::User)?;
     app.db
-        .board_tx(|t| t.set_queue_state(&pr.id, "handed", None, Some(&task.id), patch_id, now))
+        .board_tx(|t| t.set_queue_state(&pr.id, "handed", None, Some(&task.id), patch_id, now))?;
+    Ok(true)
+}
+
+/// Whether a bot holds DevOps in the project, the role that runs merges.
+pub fn has_devops(app: &AppState, project_id: &str) -> anyhow::Result<bool> {
+    Ok(app
+        .db
+        .project_roles(project_id)?
+        .iter()
+        .any(|r| r.role == Role::Devops))
+}
+
+/// Nobody holds DevOps (0.23.3): the owner is told once, on Needs you and
+/// on the card, and the merge waits until a bot holds the role.
+fn no_devops(app: &Arc<AppState>, pr: &Pr, now: DateTime<Utc>) -> anyhow::Result<()> {
+    if app.db.board_read(|t| t.merge_stuck(&pr.id))?.is_some() {
+        return Ok(());
+    }
+    tracing::warn!(
+        pr = pr.number,
+        "no DevOps to merge it; the PR waits for one"
+    );
+    let body = format!(
+        "PR #{} is approved, but nobody in this project holds DevOps, the role that merges it \
+         into {}. Give a bot the DevOps role and the pr_merge extra: it merges as soon as one holds them.",
+        pr.number, pr.base
+    );
+    let _feed = app.board.writer();
+    app.db.board_tx(|t| {
+        t.mark_merge_stuck(pr, now, now)?;
+        crate::kanban::api::comment(t, &pr.item_id, &body, None, &Actor::Daemon)?;
+        Ok(())
+    })
 }
 
 /// A handed merge timed out: its task expires, DevOps gets it again, and
@@ -196,7 +234,7 @@ fn stuck(app: &Arc<AppState>, pr: &Pr, row: &QueueRow, now: DateTime<Utc>) -> an
         pr = pr.number,
         "a handed merge timed out; DevOps gets it again"
     );
-    hand_off(app, pr, &row.patch_id, now)
+    hand_off(app, pr, &row.patch_id, now).map(|_| ())
 }
 
 /// The owner's Undo within the window (device or ticket): the PR goes back

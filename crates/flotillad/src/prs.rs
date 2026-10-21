@@ -150,9 +150,14 @@ fn shown(app: &Arc<AppState>, pr: &Pr, exact: bool) -> anyhow::Result<Value> {
     // A Leave out reverted it on main (H-272).
     out["reverted_by"] = serde_json::json!(app.db.board_read(|t| t.reverted_by(&pr.id))?);
     if let Some(row) = app.db.board_read(|t| t.queue_row(&pr.id))? {
+        // The window ended with nobody holding DevOps (0.23.3).
+        let waiting = (row.state == "window"
+            && row.merge_at.is_some_and(|end| end <= chrono::Utc::now())
+            && !crate::prs::queue::has_devops(app, &pr.project_id)?)
+        .then_some("no_devops");
         out["merge"] = serde_json::json!({
             "state": row.state, "queued_at": row.queued_at, "merge_at": row.merge_at,
-            "task_id": row.task_id,
+            "task_id": row.task_id, "waiting": waiting,
         });
     }
     out["checks"] = checks.iter().map(check_model::CheckRun::to_json).collect();

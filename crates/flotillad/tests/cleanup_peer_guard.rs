@@ -55,6 +55,7 @@ async fn only_the_home_may_ask_and_an_unmerged_commit_is_held_here() {
                 repo: &url,
                 item_id: &b.item,
                 branch: "H-1-live",
+                base: "main",
                 base_sha: &base,
                 head_sha: &sha,
                 patch_id: "p",

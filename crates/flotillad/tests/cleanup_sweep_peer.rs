@@ -119,6 +119,7 @@ async fn a_linked_computer_sweeps_its_trees_and_the_home_keeps_the_rows() {
                 repo: &url,
                 item_id: &b.item,
                 branch: "H-9-live",
+                base: "main",
                 base_sha: &sha,
                 head_sha: &sha,
                 patch_id: "p",

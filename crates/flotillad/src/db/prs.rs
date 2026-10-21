@@ -54,6 +54,8 @@ pub struct NewPr<'a> {
     pub repo: &'a str,
     pub item_id: &'a str,
     pub branch: &'a str,
+    /// The branch it lands on ("develop" where the owner set it).
+    pub base: &'a str,
     pub base_sha: &'a str,
     pub head_sha: &'a str,
     pub patch_id: &'a str,
@@ -175,7 +177,7 @@ impl BoardTx<'_> {
             "INSERT INTO pr(id, project_id, number, repo, item_id, branch, base, base_sha,
                 head_sha, head_patch_id, remote_sha, author, title, change_note, opened_at,
                 updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'main', ?7, ?8, ?9, ?8, ?10, ?11, ?12, ?13, ?13)",
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?14, ?7, ?8, ?9, ?8, ?10, ?11, ?12, ?13, ?13)",
             params![
                 id,
                 new.project_id,
@@ -189,7 +191,8 @@ impl BoardTx<'_> {
                 new.author,
                 new.title,
                 new.change_note,
-                at
+                at,
+                new.base
             ],
         )?;
         self.add_pr_push(&id, new.head_sha, new.patch_id, Some(new.author))?;

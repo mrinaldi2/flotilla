@@ -44,6 +44,7 @@ pub(super) fn owner_reviews(app: &AppState, b: &mut Builder<'_>) -> anyhow::Resu
 /// since it was first handed, until it merges or leaves the queue.
 pub(super) fn stuck_merges(app: &AppState, b: &mut Builder<'_>) -> anyhow::Result<()> {
     let stuck = app.db.board_read(|t| t.merges_stuck(b.project_id))?;
+    let devops = stuck.is_empty() || crate::prs::queue::has_devops(app, b.project_id)?;
     for s in stuck {
         let pr = app.db.board_read(|t| {
             Ok(t.prs(b.project_id, &[PrState::Merging])?
@@ -54,12 +55,20 @@ pub(super) fn stuck_merges(app: &AppState, b: &mut Builder<'_>) -> anyhow::Resul
         let part = Part {
             kind: AttentionKind::PrMergeStuck,
             target_id: format!("pr-{}", pr.number),
-            title: format!(
-                "PR #{} ({}) is waiting for DevOps to merge it; asked {} times",
-                pr.number,
-                pr.item_id,
-                s.retasks + 1
-            ),
+            title: if devops {
+                format!(
+                    "PR #{} ({}) is waiting for DevOps to merge it; asked {} times",
+                    pr.number,
+                    pr.item_id,
+                    s.retasks + 1
+                )
+            } else {
+                format!(
+                    "PR #{} ({}) is approved, but nobody holds DevOps to merge it into {}: \
+                     give a bot the DevOps role",
+                    pr.number, pr.item_id, pr.base
+                )
+            },
             created_at: s.since,
             target: Some(Target::PrNumber(pr.number)),
         };

@@ -43,6 +43,7 @@ async fn prs_land_on_the_projects_branch_even_with_no_main() {
         json!(develop),
         "the PR's base is develop's tip"
     );
+    assert_eq!(pr["base"], "develop", "and it says so");
 
     let other = r.card("Other", "doing");
     let raw = r.bots[1]
