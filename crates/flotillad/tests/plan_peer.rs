@@ -42,6 +42,7 @@ async fn a_mirrored_projects_plan_is_refused_and_points_home() {
         Request::PlanEnable(c::PlanEnable {
             project_id: win_app.clone(),
             enabled: true,
+            research_gate: None,
         }),
         Request::PlanDocRead(c::PlanDocRead {
             project_id: win_app.clone(),

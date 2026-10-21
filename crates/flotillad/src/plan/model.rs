@@ -33,7 +33,13 @@ text_enum!(
     }
 );
 
-text_enum!(ResearchState { Open => "open", Closed => "closed", Skipped => "skipped" });
+text_enum!(ResearchState {
+    Open => "open",
+    Closed => "closed",
+    Skipped => "skipped",
+    // Every spike is done; the owner reviews the findings (0.24.0).
+    Awaiting => "awaiting"
+});
 
 impl Kind {
     /// The kind of a node's parent; a goal has none.

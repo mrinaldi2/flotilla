@@ -5,6 +5,7 @@ import type { CleanupRequestBody } from "./cleanup";
 import type { ArtifactGroup, PermissionAnswer } from "./chat";
 import type { DashboardRequestBody } from "./dashboard";
 import type { MeetingRequestBody } from "./meetings";
+import type { CommandsRequestBody } from "./commands";
 import type { OwnerActionRequestBody } from "./ownerActions";
 import type { QuiesceRequestBody } from "./quiesce";
 import type { DecisionRequestBody } from "./decisionRequests";
@@ -14,6 +15,7 @@ import type { MetricsRequestBody } from "./metrics";
 import type { PrOwnerRequestBody } from "./prOwner";
 import type { ProjectTrashRequestBody } from "./projectTrash";
 import type { ReleaseRequestBody } from "./releases";
+import type { UsageRequestBody } from "./usage";
 import type {
   BotPresence,
   BotRuntime,
@@ -33,6 +35,8 @@ export type ClientRequestBody =
   | MeetingRequestBody
   | QuiesceRequestBody
   | OwnerActionRequestBody
+  | CommandsRequestBody
+  | UsageRequestBody
   | MetricsRequestBody
   | HomeRequestBody
   | PrOwnerRequestBody

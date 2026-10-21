@@ -138,6 +138,24 @@ pub mod capability {
     /// Lighter checkouts (0.23.0): the project's mirror, worktrees per card,
     /// the read-only repo tools and the project's disk budget.
     pub const REPO_MIRROR_V1: &str = "repo_mirror_v1";
+    /// The board runs the SDLC (0.24.0): `BoardColumn.on_entry`, its
+    /// `column_add`/`column_update` field, the presets' default chain, the
+    /// Tester closing a passed card, and `AttentionKind::RoleUnheld` rows.
+    pub const BOARD_FLOW_V1: &str = "board_flow_v1";
+    /// Commands across bots (0.24.0): `list_commands`, the `commands`
+    /// answer, the `commands_changed` push and the owner's `stop_command`.
+    pub const COMMANDS_V1: &str = "commands_v1";
+    /// Push requests (0.24.0): the bots' `request_push` tool, owner actions
+    /// of `kind: "push"` with their `push` details, run from desktop or phone.
+    pub const PUSH_REQUESTS_V1: &str = "push_requests_v1";
+    /// The research gate (0.24.0): `PlanResearchState::Awaiting`, the
+    /// RESEARCH gate on findings, and `research_gate` on `plan_enable` and
+    /// `PlanTree`.
+    pub const RESEARCH_GATE_V1: &str = "research_gate_v1";
+    /// Usage and budgets (0.24.0): `usage_get`, `set_project_budget`,
+    /// `budget_extend`, the price table, `usage_updated`, `ProjectRow.usage`,
+    /// the budget attention rows, and `rate_limited` set from the runtime.
+    pub const USAGE_V1: &str = "usage_v1";
     pub const ALL: &[&str] = &[
         BOARDS_0_19,
         BOARD_PRESETS,
@@ -155,6 +173,11 @@ pub mod capability {
         ARTIFACTS_V2,
         TEAM_ON_DEMAND_V1,
         REPO_MIRROR_V1,
+        BOARD_FLOW_V1,
+        COMMANDS_V1,
+        PUSH_REQUESTS_V1,
+        RESEARCH_GATE_V1,
+        USAGE_V1,
     ];
 }
 

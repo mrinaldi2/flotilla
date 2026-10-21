@@ -98,6 +98,8 @@ impl From<m::BoardColumn> for c::BoardColumn {
             movers: v.policy.movers.iter().map(|m| m.token()).collect(),
             rules: v.policy.rules.iter().map(|r| r.token()).collect(),
             allowed_from: v.policy.allowed_from,
+            // Served from 0.24 step 2 (`board_flow_v1`).
+            on_entry: 0,
         }
     }
 }

@@ -23,7 +23,9 @@ import type { DashboardReply } from "./dashboard";
 import type { HomePush, HomeReply } from "./home";
 import type { ItemCardsReply } from "./itemCards";
 import type { MeetingReply } from "./meetings";
+import type { CommandsPush, CommandsReply } from "./commands";
 import type { OwnerAction, OwnerActionReply } from "./ownerActions";
+import type { UsagePush, UsageReply } from "./usage";
 import type { Quiesce, QuiesceReply } from "./quiesce";
 import type { MetricsReply } from "./metrics";
 import type { PrOwnerReply } from "./prOwner";
@@ -74,6 +76,8 @@ export type ServerReply =
   | (ReplyBase & MeetingReply)
   | (ReplyBase & QuiesceReply)
   | (ReplyBase & OwnerActionReply)
+  | (ReplyBase & CommandsReply)
+  | (ReplyBase & UsageReply)
   | (ReplyBase & MetricsReply)
   | (ReplyBase & HomeReply)
   | (ReplyBase & PrOwnerReply)
@@ -289,6 +293,9 @@ export type ServerReply =
 export type ServerReplyType = ServerReply["type"];
 
 export type ServerPush =
+  /** 0.24.0 (`commands_v1`, `usage_v1`). */
+  | CommandsPush
+  | UsagePush
   | {
       readonly type: "term";
       readonly bot_id: string;

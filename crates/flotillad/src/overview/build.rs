@@ -180,6 +180,8 @@ fn row(
         bots_waiting: parts.iter().map(|p| p.bots_waiting).sum(),
         bot_list,
         top_attention,
+        // Served from 0.24 step 4 (`usage_v1`).
+        usage: None,
     })
 }
 

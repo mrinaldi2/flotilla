@@ -45,6 +45,10 @@ pub(crate) fn weight(kind: AttentionKind) -> u32 {
         // question: below what blocks a release or a prompt the owner must
         // answer, above a bot politely waiting, as a stopped server is.
         AttentionKind::BotStopped
+        // A column's role nobody holds (0.24.0) stalls every card entering
+        // it; a project at its budget (0.24.0) has its on-demand bots held.
+        | AttentionKind::RoleUnheld
+        | AttentionKind::BudgetReached
         | AttentionKind::P0Item
         | AttentionKind::ServingOff
         | AttentionKind::PrMergeStuck
@@ -58,6 +62,8 @@ pub(crate) fn weight(kind: AttentionKind) -> u32 {
         | AttentionKind::Question
         | AttentionKind::CleanupHeld
         | AttentionKind::DraftUpdated
+        // 80% of the weekly budget (0.24.0): a warning, nothing is held yet.
+        | AttentionKind::BudgetWarning
         | AttentionKind::CardWaiting => 1,
         // A decision's weight is its priority's (`decision_weight`).
         AttentionKind::Decision => 1,

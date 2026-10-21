@@ -1,6 +1,8 @@
 // Domain entities exchanged over the flotillad control plane (protocol v2).
 // See docs/protocol.md.
 
+import type { ProjectBudget } from "./usage";
+
 /** How much a project's bots may do without asking (H-031). */
 export type PermissionProfile = "standard" | "trusted" | "full";
 
@@ -44,6 +46,8 @@ export interface Project {
   readonly disk_budget_bytes?: number | null;
   /** Code goes through pull requests (0.23.1); absent from an older service. */
   readonly pr_flow?: boolean;
+  /** Its weekly token budget (0.24.0, `usage_v1`); absent, none or an older service. */
+  readonly budget?: ProjectBudget | null;
   /** Its cards' id prefix (`H` for `H-017`); absent without a board, or on an older service (H-203). */
   readonly item_prefix?: string | null;
   /** What its bots may do without asking (H-031); absent on older daemons. */
@@ -316,6 +320,8 @@ export interface TeamWake {
   /** A P0 bug: it went to the front of the queue. */
   readonly urgent: boolean;
   readonly queued_at: string;
+  /** `budget`: the project used its weekly budget (0.24.0, `usage_v1`). */
+  readonly held?: "budget";
 }
 
 /** This computer's running bots and the queue for a slot (0.23.0). */

@@ -198,6 +198,13 @@ Codes: `auth_failed`, `unsupported_version`, `not_found`, `invalid_request`,
 | `team_status` | – | `team`: `{ team: TeamStatus }` (0.23.0) |
 | `set_project_disk_budget` | `project_id, bytes \| null` | `project` (`disk_budget_bytes`). Owner only, capability `repo_mirror_v1` (0.23.0) |
 | `set_project_pr_flow` | `project_id, enabled` | `project` (`pr_flow`). Owner only (0.23.1): the project's code goes through pull requests, as `pr_flow_projects` in the config says for a project; bots' prompts carry the PR section from their next start |
+| `list_commands` | `project_id?, bot_id?, status?` (`running` \| `failed` \| `all`, default `all`), `query?, limit?` (default 200), `before?` | `commands`: every bot's commands across projects and linked computers. Requires `read`, capability `commands_v1` (0.24.0); see [0.24](#the-board-runs-the-sdlc-commands-approvals-and-usage-0240) |
+| `stop_command` | `bot_id, command_id` | `ok`: kills a running background command's process and tells the bot. Owner only (device or ticket), `commands_v1` (0.24.0) |
+| `usage_get` | `project_id?, bot_id?, range` (`today` \| `7d` \| `30d`) | `usage`. Requires `read`, capability `usage_v1` (0.24.0) |
+| `set_project_budget` | `project_id, weekly_tokens \| null` | `project` (`budget`). Owner only, `usage_v1` (0.24.0) |
+| `budget_extend` | `project_id` | `project`: the project's on-demand bots wake past its budget until local midnight. Owner only, `usage_v1` (0.24.0) |
+| `usage_prices` | – | `usage_prices`: the price table the estimates use (0.24.0) |
+| `set_usage_prices` | `prices: [UsagePrice]` | `usage_prices`. Owner only, `usage_v1` (0.24.0) |
 | `clear_bot_session` | `bot_id` | `ok`: the bot restarts with a fresh conversation, without the old one's history (which leaves the chat); its workspace, memory files and tasks are kept, and it is told what it was working on. On a linked bot, done on its machine. Requires `control` |
 | `set_bot_user_chrome` | `bot_id, enabled` | `bot`: whether the bot may also drive the owner's own Chrome (Claude in Chrome). Off by default; restarts the session. See [bot-browser.md](bot-browser.md) |
 | `update_bot` | `bot_id, name?, description?, instructions?, avatar?` | `bot`; on a stand-in in a linked project, forwarded to its machine |
@@ -341,6 +348,8 @@ breaking wire-shape change; v1 clients must upgrade before connecting.
   `seq` is then the newest read included, and it is the cursor to resume from. A replay
   arrives the same way, so a full ring is a handful of pushes rather than one per read, and
   `attached.seq` still marks where it ends.
+- `commands_changed`: `{ "bot_id", "project_id", "daemon_id" }` (0.24.0, `commands_v1`): refetch `list_commands`.
+- `usage_updated`: `{ "project_id" }` (0.24.0, `usage_v1`): at most once a minute while its bots work.
 - `bot_state`: `{ "bot_id", "state", "reason", "at", "item_id"?, "item_title"?, "cause"? }` — state ∈ `starting|ready|working|waiting_for_user|waiting_for_approval|rate_limited|auth_failed|crashed|stopping|stopped|asleep|queued` (the last two from 0.23.0, `team_on_demand_v1`).
   `item_id` (0.19.0) is the card the turn starting, going on or ending is about, when
   known: the card a delivery that started it named (`[card …]`, a task delegated for
@@ -1437,7 +1446,8 @@ TeamStatus { "running", "max_running", "idle_sleep_minutes",
              "queue": [TeamWake] }   // in the order they will start
 TeamWake   { "bot_id", "project_id",
              "reason": "owner"|"lead"|"card"|"task"|"message"|"review"|"routine",
-             "item_id"?, "priority"?, "urgent", "queued_at" }
+             "item_id"?, "priority"?, "urgent", "queued_at",
+             "held"? }   // "budget": the project used its weekly budget (0.24.0, usage_v1)
 ```
 
 The Board glance shows an asleep or queued bot as `BOT_STATUS_ASLEEP`, sorted
@@ -1522,6 +1532,79 @@ was never pushed. The owner's moves aren't held to it.
   project still over after the merged cards' worktrees went gets a
   `DISK_LOW` row, target `machine`, titled "Over its disk budget on
   <machine>: … used of …".
+
+### The board runs the SDLC, Commands, approvals and usage (0.24.0)
+
+The owner's plan (`.scratch/plan-0.24.md`, answered 2026-10-21). Five capabilities, each advertised once its daemon step serves it: `board_flow_v1`, `commands_v1`, `push_requests_v1`, `research_gate_v1` and `usage_v1`.
+
+**The board runs the SDLC (`board_flow_v1`).** `BoardColumn.on_entry` names a role; `column_add` and `column_update` take it, and `ROLE_UNSPECIFIED` clears it.
+- **On entry:** when a card enters such a column, by any move (a bot's, the owner's, or a fact such as `pr.opened`), the daemon assigns it to a holder of the role, picked as `item_assign {role}` picks one, and tells the holder exactly as an assignment does. A card already assigned to a holder of that role keeps its assignee.
+- **Nobody holds it:** the card keeps whoever moved it and the move succeeds. Needs you shows a `ROLE_UNHELD` row (weight 2, target `role`, e.g. `"architect"`), one per board and role, titled "Nobody holds Architect: <card> waits in <column>". It clears once a bot holds the role. The app offers Create a bot with that role.
+- **The default chain:** the Simple + Review and Software presets, and existing boards made from them, get To do or Inbox → Product, Research → Architect, Doing → Developer, Review → Tester and Verify → Tester. A custom board's columns start with none.
+- **Sending back:** a move from Review or Verify back to Doing re-assigns a Developer, and the mover's `reason` is posted on the card.
+- **Closing:** the Tester may move a passed card to Done. The Done column's movers gain `roles:tester`, and `independent` already holds for a Tester that didn't work on the card.
+- **The lead's prompt:** plan the board, set the roles and spawn role workers for parallel cards. The lead no longer hand-assigns each step.
+
+**Commands (`commands_v1`).** One list of every bot's commands, in place of Main chat (the ⌘J panel and the phone's Chat tab, which are removed). A project's bot-to-bot Conversations stay.
+- `list_commands` answers `commands`:
+
+```jsonc
+{ "type": "commands",
+  "commands": [CommandRow],      // running first, then newest started
+  "summary": [{ "daemon_id", "computer_name", "running", "failed_today" }],
+  "next_before"? }               // pass as `before` for the next page
+CommandRow { "id", "bot_id", "bot_name", "project_id", "daemon_id",
+             "command", "description"?, "background",
+             "status": "running"|"done"|"failed"|"stopped",
+             "started_at", "ended_at"?, "exit_code"?,
+             "item_id"?, "task_id"?, "output"?,        // the last 4 KB
+             "stopped_by_owner"? }                      // true when the owner stopped it
+```
+
+  - `query` matches the command and its description, case-insensitively.
+  - Ids are the bot's own computer's. A linked computer's bots are read from that computer, and a computer that doesn't answer is in `summary` with `stale: true`.
+  - `list_bot_commands` stays for older apps.
+- `commands_changed {bot_id, project_id, daemon_id}` is pushed when a bot's commands change: one starts, ends or prints. Apps refetch instead of polling every few seconds.
+- **Stop** (owner only, device credential or one-time ticket). `stop_command {bot_id, command_id}` kills a running background command's process group and marks it `stopped` with `stopped_by_owner`. The bot gets a message saying "The owner stopped your command `<command>`", naming its card or task, and telling it not to run the command again without asking. A finished command is `conflict`. A linked bot's command is stopped on its computer.
+
+**Push requests (`push_requests_v1`).** A bot that needs a push it may not make itself asks for one with the MCP tool `request_push {branch, target?, item?, reason}`.
+- **What it creates:** an owner action (see [Owner actions](#owner-actions-h-117-r1)) with `kind: "push"`. Its content is exactly `git push origin <branch>:<target>`, where `target` defaults to `branch`, run in the bot's worktree. It is single use, hashed and expires in 24 h, like every owner action.
+- **Its details:** `push: {branch, target, repo, commit, files, additions, deletions, item_id?}` is read from the worktree at request time. A branch that moves afterwards fails the run, as a changed pinned file does.
+- **Refused:** a `target` that is the project's base branch or `main`, since that is a release, not a push.
+- **Where it shows:** as an `OWNER_ACTION` row in Needs you, on the card, and on a plan gate whose document isn't pushed yet. Each offers **Push** (`owner_action_run`) and **Reject** (`owner_action_reject`).
+- **The phone:** it runs owner actions too, on its device credential, where it only counted them before.
+- **After a push:** the bot then opens its PR, or links the branch, as before.
+
+**The research gate (`research_gate_v1`).** It is on by default, per project: `plan_enable {project_id, enabled, research_gate?}`, read back in `PlanTree.research_gate`.
+- **Waiting:** when every spike of a node is done with a document, research becomes `PLAN_RESEARCH_STATE_AWAITING` where it used to close by itself, and the node's gate is RESEARCH, with the research documents. Needs you shows it as a `PLAN_GATE` row.
+- **The ruling:** `plan_rule {approve: true}` closes research (`closed`) and the next gate opens. `plan_rule {approve: false, note}` reopens it (`open`), with the note to the lead.
+- **The same panel:** the app shows one gate panel for every step (Research, PRD, Design, HLD and LLD), with the document, the questions answered, the children it creates, and Approve or Send back with a note.
+- **Turned off:** research closes by itself, as in 0.23.
+
+**Usage and budgets (`usage_v1`).** Flotilla reads each bot's Claude Code transcript as its turns end, and Codex's usage events, into a table per bot and day: input, output, cache-read and cache-write tokens, the model, and the turns. Role workers and routines count to their project.
+- `usage_get` answers `usage`:
+
+```jsonc
+{ "type": "usage", "range": "today"|"7d"|"30d",
+  "total": UsageTotals,
+  "projects": [{ "project_id", "name", "totals": UsageTotals,
+                 "share",                         // of the total, 0..1
+                 "budget"?: ProjectBudget }],
+  "bots": [{ "bot_id", "name", "project_id", "daemon_id", "totals": UsageTotals, "share" }],
+  "days": [{ "date", "totals": UsageTotals }],     // local dates, oldest first
+  "prices_as_of" }
+UsageTotals   { "input", "output", "cache_read", "cache_write", "tokens", "turns",
+                "est_cost_usd" }                  // an estimate from the price table
+ProjectBudget { "weekly_tokens", "used", "since",  // the last 7 days
+                "extended_until"?, "reached" }
+UsagePrice    { "model", "input", "output", "cache_read", "cache_write" }  // USD per million tokens
+```
+
+- **Where it shows:** `ProjectRow.usage` carries today's tokens and estimate, the week's use and the budget, for the "usage today" line on a project's card. `usage_updated {project_id}` is pushed at most once a minute while a project's bots work.
+- **The budget:** `set_project_budget` sets weekly tokens per project, over the last 7 days; `null` removes it. `project.budget` reads it back.
+- **At 80%:** a `BUDGET_WARNING` row (weight 1), "PhD used 80% of its weekly budget".
+- **At 100%:** a `BUDGET_REACHED` row (weight 2). The project's on-demand bots stop waking: their queued wakes carry `held: "budget"` in `TeamStatus`. The lead and always-on bots keep running. The row offers **Raise budget** (`set_project_budget`) and **Extend today** (`budget_extend`).
+- **Rate limits:** a bot that hits the runtime's rate limit is `rate_limited` until the reset time the runtime gives, which is the bot's `reason`. That state existed, but nothing set it before.
 
 ## Pull requests and checks (H-261)
 

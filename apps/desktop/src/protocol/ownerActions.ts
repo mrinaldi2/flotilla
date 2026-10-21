@@ -43,6 +43,23 @@ export interface OwnerAction {
   /** The redacted end of its output. */
   readonly output_tail: string | null;
   readonly reject_reason: string | null;
+  /** `push` (0.24.0, `push_requests_v1`): a bot's `request_push`; absent, a command. */
+  readonly kind?: "command" | "push";
+  /** A push request's details, read from the bot's worktree when it asked. */
+  readonly push?: PushDetails;
+}
+
+/** What a push request pushes: `git push origin <branch>:<target>`. */
+interface PushDetails {
+  readonly branch: string;
+  readonly target: string;
+  /** "owner/name". */
+  readonly repo: string;
+  readonly commit: string;
+  readonly files: number;
+  readonly additions: number;
+  readonly deletions: number;
+  readonly item_id?: string;
 }
 
 export type OwnerActionRequestBody =

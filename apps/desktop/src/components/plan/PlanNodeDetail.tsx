@@ -48,6 +48,7 @@ const RESEARCH_STATE: Readonly<Record<PlanResearchState, string>> = {
   [PlanResearchState.OPEN]: "Open",
   [PlanResearchState.CLOSED]: "Closed",
   [PlanResearchState.SKIPPED]: "Skipped",
+  [PlanResearchState.AWAITING]: "Waiting for your review",
 };
 
 function CardRow(props: {
