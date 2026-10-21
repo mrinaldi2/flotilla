@@ -40,6 +40,7 @@ mod session_events;
 mod session_hooks;
 mod start;
 mod team;
+mod team_budget;
 mod team_ops;
 mod team_settings;
 mod team_wake;

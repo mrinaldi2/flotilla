@@ -35,6 +35,10 @@ const OWNER_DRIVEN: &[&str] = &[
     "set_project_extra_repos",
     "set_project_disk_budget",
     "set_project_pr_flow",
+    // What a project may spend, and the prices that estimate it (0.24.0).
+    "set_project_budget",
+    "budget_extend",
+    "set_usage_prices",
     // A one-tap install offer on the owner's phone (CE review of H-229, M2).
     "release_send_to_device",
 ];

@@ -82,6 +82,8 @@ pub const CAPABILITIES: &[&str] = &[
     // Lighter checkouts (0.23.0): the mirror, card worktrees, repo tools.
     bus::contract::capability::REPO_MIRROR_V1,
     bus::contract::capability::TEAM_ON_DEMAND_V1,
+    // Usage and budgets (0.24.0).
+    bus::contract::capability::USAGE_V1,
     // The board runs the SDLC (0.24.0): columns assign roles on entry.
     bus::contract::capability::BOARD_FLOW_V1,
 ];
@@ -126,6 +128,8 @@ pub struct AppState {
     pub live_devices: crate::releases::phone::LiveDevices,
     /// The projects with a repository clone running (0.20.0).
     pub repo_clones: crate::repo_clone::Clones,
+    /// Usage pushes held back and bots rate limited (0.24.0).
+    pub usage: crate::usage::Usage,
     pub started_at: Instant,
     /// Wall-clock start, kept alongside the monotonic `started_at` purely so
     /// [`AppState::stale_build`] can compare it against a file mtime.
@@ -190,6 +194,7 @@ impl AppState {
             owner: crate::bus_auth::owner::Owner::new(&cfg_home),
             live_devices: Default::default(),
             repo_clones: Default::default(),
+            usage: Default::default(),
             started_at: Instant::now(),
             started_wall: SystemTime::now(),
         });
@@ -254,7 +259,6 @@ mod capability_tests {
         capability::COMMANDS_V1,
         capability::PUSH_REQUESTS_V1,
         capability::RESEARCH_GATE_V1,
-        capability::USAGE_V1,
     ];
 
     /// The 0.19, 0.20 and 0.21 board and home additions are all served.

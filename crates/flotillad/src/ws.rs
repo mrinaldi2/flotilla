@@ -68,6 +68,7 @@ mod session;
 mod tasks;
 pub(crate) mod team;
 mod terminal;
+mod usage;
 mod views;
 mod workers;
 mod writer;

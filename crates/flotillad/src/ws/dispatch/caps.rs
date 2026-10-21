@@ -66,6 +66,9 @@ const READ_ONLY: &[&str] = &[
     // What an iOS package offers a phone, and a device's waiting offer (H-229).
     "release_install",
     "install_offers",
+    // Usage and the price table (0.24.0, `usage_v1`).
+    "usage_get",
+    "usage_prices",
 ];
 
 /// Requests that exercise the owner's ruling authority.
@@ -130,6 +133,11 @@ const APPROVE_ONLY: &[&str] = &[
     // The disk a project may use (0.23.0): the owner's to set.
     "set_project_disk_budget",
     "set_project_pr_flow",
+    // A project's weekly token budget, Extend today and the price table
+    // (0.24.0, `usage_v1`): the owner's spending to set.
+    "set_project_budget",
+    "budget_extend",
+    "set_usage_prices",
 ];
 
 /// Capability required for each request type.

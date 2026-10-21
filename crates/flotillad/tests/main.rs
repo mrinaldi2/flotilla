@@ -218,6 +218,8 @@ mod team_queue;
 mod team_roles;
 mod terminal;
 mod terminal_card_guard;
+mod usage;
+mod usage_budget;
 mod windows_inbox;
 mod windows_pty;
 mod worker_cleanup;

@@ -211,6 +211,7 @@ impl Conn {
             "bot_grants" => self.bot_grants(&req_id, req),
             "list_workers" => self.list_workers(&req_id, req),
             t if super::team::KINDS.contains(&t) => self.team_request(t, &req_id, req),
+            u if super::usage::KINDS.contains(&u) => self.usage_request(u, &req_id, req),
             "cancel_worker" => self.cancel_worker(&req_id, req),
             "list_peers" => self.list_peers(&req_id),
             "create_peer_invite" => self.create_peer_invite(&req_id, req),

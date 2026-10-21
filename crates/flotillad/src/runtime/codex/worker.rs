@@ -215,6 +215,7 @@ impl Worker {
             .and_then(Value::as_str)
             .context("Codex did not return a thread ID")?
             .to_string();
+        observations::thread_model(&self.transcript, &reply);
         if self.native {
             // Naming materializes an empty thread without a model turn.
             self.rpc(
@@ -367,11 +368,13 @@ impl Worker {
             }
             "serverRequest/resolved" => self.resolved(params.get("requestId")),
             "error" => {
+                observations::event(&self.transcript, method, params)?;
                 if let Some(message) = params.pointer("/error/message").and_then(Value::as_str) {
                     self.output(&format!("\n[Codex] {message}\n"));
                 }
             }
-            _ => {}
+            // Usage and rate limits (0.24.0); every other notification is ignored.
+            _ => observations::event(&self.transcript, method, params)?,
         }
         Ok(())
     }
