@@ -14,6 +14,8 @@ export function emptyHandlers(): PushHandlerSets {
     project_updated: new Set(),
     workers_updated: new Set(),
     team_updated: new Set(),
+    commands_changed: new Set(),
+    usage_updated: new Set(),
     repo_clone: new Set(),
     meeting_event: new Set(),
     release_updated: new Set(),

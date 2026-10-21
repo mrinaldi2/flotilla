@@ -49,6 +49,7 @@ async fn plan_requests_are_served_and_watchers_hear_each_change() {
             Request::PlanEnable(c::PlanEnable {
                 project_id: pid.clone(),
                 enabled: true,
+                research_gate: None,
             }),
         )
         .await,
