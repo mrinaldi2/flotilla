@@ -14,7 +14,6 @@ use serde_json::{json, Value};
 
 /// A process writing to `output` as a background command does, leading
 /// its own process group.
-#[cfg(unix)]
 fn serve(output: &std::path::Path) -> std::process::Child {
     use std::os::unix::process::CommandExt;
     let file = std::fs::OpenOptions::new()
@@ -29,7 +28,6 @@ fn serve(output: &std::path::Path) -> std::process::Child {
         .expect("spawn")
 }
 
-#[cfg(unix)]
 #[tokio::test]
 async fn only_the_owner_stops_a_running_command_and_the_bot_is_told() {
     let d = spawn_daemon_with(|cfg| cfg.user_home = cfg.home.join("user")).await;
@@ -117,7 +115,6 @@ async fn only_the_owner_stops_a_running_command_and_the_bot_is_told() {
     assert_eq!(missing["code"], "not_found", "{missing}");
 }
 
-#[cfg(unix)]
 #[tokio::test]
 async fn a_linked_bots_command_is_stopped_on_its_computer() {
     let mut t = common::peers::team().await;

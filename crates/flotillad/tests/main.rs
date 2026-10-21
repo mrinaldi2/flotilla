@@ -85,6 +85,8 @@ mod cleanup_sweep_peer;
 mod codex_native;
 mod codex_runtime;
 mod commands_page;
+// Stop finds a command's processes on Unix only (0.24.0).
+#[cfg(unix)]
 mod commands_stop;
 mod config;
 mod control_center;
