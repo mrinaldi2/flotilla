@@ -13,7 +13,7 @@ use super::{parse_ts, ts, Db};
 const COLUMNS: &str = "id, project_id, proposed_by, item_id, decision_id, target_machine, shell, \
      cwd, content, pinned_files, reason, timeout_s, sha256, flags, origin, state, created_at, \
      expires_at, run_by, run_at, finished_at, exit_code, output_path, output_tail, reject_reason, \
-     local_project_id";
+     local_project_id, push";
 
 fn bad(text: &str) -> rusqlite::Error {
     rusqlite::Error::FromSqlConversionFailure(
@@ -44,6 +44,9 @@ fn row(r: &Row<'_>) -> rusqlite::Result<OwnerAction> {
             pinned_files: pinned,
             reason: r.get(10)?,
             timeout_s: r.get(11)?,
+            push: r
+                .get::<_, Option<String>>(26)?
+                .and_then(|p| serde_json::from_str(&p).ok()),
         },
         sha256: r.get(12)?,
         flags: serde_json::from_str(&r.get::<_, String>(13)?).unwrap_or_default(),
@@ -68,9 +71,9 @@ impl Db {
         self.lock().execute(
             "INSERT INTO owner_action (id, project_id, proposed_by, item_id, decision_id,
                  target_machine, shell, cwd, content, pinned_files, reason, timeout_s, sha256,
-                 flags, origin, state, created_at, expires_at, local_project_id)
+                 flags, origin, state, created_at, expires_at, local_project_id, kind, push)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16,
-                     ?17, ?18, ?19)",
+                     ?17, ?18, ?19, ?20, ?21)",
             params![
                 a.id,
                 p.project_id,
@@ -91,6 +94,8 @@ impl Db {
                 ts(a.created_at),
                 ts(a.expires_at),
                 a.local_project_id,
+                p.kind(),
+                p.push.as_ref().map(serde_json::to_string).transpose()?,
             ],
         )?;
         Ok(())

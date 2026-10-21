@@ -29,6 +29,7 @@ use crate::events::Push;
 use model::{OwnerAction, Pinned, Proposal, Shell, State};
 
 pub mod model;
+pub mod push;
 pub mod redact;
 pub mod run;
 mod running;
@@ -203,6 +204,7 @@ fn prepare(app: &AppState, bot: &bus::Bot, req: &ProposeRequest<'_>) -> anyhow::
         pinned_files,
         reason: req.reason.trim().to_string(),
         timeout_s: validate::timeout(req.timeout_s)?,
+        push: None,
     })
 }
 

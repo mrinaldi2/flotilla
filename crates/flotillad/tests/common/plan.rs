@@ -85,8 +85,21 @@ pub async fn unplanned() -> Plan {
     }
 }
 
-/// [`unplanned`] with planning turned on.
+/// [`unplanned`] with planning turned on, and research closing by itself
+/// once its spikes are done, as before the research gate (0.24.0).
 pub async fn planned() -> Plan {
+    let plan = gated().await;
+    assert!(plan
+        .owner()
+        .set_research_gate(&plan.pid, false)
+        .expect("research gate")
+        .is_none());
+    plan
+}
+
+/// [`unplanned`] with planning turned on as the owner turns it on: research
+/// waits for the owner's review of its findings (0.24.0).
+pub async fn gated() -> Plan {
     let plan = unplanned().await;
     assert!(plan
         .owner()

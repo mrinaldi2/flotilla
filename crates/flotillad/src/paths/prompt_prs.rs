@@ -15,7 +15,8 @@ pub(super) fn pull_requests(on: bool) -> &'static str {
      opened, merged or closed unmerged moves the card where its board's\n\
      automations say (`board_list` shows them); on a release-gated board,\n\
      to Review, Verify and back to Doing. Never make those moves yourself.\n\n\
-     - Push your branch, then `pr_open` with the card (`item`), the branch,\n\
+     - Push your branch (or ask the owner to, with `request_push`), then\n\
+     `pr_open` with the card (`item`), the branch,\n\
      your worktree's path and the change note as `body`. That is the PR.\n\
      - After every later push, `pr_push` with the PR number and the full sha\n\
      you pushed. A push you don't report counts as no one's, and no review\n\

@@ -73,7 +73,14 @@ async fn execute(app: &Arc<AppState>, a: OwnerAction) {
         .join("owner-actions")
         .join(format!("{}.log", a.id));
     let drift = pin_drift(&a);
-    let ran = if drift.is_empty() {
+    let moved = super::push::drift(&a);
+    let ran = if let Some(moved) = moved {
+        run::Ran {
+            state: State::Failed,
+            exit_code: None,
+            output: moved,
+        }
+    } else if drift.is_empty() {
         let id = a.id.clone();
         let feed = app.clone();
         // The computer that offered it watches too (R3).

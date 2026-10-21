@@ -223,6 +223,9 @@ const YOUR_CARDS: &str = "## Your cards\n\n\
      uses pull requests. A task or bug with neither is refused at Review.\n\
      Never leave finished work on a local branch for someone else to merge,\n\
      and never tell the owner a merge is theirs: say where the pushed work is.\n\
+     - A push you may not make yourself: ask the owner with `request_push`\n\
+     (branch, card, reason), who pushes it with one tap; you are told when it\n\
+     ran. Never for the project's branch or `main`: those move by release.\n\
      - If the card isn't ready, or you need answers before you can do it,\n\
      move it back to To do and ask the owner your questions: `ask_owner`\n\
      with `item_id` set to the card, one entry per question, or\n\

@@ -9,6 +9,7 @@
 //! one-line move. `MIGRATIONS.lock` records each entry's hash, and a test
 //! fails if a merged entry changes, disappears or is empty.
 
+mod approvals;
 mod artifacts;
 mod base;
 mod board;
@@ -48,6 +49,7 @@ mod trash;
 mod usage;
 mod workers;
 
+use approvals::{MIGRATION_PUSH_REQUESTS, MIGRATION_RESEARCH_GATE};
 use artifacts::MIGRATION_ARTIFACT_KEEP;
 use base::MIGRATION_1;
 use board::MIGRATION_BOARD_CORE;
@@ -188,6 +190,8 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_PR_BASE_LABEL,
     MIGRATION_USAGE,
     MIGRATION_BOARD_ON_ENTRY,
+    MIGRATION_PUSH_REQUESTS,
+    MIGRATION_RESEARCH_GATE,
 ];
 
 #[cfg(test)]

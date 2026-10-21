@@ -13,6 +13,9 @@ use crate::kanban::guards::unmet;
 /// Why a node's research doesn't let it move on: open, with its spikes'
 /// state. `None` when it is closed or skipped, or the node has none.
 fn research_open(t: &BoardTx<'_>, wrote: &mut Wrote, node: &Node) -> anyhow::Result<Option<Step>> {
+    if super::research::awaiting(node) {
+        return Ok(Some(awaiting_owner(node)));
+    }
     if !node
         .research
         .as_ref()
@@ -23,6 +26,10 @@ fn research_open(t: &BoardTx<'_>, wrote: &mut Wrote, node: &Node) -> anyhow::Res
     if close_if_done(t, wrote, node)? {
         return Ok(None);
     }
+    // Its spikes are done, and the findings now wait for the owner (0.24.0).
+    if let Some(node) = t.plan_node(&node.id)?.filter(super::research::awaiting) {
+        return Ok(Some(awaiting_owner(&node)));
+    }
     let Some(text) = still_open(&t.plan_spikes(&node.id)?) else {
         // The spikes are done: a blocking question holds it.
         return question_open(t, node);
@@ -32,6 +39,18 @@ fn research_open(t: &BoardTx<'_>, wrote: &mut Wrote, node: &Node) -> anyhow::Res
         text,
         Some("Finish the spikes with their documents, or ask the owner to skip research."),
     )])))
+}
+
+/// Research is done and waits for the owner's review of its findings.
+fn awaiting_owner(node: &Node) -> Step {
+    Step::Refused(vec![unmet(
+        "plan.research_awaiting",
+        format!(
+            "{}'s research is done and waits for the owner's review of its findings.",
+            node.id
+        ),
+        Some("The owner approves the findings or sends them back with a note."),
+    )])
 }
 
 /// Why a blocking question stops the node, if one does (0.22.0).

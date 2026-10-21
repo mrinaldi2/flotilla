@@ -108,6 +108,25 @@ pub struct Pinned {
     pub sha256: String,
 }
 
+/// What a push request pushes (0.24.0, `push_requests_v1`): read from the
+/// bot's worktree when it asked. The content is exactly
+/// `git push origin <branch>:<target>`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PushDetails {
+    pub branch: String,
+    pub target: String,
+    /// "owner/name", or the origin's URL when it names no such pair.
+    pub repo: String,
+    /// The branch's head when the bot asked: a run of a branch that moved
+    /// since is refused.
+    pub commit: String,
+    pub files: u32,
+    pub additions: u32,
+    pub deletions: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub item_id: Option<String>,
+}
+
 /// What a bot proposes: every field the sha256 covers.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Proposal {
@@ -124,14 +143,26 @@ pub struct Proposal {
     pub pinned_files: Vec<Pinned>,
     pub reason: String,
     pub timeout_s: u32,
+    /// A push request's details (`kind: "push"`); `None` for a command.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub push: Option<PushDetails>,
 }
 
 impl Proposal {
+    /// `push` for a push request, `command` for every other action.
+    pub fn kind(&self) -> &'static str {
+        match self.push {
+            Some(_) => "push",
+            None => "command",
+        }
+    }
+
     /// The sha256 over the canonical JSON of every field: object keys sorted
     /// (serde_json's map is ordered), no whitespace. What the owner's client
-    /// shows and sends back.
+    /// shows and sends back. A push request's kind and details are covered
+    /// too; a command's hash is what it was before they existed.
     pub fn sha256(&self) -> String {
-        let canonical = json!({
+        let mut canonical = json!({
             "project_id": self.project_id,
             "proposed_by": self.proposed_by,
             "item_id": self.item_id,
@@ -144,6 +175,10 @@ impl Proposal {
             "reason": self.reason,
             "timeout_s": self.timeout_s,
         });
+        if let Some(push) = &self.push {
+            canonical["kind"] = json!(self.kind());
+            canonical["push"] = json!(push);
+        }
         hex::encode(Sha256::digest(canonical.to_string().as_bytes()))
     }
 }
@@ -199,7 +234,7 @@ impl OwnerAction {
     /// Every field as the proposer hashed it, for the peer link (R3).
     pub fn wire(&self) -> Value {
         let p = &self.proposal;
-        json!({
+        let mut v = json!({
             "id": self.id, "project_id": p.project_id, "proposed_by": p.proposed_by,
             "item_id": p.item_id, "decision_id": p.decision_id,
             "target_machine": p.target_machine, "shell": p.shell.as_str(), "cwd": p.cwd,
@@ -210,7 +245,12 @@ impl OwnerAction {
             "run_by": self.run_by, "run_at": self.run_at, "finished_at": self.finished_at,
             "exit_code": self.exit_code, "output_tail": self.output_tail,
             "reject_reason": self.reject_reason,
-        })
+            "kind": p.kind(),
+        });
+        if let Some(push) = &p.push {
+            v["push"] = json!(push);
+        }
+        v
     }
 }
 

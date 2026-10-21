@@ -24,6 +24,7 @@ pub mod check_exec;
 pub mod check_tree;
 pub mod checkouts;
 pub mod cleanup;
+pub mod commands;
 pub mod compat018;
 pub mod config;
 pub mod contain;

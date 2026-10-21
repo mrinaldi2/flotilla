@@ -57,6 +57,13 @@ pub enum Push {
     TeamUpdated {
         team: crate::supervisor::TeamStatus,
     },
+    /// A bot's commands changed: one started, ended, was stopped or printed
+    /// (0.24.0, `commands_v1`). Clients refetch `list_commands`.
+    CommandsChanged {
+        bot_id: String,
+        project_id: String,
+        daemon_id: String,
+    },
     /// A project's usage changed (0.24.0, `usage_v1`): at most once a
     /// minute while its bots work. Clients refetch `usage_get`.
     UsageUpdated {

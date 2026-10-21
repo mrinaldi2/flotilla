@@ -39,12 +39,16 @@ pub(super) const PLAN: &str = "## The plan\n\n\
      reads it on the card, not in the artifacts folder. Open the spikes on its board\n\
      with `plan_node_id` set. When a spike's findings are attached, move it\n\
      straight to Done yourself, not to Review: the owner reviews research at\n\
-     the node's gate. Only the owner skips research; the lead may\n\
-     ask with `plan_research_skip` and a reason.\n\
+     the node's gate. Once every spike is done, the findings wait for the\n\
+     owner's Approve or Send back (unless the project turned that review\n\
+     off); sent back, you get a spike with the owner's note to revise them.\n\
+     Only the owner skips research; the lead may ask with\n\
+     `plan_research_skip` and a reason.\n\
      - Attach every gate document to its card (`item_attach` with `file`)\n\
      before `plan_submit`: the owner reads and approves it from there until\n\
      it is pushed, so never wait on a push to submit. Commit it to the\n\
-     repository as well, and push it when you may.\n\
+     repository as well, and push it when you may, or ask the owner to with\n\
+     `request_push`.\n\
      - Ask the owner with `ask_owner` (the spike as `item_id`, one entry per\n\
      question). A `blocking` question holds the node's research and gate\n\
      until it is answered; the answers are added to the research document.\n\

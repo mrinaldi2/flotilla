@@ -30,6 +30,8 @@ struct BotChat {
     commands: super::commands::CommandLog,
     /// The files it wrote, likewise.
     writes: super::writes::WriteLog,
+    /// The command log's changes as of its first read, which aren't news.
+    commands_base: u64,
 }
 
 #[derive(Default)]
@@ -48,8 +50,10 @@ impl ChatStore {
                 path: path.clone(),
                 offset: 0,
                 builder: Builder::new(&bot.id, names(app, bot)),
-                commands: Default::default(),
+                // Counted on from the old log, so a new session is news.
+                commands: super::commands::CommandLog::after(chat.commands.changes()),
                 writes: Default::default(),
+                commands_base: chat.commands_base,
             };
         }
         if let Some(path) = &path {
@@ -68,6 +72,9 @@ impl ChatStore {
         }
         let changed = chat.builder.take_changed();
         // The first read is a snapshot, not news.
+        if fresh {
+            chat.commands_base = chat.commands.changes();
+        }
         let changed = if fresh { Vec::new() } else { changed };
         let changed = settle(changed, &chat.builder.turns, busy(app, bot));
         Ok(super::answers::marked(app, &bot.id, changed))
@@ -146,7 +153,12 @@ impl ChatStore {
     ) -> anyhow::Result<Vec<super::commands::Command>> {
         self.refresh(app, bot)?;
         let (chat, _) = self.entry(app, bot)?;
-        let mut commands = lock(&chat).commands.list(busy(app, bot), limit);
+        let (mut commands, tasks) = {
+            let chat = lock(&chat);
+            let tasks = super::command_marks::tasks_of(&chat.builder.turns);
+            (chat.commands.list(busy(app, bot), limit), tasks)
+        };
+        super::command_marks::mark(app, bot, &mut commands, &tasks);
         for command in &mut commands {
             let running = command.status == super::commands::CommandStatus::Running;
             if let (true, Some(file)) = (running, &command.output_file) {
@@ -268,6 +280,21 @@ impl ChatStore {
     }
 
     /// Bots whose chat has been loaded, for the watcher to keep current.
+    /// How often the bot's command log changed, as last read and as first
+    /// read, and the output files of its running background commands
+    /// (0.24.0).
+    pub fn command_state(&self, bot_id: &str) -> Option<(u64, u64, Vec<String>)> {
+        let chat = self
+            .bots
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(bot_id)
+            .cloned()?;
+        let chat = lock(&chat);
+        let log = &chat.commands;
+        Some((log.changes(), chat.commands_base, log.running_outputs()))
+    }
+
     pub fn loaded(&self) -> Vec<String> {
         self.bots
             .lock()
@@ -289,6 +316,7 @@ impl ChatStore {
             builder: Builder::new(&bot.id, names(app, bot)),
             commands: Default::default(),
             writes: Default::default(),
+            commands_base: 0,
         }));
         bots.insert(bot.id.clone(), chat.clone());
         Ok((chat, true))

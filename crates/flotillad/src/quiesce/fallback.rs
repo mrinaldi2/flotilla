@@ -204,6 +204,7 @@ pub fn file(
         pinned_files: Vec::new(),
         reason,
         timeout_s: 120,
+        push: None,
     };
     owner_action::store(app, proposal, "daemon", writable_roots(app)).map(Some)
 }

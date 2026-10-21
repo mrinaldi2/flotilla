@@ -88,6 +88,7 @@ mod checks;
 mod checks_tests;
 mod cleanup;
 mod cleanup_retention;
+mod command_stops;
 pub mod comments;
 mod conversations;
 pub mod dashboard;

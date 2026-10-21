@@ -112,12 +112,13 @@ impl BoardTx<'_> {
         Ok(self
             .conn
             .query_row(
-                "SELECT enabled, next_seq FROM plan_settings WHERE project_id = ?1",
+                "SELECT enabled, next_seq, research_gate FROM plan_settings WHERE project_id = ?1",
                 params![project_id],
                 |r| {
                     Ok(Settings {
                         enabled: r.get(0)?,
                         next_seq: r.get(1)?,
+                        research_gate: r.get(2)?,
                     })
                 },
             )
@@ -130,6 +131,24 @@ impl BoardTx<'_> {
              ON CONFLICT(project_id) DO UPDATE
                SET enabled = excluded.enabled, updated_at = excluded.updated_at",
             params![project_id, enabled, ts(now())],
+        )?;
+        Ok(())
+    }
+
+    /// Whether the project's research waits for the owner's review of its
+    /// findings (0.24.0): on until the owner turns it off.
+    pub fn plan_research_gate(&self, project_id: &str) -> anyhow::Result<bool> {
+        Ok(self
+            .plan_settings(project_id)?
+            .is_none_or(|s| s.research_gate))
+    }
+
+    pub fn set_plan_research_gate(&self, project_id: &str, on: bool) -> anyhow::Result<()> {
+        self.conn.execute(
+            "INSERT INTO plan_settings(project_id, research_gate, updated_at) VALUES (?1, ?2, ?3)
+             ON CONFLICT(project_id) DO UPDATE
+               SET research_gate = excluded.research_gate, updated_at = excluded.updated_at",
+            params![project_id, on, ts(now())],
         )?;
         Ok(())
     }

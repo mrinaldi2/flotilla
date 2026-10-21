@@ -22,6 +22,10 @@ pub(super) fn handle(app: &Arc<AppState>, peer_id: &str, frame: &Value) -> anyho
         "chat" | "chat_step" | "chat_image" | "read_file" | "browser_activity" | "bot_commands" => {
             super::chat::serve(app, &peer, frame)
         }
+        "stop_command" => {
+            let bot = super::term::exposed_bot(app, &peer, frame)?;
+            crate::commands::stop::serve(app, &peer, &bot, frame)
+        }
         "term_attach" => super::term::serve_attach(app, &peer, frame),
         "restart_bot" | "clear_bot_session" => super::term::serve_session(app, &peer, frame),
         "wake_bot" | "sleep_bot" => serve_wake(app, &peer, frame),
@@ -103,6 +107,7 @@ pub(super) fn event(app: &Arc<AppState>, peer_id: &str, frame: &Value) {
         "browser_input" => super::browser::serve_input(app, &peer, frame),
         "term_input" | "term_resize" | "term_detach" => super::term::serve_event(app, &peer, frame),
         "chat_turns" => super::chat::receive_turns(app, peer_id, frame),
+        crate::commands::watch::EVENT => crate::commands::watch::receive(app, peer_id, frame),
         "project_roster" => super::mirror::receive_roster(app, peer_id, frame),
         "project_links" => super::mirror::receive_links(app, peer_id, frame),
         "board_event" => super::board::receive_event(app, peer_id, frame),

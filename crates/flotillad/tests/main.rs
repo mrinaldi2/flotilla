@@ -86,6 +86,10 @@ mod cleanup_sweep;
 mod cleanup_sweep_peer;
 mod codex_native;
 mod codex_runtime;
+mod commands_page;
+// Stop finds a command's processes on Unix only (0.24.0).
+#[cfg(unix)]
+mod commands_stop;
 mod config;
 mod control_center;
 mod control_center_tags;
@@ -149,6 +153,7 @@ mod plan_flow;
 mod plan_kickoff;
 mod plan_mcp;
 mod plan_peer;
+mod plan_research_gate;
 mod plan_rules;
 mod plan_ws;
 mod pr_base_branch;
@@ -174,6 +179,7 @@ mod projects_home;
 mod projects_home_peer;
 mod prs;
 mod prs_git_hardening;
+mod push_requests;
 mod questions;
 mod questions_wire;
 mod quiesce;

@@ -199,7 +199,7 @@ Codes: `auth_failed`, `unsupported_version`, `not_found`, `invalid_request`,
 | `set_project_disk_budget` | `project_id, bytes \| null` | `project` (`disk_budget_bytes`). Owner only, capability `repo_mirror_v1` (0.23.0) |
 | `set_project_pr_flow` | `project_id, enabled` | `project` (`pr_flow`). Owner only (0.23.1): the project's code goes through pull requests, as `pr_flow_projects` in the config says for a project; bots' prompts carry the PR section from their next start |
 | `list_commands` | `project_id?, bot_id?, status?` (`running` \| `failed` \| `all`, default `all`), `query?, limit?` (default 200), `before?` | `commands`: every bot's commands across projects and linked computers. Requires `read`, capability `commands_v1` (0.24.0); see [0.24](#the-board-runs-the-sdlc-commands-approvals-and-usage-0240) |
-| `stop_command` | `bot_id, command_id` | `ok`: kills a running background command's process and tells the bot. Owner only (device or ticket), `commands_v1` (0.24.0) |
+| `stop_command` | `bot_id, command_id` | `ok` (with `command`, the row after it): kills a running background command's process and tells the bot. Owner only (device or ticket), `commands_v1` (0.24.0) |
 | `usage_get` | `project_id?, bot_id?, range` (`today` \| `7d` \| `30d`) | `usage`. Requires `read`, capability `usage_v1` (0.24.0) |
 | `set_project_budget` | `project_id, weekly_tokens \| null` | `project` (`budget`). Owner only, `usage_v1` (0.24.0) |
 | `budget_extend` | `project_id` | `project`: the project's on-demand bots wake past its budget until local midnight. Owner only, `usage_v1` (0.24.0) |
@@ -1568,14 +1568,30 @@ CommandRow { "id", "bot_id", "bot_name", "project_id", "daemon_id",
 ```
 
   - `query` matches the command and its description, case-insensitively.
-  - Ids are the bot's own computer's. A linked computer's bots are read from that computer, and a computer that doesn't answer is in `summary` with `stale: true`.
+  - A row's `id` is the command's own (its tool call's id on the bot's computer), and `daemon_id` is the computer the bot runs on. `bot_id` and `project_id` are this computer's, a linked bot's stand-in here, so `stop_command` can name them.
+  - A linked computer's bots are read from that computer (`bot_commands`, one bot at a time, 5 s each), and a computer that doesn't answer for one of them is in `summary` with `stale: true`.
+  - `summary` counts every command of the bots `project_id` and `bot_id` name, whatever `status` and `query` say; `failed_today` is by this computer's date.
+  - `item_id` is the card of the bus task whose turn ran the command, when it names one.
+  - `status` other than `running`, `failed` or `all` is `invalid_request`. `limit` is at most 500.
   - `list_bot_commands` stays for older apps.
-- `commands_changed {bot_id, project_id, daemon_id}` is pushed when a bot's commands change: one starts, ends or prints. Apps refetch instead of polling every few seconds.
+- `commands_changed {bot_id, project_id, daemon_id}` is pushed when a bot's commands change: one starts, ends, is stopped or prints (printing at most every 5 s per bot). Apps refetch instead of polling every few seconds.
+  - It covers the bots whose commands a client has read since the daemon started, which `list_commands` does for every bot it lists.
+  - A linked bot's computer sends the peer event `commands_changed {bot_id}` (its own id) to each computer the bot is linked to, which pushes it for its stand-ins with that computer's `daemon_id`.
 - **Stop** (owner only, device credential or one-time ticket). `stop_command {bot_id, command_id}` kills a running background command's process group and marks it `stopped` with `stopped_by_owner`. The bot gets a message saying "The owner stopped your command `<command>`", naming its card or task, and telling it not to run the command again without asking. A finished command is `conflict`. A linked bot's command is stopped on its computer.
+  - It answers `{type: "ok", command}`, the row as the list now shows it. The list keeps `stopped` and `stopped_by_owner` once the transcript records the end too.
+  - The command's processes are the ones holding its output file open (`…/tasks/<id>.output`): each is ended with its process group when it leads one, else with the processes under it, SIGTERM then SIGKILL 2 s later. The bot's own session and the daemon are never signalled. Windows answers `invalid_request` ("not supported on Windows yet").
+  - A foreground command is `invalid_request`: it ends with the bot's turn. A command the bot never ran is `not_found`.
+  - The message comes from the owner as a note; a card it ran for gets a comment too.
+  - A linked bot's: the peer request `stop_command {bot_id, command_id}` to its computer, which stops it as its own and answers `{command}`; refusals keep their codes.
 
 **Push requests (`push_requests_v1`).** A bot that needs a push it may not make itself asks for one with the MCP tool `request_push {branch, target?, item?, reason}`.
 - **What it creates:** an owner action (see [Owner actions](#owner-actions-h-117-r1)) with `kind: "push"`. Its content is exactly `git push origin <branch>:<target>`, where `target` defaults to `branch`, run in the bot's worktree. It is single use, hashed and expires in 24 h, like every owner action.
 - **Its details:** `push: {branch, target, repo, commit, files, additions, deletions, item_id?}` is read from the worktree at request time. A branch that moves afterwards fails the run, as a changed pinned file does.
+  - `commit` is the branch's head; `files`, `additions` and `deletions` are against `origin/<target>` when the worktree's origin has it, else the project's branch (or `main`).
+  - `repo` is "owner/name" for a GitHub origin, else the origin's URL.
+  - Every action's JSON has `kind` (`command` or `push`); `push` only on a push request. The hash covers both for a push request, and a command's hash is what it was before.
+- **The worktree:** the tool also takes `worktree?`, the folder it runs in; by default the bot's card worktree on `branch` (the card's first). It is checked as a PR's worktree is: the bot may work there, it's a git worktree, and it is on `branch`.
+- **Names:** `branch` and `target` are plain branch names (letters, digits, `.`, `_`, `-`, `/`), and a `reason` is required.
 - **Refused:** a `target` that is the project's base branch or `main`, since that is a release, not a push.
 - **Where it shows:** as an `OWNER_ACTION` row in Needs you, on the card, and on a plan gate whose document isn't pushed yet. Each offers **Push** (`owner_action_run`) and **Reject** (`owner_action_reject`).
 - **The phone:** it runs owner actions too, on its device credential, where it only counted them before.
@@ -1583,7 +1599,13 @@ CommandRow { "id", "bot_id", "bot_name", "project_id", "daemon_id",
 
 **The research gate (`research_gate_v1`).** It is on by default, per project: `plan_enable {project_id, enabled, research_gate?}`, read back in `PlanTree.research_gate`.
 - **Waiting:** when every spike of a node is done with a document, research becomes `PLAN_RESEARCH_STATE_AWAITING` where it used to close by itself, and the node's gate is RESEARCH, with the research documents. Needs you shows it as a `PLAN_GATE` row.
+  - The gate has no `doc_path`: its documents are the node's `docs` of kind research, one per spike document. It is `submitted_by` `daemon`, its `round` counts the reviews, and the node's history says `research_awaiting`.
+  - The row's title is "Approve the research findings of <title>?".
+  - `plan_submit` meanwhile is refused with `plan.research_awaiting`.
 - **The ruling:** `plan_rule {approve: true}` closes research (`closed`) and the next gate opens. `plan_rule {approve: false, note}` reopens it (`open`), with the note to the lead.
+  - Approved, the history says `approved` (stage research), then `research_closed`.
+  - Sent back, it says `sent_back` (stage research), and the lead gets a spike, "Revise the research: <title>", carrying the note. Research waits for the owner again once that spike is done with a document, like every spike of the node.
+  - The owner's `plan_enable {research_gate}` is all that turns it; only the owner may. Projects that planned before 0.24.0 get it on too.
 - **The same panel:** the app shows one gate panel for every step (Research, PRD, Design, HLD and LLD), with the document, the questions answered, the children it creates, and Approve or Send back with a note.
 - **Turned off:** research closes by itself, as in 0.23.
 

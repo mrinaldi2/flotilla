@@ -41,7 +41,9 @@ impl Planner<'_> {
                     ));
                 };
                 t.clear_plan_gate(&node.id)?;
-                if gate.stage == Stage::Proposed {
+                if gate.stage == Stage::Research && research::awaiting(&node) {
+                    research::send_back(t, wrote, &node, &by, note)?;
+                } else if gate.stage == Stage::Proposed {
                     t.set_plan_stage(&node.id, Stage::Dropped)?;
                     let stage = Some(Stage::Dropped);
                     changed(t, wrote, &node.id, &by, "declined", stage, Some(note))?;
@@ -102,6 +104,10 @@ impl Planner<'_> {
                 t.set_plan_stage(&node.id, Stage::Research)?;
                 let stage = Some(Stage::Research);
                 return changed(t, wrote, &node.id, &by, "accepted", stage, note);
+            }
+            // The findings, once research waits for them (0.24.0).
+            Stage::Research if research::awaiting(node) => {
+                return research::approve_findings(t, wrote, node, &by, note);
             }
             Stage::Research => {
                 let reason = gate.note.as_deref().unwrap_or_default();

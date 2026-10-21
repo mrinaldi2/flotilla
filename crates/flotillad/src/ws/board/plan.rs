@@ -56,6 +56,15 @@ impl Conn {
                 if let Some(unmet) = refused {
                     return Err(refuse(code(&unmet.code), unmet.text));
                 }
+                // Left out, the research gate stays as it is (0.24.0).
+                if let Some(on) = r.research_gate {
+                    let refused = planner
+                        .set_research_gate(&r.project_id, on)
+                        .map_err(refusal)?;
+                    if let Some(unmet) = refused {
+                        return Err(refuse(code(&unmet.code), unmet.text));
+                    }
+                }
                 Ok(Response::Plan(
                     planner.tree(&r.project_id).map_err(refusal)?.into(),
                 ))
