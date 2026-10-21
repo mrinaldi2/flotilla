@@ -81,6 +81,7 @@ pub mod terminal;
 pub(crate) mod test_logs;
 pub mod tool_path;
 pub mod trash;
+pub mod usage;
 pub mod workers;
 pub mod worktree;
 pub mod ws;

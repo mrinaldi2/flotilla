@@ -64,6 +64,11 @@ pub enum Push {
         project_id: String,
         daemon_id: String,
     },
+    /// A project's usage changed (0.24.0, `usage_v1`): at most once a
+    /// minute while its bots work. Clients refetch `usage_get`.
+    UsageUpdated {
+        project_id: String,
+    },
     /// A `clone_project_repo` clone started (`cloning`), finished (`done`,
     /// with the clone's `path`) or failed (`failed`, with an `error` to
     /// show) (0.20.0).

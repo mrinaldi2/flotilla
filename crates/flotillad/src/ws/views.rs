@@ -47,6 +47,8 @@ pub(crate) fn project_view(app: &AppState, project: &bus::Project) -> Value {
         // Code goes through pull requests (0.23.1): the owner's switch, or the
         // daemon config's `pr_flow_projects`.
         "pr_flow": crate::botmgmt::pr_flow(app, project),
+        // Its weekly token budget (0.24.0, `usage_v1`); null, none.
+        "budget": crate::usage::budget::project_json(app, &project.id),
         "deleted_at": project.deleted_at.map(|t| t.to_rfc3339()),
         "created_at": project.created_at.to_rfc3339()
     })

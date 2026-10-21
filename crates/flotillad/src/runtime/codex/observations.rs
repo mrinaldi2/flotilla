@@ -188,6 +188,104 @@ fn hunk_header(header: &str) -> Value {
     json!({ "oldStart": old_start, "oldLines": old_lines, "newStart": new_start, "newLines": new_lines, "lines": [] })
 }
 
+/// The model a Codex thread runs, kept beside its record so each usage
+/// line can name it (0.24.0, `usage_v1`).
+fn model_file(path: &Path) -> std::path::PathBuf {
+    path.with_file_name("codex-model")
+}
+
+/// The latest rate limit windows App Server reported.
+fn limits_file(path: &Path) -> std::path::PathBuf {
+    path.with_file_name("codex-rate-limits.json")
+}
+
+/// Keeps the model `thread/start` or `thread/resume` answered with.
+pub(super) fn thread_model(path: &Path, reply: &Value) {
+    if let Some(model) = reply.get("model").and_then(Value::as_str) {
+        let _ = std::fs::write(model_file(path), model);
+    }
+}
+
+/// Records what an App Server notification says about usage (0.24.0): a
+/// `usage` line per token report, and a `rate_limit` line when a window is
+/// used up or a turn fails on the plan's limit.
+pub(super) fn event(path: &Path, method: &str, params: &Value) -> anyhow::Result<()> {
+    match method {
+        "thread/tokenUsage/updated" => {
+            let usage = params.get("tokenUsage").unwrap_or(params);
+            let last = &usage["last"];
+            let total = usage["total"]["totalTokens"].as_u64().unwrap_or(0);
+            let thread = params["threadId"].as_str().unwrap_or("thread");
+            let model = std::fs::read_to_string(model_file(path)).unwrap_or_default();
+            write(
+                path,
+                &json!({
+                    "type": "usage", "timestamp": now(), "id": format!("{thread}:{total}"),
+                    "model": if model.trim().is_empty() { "codex" } else { model.trim() },
+                    "usage": {
+                        "input_tokens": last["inputTokens"].as_u64().unwrap_or(0),
+                        "cached_input_tokens": last["cachedInputTokens"].as_u64().unwrap_or(0),
+                        "output_tokens": last["outputTokens"].as_u64().unwrap_or(0),
+                    }
+                }),
+            )
+        }
+        "account/rateLimits/updated" => {
+            let limits = params.get("rateLimits").unwrap_or(params);
+            let _ = std::fs::write(limits_file(path), limits.to_string());
+            match resets(limits, true) {
+                Some(at) => limited(path, Some(at)),
+                None => Ok(()),
+            }
+        }
+        "error" => {
+            let info = params["error"]["codexErrorInfo"].to_string();
+            let message = params["error"]["message"].as_str().unwrap_or("");
+            if !info.contains("usageLimit") && !message.to_lowercase().contains("usage limit") {
+                return Ok(());
+            }
+            let known = std::fs::read_to_string(limits_file(path))
+                .ok()
+                .and_then(|s| serde_json::from_str::<Value>(&s).ok());
+            limited(path, known.as_ref().and_then(|l| resets(l, false)))
+        }
+        _ => Ok(()),
+    }
+}
+
+fn limited(path: &Path, resets_at: Option<chrono::DateTime<chrono::Utc>>) -> anyhow::Result<()> {
+    write(
+        path,
+        &json!({ "type": "rate_limit", "timestamp": now(),
+                 "resets_at": resets_at.map(|t| t.to_rfc3339()) }),
+    )
+}
+
+/// When the limit resets: the latest reset of a used-up window, or (not
+/// `full_only`) of the most used one.
+fn resets(limits: &Value, full_only: bool) -> Option<chrono::DateTime<chrono::Utc>> {
+    let windows = ["primary", "secondary"].map(|w| &limits[w]);
+    let used = |w: &Value| w["usedPercent"].as_f64().unwrap_or(0.0);
+    let at = |w: &Value| {
+        w["resetsAt"]
+            .as_i64()
+            .and_then(|s| chrono::DateTime::from_timestamp(s, 0))
+    };
+    if full_only {
+        windows
+            .iter()
+            .filter(|w| used(w) >= 100.0)
+            .filter_map(|w| at(w))
+            .max()
+    } else {
+        windows
+            .iter()
+            .filter(|w| w.is_object())
+            .max_by(|a, b| used(a).total_cmp(&used(b)))
+            .and_then(|w| at(w))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

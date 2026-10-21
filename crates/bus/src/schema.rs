@@ -45,6 +45,7 @@ mod reviews;
 mod roles;
 mod team;
 mod trash;
+mod usage;
 mod workers;
 
 use approvals::{MIGRATION_PUSH_REQUESTS, MIGRATION_RESEARCH_GATE};
@@ -100,6 +101,7 @@ use reviews::MIGRATION_REVIEWS;
 use roles::MIGRATION_ROLES;
 use team::MIGRATION_BOT_PRESENCE;
 use trash::MIGRATION_PROJECT_TRASH;
+use usage::MIGRATION_USAGE;
 use workers::{MIGRATION_18, MIGRATION_19};
 
 pub const MIGRATIONS: &[&str] = &[
@@ -184,6 +186,7 @@ pub const MIGRATIONS: &[&str] = &[
     MIGRATION_BOT_PRESENCE,
     MIGRATION_PROJECT_PR_FLOW,
     MIGRATION_PR_BASE_LABEL,
+    MIGRATION_USAGE,
     MIGRATION_PUSH_REQUESTS,
     MIGRATION_RESEARCH_GATE,
 ];
