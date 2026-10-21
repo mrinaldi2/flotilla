@@ -42,7 +42,6 @@ fn this_computer(app: &AppState) -> anyhow::Result<String> {
 
 fn check_branch(branch: &str) -> anyhow::Result<()> {
     let ok = !branch.is_empty()
-        && branch != "main"
         && !branch.starts_with('-')
         && !branch.contains("..")
         && branch
@@ -76,6 +75,12 @@ pub fn open(app: &Arc<AppState>, bot: &bus::Bot, req: &Open<'_>) -> anyhow::Resu
         )));
     }
     let repo = repo::of_project(app, project, req.repo)?;
+    if branch == repo.base_branch().unwrap_or("main") {
+        return Err(conflict(format!(
+            "{branch} is the branch {}'s PRs land on; open the PR from your own branch",
+            repo.name
+        )));
+    }
     let machine = this_computer(app)?;
     let tree = req
         .worktree
@@ -84,7 +89,7 @@ pub fn open(app: &Arc<AppState>, bot: &bus::Bot, req: &Open<'_>) -> anyhow::Resu
     let cache = repo.fetch(app)?;
     let head = repo::tip(&cache, branch)
         .ok_or_else(|| conflict(format!("{branch} isn't on {}; push it first", repo.name)))?;
-    let facts = repo::facts(&cache, &head)?;
+    let facts = repo.facts(&cache, &head)?;
     let required = checks::required(&cache, &facts.base_sha, &head)?;
     let title = req.title.map(str::trim).filter(|t| !t.is_empty());
     let mut feed = app.board.writer();
@@ -188,7 +193,7 @@ pub fn push(
             short(&tip)
         )));
     }
-    let facts = repo::facts(&cache, &tip)?;
+    let facts = repo.facts(&cache, &tip)?;
     let required = checks::required(&cache, &facts.base_sha, &tip)?;
     let pr = app.db.board_tx(|t| {
         let pr = t
@@ -274,24 +279,26 @@ pub fn observe(app: &AppState, project: &str) -> anyhow::Result<Vec<u32>> {
         .db
         .board_read(|t| t.prs(project, &[PrState::Open, PrState::Merging]))?;
     let mut flagged = Vec::new();
-    let mut fetched: Vec<(String, std::path::PathBuf)> = Vec::new();
+    let mut fetched: Vec<(String, Repo, std::path::PathBuf)> = Vec::new();
     for pr in prs {
-        let cache = match fetched.iter().find(|(name, _)| *name == pr.repo) {
-            Some((_, cache)) => cache.clone(),
+        let at = match fetched.iter().position(|(name, ..)| *name == pr.repo) {
+            Some(at) => at,
             None => {
                 let repo: Repo = repo::of_project(app, project, Some(&pr.repo))?;
                 let cache = repo.fetch(app)?;
-                fetched.push((pr.repo.clone(), cache.clone()));
-                cache
+                fetched.push((pr.repo.clone(), repo, cache));
+                fetched.len() - 1
             }
         };
-        let Some(tip) = repo::tip(&cache, &pr.branch) else {
+        let (_, repo, cache) = &fetched[at];
+        let Some(tip) = repo::tip(cache, &pr.branch) else {
             continue;
         };
         if tip == pr.head_sha || tip == pr.remote_sha {
             continue;
         }
-        let patch_id = repo::facts(&cache, &tip)
+        let patch_id = repo
+            .facts(cache, &tip)
             .map(|f| f.patch_id)
             .unwrap_or_default();
         app.db.board_tx(|t| t.set_pr_moved(&pr, &tip, &patch_id))?;

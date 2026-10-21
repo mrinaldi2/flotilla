@@ -142,8 +142,7 @@ fn gate(app: &Arc<AppState>, bot: &bus::Bot, number: u32) -> anyhow::Result<Pr> 
 fn check(app: &Arc<AppState>, pr: &Pr) -> anyhow::Result<Value> {
     let repo = repo::of_project(app, &pr.project_id, Some(&pr.repo))?;
     let cache = repo.fetch(app)?;
-    let main = git_cache::resolve(&cache, "refs/heads/main")
-        .ok_or_else(|| anyhow::anyhow!("{} has no main branch", repo.name))?;
+    let main = repo.base_tip(&cache)?;
     let tip = repo::tip(&cache, &pr.branch);
     if tip.as_deref() != Some(pr.head_sha.as_str()) {
         return refuse(
@@ -193,6 +192,8 @@ fn check(app: &Arc<AppState>, pr: &Pr) -> anyhow::Result<Value> {
         "head_sha": pr.head_sha,
         "branch": pr.branch,
         "main_sha": main,
+        // The branch the merge fast-forwards: the project's, not always main.
+        "base_branch": repo.base_name(&cache).unwrap_or_else(|| "main".into()),
         "repo": repo.name,
         // Where the result is checked: the project's repo, not the
         // checkout's own remote.
@@ -269,11 +270,12 @@ fn merged(
     }
     let repo = repo::of_project(app, &pr.project_id, Some(&pr.repo))?;
     let cache = repo.fetch(app)?;
-    let main = git_cache::resolve(&cache, "refs/heads/main");
+    let main = git_cache::resolve(&cache, &repo.base_ref());
     if main.as_deref() != Some(sha) {
         return Err(conflict(format!(
-            "{} has main at {}, not {sha}; nothing recorded",
+            "{} has {} at {}, not {sha}; nothing recorded",
             repo.name,
+            repo.base_branch().unwrap_or("its default branch"),
             main.as_deref().unwrap_or("nothing")
         )));
     }

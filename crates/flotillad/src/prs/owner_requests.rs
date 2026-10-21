@@ -44,7 +44,8 @@ fn pr(app: &AppState, project: &str, number: u32) -> anyhow::Result<crate::prs::
 /// The setting, with the area names the project's main has to pick from.
 fn review_settings(app: &Arc<AppState>, project: &str) -> anyhow::Result<Value> {
     let settings = app.db.review_settings(project)?;
-    let areas: Vec<String> = base::load(app, project, "refs/heads/main")
+    let areas: Vec<String> = crate::prs::repo::of_project(app, project, None)
+        .and_then(|repo| base::load(app, project, &repo.base_ref()))
         .ok()
         .and_then(|b| b.reviewers.ok())
         .map(|r| r.areas.into_iter().map(|a| a.name).collect())
