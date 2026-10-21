@@ -125,6 +125,7 @@ pub(crate) fn rows(
         owner_actions(app, &mut b)?;
         super::waiting::prompts_and_waiting(app, &mut b)?;
         super::stopped::stopped_bots(app, &mut b)?;
+        super::budget::rows(app, &mut b)?;
         owner_questions(app, &mut b)?;
         off_board(app, &mut b)?;
     }

@@ -11,9 +11,10 @@ use super::*;
 /// The reasons a sleeping or waiting bot shows.
 const ASLEEP: &str = "asleep: nothing to do";
 const QUEUED: &str = "waiting for a free slot";
+const HELD: &str = "held: its project used its weekly budget";
 
 impl Supervisor {
-    fn lock_team(&self) -> std::sync::MutexGuard<'_, Team> {
+    pub(super) fn lock_team(&self) -> std::sync::MutexGuard<'_, Team> {
         self.inner.team.lock().unwrap_or_else(|e| e.into_inner())
     }
 
@@ -59,7 +60,10 @@ impl Supervisor {
         let before = self.team_status();
         let max = self.inner.team_settings.max_running();
         let mut asked = Vec::new();
-        for (bot, request) in wakes {
+        let leads = self.leads();
+        for (bot, mut request) in wakes {
+            // The budget holds only an on-demand bot's wakes (0.24.0).
+            request.budgeted = bot.presence != BotPresence::AlwaysOn && !leads.contains(&bot.id);
             if bot.is_linked() || bot.deleted_at.is_some() {
                 continue;
             }
@@ -81,6 +85,7 @@ impl Supervisor {
         for (bot_id, woke) in &woke {
             match woke {
                 Woke::Queued => self.show_resting(bot_id, BotState::Queued, QUEUED),
+                Woke::Held => self.show_resting(bot_id, BotState::Queued, HELD),
                 Woke::Started if start_now => self.start_soon(bot_id),
                 Woke::Started => tracing::info!(bot_id, "woken"),
                 Woke::Running => {}
@@ -374,16 +379,5 @@ impl Supervisor {
                 HashSet::new()
             }
         }
-    }
-
-    /// Whether the session about to start wakes the bot from a clean sleep,
-    /// which left nothing unfinished to be told about; asked once per start.
-    pub fn waking_from_sleep(&self, bot_id: &str) -> bool {
-        self.lock_team().slept.remove(bot_id)
-    }
-
-    /// Asleep or waiting for a slot: the keeper leaves such a bot be.
-    pub fn resting(&self, bot_id: &str) -> bool {
-        matches!(self.state(bot_id).0, BotState::Asleep | BotState::Queued)
     }
 }

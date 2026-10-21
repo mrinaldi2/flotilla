@@ -44,11 +44,18 @@ pub struct WakeCard {
 pub struct WakeRequest {
     pub reason: WakeReason,
     pub card: Option<WakeCard>,
+    /// An on-demand bot's wake, which its project's budget holds (0.24.0);
+    /// the supervisor sets it. A lead's or an always-on bot's never is.
+    pub budgeted: bool,
 }
 
 impl WakeRequest {
     pub fn new(reason: WakeReason) -> Self {
-        Self { reason, card: None }
+        Self {
+            reason,
+            card: None,
+            budgeted: false,
+        }
     }
 
     fn class(&self) -> u8 {
@@ -73,6 +80,10 @@ pub struct TeamWake {
     pub priority: Option<String>,
     pub urgent: bool,
     pub queued_at: DateTime<Utc>,
+    /// `budget`: its project used its weekly budget, so it waits until the
+    /// owner raises or extends it (0.24.0, `usage_v1`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub held: Option<&'static str>,
 }
 
 /// This computer's running bots and the queue for a slot.
@@ -114,7 +125,7 @@ impl Queued {
         }
     }
 
-    fn view(&self) -> TeamWake {
+    fn view(&self, held: bool) -> TeamWake {
         let card = self.request.card.as_ref();
         TeamWake {
             bot_id: self.bot_id.clone(),
@@ -124,6 +135,7 @@ impl Queued {
             priority: card.map(|c| c.priority.clone()),
             urgent: card.is_some_and(|c| c.urgent),
             queued_at: self.queued_at,
+            held: held.then_some("budget"),
         }
     }
 }
@@ -146,6 +158,8 @@ pub enum Woke {
     Started,
     /// It waits for one.
     Queued,
+    /// It waits until its project's budget is raised or extended (0.24.0).
+    Held,
 }
 
 /// The slots and the queue. Kept by the supervisor; every method is a plain
@@ -163,6 +177,8 @@ pub(super) struct Team {
     pub(super) rewake: HashMap<String, WakeRequest>,
     /// Bots that went to sleep cleanly and haven't started since.
     pub(super) slept: HashSet<String>,
+    /// Projects whose on-demand bots' wakes are held for the budget.
+    held: HashSet<String>,
     next: u64,
 }
 
@@ -177,6 +193,23 @@ impl Team {
 
     pub fn running(&self) -> usize {
         self.holders.len()
+    }
+
+    /// Holds the on-demand bots' wakes of these projects, and releases the
+    /// rest. Whether that changed anything.
+    pub fn set_held(&mut self, held: HashSet<String>) -> bool {
+        let changed = held != self.held;
+        self.held = held;
+        changed
+    }
+
+    fn is_held(&self, project_id: &str, request: &WakeRequest) -> bool {
+        request.budgeted && self.held.contains(project_id)
+    }
+
+    /// A queued wake that could start once a slot frees.
+    fn startable(&self, q: &Queued) -> bool {
+        !self.is_held(&q.project_id, &q.request)
     }
 
     /// A bot that runs without having asked (it was started directly)
@@ -252,6 +285,8 @@ impl Team {
         if self.holds(bot_id) {
             return Woke::Running;
         }
+        let held = self.is_held(project_id, &request);
+        let waits = if held { Woke::Held } else { Woke::Queued };
         if let Some(queued) = self.queue.iter_mut().find(|q| q.bot_id == bot_id) {
             // Already waiting: only the owner, or an urgent bug, moves it up.
             let urgent = request.card.as_ref().is_some_and(|c| c.urgent);
@@ -261,9 +296,10 @@ impl Team {
                 queued.request = request;
                 queued.batch = batch;
             }
-            return Woke::Queued;
+            return waits;
         }
-        if self.queue.is_empty() && self.holders.len() < max {
+        let free = !self.queue.iter().any(|q| self.startable(q)) && self.holders.len() < max;
+        if !held && free {
             self.holders.insert(bot_id.to_string());
             return Woke::Started;
         }
@@ -277,7 +313,7 @@ impl Team {
             batch,
             seq: self.next,
         });
-        Woke::Queued
+        waits
     }
 
     /// Gives free slots to the head of the queue: each bot started, and how
@@ -296,14 +332,19 @@ impl Team {
     }
 
     fn head(&self) -> Option<usize> {
-        (0..self.queue.len()).min_by_key(|&i| self.queue[i].key())
+        (0..self.queue.len())
+            .filter(|&i| self.startable(&self.queue[i]))
+            .min_by_key(|&i| self.queue[i].key())
     }
 
     /// The queue in the order it will start.
     pub fn queue(&self) -> Vec<TeamWake> {
         let mut queue: Vec<&Queued> = self.queue.iter().collect();
         queue.sort_by_key(|q| q.key());
-        queue.into_iter().map(Queued::view).collect()
+        queue
+            .into_iter()
+            .map(|q| q.view(!self.startable(q)))
+            .collect()
     }
 }
 

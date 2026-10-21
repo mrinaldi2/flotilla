@@ -13,6 +13,7 @@ use bus::contract::pbjson_types::Timestamp;
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 
+mod budget;
 mod cleanup;
 mod keeper;
 mod legacy;

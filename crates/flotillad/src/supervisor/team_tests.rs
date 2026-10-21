@@ -9,6 +9,7 @@ fn card(id: &str, priority: &str, urgent: bool, age_days: i64) -> WakeRequest {
             urgent,
             created_at: Some(Utc::now() - chrono::Duration::days(age_days)),
         }),
+        budgeted: false,
     }
 }
 
@@ -166,4 +167,36 @@ fn a_new_wake_waits_behind_the_queue_even_with_a_slot_free() {
     assert_eq!(woke, Woke::Queued);
     let started: Vec<String> = team.grant(2).into_iter().map(|(id, _)| id).collect();
     assert_eq!(started, ["b", "a"]);
+}
+
+/// A project at its budget (0.24.0): its on-demand bots' wakes wait, held,
+/// even with a slot free, while its lead and other projects' bots start;
+/// released, the held wakes start in their order.
+#[test]
+fn a_budget_holds_on_demand_wakes_until_released() {
+    let mut team = Team::default();
+    let now = Utc::now();
+    team.set_held(["p".to_string()].into());
+    let on_demand = WakeRequest {
+        budgeted: true,
+        ..WakeRequest::new(WakeReason::Message)
+    };
+    assert_eq!(team.wake("a", "p", on_demand.clone(), 3, now), Woke::Held);
+    assert_eq!(
+        team.wake("b", "p", card("H-1", "P1", false, 1), 3, now),
+        Woke::Started
+    );
+    assert_eq!(
+        team.wake("c", "q", on_demand.clone(), 3, now),
+        Woke::Started
+    );
+    let lead = WakeRequest::new(WakeReason::Lead);
+    assert_eq!(team.wake("lead", "p", lead, 3, now), Woke::Started);
+    assert!(team.grant(4).is_empty(), "a held wake takes no free slot");
+    let queue = team.queue();
+    assert_eq!(queue.len(), 1);
+    assert_eq!(queue[0].held, Some("budget"));
+    assert!(team.set_held(Default::default()));
+    let started: Vec<String> = team.grant(4).into_iter().map(|(id, _)| id).collect();
+    assert_eq!(started, ["a"]);
 }
