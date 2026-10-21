@@ -158,7 +158,11 @@ async fn a_failed_check_goes_back_to_its_developer_with_the_reason() {
     let reason = "The export has no header row";
     bot_move(&mut f, 4, &item.id, "doing", Some(reason)).await;
     assert_eq!(assignee(&f, &item.id).as_deref(), Some(builder.as_str()));
-    let comments = f.d.app.db.board_read(|t| t.item_comments(&item.id)).unwrap();
+    let comments =
+        f.d.app
+            .db
+            .board_read(|t| t.item_comments(&item.id))
+            .unwrap();
     let posted = comments.last().expect("the reason");
     assert_eq!(posted.body, format!("Sent back to Doing: {reason}"));
     assert_eq!(posted.author, format!("bot:{}", f.bot_ids[4]));
