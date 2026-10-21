@@ -57,6 +57,13 @@ pub enum Push {
     TeamUpdated {
         team: crate::supervisor::TeamStatus,
     },
+    /// A bot's commands changed: one started, ended, was stopped or printed
+    /// (0.24.0, `commands_v1`). Clients refetch `list_commands`.
+    CommandsChanged {
+        bot_id: String,
+        project_id: String,
+        daemon_id: String,
+    },
     /// A `clone_project_repo` clone started (`cloning`), finished (`done`,
     /// with the clone's `path`) or failed (`failed`, with an `error` to
     /// show) (0.20.0).

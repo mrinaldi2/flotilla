@@ -43,7 +43,8 @@ pub(super) const PLAN_TOOLS: &[BoardTool] = &[
         Audience::Lead,
         "Lead: submit the node's document (PRD, design, HLD or LLD, committed in the repo) for \
          the owner's approval, with the children it proposes: epics with a PRD, features with an \
-         HLD, task cards with an LLD. Research must be closed first.",
+         HLD, task cards with an LLD. Research must be closed first: once its spikes are \
+         done, the owner approves the findings, unless the project turned that review off.",
     ),
     shared(
         "plan_research_skip",

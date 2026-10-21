@@ -106,6 +106,9 @@ fn wanted(t: &BoardTx<'_>, node: &Node) -> anyhow::Result<Option<Card>> {
                 Kind::Initiative => "PRD",
                 _ => "design",
             };
+            if let Some(card) = revise_research(t, node, doc)? {
+                return Ok(Some(card));
+            }
             Card {
                 item_type: ItemType::Spike,
                 title: format!("Research: {title}"),
@@ -176,6 +179,35 @@ fn wanted(t: &BoardTx<'_>, node: &Node) -> anyhow::Result<Option<Card>> {
     Ok(Some(card))
 }
 
+/// The owner sent the node's findings back (0.24.0): a spike to revise
+/// them, with the note. Its research waits for the owner again once this
+/// spike is done with a document, as every spike of the node is.
+fn revise_research(t: &BoardTx<'_>, node: &Node, doc: &str) -> anyhow::Result<Option<Card>> {
+    let events = t.plan_events(&node.id)?;
+    let back = |e: &&super::model::Event| e.kind == "sent_back" && e.stage == Some(Stage::Research);
+    let Some(note) = events.last().filter(back).and_then(|e| e.note.clone()) else {
+        return Ok(None);
+    };
+    let round = match events.iter().filter(back).count() {
+        0 | 1 => String::new(),
+        n => format!(" ({n})"),
+    };
+    let (id, title) = (&node.id, &node.title);
+    Ok(Some(Card {
+        item_type: ItemType::Spike,
+        title: format!("{REVISE_RESEARCH}{round}: {title}"),
+        description: format!(
+            "The owner sent the research of {id} “{title}” back: “{note}”\n\nAnswer it: \
+             change the research document or add what is missing, attach it to this card \
+             (item_attach with file), and move this card to Done. The findings then go \
+             back to the owner for review before the {doc}."
+        ),
+    }))
+}
+
+/// The title a revision of sent-back findings starts with.
+const REVISE_RESEARCH: &str = "Revise the research";
+
 /// Whether `card` is a kickoff the node no longer waits on: a document's
 /// for a stage it left or an earlier round of the one it is at, its
 /// research once research is over, its proposals once the goal is.
@@ -188,14 +220,18 @@ fn passed(card: &NodeCard, node: &Node, want: Option<&Card>) -> bool {
     let is_doc = ["PRD", "design", "HLD", "LLD"].iter().any(|w| of(w));
     let current = doc.is_some_and(of);
     let superseded = want.is_some_and(|w| w.title != card.title);
-    let research_over = card.title.starts_with("Research: ")
+    let revising = card.title.starts_with(REVISE_RESEARCH);
+    let research_over = (card.title.starts_with("Research: ") || revising)
         && node
             .research
             .as_ref()
             .is_none_or(|r| r.state != super::model::ResearchState::Open);
     let proposing_over =
         card.title.starts_with("Propose initiatives for: ") && node.stage != Stage::Active;
-    (is_doc && (!current || superseded)) || research_over || proposing_over
+    (is_doc && (!current || superseded))
+        || research_over
+        || (revising && superseded)
+        || proposing_over
 }
 
 /// Give each node `wrote` changed the card it waits on, assigned to its

@@ -32,6 +32,7 @@ const DIRECT_GIT: &[(&str, &str)] = &[
 /// Source files that start a program whose name isn't a string literal,
 /// and what that program is (never git).
 const OTHER_PROGRAMS: &[(&str, &str)] = &[
+    ("commands/kill.rs", "lsof, from /usr/sbin or /usr/bin"),
     ("holders.rs", "lsof, from /usr/sbin or /usr/bin"),
     ("holders_procs.rs", "lsof, from /usr/sbin or /usr/bin"),
     (

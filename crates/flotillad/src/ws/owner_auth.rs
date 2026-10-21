@@ -35,6 +35,8 @@ const OWNER_DRIVEN: &[&str] = &[
     "set_project_extra_repos",
     "set_project_disk_budget",
     "set_project_pr_flow",
+    // Killing a bot's command is the owner's hands on it (0.24.0).
+    "stop_command",
     // A one-tap install offer on the owner's phone (CE review of H-229, M2).
     "release_send_to_device",
 ];
@@ -99,6 +101,7 @@ mod tests {
         assert!(owner_driven("update_bot"));
         assert!(owner_driven("delete_project"));
         assert!(owner_driven("release_send_to_device"));
+        assert!(owner_driven("stop_command"));
         assert!(owner_driven("project_delete_preview"));
         assert!(owner_driven("deleted_projects_cleanup"));
         for kind in CREDENTIALS {

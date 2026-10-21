@@ -4,11 +4,18 @@
 //! closed is then recorded, its documents kept as the node's, and the node
 //! moves on (an initiative to its PRD, an epic to its design). The owner can
 //! also skip it, with a reason.
+//!
+//! With the project's research gate on (0.24.0, the default), research
+//! whose spikes are done doesn't close by itself: it waits for the owner's
+//! review of its findings (`awaiting`, a RESEARCH gate), and the owner's
+//! approval closes it (`approve_findings`) or sends it back (`send_back`).
 
-use super::model::{DocKind, Node, ResearchState, Stage};
-use super::{changed, Wrote};
+use super::model::{DocKind, Gate, Node, ResearchState, Stage};
+use super::{changed, owner_only, Planner, Wrote};
 use crate::db::{BoardTx, Spike};
+use crate::decisions::not_found;
 use crate::kanban::feed_by::DAEMON;
+use crate::kanban::model::Unmet;
 
 /// Why the node's research is still open, naming its spikes; `None` once
 /// they close it.
@@ -67,6 +74,81 @@ pub(super) fn close_if_done(
             t.upsert_plan_doc(&node.id, DocKind::Research, doc, Some(&spike.id))?;
         }
     }
+    if t.plan_research_gate(&node.project_id)? {
+        await_owner(t, wrote, node)?;
+        return Ok(false);
+    }
+    close(t, wrote, node, DAEMON)?;
+    Ok(true)
+}
+
+/// The findings wait for the owner: research `awaiting`, the node's gate
+/// RESEARCH with its research documents (the node's), which replaces a
+/// request to skip it.
+fn await_owner(t: &BoardTx<'_>, wrote: &mut Wrote, node: &Node) -> anyhow::Result<()> {
+    t.set_plan_research(&node.id, ResearchState::Awaiting, None)?;
+    // Each review of the findings is a round, as each submission is.
+    let rounds = t
+        .plan_events(&node.id)?
+        .iter()
+        .filter(|e| e.kind == "research_awaiting")
+        .count();
+    let round = u32::try_from(rounds).unwrap_or(u32::MAX).saturating_add(1);
+    t.set_plan_gate(
+        &node.id,
+        &Gate {
+            stage: Stage::Research,
+            doc_path: None,
+            sha: None,
+            pr_number: None,
+            submitted_by: DAEMON.to_string(),
+            submitted_at: bus::now(),
+            note: None,
+            children: Vec::new(),
+            decision_id: None,
+            round,
+        },
+    )?;
+    let stage = Some(Stage::Research);
+    changed(t, wrote, &node.id, DAEMON, "research_awaiting", stage, None)
+}
+
+/// Whether the node's research waits for the owner's findings review.
+pub(super) fn awaiting(node: &Node) -> bool {
+    node.research
+        .as_ref()
+        .is_some_and(|r| r.state == ResearchState::Awaiting)
+}
+
+/// The owner approves the findings: research closes and the node moves on.
+pub(super) fn approve_findings(
+    t: &BoardTx<'_>,
+    wrote: &mut Wrote,
+    node: &Node,
+    by: &str,
+    note: Option<&str>,
+) -> anyhow::Result<()> {
+    let stage = Some(Stage::Research);
+    changed(t, wrote, &node.id, by, "approved", stage, note)?;
+    close(t, wrote, node, by)
+}
+
+/// The owner sends the findings back: research is open again, and the
+/// lead's next research spike carries the note (`kickoff`).
+pub(super) fn send_back(
+    t: &BoardTx<'_>,
+    wrote: &mut Wrote,
+    node: &Node,
+    by: &str,
+    note: &str,
+) -> anyhow::Result<()> {
+    t.set_plan_research(&node.id, ResearchState::Open, None)?;
+    let stage = Some(Stage::Research);
+    changed(t, wrote, &node.id, by, "sent_back", stage, Some(note))
+}
+
+/// Research closes and the node moves on to its next stage.
+fn close(t: &BoardTx<'_>, wrote: &mut Wrote, node: &Node, by: &str) -> anyhow::Result<()> {
     t.set_plan_research(&node.id, ResearchState::Closed, None)?;
     // A request to skip it is moot now.
     if node
@@ -80,8 +162,7 @@ pub(super) fn close_if_done(
     if let Some(next) = next {
         t.set_plan_stage(&node.id, next)?;
     }
-    changed(t, wrote, &node.id, DAEMON, "research_closed", next, None)?;
-    Ok(true)
+    changed(t, wrote, &node.id, by, "research_closed", next, None)
 }
 
 /// Skip the node's research with the owner's reason and move it on.
@@ -114,4 +195,27 @@ pub(super) fn settle(t: &BoardTx<'_>, wrote: &mut Wrote, project_id: &str) -> an
         close_if_done(t, wrote, node)?;
     }
     Ok(())
+}
+
+impl Planner<'_> {
+    /// The owner turning the research gate on or off (0.24.0): on, research
+    /// waits for the owner's review of its findings once its spikes are
+    /// done; off, it closes by itself, as before.
+    pub fn set_research_gate(&self, project_id: &str, on: bool) -> anyhow::Result<Option<Unmet>> {
+        if !self.actor.is_owner() {
+            return Ok(Some(owner_only()));
+        }
+        if !self
+            .app
+            .db
+            .get_project(project_id)?
+            .is_some_and(|p| p.deleted_at.is_none())
+        {
+            return Err(not_found(format!("no project {project_id}")));
+        }
+        self.app
+            .db
+            .board_tx(|t| t.set_plan_research_gate(project_id, on))?;
+        Ok(None)
+    }
 }

@@ -209,6 +209,7 @@ async fn the_pc_runs_only_what_the_mac_offered() {
         pinned_files: vec![],
         reason: "r".into(),
         timeout_s: 60,
+        push: None,
     };
     let local = flotillad::owner_action::store(win, proposal, "bot", vec![]).unwrap();
     let forged =

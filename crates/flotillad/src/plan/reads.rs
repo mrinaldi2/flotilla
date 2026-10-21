@@ -13,6 +13,8 @@ pub struct Tree {
     pub project_id: String,
     pub enabled: bool,
     pub has_repo: bool,
+    /// Research waits for the owner's findings review (0.24.0).
+    pub research_gate: bool,
     /// Parents before children; none while planning is off.
     pub nodes: Vec<Node>,
     pub guidelines: Vec<Doc>,
@@ -42,10 +44,13 @@ impl Planner<'_> {
         if enabled {
             self.settle(project_id)?;
         }
-        let nodes = match enabled {
-            true => db.board_read(|t| t.plan_nodes(project_id))?,
-            false => Vec::new(),
-        };
+        let (nodes, research_gate) = db.board_read(|t| {
+            let nodes = match enabled {
+                true => t.plan_nodes(project_id)?,
+                false => Vec::new(),
+            };
+            Ok((nodes, t.plan_research_gate(project_id)?))
+        })?;
         let guidelines = match enabled && has_repo {
             true => docs::guidelines(self.app, project_id),
             false => Vec::new(),
@@ -54,6 +59,7 @@ impl Planner<'_> {
             project_id: project_id.to_string(),
             enabled,
             has_repo,
+            research_gate,
             nodes,
             guidelines,
         })

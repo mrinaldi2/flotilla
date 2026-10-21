@@ -33,6 +33,8 @@ const READ_ONLY: &[&str] = &[
     "unwatch_browser",
     "list_browser_activity",
     "list_bot_commands",
+    // Every bot's commands, for the Commands page (0.24.0).
+    "list_commands",
     "list_agent_conversations",
     "list_agent_conversation",
     "list_chat",
@@ -130,6 +132,8 @@ const APPROVE_ONLY: &[&str] = &[
     // The disk a project may use (0.23.0): the owner's to set.
     "set_project_disk_budget",
     "set_project_pr_flow",
+    // The owner's Stop on a bot's command (0.24.0).
+    "stop_command",
 ];
 
 /// Capability required for each request type.

@@ -187,6 +187,8 @@ pub struct Event {
 pub struct Settings {
     pub enabled: bool,
     pub next_seq: u32,
+    /// Research waits for the owner's review of its findings (0.24.0).
+    pub research_gate: bool,
 }
 
 /// A node to insert; the store gives it its id and rank.

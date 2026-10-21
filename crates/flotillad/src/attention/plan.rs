@@ -6,13 +6,21 @@ use bus::contract::home::{attention_row::Target, AttentionKind};
 use super::rows::{Builder, Part};
 use super::weight;
 use crate::app::AppState;
-use crate::plan::model::{Node, Stage};
+use crate::plan::model::{Node, ResearchState, Stage};
+
+fn awaiting(node: &Node) -> bool {
+    node.research
+        .as_ref()
+        .is_some_and(|r| r.state == ResearchState::Awaiting)
+}
 
 /// What the owner is asked, in their words.
 fn question(node: &Node, stage: Stage) -> String {
     let title = &node.title;
     match stage {
         Stage::Proposed => format!("Accept the proposed initiative {title}?"),
+        // Its spikes are done and the findings wait for review (0.24.0).
+        Stage::Research if awaiting(node) => format!("Approve the research findings of {title}?"),
         Stage::Research => format!("Skip research for {title}?"),
         Stage::Prd => format!("Approve the PRD of {title}?"),
         Stage::Design => format!("Approve the design of {title}?"),

@@ -21,6 +21,7 @@ use tokio_tungstenite::tungstenite::Message as WsMsg;
 pub mod board;
 pub mod cards;
 pub mod cleanup;
+pub mod commands;
 pub mod cuts;
 pub mod deployed_via;
 pub mod devtools;

@@ -117,6 +117,8 @@ impl Conn {
             "browser_input" => self.browser_input(req),
             "list_browser_activity" => self.list_browser_activity(&req_id, req),
             "list_bot_commands" => self.list_bot_commands(&req_id, req),
+            "list_commands" => self.list_commands(&req_id, req),
+            "stop_command" => self.stop_command(&req_id, req),
             "list_agent_conversations" => self.list_agent_conversations(&req_id, req),
             "list_agent_conversation" => self.list_agent_conversation(&req_id, req),
             "delete_bot" => self.delete_bot(&req_id, req),

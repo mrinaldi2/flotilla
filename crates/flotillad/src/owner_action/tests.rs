@@ -18,6 +18,7 @@ fn proposal(content: &str) -> Proposal {
         pinned_files: Vec::new(),
         reason: "because".into(),
         timeout_s: 5,
+        push: None,
     }
 }
 

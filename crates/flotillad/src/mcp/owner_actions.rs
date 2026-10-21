@@ -1,12 +1,14 @@
-//! Owner actions over MCP (H-117 R1): a bot proposes, withdraws and reads.
-//! There is deliberately no tool that runs one; only the owner does, from
-//! the app or the phone.
+//! Owner actions over MCP (H-117 R1): a bot proposes, withdraws and reads,
+//! and asks for a push it may not make (`request_push`, 0.24.0). There is
+//! deliberately no tool that runs one; only the owner does, from the app or
+//! the phone.
 
 use std::sync::Arc;
 
 use serde_json::{json, Value};
 
 use crate::app::AppState;
+use crate::owner_action::push::{self, PushRequest};
 use crate::owner_action::{self, ProposeRequest};
 
 use super::caller;
@@ -36,6 +38,22 @@ pub(super) fn tools() -> Vec<Value> {
                  "timeout_s": {"type": "integer", "description": "Optional. Seconds before it is stopped (default 600, max 3600)."}
              }),
              vec!["content", "reason", "cwd"]),
+        tool("request_push",
+             "Ask the owner to push a branch you may not push yourself. The owner gets a Push \
+              button on the card and in Needs you; it runs exactly `git push origin \
+              <branch>:<target>` in your worktree, as the owner, and you get a note with how it \
+              went. Commit first: the branch's commit, files and lines are read now, and a \
+              branch that moves before the owner pushes fails the push (ask again). Refused for \
+              the project's branch or main: that is a release, not a push. Then open the PR or \
+              link the branch as usual.",
+             json!({
+                 "branch": {"type": "string", "description": "Your local branch to push."},
+                 "target": {"type": "string", "description": "Optional. The remote branch; the same name by default."},
+                 "item": {"type": "string", "description": "Optional. The card it is for, e.g. RB-12: the Push button shows there."},
+                 "reason": {"type": "string", "description": "Why the owner should push it, in one or two sentences."},
+                 "worktree": {"type": "string", "description": "Optional. Your worktree checked out on the branch; by default your card worktree on it."}
+             }),
+             vec!["branch", "reason"]),
         tool("withdraw_owner_action",
              "Withdraw an owner action you proposed that hasn't run.",
              json!({ "id": {"type": "string"} }),
@@ -50,7 +68,7 @@ pub(super) fn tools() -> Vec<Value> {
 fn handles(name: &str) -> bool {
     matches!(
         name,
-        "propose_owner_action" | "withdraw_owner_action" | "get_owner_action"
+        "propose_owner_action" | "request_push" | "withdraw_owner_action" | "get_owner_action"
     )
 }
 
@@ -103,6 +121,25 @@ async fn call(
                 timeout_s: timeout.map(|t| u32::try_from(t).unwrap_or(u32::MAX)),
             };
             owner_action::propose(app, &me, &req).await?
+        }
+        "request_push" => {
+            let owned = |key: &str| text(args, key).map(str::to_string);
+            let branch = owned("branch").ok_or_else(|| anyhow::anyhow!("'branch' is required"))?;
+            let (target, item, tree) = (owned("target"), owned("item"), owned("worktree"));
+            let reason = owned("reason").unwrap_or_default();
+            let app = app.clone();
+            // It reads the worktree with git: off the async workers.
+            tokio::task::spawn_blocking(move || {
+                let req = PushRequest {
+                    branch: &branch,
+                    target: target.as_deref(),
+                    item_id: item.as_deref(),
+                    reason: &reason,
+                    worktree: tree.as_deref(),
+                };
+                push::request(&app, &me, &req)
+            })
+            .await??
         }
         "withdraw_owner_action" => owner_action::withdraw(app, &me, id()?).await?,
         "get_owner_action" => owner_action::load(app, Some(&me.project_id), id()?)?,

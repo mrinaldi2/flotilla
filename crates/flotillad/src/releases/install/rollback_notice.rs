@@ -72,6 +72,7 @@ pub fn report(app: &Arc<AppState>) {
              service from {bundle}, the app now in Applications."
         ),
         timeout_s: 300,
+        push: None,
     };
     if let Err(e) = owner_action::store(app, proposal, "daemon", writable_roots(app)) {
         tracing::warn!(error = %e, "could not file the rollback's Run card");

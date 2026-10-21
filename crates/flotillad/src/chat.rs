@@ -14,6 +14,7 @@ mod browser_steps;
 mod builder;
 #[cfg(test)]
 mod builder_tests;
+mod command_marks;
 pub mod commands;
 mod envelope;
 pub mod files;

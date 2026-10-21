@@ -302,8 +302,7 @@ impl From<super::Tree> for c::PlanTree {
             has_repo: v.has_repo,
             nodes: v.nodes.into_iter().map(Into::into).collect(),
             guidelines: v.guidelines.into_iter().map(Into::into).collect(),
-            // Served from 0.24 step 3 (`research_gate_v1`).
-            research_gate: false,
+            research_gate: v.research_gate,
         }
     }
 }
