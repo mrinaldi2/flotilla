@@ -141,6 +141,8 @@ fn shown(app: &Arc<AppState>, pr: &Pr, exact: bool) -> anyhow::Result<Value> {
             t.pr_needs(&pr.id)?,
         ))
     })?;
+    let mut reviews = reviews;
+    review_model::resolve_findings(&mut reviews);
     let mut out = pr.to_json();
     out["reviews"] = reviews.iter().map(|r| r.to_json(pr)).collect();
     out["required_roles"] = serde_json::json!(needs);
