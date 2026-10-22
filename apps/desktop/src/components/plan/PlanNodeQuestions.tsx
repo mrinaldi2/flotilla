@@ -11,6 +11,7 @@ import { isOpen } from "../../protocol/questions";
 import QuestionCard from "../questions/QuestionCard";
 import { openCount } from "../questions/questionText";
 import { useLiveQuestions } from "../questions/useLiveQuestions";
+import type { LiveQuestions } from "../questions/useLiveQuestions";
 
 export interface PlanNodeQuestionsProps {
   readonly api: BoardApi;
@@ -22,13 +23,22 @@ export interface PlanNodeQuestionsProps {
   readonly canAnswer: boolean;
 }
 
-export default function PlanNodeQuestions(props: PlanNodeQuestionsProps): ReactElement | null {
-  const { nodeId, cards } = props;
+/** The node's questions kept live: its own, and its cards'. */
+export function useNodeQuestions(
+  api: BoardApi,
+  nodeId: string,
+  cards: readonly ItemCard[],
+  questions: readonly Question[],
+): LiveQuestions {
   const belongs = useCallback(
     (q: Question): boolean => q.planNodeId === nodeId || cards.some((c) => c.id === q.itemId),
     [nodeId, cards],
   );
-  const live = useLiveQuestions(props.api, props.questions, belongs);
+  return useLiveQuestions(api, questions, belongs);
+}
+
+export default function PlanNodeQuestions(props: PlanNodeQuestionsProps): ReactElement | null {
+  const live = useNodeQuestions(props.api, props.nodeId, props.cards, props.questions);
   if (live.questions.length === 0) {
     return null;
   }
