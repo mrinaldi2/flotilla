@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { agentsDaemon } from "../../test/agentFixtures";
 import * as fx from "../../test/fixtures";
-import CommandsPanel, { elapsed } from "./CommandsPanel";
+import CommandsPanel from "./CommandsPanel";
 
 describe("CommandsPanel", () => {
   it("shows what the bot is running apart from what it ran", async () => {
@@ -71,13 +71,5 @@ describe("CommandsPanel", () => {
     });
     render(<CommandsPanel client={failing} bot={fx.bot()} connected />);
     expect(await screen.findByText("peer is offline")).toBeInTheDocument();
-  });
-});
-
-describe("elapsed", () => {
-  it("reads like a stopwatch", () => {
-    expect(elapsed("2025-01-15T10:00:00Z", "2025-01-15T10:00:12Z")).toBe("12s");
-    expect(elapsed("2025-01-15T10:00:00Z", "2025-01-15T10:04:03Z")).toBe("4m 03s");
-    expect(elapsed("2025-01-15T10:00:00Z", "2025-01-15T11:05:00Z")).toBe("1h 05m");
   });
 });

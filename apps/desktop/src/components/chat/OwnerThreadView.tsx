@@ -15,10 +15,7 @@ import { useOwnerThread } from "../home/useOwnerThreads";
  * One message: the owner's on the right, the bot's on the left. The owner's
  * chat a linked computer sent unverified is never shown as theirs (H-306).
  */
-function Bubble(props: {
-  readonly message: ThreadMessage;
-  readonly now: number;
-}): ReactElement {
+function Bubble(props: { readonly message: ThreadMessage; readonly now: number }): ReactElement {
   const { message, now } = props;
   const mine = message.fromOwner;
   const unverified = message.unverifiedFrom !== "";

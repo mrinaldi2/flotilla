@@ -1,1 +1,361 @@
 /* The Commands page (0.24.0): every bot's commands, across projects and computers. */
+
+.commands-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.commands-header {
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.commands-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.commands-title h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  color: var(--text-strong);
+}
+
+/* ---------- summary tiles ---------- */
+
+.commands-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.commands-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 110px;
+  padding: 10px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.commands-tile-wide {
+  min-width: 160px;
+}
+
+.commands-tile-value {
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.commands-tile-text {
+  padding-top: 4px;
+  font-weight: 600;
+}
+
+.commands-tile-label {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+/* ---------- filters ---------- */
+
+.commands-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.commands-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.commands-filter select {
+  background: var(--bg-raised);
+  max-width: 180px;
+}
+
+.commands-status-filter {
+  display: flex;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.commands-status-filter button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.commands-status-filter button[aria-checked="true"] {
+  background: var(--bg-active);
+  color: var(--text-strong);
+}
+
+.commands-search {
+  flex: 1 1 180px;
+  min-width: 0;
+  background: var(--bg-raised);
+}
+
+/* ---------- list ---------- */
+
+.commands-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.commands-list {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: auto;
+}
+
+.commands-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.commands-row {
+  display: grid;
+  grid-template-columns: 104px 128px minmax(0, 1fr) 68px 56px;
+  gap: 10px;
+  align-items: start;
+  width: 100%;
+  padding: 10px 20px;
+  border: none;
+  border-bottom: 1px solid var(--bg-hover);
+  background: transparent;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.commands-row:hover {
+  background: var(--bg-raised);
+}
+
+.commands-row[aria-pressed="true"] {
+  background: var(--bg-hover);
+}
+
+.commands-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.commands-row-head {
+  border-bottom-color: var(--border);
+  color: var(--text-faint);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: default;
+}
+
+.commands-row-head:hover {
+  background: transparent;
+}
+
+.commands-status {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.commands-running {
+  color: var(--blue);
+}
+
+.commands-done {
+  color: var(--green);
+}
+
+.commands-failed {
+  color: var(--red);
+}
+
+.commands-stopped {
+  color: var(--amber);
+}
+
+.commands-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.commands-bot {
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commands-dim {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.commands-line {
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.commands-note {
+  margin: 0;
+  padding: 16px 20px;
+}
+
+.commands-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  color: var(--red);
+}
+
+.commands-more {
+  margin: 12px 20px;
+}
+
+/* ---------- detail ---------- */
+
+.commands-detail {
+  flex: 0 0 340px;
+  width: 340px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+  background: var(--bg-raised);
+}
+
+.commands-detail-empty {
+  padding: 18px 20px;
+}
+
+.commands-detail-empty p {
+  margin: 0;
+}
+
+.commands-detail-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.commands-detail-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.commands-detail-when {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.commands-detail-command {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.commands-detail-command code {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-strong);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.commands-detail-whose {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.commands-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.commands-link:hover {
+  text-decoration: underline;
+}
+
+.commands-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.commands-detail-actions .field-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.commands-confirm {
+  flex-basis: 100%;
+}
+
+.commands-detail-label {
+  margin: 0;
+  padding: 12px 18px 6px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.commands-detail-output {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 18px 18px;
+  padding: 12px;
+  overflow: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
