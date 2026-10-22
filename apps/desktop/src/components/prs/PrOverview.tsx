@@ -21,9 +21,12 @@ import {
   sha7,
   stateLine,
   waitingFor,
+  baseOf,
 } from "./prText";
 
-const MERGE_RULE = "Merges to main when every review is in and checks pass.";
+function mergeRule(pr: PullRequest): string {
+  return `Merges to ${baseOf(pr)} when every review is in and checks pass.`;
+}
 
 /** The project's Owner review setting, on the Waiting for line (decision 8). */
 export interface SettingNote {
@@ -67,7 +70,7 @@ function MergeLine(props: {
   const others = otherBlockers(pr);
   return (
     <div className="pr-banner" role="status">
-      <b>{MERGE_RULE}</b>{" "}
+      <b>{mergeRule(pr)}</b>{" "}
       {pr.mergeable?.ok === true ? (
         "Everything is in: it merges next."
       ) : waiting ? (

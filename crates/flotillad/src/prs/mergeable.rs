@@ -168,6 +168,7 @@ pub fn compute(app: &AppState, pr: &Pr, exact: bool) -> anyhow::Result<Mergeable
     // 5. The head descends from main's tip: main fast-forwards to it.
     let repo = repo::of_project(app, &pr.project_id, Some(&pr.repo))?;
     let cache = repo.cached(app);
+    let base = repo.base_name(&cache).unwrap_or_else(|| "main".into());
     if let Some(main) = git_cache::resolve(&cache, &repo.base_ref()) {
         if !git_cache::contains(&cache, &pr.head_sha, &main)? {
             let paths = if exact {
@@ -176,9 +177,12 @@ pub fn compute(app: &AppState, pr: &Pr, exact: bool) -> anyhow::Result<Mergeable
                 Vec::new()
             };
             if paths.is_empty() {
-                out.push(Blocker::new("behind_main", "Needs update with main"));
+                out.push(Blocker::new(
+                    "behind_main",
+                    format!("Needs update with {base}"),
+                ));
             } else {
-                let mut b = Blocker::new("conflicts", "Has conflicts with main");
+                let mut b = Blocker::new("conflicts", format!("Has conflicts with {base}"));
                 b.paths = paths;
                 out.push(b);
             }

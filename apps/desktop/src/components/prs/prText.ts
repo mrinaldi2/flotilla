@@ -146,7 +146,7 @@ export function branchMarker(
     return { text: `⚠ Has conflicts: waiting for ${author} to resolve`, tone: "warn" };
   }
   if (has(pr, BlockerKind.BEHIND_MAIN)) {
-    return { text: "⇣ Needs update with main", tone: "dim" };
+    return { text: `⇣ Needs update with ${baseOf(pr)}`, tone: "dim" };
   }
   return null;
 }
@@ -196,8 +196,15 @@ export function reviewRoles(pr: PullRequest): readonly string[] {
   return [...unique.filter((r) => r === OWNER_ROLE), ...unique.filter((r) => r !== OWNER_ROLE)];
 }
 
+/** The role's latest review: reviews come oldest first, and a role reviews each new head. */
 export function reviewOf(pr: PullRequest, role: string): Review | undefined {
-  return pr.reviews.find((review) => review.role === role);
+  for (let i = pr.reviews.length - 1; i >= 0; i -= 1) {
+    const review = pr.reviews[i];
+    if (review?.role === role) {
+      return review;
+    }
+  }
+  return undefined;
 }
 
 /** A review chip for the list: "✓ Architect", "⟳ CE approved an older commit", "▲ You". */
@@ -227,13 +234,18 @@ export function reviewChip(
   }
 }
 
+/** The branch the PR lands on: the project's (`develop`), `main` from an older service. */
+export function baseOf(pr: PullRequest): string {
+  return pr.base || "main";
+}
+
 /** "✓ Merged into main · 14:02", "Merging into main…", "Closed without merging · 8 Oct, 12:20". */
 export function stateLine(pr: PullRequest, now: number): string | null {
   switch (pr.state) {
     case PrState.MERGED:
-      return `✓ Merged into ${pr.base || "main"} · ${clock(pr.mergedAt, now)}`;
+      return `✓ Merged into ${baseOf(pr)} · ${clock(pr.mergedAt, now)}`;
     case PrState.MERGING:
-      return `◌ Merging into ${pr.base || "main"}…`;
+      return `◌ Merging into ${baseOf(pr)}…`;
     case PrState.CLOSED:
       return `Closed without merging · ${clock(pr.closedAt, now)}`;
     default:

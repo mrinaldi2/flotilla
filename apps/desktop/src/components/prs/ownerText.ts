@@ -13,10 +13,12 @@ import {
 } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { OwnerReviewMode } from "../../protocol/prOwner";
 import { checksSummary, splitChecks } from "./checkText";
-import { joinNames, OWNER_ROLE, reviewOf, roleLabel, sha7, waitingFor } from "./prText";
+import { baseOf, joinNames, OWNER_ROLE, reviewOf, roleLabel, sha7, waitingFor } from "./prText";
 
-/** "the next release" is where a merged PR goes (ruling fc46b042). */
-const SHIPS = "merges into main and ships in the next release";
+/** "the next release" is where a merged PR goes (ruling fc46b042), into its own branch. */
+function ships(pr: PullRequest): string {
+  return `merges into ${baseOf(pr)} and ships in the next release`;
+}
 
 /** Who else the PR waits for once you approve: "CE", "CE, and checks", or "". */
 function othersAfterYou(pr: PullRequest): string {
@@ -30,10 +32,10 @@ function othersAfterYou(pr: PullRequest): string {
 export function approveCopy(pr: PullRequest): string {
   const others = othersAfterYou(pr);
   if (others === "") {
-    return `#${pr.number} ${SHIPS}. You have 10 seconds to undo.`;
+    return `#${pr.number} ${ships(pr)}. You have 10 seconds to undo.`;
   }
   const verb = others === "checks" ? "pass" : others.includes(", and ") ? "approve" : "approves";
-  return `When ${others} ${verb} too, #${pr.number} ${SHIPS}.`;
+  return `When ${others} ${verb} too, #${pr.number} ${ships(pr)}.`;
 }
 
 /** What Ask for changes does. */
@@ -98,7 +100,7 @@ export function reviewRowMeta(pr: PullRequest): string {
   const checks = checksSummary(splitChecks(pr).head).text;
   const others = othersAfterYou(pr);
   const when =
-    others === "" ? "merges into main when you approve" : `waits for ${others} after you`;
+    others === "" ? `merges into ${baseOf(pr)} when you approve` : `waits for ${others} after you`;
   return [pr.author?.name ?? "", approved.join(" "), checks, when]
     .filter((part) => part !== "")
     .join(" · ");
@@ -125,7 +127,7 @@ export const MODE_CHOICES: readonly {
   {
     mode: "all",
     title: "Every pull request",
-    hint: "Nothing merges to main without you. Start here.",
+    hint: "Nothing merges without you. Start here.",
   },
   { mode: "areas", title: "Some areas", hint: "Only PRs that touch an area you pick:" },
   {
