@@ -53,7 +53,9 @@ function Summary({ node }: { readonly node: PlanNode }): ReactElement {
 }
 
 /** What the gate submits: its document at its commit, research's documents, or the summary. */
-function GateDoc(props: PlanGateViewProps): ReactElement {
+function GateDoc(
+  props: Pick<PlanGateViewProps, "api" | "projectId" | "node" | "gate">,
+): ReactElement {
   const { node, gate } = props;
   const path = gate.docPath;
   if (path !== undefined) {
