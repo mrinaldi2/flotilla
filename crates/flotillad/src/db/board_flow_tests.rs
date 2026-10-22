@@ -179,3 +179,77 @@ fn a_release_gated_board_takes_facts_the_way_0_18_moved_items() {
     .unwrap();
     assert_eq!(db.get_item(&item.id).unwrap().unwrap().column_key, "review");
 }
+
+/// 0.23.5: a custom board that maps no column for "changes requested"
+/// still sends the card from Review back to the Doing column before it.
+#[test]
+fn changes_asked_on_a_board_with_no_column_for_them_send_the_card_back() {
+    let (db, p) = board();
+    let rs = db
+        .create_board(&p, "Research", "RS", Preset::Software)
+        .unwrap();
+    db.board_tx(|t| {
+        let version = t.board(&rs.id)?.expect("the board").version;
+        t.set_automation(&bus::contract::board::AutomationSet {
+            board_id: rs.id.clone(),
+            version,
+            fact: "pr.changes_requested".into(),
+            column_key: None,
+        })
+    })
+    .unwrap();
+    let item = db
+        .create_item(
+            &NewItem {
+                board_id: Some(&rs.id),
+                acceptance_criteria: &[],
+                plan_node_id: None,
+                ..new_item(&p, "Lock the tour")
+            },
+            &OWNER,
+        )
+        .unwrap();
+    db.board_tx(|t| {
+        report_fact(
+            t,
+            &p,
+            &item.id,
+            Fact::PrOpened,
+            "PR #1 opened",
+            false,
+            &OWNER,
+        )
+    })
+    .unwrap();
+    assert_eq!(
+        db.get_item(&item.id).unwrap().unwrap().column_key,
+        "rs-review"
+    );
+    let mapped = db
+        .board_tx(|t| {
+            report_fact(
+                t,
+                &p,
+                &item.id,
+                Fact::PrChangesRequested,
+                "changes",
+                true,
+                &OWNER,
+            )
+        })
+        .unwrap();
+    assert_eq!(mapped, None, "the board maps no column for it");
+    let back = db
+        .board_tx(|t| crate::kanban::api::send_back(t, &p, &item.id, "changes", &OWNER))
+        .unwrap();
+    assert_eq!(back.as_deref(), Some("rs-review"));
+    assert_eq!(
+        db.get_item(&item.id).unwrap().unwrap().column_key,
+        "rs-doing"
+    );
+    // Already in Doing: nothing earlier to go back to.
+    let again = db
+        .board_tx(|t| crate::kanban::api::send_back(t, &p, &item.id, "changes", &OWNER))
+        .unwrap();
+    assert_eq!(again, None);
+}

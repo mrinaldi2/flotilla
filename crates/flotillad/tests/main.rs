@@ -157,6 +157,7 @@ mod plan_research_gate;
 mod plan_rules;
 mod plan_ws;
 mod pr_base_branch;
+mod pr_changes;
 mod pr_comments;
 mod pr_executor;
 mod pr_merge;

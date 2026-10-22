@@ -12,7 +12,7 @@ use crate::kanban::facts::Fact;
 use crate::kanban::feed::{card_after_commit, Change, ChangeKind, FeedWriter};
 use crate::kanban::guards::{self, Move, Who};
 use crate::kanban::model::{
-    BoardColumn, BoardFlow, Item, ItemComment, ItemLink, ItemState, LinkKind,
+    BoardColumn, BoardFlow, ColumnCategory, Item, ItemComment, ItemLink, ItemState, LinkKind,
 };
 
 /// Report a fact about an item and let its board decide where it goes
@@ -69,6 +69,47 @@ pub fn report_fact(
         }
     };
     system_move(t, project_id, &item, column, note, first, actor)
+}
+
+/// Sends `item` back to work (0.23.5): to the nearest Doing column before
+/// the one it is in, on a board whose automations map no column for the
+/// fact that asked for it. Nothing moves when there is none, or when that
+/// column's rules don't hold; the fact stays on the card either way.
+pub fn send_back(
+    t: &BoardTx<'_>,
+    project_id: &str,
+    item_id: &str,
+    note: &str,
+    actor: &Actor<'_>,
+) -> anyhow::Result<Option<String>> {
+    let Some(item) = t.item(item_id)? else {
+        return Ok(None);
+    };
+    if item.state != ItemState::Live {
+        return Ok(None);
+    }
+    let columns: Vec<BoardColumn> = t
+        .columns(project_id)?
+        .into_iter()
+        .filter(|c| item.board_id.is_empty() || c.board_id == item.board_id)
+        .collect();
+    let Some(here) = columns.iter().find(|c| c.key == item.column_key) else {
+        return Ok(None);
+    };
+    let back = columns
+        .iter()
+        .filter(|c| c.category == ColumnCategory::Doing && c.visible && c.ord < here.ord)
+        .max_by_key(|c| c.ord);
+    let Some(back) = back else {
+        return Ok(None);
+    };
+    match system_move(t, project_id, &item, back, note, true, actor) {
+        Ok(moved) => Ok(moved),
+        Err(e) => {
+            tracing::info!(item = item_id, error = %e, "changes asked for, but the card stays");
+            Ok(None)
+        }
+    }
 }
 
 /// The daemon's own move of `item` to `column`: the guards' daemon path.
