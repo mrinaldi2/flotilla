@@ -31,3 +31,28 @@ impl Supervisor {
         matches!(self.state(bot_id).0, BotState::Asleep | BotState::Queued)
     }
 }
+
+impl Supervisor {
+    /// What is known of the bot's runtime process, whose background
+    /// commands die with it (0.24.0): an asleep or queued bot has none, and
+    /// a running one started when its last start did, even when it resumed
+    /// the same conversation. A stopped or crashed one is left unknown: a
+    /// session can outlive the daemon that started it.
+    pub fn runtime(&self, bot_id: &str) -> crate::chat::commands::Runtime {
+        use crate::chat::commands::Runtime;
+        let bots = self.lock_bots();
+        let Some(h) = bots.get(bot_id) else {
+            return Runtime::Unknown;
+        };
+        match h.state {
+            BotState::Asleep | BotState::Queued => Runtime::Gone,
+            BotState::Stopped | BotState::Crashed | BotState::AuthFailed | BotState::Stopping => {
+                Runtime::Unknown
+            }
+            _ => chrono::Duration::from_std(h.last_start.elapsed())
+                .map_or(Runtime::Unknown, |age| {
+                    Runtime::Since(chrono::Utc::now() - age)
+                }),
+        }
+    }
+}

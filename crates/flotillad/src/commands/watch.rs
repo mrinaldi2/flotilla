@@ -61,6 +61,9 @@ struct Seen {
     changes: u64,
     printed: u64,
     told_print: Instant,
+    /// Whether it had a runtime: its background commands die with it, so a
+    /// bot falling asleep or stopping changes its list too.
+    alive: bool,
 }
 
 /// The size of everything the bot's running commands printed.
@@ -97,14 +100,16 @@ fn look(app: &AppState, seen: &mut HashMap<String, Seen>) {
             continue;
         };
         let printed = printed(&outputs);
+        let alive = app.supervisor.runtime(&bot_id) != crate::chat::commands::Runtime::Gone;
         // What the chat's first read found is a snapshot, not news; what
         // came after it is, even before this first look.
         let was = seen.entry(bot_id.clone()).or_insert_with(|| Seen {
             changes: base,
             printed,
             told_print: Instant::now(),
+            alive,
         });
-        let moved = changes != was.changes;
+        let moved = changes != was.changes || alive != was.alive;
         let prints = printed != was.printed && was.told_print.elapsed() >= PRINTS_EVERY;
         if !moved && !prints {
             continue;
@@ -117,6 +122,7 @@ fn look(app: &AppState, seen: &mut HashMap<String, Seen>) {
             } else {
                 was.told_print
             },
+            alive,
         };
         if let Ok(Some(bot)) = app.db.get_live_bot(&bot_id) {
             changed(app, &bot);

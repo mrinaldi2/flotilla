@@ -11,6 +11,12 @@ use common::peers::{project, team};
 use common::*;
 use serde_json::{json, Value};
 
+/// A transcript time this many seconds from now: after the test bot's
+/// runtime started, as a real command's is (0.24.0).
+fn now_plus(secs: i64) -> String {
+    (chrono::Utc::now() + chrono::Duration::seconds(secs)).to_rfc3339()
+}
+
 fn id(v: &Value) -> String {
     v["id"].as_str().expect("id").to_string()
 }
@@ -39,13 +45,13 @@ async fn setup() -> Setup {
         &d,
         &builder,
         &[
-            bash("t1", "cargo test", false, "2026-10-01T10:00:00Z"),
-            result("t1", "test result: ok", false, "2026-10-01T10:00:09Z"),
-            bash("b1", "./serve.sh", true, "2026-10-01T09:00:00Z"),
-            started("b1", "bx1", &output, "2026-10-01T09:00:01Z"),
+            bash("t1", "cargo test", false, &now_plus(60)),
+            result("t1", "test result: ok", false, &now_plus(69)),
+            bash("b1", "./serve.sh", true, &now_plus(0)),
+            started("b1", "bx1", &output, &now_plus(1)),
         ],
     );
-    let today = chrono::Utc::now().to_rfc3339();
+    let today = now_plus(120);
     transcript(
         &d,
         &tester,
@@ -178,8 +184,8 @@ async fn a_linked_computers_bots_are_read_from_there_and_pushed_here() {
         &t.win,
         &t.windev_id,
         &[
-            bash("w1", "msbuild player.sln", true, "2026-10-01T09:00:00Z"),
-            started("w1", "wx1", &output, "2026-10-01T09:00:01Z"),
+            bash("w1", "msbuild player.sln", true, &now_plus(0)),
+            started("w1", "wx1", &output, &now_plus(1)),
         ],
     );
     let listed = t
