@@ -15,6 +15,10 @@ export interface OwnerActionScope {
   readonly decisionId?: string;
   /** Only those waiting for the owner. */
   readonly waitingOnly?: boolean;
+  /** Only those for one of these cards (a plan node's), by the action's or its push's card. */
+  readonly itemIds?: readonly string[];
+  /** Only push requests (0.24.0, `push_requests_v1`). */
+  readonly pushOnly?: boolean;
 }
 
 export interface OwnerActions {
@@ -25,9 +29,17 @@ export interface OwnerActions {
   readonly reject: (action: OwnerAction, reason: string) => Promise<void>;
 }
 
+/** The card it is for: its own, else its push's. */
+function cardOf(a: OwnerAction): string | null {
+  return a.item_id ?? a.push?.item_id ?? null;
+}
+
 function inScope(a: OwnerAction, scope: OwnerActionScope): boolean {
+  const card = cardOf(a);
   return (
     a.project_id === scope.projectId &&
+    (scope.itemIds === undefined || (card !== null && scope.itemIds.includes(card))) &&
+    (scope.pushOnly !== true || a.kind === "push") &&
     (scope.itemId === undefined || a.item_id === scope.itemId) &&
     (scope.decisionId === undefined || a.decision_id === scope.decisionId) &&
     (scope.waitingOnly !== true || a.state === "proposed" || a.state === "running")

@@ -81,6 +81,11 @@ const ORDER: Readonly<Record<Shown["kind"], number>> = {
   // A bot's question (0.22.0); a blocking one ranks as a gate (`orderOf`).
   question: 4,
   cleanup_held: 6,
+  // A column's role nobody holds stalls its cards, like a stuck merge (0.24.0).
+  role_unheld: 2,
+  // A used-up budget holds the project's bots; a warning can wait (0.24.0).
+  budget_reached: 2,
+  budget_warning: 4,
   routines_without_card: 7,
   // Sorted by the kind it carries (`orderOf`); this is the fallback.
   elsewhere: 5,

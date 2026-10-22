@@ -5,7 +5,7 @@ import type { Selection } from "./selection";
 export interface OpenBot {
   /** On its first tab. */
   readonly openBot: (botId: string) => void;
-  /** On its Chat: from the main chat, the owner lands where they were (H-192). */
+  /** On its Chat: Reply on a report lands there (H-192). */
   readonly openBotChat: (botId: string) => void;
 }
 

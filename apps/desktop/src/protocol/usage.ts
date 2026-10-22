@@ -2,6 +2,9 @@
 // bot from the bots' transcripts, an estimated cost from the owner's price
 // table, and a weekly token budget per project.
 
+/** `usage_get`, budgets, the price table and `usage_updated`. */
+export const USAGE_V1 = "usage_v1";
+
 type UsageRange = "today" | "7d" | "30d";
 
 interface UsageTotals {

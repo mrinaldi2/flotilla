@@ -24,7 +24,7 @@ interface BotViewProps {
   readonly client: DaemonApi;
   readonly bot: Bot;
   readonly bots: readonly Bot[];
-  /** The tab to open on, when the bot offers it (H-192: Chat from the main chat). */
+  /** The tab to open on, when the bot offers it (H-192: Chat, from Reply on a report). */
   readonly initialTab?: BotTab;
   readonly connected: boolean;
   readonly canControl: boolean;
@@ -34,8 +34,6 @@ interface BotViewProps {
   readonly onRoutinesChanged: (botId: string, routines: readonly Routine[]) => void;
   readonly onToast: AddToast;
   readonly onOpenDecision?: (decisionId: string) => void;
-  /** Replies to the bot quoting a report; without it, Reply opens the bot's Chat tab. */
-  readonly onReply?: (botId: string, quote: string) => void;
   /** Back to the bot's project (its Team tab); the crumb is hidden without it. */
   readonly onBack?: () => void;
   /** Told the tab shown, so going back through history reopens it (UX-035 §5). */
@@ -221,12 +219,8 @@ export default function BotView(props: BotViewProps): ReactElement {
             onRoutinesChanged={props.onRoutinesChanged}
             onToast={onToast}
             onSelectTab={setTab}
-            onReply={(quote) => {
-              if (props.onReply === undefined) {
-                setTab("chat");
-              } else {
-                props.onReply(bot.id, quote);
-              }
+            onReply={() => {
+              setTab("chat");
             }}
           />
         </section>

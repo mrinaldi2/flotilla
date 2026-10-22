@@ -1,0 +1,42 @@
+/* A bot's thread with the owner (H-132 D6): its Chat tab and a draft's Discuss. */
+
+.mc-messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 10px 0;
+  overflow-y: auto;
+}
+
+.mc-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 85%;
+  padding: 7px 10px;
+  font-size: 13px;
+  background: var(--bg);
+  border-radius: 10px;
+}
+
+.mc-bubble-me {
+  align-self: flex-end;
+  background: var(--bg-active);
+}
+
+.mc-bubble-unverified {
+  border: 1px dashed var(--border);
+}
+
+.mc-bubble-src {
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+
+.mc-bubble-text {
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

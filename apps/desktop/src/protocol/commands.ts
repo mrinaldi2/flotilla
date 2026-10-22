@@ -4,6 +4,9 @@
 
 import type { BotCommand } from "./agents";
 
+/** The Commands page: `list_commands`, `commands_changed` and `stop_command`. */
+export const COMMANDS_V1 = "commands_v1";
+
 /** One command, with the bot and project it belongs to. Ids are the bot's own computer's. */
 interface CommandRow extends BotCommand {
   readonly bot_id: string;

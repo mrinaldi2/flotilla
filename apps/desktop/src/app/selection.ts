@@ -54,8 +54,8 @@ export type Selection =
   /** The projects home, ranked by what needs the owner: where the app opens (H-133). */
   | { readonly kind: "home" }
   /**
-   * A bot's page. `tab: "chat"` opens it on its Chat, the way back from the
-   * main chat (H-192); without it, the page opens on its first tab. History
+   * A bot's page. `tab: "chat"` opens it on its Chat, as Reply on a report
+   * does (H-192); without it, the page opens on its first tab. History
    * records the tab the owner moved to, so going back reopens it. `press`
    * counts those asks, so a second one lands on Chat even when the page is
    * already open and the owner moved to another tab (UX-034).
@@ -81,7 +81,7 @@ export type Selection =
       /** With `pr`: open its delta since your approval (a Re-check row). */
       readonly recheck?: boolean;
       /** Settings: focus this section ("Change" on a PR's Owner review line). */
-      readonly section?: "owner_review";
+      readonly section?: "owner_review" | "budget";
       /** Board: show this board (0.19.0); an `item`'s own board wins. */
       readonly board?: string;
       /** With `board`: open its settings ("Change it…" on a lead's proposal). */
@@ -94,7 +94,11 @@ export type Selection =
    * The Control center. `decisionId` opens straight onto one record, which is
    * what a notification or a palette entry hands over.
    */
-  | { readonly kind: "control"; readonly decisionId?: string };
+  | { readonly kind: "control"; readonly decisionId?: string }
+  /** Every bot's commands, across projects and computers (0.24.0, `commands_v1`). */
+  | { readonly kind: "commands" }
+  /** Tokens per project and bot, and the price table (0.24.0, `usage_v1`). */
+  | { readonly kind: "usage" };
 
 /** Narrows a stored string to a project tab. */
 export function isProjectTab(value: string): value is ProjectTab {

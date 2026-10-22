@@ -7,6 +7,8 @@ import type { Bot, TeamStatus, WakeReason } from "./entities";
 
 /** Presence, Asleep, wake and sleep, the running cap and assigning by role. */
 export const TEAM_ON_DEMAND_V1 = "team_on_demand_v1";
+/** Columns assign a role on entry (`on_entry`), and `ROLE_UNHELD` rows (0.24.0). */
+export const BOARD_FLOW_V1 = "board_flow_v1";
 /** The project mirror, card worktrees and the disk budget. */
 export const REPO_MIRROR_V1 = "repo_mirror_v1";
 

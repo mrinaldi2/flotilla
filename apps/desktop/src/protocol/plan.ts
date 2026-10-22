@@ -13,6 +13,8 @@ export const PLAN_V1 = "plan_v1";
 export const ITEM_TYPES_V2 = "item_types_v2";
 /** The Research column, its `start.research` guard and `LINK_KIND_DESIGN`. */
 export const COLUMN_RESEARCH = "column_research";
+/** Research waits for the owner's Approve findings / Send back; `plan_enable {research_gate}` (0.24.0). */
+export const RESEARCH_GATE_V1 = "research_gate_v1";
 
 /** A repository file as the document preview reads it: text, or base64 for the rest. */
 export interface PlanFile {

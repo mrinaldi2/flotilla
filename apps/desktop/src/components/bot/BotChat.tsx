@@ -11,7 +11,7 @@ import type { ThreadMessage } from "../../protocol/gen/flotilla/home/v1/home_pb"
 import ChatComposer from "../chat/ChatComposer";
 import { uploadAttachment } from "../chat/upload";
 import { useNow } from "../control/useNow";
-import OwnerThreadView from "../mainchat/OwnerThreadView";
+import OwnerThreadView from "../chat/OwnerThreadView";
 
 /** How long an unanswered message waits before the Activity hint shows. */
 export const ANSWER_HINT_MS = 2 * 60 * 1000;

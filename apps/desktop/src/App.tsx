@@ -19,8 +19,7 @@ import BoardActivityLayer from "./components/BoardActivityLayer";
 import CardsLayer from "./components/cards/CardsLayer";
 import CommandPalette from "./components/CommandPalette";
 import Rail from "./components/home/Rail";
-import MainChat from "./components/mainchat/MainChat";
-import { useAppChat } from "./components/mainchat/useAppChat";
+import { useRunningCommands } from "./components/commands/useRunningCommands";
 import HomeMigrationConfirm from "./components/overlay/HomeMigrationConfirm";
 import MainPane from "./components/MainPane";
 import SearchOverlay from "./components/SearchOverlay";
@@ -33,6 +32,8 @@ import type { Toast } from "./components/Toasts";
 import type { DaemonApi } from "./protocol/api";
 import type { Endpoint } from "./protocol/connection";
 import { DaemonClient } from "./protocol/client";
+import { COMMANDS_V1 } from "./protocol/commands";
+import { USAGE_V1 } from "./protocol/usage";
 import { loadEndpoint } from "./settings";
 import { readClientToken } from "./token";
 
@@ -157,12 +158,8 @@ export default function App(): ReactElement {
     openSettings: overlays.openSettings,
   });
 
-  const { chat, threads, asking } = useAppChat(
-    client,
-    connected,
-    daemon.selection,
-    daemon.projects,
-  );
+  const commands = connected && client.capabilities.includes(COMMANDS_V1);
+  const running = useRunningCommands(client, commands);
 
   useDesktopShell(daemon.unreadBots, pending.total, addToast);
 
@@ -178,16 +175,10 @@ export default function App(): ReactElement {
             status={daemon.status}
             endpoint={daemon.endpoint}
             canControl={canControl}
-            chatOpen={chat.open}
-            chatAsking={asking}
+            commands={commands}
+            commandsRunning={running}
+            usage={connected && client.capabilities.includes(USAGE_V1)}
             onSelect={select}
-            onToggleChat={() => {
-              if (chat.open) {
-                chat.close();
-              } else {
-                chat.openOn();
-              }
-            }}
             onOpenSettings={overlays.openSettings}
           />
           <main className="main">
@@ -206,20 +197,9 @@ export default function App(): ReactElement {
               onDeleteBot={actions.deleteBot}
               permissions={inbox.permissions}
               onOpenBot={openBot}
-              onReply={chat.openOn}
+              onReply={openBotChat}
             />
           </main>
-          <MainChat
-            client={client}
-            connected={connected}
-            canControl={canControl}
-            bots={bots}
-            projects={daemon.projects}
-            threads={threads}
-            chat={chat}
-            addToast={addToast}
-            onOpenBot={openBotChat}
-          />
           {overlays.paletteOpen ? (
             <CommandPalette
               actions={paletteActions}

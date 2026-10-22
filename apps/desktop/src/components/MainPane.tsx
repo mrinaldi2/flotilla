@@ -4,20 +4,22 @@ import heroArt from "../assets/empty/hero.png";
 import quietArt from "../assets/empty/quiet.png";
 import { connectionStatusLabel } from "../protocol/connection";
 import BotView from "./BotView";
+import CommandsPage from "./commands/CommandsPage";
 import ControlCenterView from "./control/ControlCenterView";
 import type { Permissions } from "./permissions/usePermissions";
 import ProjectsHome from "./home/ProjectsHome";
 import ProjectPane from "./project/ProjectPane";
 import type { ProjectActions } from "./project/ProjectPane";
 import NewProjectForm from "./sidebar/NewProjectForm";
+import UsagePage from "./usage/UsagePage";
 
 interface MainPaneProps extends ProjectActions {
   readonly onCreateProject: (name: string) => Promise<void>;
   /** Every bot's permission requests, answered in Decisions. */
   readonly permissions?: Permissions;
   readonly onOpenBot?: (botId: string) => void;
-  /** Answers a bot quoting one of its reports; else Reply opens the bot. */
-  readonly onReply?: (botId: string, quote: string) => void;
+  /** Reply on a report: opens the bot's Chat tab; else Reply opens the bot. */
+  readonly onReply?: (botId: string) => void;
 }
 
 interface EmptyStateProps {
@@ -92,6 +94,35 @@ export default function MainPane(props: MainPaneProps): ReactElement {
     );
   }
 
+  if (selection.kind === "commands") {
+    return (
+      <CommandsPage
+        client={client}
+        projects={daemon.projects}
+        bots={bots}
+        connected={connected}
+        onOpenBot={(botId) => daemon.select({ kind: "bot", botId })}
+        onOpenItem={(projectId, item) =>
+          daemon.select({ kind: "project", projectId, tab: "board", item })
+        }
+      />
+    );
+  }
+
+  if (selection.kind === "usage") {
+    return (
+      <UsagePage
+        client={client}
+        projects={daemon.projects}
+        bots={bots}
+        connected={connected}
+        onOpenBudget={(projectId) =>
+          daemon.select({ kind: "project", projectId, tab: "settings", section: "budget" })
+        }
+      />
+    );
+  }
+
   if (selection.kind === "project") {
     const project = daemon.projects.find((item) => item.id === selection.projectId);
     return project === undefined ? (
@@ -121,7 +152,6 @@ export default function MainPane(props: MainPaneProps): ReactElement {
         onOpenDecision={(decisionId) => {
           daemon.select({ kind: "control", decisionId });
         }}
-        onReply={props.onReply}
         onBack={() => {
           daemon.select({ kind: "project", projectId: bot.project_id, tab: "team" });
         }}

@@ -2,6 +2,9 @@
 // owner runs, with one tap, from the app or the phone. The client must say
 // it renders them (hello feature `owner_actions`) to get them at all.
 
+/** Push requests (0.24.0): owner actions with `kind: "push"`. */
+export const PUSH_REQUESTS_V1 = "push_requests_v1";
+
 type OwnerActionState =
   | "proposed"
   | "running"
