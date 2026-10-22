@@ -45,6 +45,24 @@ async fn prs_land_on_the_projects_branch_even_with_no_main() {
     );
     assert_eq!(pr["base"], "develop", "and it says so");
 
+    // develop moves on: the PR needs an update with develop, by name.
+    commit(&seed, "later.txt", "later\n");
+    git(&seed, &["push", "-q", "origin", "develop"]);
+    r.bots[1]
+        .call("pr_push", json!({"number": 1, "sha": head(&tree)}))
+        .await;
+    let got = r.bots[0].call("pr_get", json!({"number": 1})).await["pr"].clone();
+    let texts: Vec<String> = got["mergeable"]["blockers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|b| b["text"].as_str().map(str::to_string))
+        .collect();
+    assert!(
+        texts.iter().any(|t| t == "Needs update with develop"),
+        "{texts:?}"
+    );
+
     let other = r.card("Other", "doing");
     let raw = r.bots[1]
         .call_raw("pr_open", json!({"item": other, "branch": "develop"}))

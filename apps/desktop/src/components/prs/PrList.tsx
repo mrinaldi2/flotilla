@@ -36,7 +36,7 @@ export function Chip(props: { readonly text: string; readonly tone: Tone }): Rea
   return <span className={`pr-chip pr-tone-${props.tone}`}>{props.text}</span>;
 }
 
-/** "Desktop Dev · into main · 14 files +412 −37 · 3h", or when it merged. */
+/** "Desktop Dev · into develop · 14 files +412 −37 · 3h", or when it merged. */
 function meta(pr: PullRequest, now: number): string {
   const parts = [pr.author?.name ?? ""];
   if (pr.state === PrState.MERGED) {

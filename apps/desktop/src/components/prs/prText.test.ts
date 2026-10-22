@@ -56,6 +56,16 @@ describe("reviewer states (UX-051 decision 3)", () => {
     expect(reviewState(pr, "qa", undefined)).toMatchObject({ glyph: "○", text: "Waiting" });
   });
 
+  it("reads a role's latest review, not its first", () => {
+    const pr = waitingPr();
+    const older = reviewOf(pr, "ce");
+    expect(older?.stale).toBe(true);
+    const again = older && { ...older, sha: HEAD, stale: false };
+    const reviewed = again ? { ...pr, reviews: [...pr.reviews, again] } : pr;
+    expect(reviewOf(reviewed, "ce")?.sha).toBe(HEAD);
+    expect(reviewChip(reviewed, "ce").text).toBe("✓ CE");
+  });
+
   it("asks for your review only once the reviewers are in", () => {
     expect(waitsForYou(waitingPr())).toBe(false);
     expect(reviewState(waitingPr(), "owner", undefined).text).toBe("Waiting");
@@ -91,6 +101,9 @@ describe("what a PR waits for (decisions 4 and 11)", () => {
 
   it("marks conflicts before behind main", () => {
     expect(behind && branchMarker(behind)?.text).toBe("⇣ Needs update with main");
+    expect(behind && branchMarker({ ...behind, base: "develop" })?.text).toBe(
+      "⇣ Needs update with develop",
+    );
     expect(conflict && branchMarker(conflict)?.text).toBe(
       "⚠ Has conflicts: waiting for Backend Dev to resolve",
     );

@@ -30,6 +30,10 @@ describe("ownerText", () => {
     expect(approveCopy(waitingPr())).toBe(
       "When CE approves too, #42 merges into main and ships in the next release.",
     );
+    // The project's own branch, not always main.
+    expect(approveCopy({ ...readyForYouPr(), base: "develop" })).toBe(
+      "#42 merges into develop and ships in the next release. You have 10 seconds to undo.",
+    );
   });
 
   it("allows Approve only on the latest, reported commit of an open PR", () => {

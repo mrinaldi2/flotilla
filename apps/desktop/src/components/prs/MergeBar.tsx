@@ -1,6 +1,6 @@
 // The 10 s Undo (H-261 §16, ruling 7629a873; H-271): once your Approve makes
 // a PR mergeable it waits 10 s before the merge is handed to DevOps, and
-// nothing is pushed meanwhile, so Undo withdraws your approval with main
+// nothing is pushed meanwhile, so Undo withdraws your approval with its branch
 // untouched. After the window it says it waits for DevOps (H-284 S3), or
 // that nobody holds DevOps to merge it (0.23.3).
 // Screen readers hear it once when the window opens and once on the outcome,
@@ -12,6 +12,7 @@ import type { PullRequest } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import { PrState } from "../../protocol/gen/flotilla/pr/v1/pr_pb";
 import type { MergeWindow } from "./ownerText";
 import { mergeWindow, youApproved } from "./ownerText";
+import { baseOf } from "./prText";
 import type { OwnerAct } from "./usePrOwner";
 
 /** The time, every second while a window is open. */
@@ -46,7 +47,7 @@ function announcement(pr: PullRequest, phase: MergeWindow, from: Stage, undo: bo
   if (phase?.kind === "undo") {
     const seconds = phase.seconds === 1 ? "1 second" : `${phase.seconds} seconds`;
     const then = undo ? " Undo is available." : "";
-    return `Merging #${pr.number} into ${pr.base || "main"} in ${seconds}.${then}`;
+    return `Merging #${pr.number} into ${baseOf(pr)} in ${seconds}.${then}`;
   }
   if (phase?.kind === "devops") {
     return noDevops(pr)
@@ -85,7 +86,7 @@ function UndoBar(props: {
   return (
     <div className="pr-merge-bar pr-merge-bar-undo">
       <span>
-        ◌ Merging #{pr.number} into {pr.base || "main"}
+        ◌ Merging #{pr.number} into {baseOf(pr)}
         <span aria-hidden="true"> in {props.seconds} s</span>. Nothing is pushed until then.
       </span>
       {props.undo ? (
@@ -129,14 +130,14 @@ export default function MergeBar(props: {
       ) : null}
       {phase?.kind === "devops" && !noDevops(pr) ? (
         <div className="pr-merge-bar">
-          ◌ Waiting for DevOps to merge #{pr.number} into {pr.base || "main"}.
+          ◌ Waiting for DevOps to merge #{pr.number} into {baseOf(pr)}.
         </div>
       ) : null}
       {phase?.kind === "devops" && noDevops(pr) ? (
         <div className="pr-merge-bar">
           ◌ Approved, but nobody in this project holds DevOps, the role that merges #{pr.number}{" "}
-          into {pr.base || "main"}. Give a bot the DevOps role and the pr_merge extra: it merges as
-          soon as one holds them.
+          into {baseOf(pr)}. Give a bot the DevOps role and the pr_merge extra: it merges as soon as
+          one holds them.
         </div>
       ) : null}
     </>

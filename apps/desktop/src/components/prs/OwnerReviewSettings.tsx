@@ -44,7 +44,9 @@ function AreaPicker(props: {
   return (
     <div className="owner-review-areas" role="group" aria-label="Areas">
       {props.areas.length === 0 ? (
-        <span className="field-hint">reviewers.toml on main names no areas yet.</span>
+        <span className="field-hint">
+          reviewers.toml on the project's branch names no areas yet.
+        </span>
       ) : (
         props.areas.map((area) => (
           <label key={area} className="checkbox-row">
