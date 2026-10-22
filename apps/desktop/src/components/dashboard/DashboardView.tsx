@@ -151,6 +151,56 @@ function questionAnswering(
   };
 }
 
+/** A release's review or a card, opened from Needs you, over the dashboard. */
+function Drawers(
+  props: DashboardViewProps & {
+    readonly reviewing: Release | null;
+    readonly openItem: string | null;
+    readonly botName: (id: string) => string;
+    readonly onChanged: () => void;
+    readonly onClose: () => void;
+  },
+): ReactElement {
+  const { client, project, bots, connected, reviewing, openItem } = props;
+  return (
+    <>
+      {reviewing ? (
+        <ReviewDrawer
+          key={reviewing.id}
+          release={reviewing}
+          client={client}
+          project={project}
+          bots={bots}
+          canControl={props.canControl}
+          addToast={props.addToast}
+          onChanged={props.onChanged}
+          onClose={props.onClose}
+        />
+      ) : null}
+      {openItem ? (
+        <DashboardItem
+          key={openItem}
+          api={client}
+          projectId={project.id}
+          itemId={openItem}
+          bots={bots}
+          canComment={props.canControl}
+          canAnswer={mayAnswer(client, connected)}
+          onClose={props.onClose}
+        >
+          <OwnerActionList
+            client={client}
+            connected={connected}
+            scope={{ projectId: project.id, itemId: openItem }}
+            addToast={props.addToast}
+            botName={props.botName}
+          />
+        </DashboardItem>
+      ) : null}
+    </>
+  );
+}
+
 export default function DashboardView(props: DashboardViewProps): ReactElement {
   const { client, project, bots, connected } = props;
   const { dashboard, error, refresh } = useDashboard(client, project.id, connected);
@@ -260,39 +310,14 @@ export default function DashboardView(props: DashboardViewProps): ReactElement {
         </div>
       </div>
       <CleanupChoice cleanup={cleanup} />
-      {reviewing ? (
-        <ReviewDrawer
-          key={reviewing.id}
-          release={reviewing}
-          client={client}
-          project={project}
-          bots={bots}
-          canControl={props.canControl}
-          addToast={props.addToast}
-          onChanged={() => void refresh()}
-          onClose={closeDrawer}
-        />
-      ) : null}
-      {openItem ? (
-        <DashboardItem
-          key={openItem}
-          api={client}
-          projectId={project.id}
-          itemId={openItem}
-          bots={bots}
-          canComment={props.canControl}
-          canAnswer={mayAnswer(client, connected)}
-          onClose={closeDrawer}
-        >
-          <OwnerActionList
-            client={client}
-            connected={connected}
-            scope={{ projectId: project.id, itemId: openItem }}
-            addToast={props.addToast}
-            botName={botName}
-          />
-        </DashboardItem>
-      ) : null}
+      <Drawers
+        {...props}
+        reviewing={reviewing}
+        openItem={openItem}
+        botName={botName}
+        onChanged={() => void refresh()}
+        onClose={closeDrawer}
+      />
     </div>
   );
 }
