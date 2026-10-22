@@ -33,3 +33,32 @@ async fn a_reviewers_must_fix_tasks_the_prs_author() {
     assert!(asks[0].contains("(as architect)"), "{}", asks[0]);
     assert!(asks[0].contains("The prints lie."), "{}", asks[0]);
 }
+
+/// 0.24.0: the fix is pushed and the reviewer approves it, so its finding
+/// shows as resolved in that commit, not "0 of 1 resolved".
+#[tokio::test]
+async fn approving_the_fix_resolves_the_finding() {
+    let mut r = setup().await;
+    let (tree, head) = opened(&mut r).await;
+    give(&r, 2, Role::ReviewerArch);
+    r.bots[2]
+        .call(
+            "pr_review",
+            json!({"number": 1, "sha": head, "role": "architect",
+                   "verdict": "changes_requested", "summary": "One to fix.",
+                   "findings": [{"severity": "should", "text": "Log it too"}]}),
+        )
+        .await;
+    common::prs::write(&tree, "fix.txt", "logged\n");
+    common::repo::git(&tree, &["push", "-q", "origin", "H-1-search"]);
+    let fixed = common::prs::report(&mut r, &tree).await;
+    r.bots[2]
+        .call(
+            "pr_review",
+            json!({"number": 1, "sha": fixed, "role": "architect", "verdict": "approved"}),
+        )
+        .await;
+    let got = common::prs::pr(&mut r).await;
+    let finding = &got["reviews"][0]["findings"][0];
+    assert_eq!(finding["resolved_in"], fixed.as_str(), "{got}");
+}
