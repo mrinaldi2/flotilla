@@ -136,10 +136,15 @@ async fn a_linked_computer_sweeps_its_trees_and_the_home_keeps_the_rows() {
     let pc = mac.app.db.get_peer(&b.p.mac_peer_id).unwrap().unwrap().name;
     let db = &mac.app.db;
     let deadline = tokio::time::Instant::now() + Duration::from_secs(30);
-    while job_on(db, &pc, &dirty).is_none() || job_on(db, &pc, &clean).is_none() {
+    // Both rows exist before the PC has finished with them: wait until each
+    // left `queued`, so the states below are the sweep's outcome.
+    let settled = |path: &std::path::Path| {
+        job_on(db, &pc, path).is_some_and(|j| j.state.as_str() != "queued")
+    };
+    while !settled(&dirty) || !settled(&clean) {
         assert!(
             tokio::time::Instant::now() < deadline,
-            "no sweep rows on the Mac"
+            "no settled sweep rows on the Mac"
         );
         tokio::time::sleep(Duration::from_millis(100)).await;
     }

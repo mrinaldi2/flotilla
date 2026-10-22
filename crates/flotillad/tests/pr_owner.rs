@@ -112,6 +112,18 @@ async fn an_owner_must_fix_sends_the_card_back_to_doing() {
     let asked = app.request(ask).await;
     assert_eq!(asked["review"]["verdict"], "changes_requested", "{asked}");
     assert_eq!(r.column(&item), "doing");
+    // 0.23.5: the bot that opened the PR is tasked with the changes.
+    let db = &r.pair.d.app.db;
+    let asks: Vec<String> = db
+        .open_tasks_for(&r.pair.ids[1])
+        .unwrap()
+        .iter()
+        .filter_map(|t| db.get_message(&t.origin_message_id).unwrap())
+        .map(|m| m.body)
+        .filter(|b| b.contains("asked for changes on PR #1"))
+        .collect();
+    assert_eq!(asks.len(), 1, "{asks:?}");
+    assert!(asks[0].contains("Rename the setting."), "{}", asks[0]);
 }
 
 /// AC4: the lead flags a PR for the owner with a reason; it shows on the PR;

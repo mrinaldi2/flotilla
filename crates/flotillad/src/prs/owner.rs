@@ -172,7 +172,9 @@ pub fn submit(
         })?;
         let moved = if verdict == Verdict::ChangesRequested {
             let note = format!("the owner asked for changes on PR #{number}");
-            report_fact(
+            // A custom board with no column for the fact still sends the
+            // card back to work (0.23.5).
+            let moved = match report_fact(
                 t,
                 project,
                 &pr.item_id,
@@ -180,15 +182,25 @@ pub fn submit(
                 &note,
                 true,
                 &Actor::User,
-            )?
-            .map(|from| vec![(pr.item_id.clone(), from)])
-            .unwrap_or_default()
+            )? {
+                Some(from) => Some(from),
+                None => {
+                    crate::kanban::api::send_back(t, project, &pr.item_id, &note, &Actor::User)?
+                }
+            };
+            moved
+                .map(|from| vec![(pr.item_id.clone(), from)])
+                .unwrap_or_default()
         } else {
             Vec::new()
         };
         Ok((review, moved))
     })?;
     publish_moves(app, &mut feed, project, &moved);
+    drop(feed);
+    if verdict == Verdict::ChangesRequested {
+        crate::prs::changes::requested(app, &pr, "The owner", summary);
+    }
     Ok(review)
 }
 

@@ -3,6 +3,7 @@
 //! checks each head must pass. Reviews and merges come with their own slices.
 
 pub mod anchor;
+pub mod changes;
 pub mod check_checkout;
 mod check_defs;
 pub mod check_jobs;
