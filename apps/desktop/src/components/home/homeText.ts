@@ -7,12 +7,14 @@ import {
   Source_State,
   type AttentionSummary,
   type ProjectRow,
+  type ProjectUsage,
   type ReleaseBrief,
   type Source,
 } from "../../protocol/gen/flotilla/home/v1/home_pb";
 import type { ReleaseStatus } from "../../protocol/releases";
 import { age } from "../control/decisions";
 import { statusLabel } from "../releases/labels";
+import { costText, tokensText } from "../usage/usageText";
 
 /** Singular and plural words per attention kind, in needs-you points order. */
 const KIND_WORDS: readonly (readonly [string, string, string])[] = [
@@ -129,3 +131,19 @@ export function homeSummary(projects: number, computers: number): string {
 /** The ranking rule, as the "Why this order?" tooltip states it. */
 export const ORDER_RULE =
   "Projects are ranked by how much they need you: releases to test and urgent decisions count most, then Run cards and P0 items, then other decisions and approvals, then questions and rulings to confirm. Each one counts more the longer it waits. Pinned projects stay on top; projects that need nothing sort by recent activity.";
+
+/**
+ * "Today 1.2 M tokens · ≈ $3.40 · week 29.8 M of 40 M": the card's usage line
+ * (0.24.0, `usage_v1`); the week alone without a budget.
+ */
+export function usageLine(usage: ProjectUsage): string {
+  const week =
+    usage.budgetWeek > 0n
+      ? `week ${tokensText(Number(usage.tokensWeek))} of ${tokensText(Number(usage.budgetWeek))}`
+      : `week ${tokensText(Number(usage.tokensWeek))}`;
+  return [
+    `Today ${tokensText(Number(usage.tokensToday))} tokens`,
+    costText(usage.estCostTodayUsd),
+    week,
+  ].join(" · ");
+}

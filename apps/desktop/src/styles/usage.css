@@ -1,1 +1,323 @@
-/* The Usage page and project budgets (0.24.0). */
+/* The Usage page and project budgets (0.24.0). States pair a word with the
+   colour, so a bar reads the same without it. */
+
+.usage-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.usage-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px 8px;
+}
+
+.usage-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.usage-dim {
+  color: var(--text-dim);
+}
+
+p.usage-dim,
+.usage-note {
+  margin: 0;
+  font-size: 12px;
+}
+
+.usage-ranges {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.usage-range {
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.usage-range:hover {
+  background: var(--bg-hover);
+}
+
+.usage-range-on {
+  border-color: var(--text-faint);
+  background: var(--bg-active);
+  color: var(--text-strong);
+}
+
+.usage-scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 24px 32px;
+}
+
+.usage-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.usage-tile,
+.usage-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-raised);
+}
+
+.usage-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  min-width: 0;
+}
+
+.usage-tile-label {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.usage-tile-value {
+  font-size: 22px;
+  font-weight: 650;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+.usage-tile-note {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.usage-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 52fr) minmax(0, 48fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.usage-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 16px;
+}
+
+.usage-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.usage-card-title {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-strong);
+}
+
+.usage-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.usage-projects {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.usage-project {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.usage-project-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.usage-name {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.usage-budget-btn {
+  margin-left: auto;
+}
+
+.usage-budget-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+}
+
+.usage-state {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.usage-state-ok {
+  color: var(--text-dim);
+}
+
+.usage-state-near {
+  color: var(--amber);
+}
+
+.usage-state-reached {
+  color: var(--red);
+}
+
+.usage-state-extended {
+  color: var(--blue);
+}
+
+.usage-bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--bg-active);
+}
+
+.usage-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+}
+
+.usage-bar-ok {
+  background: var(--accent);
+}
+
+.usage-bar-near {
+  background: var(--amber);
+}
+
+.usage-bar-reached {
+  background: var(--red);
+}
+
+.usage-bar-extended {
+  background: var(--blue);
+}
+
+.usage-days {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.usage-days-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 96px;
+}
+
+.usage-day {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  min-width: 0;
+}
+
+.usage-day-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  background: var(--accent);
+}
+
+.usage-day-label {
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.usage-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.usage-table thead th {
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.usage-table tbody th,
+.usage-table tbody td {
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--bg-hover);
+  text-align: left;
+}
+
+.usage-table tbody th {
+  font-weight: 400;
+  color: var(--text-strong);
+}
+
+.usage-prices input {
+  width: 84px;
+}
+
+.usage-prices th input {
+  width: 140px;
+}
+
+/* A project card's "usage today" line (the projects home). */
+.home-usage {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.home-usage-reached {
+  font-weight: 600;
+  color: var(--amber);
+}
+
+/* The project's Usage budget panel: what it used against the budget. */
+.usage-budget-used {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}

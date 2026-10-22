@@ -8,6 +8,7 @@ import ProjectRepoForm from "./ProjectRepoForm";
 import DeleteProjectDialog, { botsSentence } from "./project/DeleteProjectDialog";
 import DiskBudget from "./project/DiskBudgetForm";
 import PullRequestsSwitch from "./project/PullRequestsSwitch";
+import UsageBudget from "./project/UsageBudgetForm";
 import PlanningSettings from "./plan/PlanningSettings";
 import type { UsePlan } from "./plan/usePlan";
 import OwnerReviewSettings from "./prs/OwnerReviewSettings";
@@ -28,6 +29,8 @@ interface ProjectViewProps {
   readonly ownerReview?: boolean;
   /** Opened from a PR's "Change": focus Owner review. */
   readonly focusOwnerReview?: boolean;
+  /** Opened from the Usage page or a budget row: focus Usage budget. */
+  readonly focusBudget?: boolean;
   /** The project's plan, for its switch (0.21.0); none hides it. */
   readonly plan?: UsePlan;
 }
@@ -151,6 +154,14 @@ export default function ProjectView(props: ProjectViewProps): ReactElement {
         connected={connected}
         canControl={canControl}
         onToast={onToast}
+      />
+
+      <UsageBudget
+        client={client}
+        project={project}
+        connected={connected}
+        onToast={onToast}
+        focus={props.focusBudget}
       />
 
       <PullRequestsSwitch

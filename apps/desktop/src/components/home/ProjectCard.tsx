@@ -8,6 +8,7 @@ import {
   releasePill,
   runningLine,
   staleNotes,
+  usageLine,
   whyLine,
 } from "./homeText";
 
@@ -124,6 +125,25 @@ function PinButton({
   );
 }
 
+/** Today's tokens and the budget's week; nothing from a service that doesn't count them. */
+function UsageNote({ row }: { readonly row: ProjectRow }): ReactElement | null {
+  const usage = row.usage;
+  if (usage === undefined) {
+    return null;
+  }
+  return (
+    <p className="home-usage">
+      {usageLine(usage)}
+      {usage.budgetReached ? (
+        <>
+          {" · "}
+          <span className="home-usage-reached">Budget reached</span>
+        </>
+      ) : null}
+    </p>
+  );
+}
+
 /** Why the card ranks where it does, then its facts and news; an older service has neither. */
 function Body(props: {
   readonly row: ProjectRow;
@@ -143,6 +163,7 @@ function Body(props: {
         {top ? `Needs you most: ${why}` : why}
       </p>
       <Facts row={row} />
+      <UsageNote row={row} />
       <Latest row={row} leadName={props.leadName} now={now} />
     </>
   );

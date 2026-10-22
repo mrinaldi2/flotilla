@@ -156,8 +156,9 @@ export function useProjectRow(
 }
 
 /**
- * Reads again when the service says the overview changed, or a pin moved;
- * with `projectId`, only for a change that names it (or names none).
+ * Reads again when the service says the overview changed, a pin moved or a
+ * project's usage changed; with `projectId`, only for a change that names it
+ * (or names none).
  */
 function useOverviewPushes(
   client: DaemonApi,
@@ -179,9 +180,16 @@ function useOverviewPushes(
       }
     });
     const offPinned = client.on("project_pinned", again);
+    // A project's tokens changed (0.24.0); the service sends it at most once a minute.
+    const offUsage = client.on("usage_updated", (push) => {
+      if (projectId === undefined || push.project_id === projectId) {
+        again();
+      }
+    });
     return () => {
       offChanged();
       offPinned();
+      offUsage();
     };
   }, [client, projectId, refresh, supported]);
 }
