@@ -41,14 +41,16 @@ pub(super) const PR_TOOLS: &[BoardTool] = &[
         "PrReview",
         Audience::Everyone,
         "Review a PR as a role you hold (architect, ux, ce, devops, qa), on its current head \
-         sha. Asking for changes needs a `must` finding. Refused for its author, its card's \
+         sha. A `must` or `should` finding is a request for changes, fixed in this PR before \
+         it is approved; only a `nit` goes with an approval. Refused for its author, its card's \
          assignee, a bot that pushed to it since its last approval, or one whose worker did.",
     ),
     shared(
         "pr_follow_up",
         "PrFollowUp",
         Audience::Everyone,
-        "File a review's `should` or `nit` finding as an Inbox card related to the PR's card.",
+        "File a review's `nit` finding as an Inbox card related to the PR's card. A `must` or \
+         `should` one is fixed in the PR itself.",
     ),
     shared(
         "pr_flag",

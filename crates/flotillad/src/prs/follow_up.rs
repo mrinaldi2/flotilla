@@ -1,4 +1,5 @@
-//! A `should` or `nit` finding turned into its own card (H-261 §1.3): an
+//! A `nit` finding turned into its own card (H-261 §1.3; a `should` one is
+//! fixed in its PR since 0.24.0): an
 //! Inbox card related to the PR's card, recorded on the finding so it isn't
 //! filed twice.
 
@@ -39,10 +40,11 @@ pub fn file(
         .findings
         .get(index)
         .ok_or_else(|| invalid(format!("the review has no finding {index}")))?;
-    if finding.severity == "must" {
-        return Err(invalid(
-            "a `must` finding is fixed in this PR, not filed for later",
-        ));
+    if finding.severity != "nit" {
+        return Err(invalid(format!(
+            "a `{}` finding is fixed in this PR, not filed for later",
+            finding.severity
+        )));
     }
     if let Some(id) = &finding.follow_up_item_id {
         return Err(conflict(format!("that finding is already {id}")));

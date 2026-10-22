@@ -139,7 +139,10 @@ async fn the_daemon_refuses_reviews_it_cant_trust() {
                    "findings": [{"severity": "nit", "text": "Spacing"}]}),
         )
         .await;
-    assert!(error(&vague).contains("`must` finding"), "{vague}");
+    assert!(
+        error(&vague).contains("`must` or `should` finding"),
+        "{vague}"
+    );
 
     // The owner's review never comes through a bot.
     let owner = r.bots[2]
@@ -242,18 +245,47 @@ async fn review_tasks_open_with_the_pr_and_close_with_the_review() {
     assert_eq!(db.open_tasks_for(&arch).unwrap().len(), 1, "asked again");
 }
 
-/// A `should` finding becomes an Inbox card related to the PR's card, once.
+/// A finding is fixed in its PR before it is approved (0.24.0): a `should`
+/// can't go with an approval or be filed for later; a `nit` may, and
+/// becomes an Inbox card related to the PR's card, once.
 #[tokio::test]
-async fn a_should_finding_becomes_a_follow_up_card() {
+async fn only_a_nit_goes_with_an_approval_and_becomes_a_follow_up_card() {
     let mut r = setup().await;
     let (_tree, head) = opened(&mut r).await;
+    let with_should = r.bots[2]
+        .call_raw(
+            "pr_review",
+            json!({"number": 1, "sha": head, "role": "architect", "verdict": "approved",
+                   "findings": [{"severity": "should", "text": "Cache the policy per base"}]}),
+        )
+        .await;
+    assert!(
+        error(&with_should).contains("fixed in this PR before it is approved"),
+        "{with_should}"
+    );
+    let asked = r.bots[2]
+        .call(
+            "pr_review",
+            json!({"number": 1, "sha": head, "role": "architect",
+                   "verdict": "changes_requested", "summary": "One to fix.",
+                   "findings": [{"severity": "should", "text": "Cache the policy per base"}]}),
+        )
+        .await;
+    let asked_id = asked["review"]["id"].as_str().unwrap().to_string();
+    let later = r.bots[2]
+        .call_raw(
+            "pr_follow_up",
+            json!({"number": 1, "review_id": asked_id, "finding": 0}),
+        )
+        .await;
+    assert!(error(&later).contains("fixed in this PR"), "{later}");
+
     let review = r.bots[2]
         .call(
             "pr_review",
             json!({"number": 1, "sha": head, "role": "architect", "verdict": "approved",
-                   "findings": [{"severity": "should", "text": "Cache the policy per base",
-                                 "path": "src/x.rs", "line": 3},
-                                {"severity": "nit", "text": "Typo"}]}),
+                   "findings": [{"severity": "nit", "text": "Rename x to policy",
+                                 "path": "src/x.rs", "line": 3}]}),
         )
         .await;
     let id = review["review"]["id"].as_str().unwrap().to_string();
@@ -265,7 +297,7 @@ async fn a_should_finding_becomes_a_follow_up_card() {
         .await;
     let card = filed["item_id"].as_str().unwrap().to_string();
     let item = r.pair.d.app.db.get_item(&card).unwrap().unwrap();
-    assert_eq!(item.title, "Cache the policy per base");
+    assert_eq!(item.title, "Rename x to policy");
     assert_eq!(item.column_key, "inbox");
     let again = r.bots[2]
         .call_raw(
@@ -274,9 +306,4 @@ async fn a_should_finding_becomes_a_follow_up_card() {
         )
         .await;
     assert!(error(&again).contains("already"), "{again}");
-    let detail = pr(&mut r).await;
-    assert_eq!(
-        detail["reviews"][0]["findings"][0]["follow_up_item_id"],
-        card.as_str()
-    );
 }

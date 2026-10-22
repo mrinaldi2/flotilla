@@ -22,8 +22,10 @@ pub(super) fn pull_requests(on: bool) -> &'static str {
      you pushed. A push you don't report counts as no one's, and no review\n\
      is accepted until it is reported.\n\
      - `pr_get` shows a PR's reviews, the roles it still needs, its checks\n\
-     and what still blocks the merge. Answer a reviewer's `must` findings and\n\
-     `must` comments (`pr_comments`) with a new push, never by note.\n\
+     and what still blocks the merge. Answer a reviewer's `must` and `should`\n\
+     findings and `must` comments (`pr_comments`) with a new push in the same\n\
+     PR, never by note or a later card. As a reviewer, approve only when\n\
+     nothing but a `nit` is left; otherwise ask for changes.\n\
      - `pr_close` with a reason only to abandon a PR.\n\
      - You can't review a PR you opened, pushed to, or whose card you hold.\n\
      - Nobody merges by hand: a mergeable PR goes to DevOps as a merge task,\n\

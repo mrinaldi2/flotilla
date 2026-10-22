@@ -1749,7 +1749,7 @@ The typed surface `flotilla.pr.v1` (`proto/flotilla/pr/v1/pr.proto`, contract `p
 - **`pr_review {number, sha, role, verdict, summary?, findings[], artifact?}`:**
   - The bot must hold the role's board role, and `sha` must be the head.
   - It is refused while the PR is `moved_unreported`; the pusher reports the tip first.
-  - `changes_requested` needs at least one `must` finding.
+  - **Findings are fixed in the PR (0.24.0, the owner's rule):** `approved` may carry only `nit` findings. A `must` or `should` finding goes with `changes_requested`, which needs at least one of them. The author fixes it on the same branch, and the reviewer approves the push that fixes it.
   - **Who fixes it (0.23.5):** the bot that opened the PR gets a task naming the reviewer and the summary, and the card's assignee, when it is another bot, gets a note.
   - The `owner` role is refused over MCP.
   - The verdict is stored with the head's patch-id. `stale` is computed as the review's patch-id ≠ the PR's head patch-id, so an update with main keeps it and a fix-up or a conflict resolution doesn't.
@@ -1767,7 +1767,7 @@ The typed surface `flotilla.pr.v1` (`proto/flotilla/pr/v1/pr.proto`, contract `p
   - It goes to the first holder §4.4 allows. A role nobody may fill gets none, and the daemon logs it.
   - The review closes it.
 - **`pr_follow_up {number, review_id, finding}`:**
-  - The reviewer, the PR's author or the lead files a `should` or `nit` finding as an Inbox chore, labelled `follow-up`, related to the PR's card.
+  - The reviewer, the PR's author or the lead files a `nit` finding as an Inbox chore, labelled `follow-up`, related to the PR's card. A `must` or `should` finding is refused: it is fixed in the PR (0.24.0).
   - The finding records `follow_up_item_id`, so it can't be filed twice.
 
 **The owner as a reviewer (PR-4, H-269; ruling 7629a873).** It uses migration `REVIEW_SETTINGS`, which adds the tables `project_review_settings` and `pr_shape`.
