@@ -9,6 +9,8 @@ import { ColumnKind } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import OverlayShell from "../../overlay/OverlayShell";
 import ColumnRow from "./ColumnRow";
 import type { ColumnChange } from "./columnEdits";
+import type { ColumnFlow } from "./columnFlow";
+import { FlowSummary } from "./OnEntry";
 import { KINDS } from "./rules";
 
 export interface ColumnsActions {
@@ -25,6 +27,8 @@ interface ColumnsSectionProps extends ColumnsActions {
   readonly disabled: boolean;
   /** The column shown expanded first (stories). */
   readonly initiallyExpanded?: string;
+  /** The board runs the SDLC (`board_flow_v1`): each column's On entry role. */
+  readonly flow?: ColumnFlow;
 }
 
 function AddColumn(props: {
@@ -144,9 +148,13 @@ export default function ColumnsSection(props: ColumnsSectionProps): ReactElement
             onExpand={(open) => setExpanded(open ? column.key : null)}
             onChange={(change) => props.onChange(column, change)}
             onRemove={() => setRemoving(column)}
+            flow={props.flow}
           />
         ))}
       </ol>
+      {props.flow === undefined ? null : (
+        <FlowSummary columns={columns} flow={props.flow} disabled={disabled} />
+      )}
       {custom && !disabled ? <AddColumn onAdd={props.onAdd} /> : null}
       {removing === null ? null : (
         <RemoveColumnDialog

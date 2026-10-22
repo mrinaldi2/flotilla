@@ -2,7 +2,7 @@
 // so nothing depends on colour; the stages a kind passes, gates marked; and
 // the tree in reading order, with the Needs you and Done filters.
 
-import type { PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
+import type { PlanGate, PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import {
   PlanDocKind,
   PlanKind,
@@ -93,6 +93,56 @@ export function stagesOf(kind: PlanKind): readonly PlanStage[] {
     default:
       return [];
   }
+}
+
+/** The stage approving `gate` moves `node` to: the next on its path, research after a proposal. */
+function stageAfter(node: PlanNode, gate: PlanGate): PlanStage | undefined {
+  const stages = stagesOf(node.kind);
+  if (gate.stage === PlanStage.PROPOSED) {
+    return stages[0];
+  }
+  const at = stages.indexOf(gate.stage);
+  return at < 0 ? undefined : stages[at + 1];
+}
+
+/** What happens at each stage, once a gate moves a node there. */
+function nextWork(stage: PlanStage, kind: PlanKind): string {
+  switch (stage) {
+    case PlanStage.RESEARCH:
+      return "the lead opens spikes on its board";
+    case PlanStage.PRD:
+    case PlanStage.HLD:
+      return `the lead writes the ${stageWord(stage)} next`;
+    case PlanStage.DESIGN:
+      return "the lead writes the design next";
+    case PlanStage.RUNNING:
+      return kind === PlanKind.INITIATIVE
+        ? "its epics start, each in research"
+        : "its features start, each in LLD";
+    case PlanStage.BUILD:
+      return "its tasks go on the initiative's board";
+    default:
+      return "";
+  }
+}
+
+/** "Design: the lead writes the design next": where approving `gate` moves `node`. */
+export function nextStepWords(node: PlanNode, gate: PlanGate): string {
+  const next = stageAfter(node, gate);
+  if (next === undefined) {
+    return "";
+  }
+  const work = nextWork(next, node.kind);
+  return work === "" ? stageWord(next) : `${stageWord(next)}: ${work}`;
+}
+
+/** Research done and waiting for the owner's Approve findings or Send back (0.24.0). */
+export function researchAwaits(node: PlanNode, gate: PlanGate): boolean {
+  return (
+    gate.stage === PlanStage.RESEARCH &&
+    gate.docPath === undefined &&
+    node.research?.state === PlanResearchState.AWAITING
+  );
 }
 
 /** How a stage chip reads: waiting for the owner, a gate, research, or plain. */

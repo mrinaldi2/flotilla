@@ -29,6 +29,7 @@ const LINES: Readonly<Record<string, Line>> = {
   approved: (_e, who, stage) => `${who} approved the ${stage}`,
   sent_back: (e, who, stage) => `${who} sent the ${stage} back${noted(e.note, ": ")}`,
   research_closed: () => "Research closed: every spike is done with a document",
+  research_awaiting: () => "Research waits for your review: every spike is done with a document",
   research_skipped: (e, who) => `${who} skipped research${noted(e.note, ": ")}`,
   stage: (_e, _who, stage) => `Moved to ${stage}`,
   edited: (_e, who) => `${who} edited it`,

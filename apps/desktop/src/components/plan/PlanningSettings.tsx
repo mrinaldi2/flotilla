@@ -1,19 +1,23 @@
 // The owner's switch for a project's plan (0.21.0, `plan_enable`): turning
 // it on needs the project's repository, where the plan's documents live;
 // turning it off hides the plan and keeps it. The daemon tells the
-// project's bots either way.
+// project's bots either way. With planning on, the owner also sets whether
+// research waits for their Approve findings (0.24.0, `research_gate_v1`).
 
 import { useState } from "react";
 import type { ReactElement } from "react";
+import type { DaemonApi } from "../../protocol/api";
 import type { BoardApi } from "../../protocol/board";
 import type { ProjectRepo } from "../../protocol/entities";
 import { boardCall } from "../../protocol/board";
+import { RESEARCH_GATE_V1 } from "../../protocol/plan";
 import { errText } from "../../util";
 import type { UsePlan } from "./usePlan";
 import { planOn } from "./usePlan";
 
 interface PlanningSettingsProps {
-  readonly api: BoardApi;
+  /** The board's requests, and the grants: only the owner turns the research gate. */
+  readonly api: BoardApi & Pick<DaemonApi, "hasGrant">;
   readonly projectId: string;
   /** The project's plan; none (or a daemon without it) hides the panel. */
   readonly plan?: UsePlan;
@@ -29,6 +33,64 @@ export default function PlanningSettings(props: PlanningSettingsProps): ReactEle
     return null;
   }
   return <Panel {...props} plan={plan} hasRepo={props.repo !== null && props.repo !== undefined} />;
+}
+
+/** "Research waits for my approval": the project's research gate, the owner's to turn. */
+function ResearchGate(
+  props: PlanningSettingsProps & { readonly plan: UsePlan },
+): ReactElement | null {
+  const { api, plan } = props;
+  if (plan.status.kind !== "ready" || !plan.status.tree.enabled) {
+    return null;
+  }
+  if (!api.capabilities.includes(RESEARCH_GATE_V1)) {
+    return null;
+  }
+  return <GateSwitch {...props} gate={plan.status.tree.researchGate} />;
+}
+
+function GateSwitch(
+  props: PlanningSettingsProps & { readonly plan: UsePlan; readonly gate: boolean },
+): ReactElement {
+  const { api, projectId, plan } = props;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const flip = async (next: boolean): Promise<void> => {
+    setBusy(true);
+    setError(null);
+    try {
+      const value = { projectId, enabled: true, researchGate: next };
+      await boardCall(api, { case: "planEnable", value }, "plan");
+      plan.refresh();
+    } catch (failure) {
+      setError(errText(failure));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const allowed = props.connected && props.canControl && api.hasGrant("approve");
+  return (
+    <>
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
+          checked={props.gate}
+          disabled={!allowed || busy}
+          onChange={(e) => void flip(e.target.checked)}
+        />
+        Research waits for my approval
+      </label>
+      <p className="field-hint">
+        When every spike is done, research waits for your Approve findings or Send back. Off, it
+        closes by itself.
+      </p>
+      {error === null ? null : (
+        <p className="field-error" role="alert">
+          {error}
+        </p>
+      )}
+    </>
+  );
 }
 
 function Panel(
@@ -78,6 +140,7 @@ function Panel(
           {on ? "Turn planning off" : "Turn planning on"}
         </button>
       </div>
+      <ResearchGate {...props} />
     </div>
   );
 }

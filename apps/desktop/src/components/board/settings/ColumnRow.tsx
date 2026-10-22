@@ -9,6 +9,8 @@ import type { BoardColumn } from "../../../protocol/gen/flotilla/board/v1/board_
 import ColumnRules from "./ColumnRules";
 import type { ColumnChange } from "./columnEdits";
 import { afterFor, limitChange, policyLine } from "./columnEdits";
+import type { ColumnFlow } from "./columnFlow";
+import { OnEntryLine } from "./OnEntry";
 import { KINDS, kindChip } from "./rules";
 
 interface ColumnRowProps {
@@ -21,6 +23,8 @@ interface ColumnRowProps {
   readonly onExpand: (open: boolean) => void;
   readonly onChange: (change: ColumnChange) => void;
   readonly onRemove: () => void;
+  /** The board runs the SDLC (`board_flow_v1`): the column's On entry role. */
+  readonly flow?: ColumnFlow;
 }
 
 function OrderButtons(props: {
@@ -129,7 +133,7 @@ function KindControl(props: {
   );
 }
 
-function RowDetail(props: Omit<ColumnRowProps, "onExpand" | "onRemove">): ReactElement {
+function RowDetail(props: Omit<ColumnRowProps, "onExpand" | "onRemove" | "flow">): ReactElement {
   const { column, columns } = props;
   if (!props.expanded) {
     return <p className="column-row-summary">{policyLine(column, columns, props.custom)}</p>;
@@ -227,6 +231,14 @@ export default function ColumnRow(props: ColumnRowProps): ReactElement {
           )}
         </button>
       </div>
+      {props.flow === undefined ? null : (
+        <OnEntryLine
+          column={column}
+          flow={props.flow}
+          disabled={disabled}
+          onChange={props.onChange}
+        />
+      )}
       <RowDetail {...props} />
     </li>
   );

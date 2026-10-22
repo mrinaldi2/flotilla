@@ -16,6 +16,7 @@ import type {
 } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import AutomationsSection from "./AutomationsSection";
 import type { ColumnChange } from "./columnEdits";
+import type { ColumnFlow } from "./columnFlow";
 import ColumnsSection from "./ColumnsSection";
 import type { ColumnsActions } from "./ColumnsSection";
 import GeneralSection from "./GeneralSection";
@@ -49,6 +50,8 @@ interface BoardSettingsProps {
   readonly initiallyExpanded?: string;
   /** "Now", for the footer's age; stories pin it. */
   readonly now?: number;
+  /** The board runs the SDLC (`board_flow_v1`): columns assign a role on entry. */
+  readonly flow?: ColumnFlow;
 }
 
 /** A column change as `column_update` carries it; a policy replaces all three lists. */
@@ -120,6 +123,7 @@ function Section(props: {
           counts={props.settings.counts}
           disabled={disabled}
           initiallyExpanded={props.settings.initiallyExpanded}
+          flow={props.settings.flow}
           {...actions.columns}
         />
       );

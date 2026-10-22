@@ -130,11 +130,22 @@ export interface AttentionRowJson {
      * A bot's question for the owner, one row each (0.22.0, `questions_v1`):
      * `decision_id` is the question's id, `item_id` its card when it has one.
      */
-    | "question";
+    | "question"
+    /**
+     * A column assigns a role nobody holds (0.24.0, `board_flow_v1`): `role`
+     * is its token ("architect"); the app offers Create a bot with it.
+     */
+    | "role_unheld"
+    /** A project used 80% of its weekly token budget (0.24.0, `usage_v1`). */
+    | "budget_warning"
+    /** A project used its weekly budget: its on-demand bots are held (0.24.0). */
+    | "budget_reached";
   readonly id: string;
   /** One line, set by the daemon. */
   readonly title: string;
   readonly daemon_id?: string;
+  /** The project the row is about: a budget row's, to raise or extend. */
+  readonly project_id?: string;
   readonly created_at?: string;
   /** The bot a thread question, a wait or off-board work is about. */
   readonly bot?: { readonly daemon_id?: string; readonly bot_id?: string; readonly name?: string };
@@ -154,6 +165,8 @@ export interface AttentionRowJson {
   readonly decision_id?: string;
   /** A `question` that holds its node's research or gate. */
   readonly question_blocking?: boolean;
+  /** A `role_unheld` row's role, as its token: "architect", "tester"… */
+  readonly role?: string;
   /** A held or failed cleanup, in fields the app words (UX-055). */
   readonly cleanup?: CleanupFields;
 }

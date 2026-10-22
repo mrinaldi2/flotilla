@@ -9,7 +9,7 @@ import { nativeDictation } from "../../../dictation";
 import type { DaemonApi } from "../../../protocol/api";
 import type { Bot } from "../../../protocol/entities";
 import ChatComposer from "../../chat/ChatComposer";
-import OwnerThreadView from "../../mainchat/OwnerThreadView";
+import OwnerThreadView from "../../chat/OwnerThreadView";
 
 interface DiscussPanelProps {
   readonly client: DaemonApi;

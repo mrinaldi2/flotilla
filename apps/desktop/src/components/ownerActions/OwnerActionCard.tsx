@@ -2,13 +2,16 @@
 // for what and where, why, the content verbatim, its fingerprint, any
 // warnings, and once it ran, one line for how it went with the (redacted)
 // output. Run opens the confirm sheet; without the approve grant the card
-// says where it can be run.
+// says where it can be run. A push request (0.24.0) is its own card.
 
 import { useState } from "react";
 import type { ReactElement } from "react";
 import type { OwnerAction } from "../../protocol/ownerActions";
+import ActionOutput from "./ActionOutput";
 import OwnerActionConfirm from "./OwnerActionConfirm";
 import { fingerprint, resultLine, titleLine } from "./ownerActionText";
+import PushCard from "./PushCard";
+import RejectForm from "./RejectForm";
 
 export interface OwnerActionCardProps {
   readonly action: OwnerAction;
@@ -19,25 +22,8 @@ export interface OwnerActionCardProps {
   readonly canRun: boolean;
   readonly onRun: (action: OwnerAction) => void;
   readonly onReject: (action: OwnerAction, reason: string) => void;
-}
-
-function Output(props: {
-  readonly action: OwnerAction;
-  readonly live?: string;
-}): ReactElement | null {
-  const { state } = props.action;
-  const text = props.live && state === "running" ? props.live : props.action.output_tail;
-  if (!text) {
-    return null;
-  }
-  // Open while it runs, and when it went wrong.
-  const open = state === "running" || state === "failed" || state === "timed_out";
-  return (
-    <details className="owner-action-output" open={open}>
-      <summary>Output</summary>
-      <pre>{text}</pre>
-    </details>
-  );
+  /** "Now", for a push request's "expires in"; stories pin it. */
+  readonly now?: number;
 }
 
 function Actions(
@@ -45,7 +31,6 @@ function Actions(
 ): ReactElement {
   const [confirming, setConfirming] = useState(false);
   const [rejecting, setRejecting] = useState(false);
-  const [reason, setReason] = useState("");
   if (confirming) {
     return (
       <OwnerActionConfirm
@@ -61,21 +46,10 @@ function Actions(
   }
   if (rejecting) {
     return (
-      <div className="owner-action-buttons">
-        <input
-          className="owner-action-reason"
-          aria-label="Why not (optional)"
-          placeholder="Why not (optional)"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        />
-        <button type="button" className="btn" onClick={() => setRejecting(false)}>
-          Cancel
-        </button>
-        <button type="button" className="btn" onClick={() => props.onReject(props.action, reason)}>
-          Reject
-        </button>
-      </div>
+      <RejectForm
+        onCancel={() => setRejecting(false)}
+        onReject={(reason) => props.onReject(props.action, reason)}
+      />
     );
   }
   return (
@@ -92,6 +66,9 @@ function Actions(
 
 export default function OwnerActionCard(props: OwnerActionCardProps): ReactElement {
   const a = props.action;
+  if (a.kind === "push" && a.push !== undefined) {
+    return <PushCard {...props} push={a.push} />;
+  }
   const title = titleLine(a, props.proposer);
   const result = resultLine(a, props.proposer);
   return (
@@ -121,7 +98,7 @@ export default function OwnerActionCard(props: OwnerActionCardProps): ReactEleme
           {result}
         </p>
       )}
-      <Output action={a} live={props.output} />
+      <ActionOutput action={a} live={props.output} />
       {a.state === "proposed" && props.canRun ? (
         <Actions
           action={a}

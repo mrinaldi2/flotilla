@@ -11,6 +11,7 @@ import { useOpenBot } from "./app/useOpenBot";
 import { useOverlays } from "./app/useOverlays";
 import type { OverlaysApi } from "./app/useOverlays";
 import { usePaletteActions } from "./app/usePaletteActions";
+import { useRailPages } from "./app/useRailPages";
 import { useToasts } from "./app/useToasts";
 import type { AddToast } from "./app/useToasts";
 import { useServiceRecovery } from "./app/useServiceRecovery";
@@ -19,8 +20,6 @@ import BoardActivityLayer from "./components/BoardActivityLayer";
 import CardsLayer from "./components/cards/CardsLayer";
 import CommandPalette from "./components/CommandPalette";
 import Rail from "./components/home/Rail";
-import MainChat from "./components/mainchat/MainChat";
-import { useAppChat } from "./components/mainchat/useAppChat";
 import HomeMigrationConfirm from "./components/overlay/HomeMigrationConfirm";
 import MainPane from "./components/MainPane";
 import SearchOverlay from "./components/SearchOverlay";
@@ -157,12 +156,7 @@ export default function App(): ReactElement {
     openSettings: overlays.openSettings,
   });
 
-  const { chat, threads, asking } = useAppChat(
-    client,
-    connected,
-    daemon.selection,
-    daemon.projects,
-  );
+  const railPages = useRailPages(client, connected);
 
   useDesktopShell(daemon.unreadBots, pending.total, addToast);
 
@@ -178,16 +172,8 @@ export default function App(): ReactElement {
             status={daemon.status}
             endpoint={daemon.endpoint}
             canControl={canControl}
-            chatOpen={chat.open}
-            chatAsking={asking}
+            {...railPages}
             onSelect={select}
-            onToggleChat={() => {
-              if (chat.open) {
-                chat.close();
-              } else {
-                chat.openOn();
-              }
-            }}
             onOpenSettings={overlays.openSettings}
           />
           <main className="main">
@@ -206,20 +192,9 @@ export default function App(): ReactElement {
               onDeleteBot={actions.deleteBot}
               permissions={inbox.permissions}
               onOpenBot={openBot}
-              onReply={chat.openOn}
+              onReply={openBotChat}
             />
           </main>
-          <MainChat
-            client={client}
-            connected={connected}
-            canControl={canControl}
-            bots={bots}
-            projects={daemon.projects}
-            threads={threads}
-            chat={chat}
-            addToast={addToast}
-            onOpenBot={openBotChat}
-          />
           {overlays.paletteOpen ? (
             <CommandPalette
               actions={paletteActions}

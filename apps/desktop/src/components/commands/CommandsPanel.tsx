@@ -7,6 +7,7 @@ import type { DaemonApi } from "../../protocol/api";
 import type { Bot } from "../../protocol/entities";
 import { errText, fmtTimestamp } from "../../util";
 import CopyButton from "../CopyButton";
+import { elapsed } from "./commandsText";
 
 /** Waits this long after the bot's turns change before refetching. */
 const REFRESH_DELAY_MS = 600;
@@ -25,19 +26,6 @@ const STATUS_LABEL: Readonly<Record<BotCommand["status"], string>> = {
   failed: "failed",
   stopped: "stopped",
 };
-
-/** "12s", "4m 03s", "1h 05m". */
-export function elapsed(from: string, to: string): string {
-  const seconds = Math.max(0, Math.round((Date.parse(to) - Date.parse(from)) / 1000));
-  if (seconds < 60) {
-    return `${seconds}s`;
-  }
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) {
-    return `${minutes}m ${String(seconds % 60).padStart(2, "0")}s`;
-  }
-  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, "0")}m`;
-}
 
 function when(command: BotCommand): string {
   const started = fmtTimestamp(command.started_at);

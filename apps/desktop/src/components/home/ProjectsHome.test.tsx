@@ -155,6 +155,19 @@ describe("ProjectsHome", () => {
     });
   });
 
+  it("reads again when a project's usage changed (0.24.0)", async () => {
+    const daemon = daemonWithOverview();
+    renderHome(daemon);
+    await screen.findAllByTestId("project-card");
+    const before = overviewReads(daemon);
+    act(() => {
+      daemon.emit("usage_updated", { type: "usage_updated", project_id: "p1" });
+    });
+    await waitFor(() => {
+      expect(overviewReads(daemon)).toBe(before + 1);
+    });
+  });
+
   it("opens a project", async () => {
     const user = userEvent.setup();
     const onOpenProject = vi.fn<(projectId: string) => void>();

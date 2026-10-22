@@ -25,6 +25,7 @@ import type { QuestionAnswering } from "./questionRows";
 import { useConfirmRelayed } from "./useConfirmRelayed";
 import { useDashboard } from "./useDashboard";
 import { useDashboardDrawers } from "./useDashboardDrawers";
+import { useFlowRows } from "./useFlowRows";
 import { useMetrics } from "./useMetrics";
 import { useNeedsYouPrs } from "./useNeedsYouPrs";
 import { ActionItemsWidget, MeetingsWidget, offHomeOf } from "./MeetingWidgets";
@@ -52,6 +53,8 @@ export interface DashboardViewProps {
   readonly onOpenPr?: (pr: number, recheck: boolean) => void;
   /** "From the team", shown right after Needs you on the Overview. */
   readonly fromTheTeam?: ReactNode;
+  /** Opens a project's Settings on its budget (0.24.0, a budget row's Raise budget…). */
+  readonly onRaiseBudget?: (projectId: string) => void;
 }
 
 function asOf(at: string): string {
@@ -148,6 +151,56 @@ function questionAnswering(
   };
 }
 
+/** A release's review or a card, opened from Needs you, over the dashboard. */
+function Drawers(
+  props: DashboardViewProps & {
+    readonly reviewing: Release | null;
+    readonly openItem: string | null;
+    readonly botName: (id: string) => string;
+    readonly onChanged: () => void;
+    readonly onClose: () => void;
+  },
+): ReactElement {
+  const { client, project, bots, connected, reviewing, openItem } = props;
+  return (
+    <>
+      {reviewing ? (
+        <ReviewDrawer
+          key={reviewing.id}
+          release={reviewing}
+          client={client}
+          project={project}
+          bots={bots}
+          canControl={props.canControl}
+          addToast={props.addToast}
+          onChanged={props.onChanged}
+          onClose={props.onClose}
+        />
+      ) : null}
+      {openItem ? (
+        <DashboardItem
+          key={openItem}
+          api={client}
+          projectId={project.id}
+          itemId={openItem}
+          bots={bots}
+          canComment={props.canControl}
+          canAnswer={mayAnswer(client, connected)}
+          onClose={props.onClose}
+        >
+          <OwnerActionList
+            client={client}
+            connected={connected}
+            scope={{ projectId: project.id, itemId: openItem }}
+            addToast={props.addToast}
+            botName={props.botName}
+          />
+        </DashboardItem>
+      ) : null}
+    </>
+  );
+}
+
 export default function DashboardView(props: DashboardViewProps): ReactElement {
   const { client, project, bots, connected } = props;
   const { dashboard, error, refresh } = useDashboard(client, project.id, connected);
@@ -157,6 +210,14 @@ export default function DashboardView(props: DashboardViewProps): ReactElement {
   const metrics = useMetrics(client, project.id, connected);
   const prs = useNeedsYouPrs(client, project.id, connected, props.onOpenPr, dashboard);
   const cleanup = useCleanup(client, project.id, props.addToast, refresh);
+  const flowRows = useFlowRows({
+    client,
+    projectId: project.id,
+    addToast: props.addToast,
+    refresh,
+    onOpenBot: props.onOpenBot,
+    onRaiseBudget: props.onRaiseBudget,
+  });
 
   if (dashboard === null) {
     return <Loading error={error} onRetry={() => void refresh()} />;
@@ -206,6 +267,7 @@ export default function DashboardView(props: DashboardViewProps): ReactElement {
             prs={prs}
             onOpenPr={props.onOpenPr}
             {...cleanupRowActions(cleanup, connected)}
+            {...flowRows}
           />
           {props.fromTheTeam}
           <OwnerActionList
@@ -215,6 +277,7 @@ export default function DashboardView(props: DashboardViewProps): ReactElement {
             addToast={props.addToast}
             botName={botName}
             title="Commands for you to run"
+            pushTitle="Commands and pushes for you"
           />
           <BoardWidget board={dashboard.board} home={dashboard.home} onOpen={openBoard} />
           <ReleasesWidget
@@ -247,39 +310,14 @@ export default function DashboardView(props: DashboardViewProps): ReactElement {
         </div>
       </div>
       <CleanupChoice cleanup={cleanup} />
-      {reviewing ? (
-        <ReviewDrawer
-          key={reviewing.id}
-          release={reviewing}
-          client={client}
-          project={project}
-          bots={bots}
-          canControl={props.canControl}
-          addToast={props.addToast}
-          onChanged={() => void refresh()}
-          onClose={closeDrawer}
-        />
-      ) : null}
-      {openItem ? (
-        <DashboardItem
-          key={openItem}
-          api={client}
-          projectId={project.id}
-          itemId={openItem}
-          bots={bots}
-          canComment={props.canControl}
-          canAnswer={mayAnswer(client, connected)}
-          onClose={closeDrawer}
-        >
-          <OwnerActionList
-            client={client}
-            connected={connected}
-            scope={{ projectId: project.id, itemId: openItem }}
-            addToast={props.addToast}
-            botName={botName}
-          />
-        </DashboardItem>
-      ) : null}
+      <Drawers
+        {...props}
+        reviewing={reviewing}
+        openItem={openItem}
+        botName={botName}
+        onChanged={() => void refresh()}
+        onClose={closeDrawer}
+      />
     </div>
   );
 }

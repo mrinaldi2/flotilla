@@ -239,3 +239,52 @@ export function questionsPlan() {
   });
   return fake;
 }
+
+/**
+ * The owner's answers on Combat onboarding's research (0.24.0): one in
+ * words, one by option, and, with `holding`, a blocking one still open.
+ */
+export function onboardingQuestions(holding = false): Question[] {
+  const answer = (text: string, option?: string) =>
+    create(OwnerAnswerSchema, {
+      option,
+      text,
+      answeredBy: "owner",
+      answeredAt: at("2025-03-03T10:00:00Z"),
+    });
+  const settled = [
+    question({
+      id: "d-81a",
+      text: "Who plays the grounding session?",
+      state: QuestionState.ANSWERED,
+      itemId: "CO-1",
+      planNodeId: "PL-9",
+      askedAt: at("2025-03-02T09:00:00Z"),
+      answer: answer("You alone, desktop and phone"),
+    }),
+    question({
+      id: "d-81b",
+      text: "Keep the tutorial skippable?",
+      options: [
+        { key: "yes", label: "Yes, after the first block" },
+        { key: "no", label: "No" },
+      ],
+      state: QuestionState.ANSWERED,
+      planNodeId: "PL-9",
+      askedAt: at("2025-03-02T09:05:00Z"),
+      answer: answer("", "yes"),
+    }),
+  ];
+  if (!holding) {
+    return settled;
+  }
+  const open = question({
+    id: "d-81c",
+    text: "Test with players who never played a soulslike?",
+    blocking: true,
+    itemId: "CO-2",
+    planNodeId: "PL-9",
+    askedAt: at("2025-03-04T08:00:00Z"),
+  });
+  return [open, ...settled];
+}

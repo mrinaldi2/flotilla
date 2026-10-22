@@ -13,6 +13,7 @@ import PlanCreateDialog from "./PlanCreateDialog";
 import type { CreateKind } from "./PlanCreateDialog";
 import PlanDocReader from "./PlanDocReader";
 import PlanGateView from "./PlanGateView";
+import type { GateExtras } from "./PlanGateView";
 import PlanNodeDetail from "./PlanNodeDetail";
 import type { TreeFilter } from "./planText";
 import { actorName, ancestorsOf, fileName, treeRows } from "./planText";
@@ -43,6 +44,8 @@ export interface PlanViewProps {
   readonly openGate?: boolean;
   readonly onOpenItem?: (id: string) => void;
   readonly onOpenBoard?: (boardId: string) => void;
+  /** More on a gate beside the ruling: its push requests (0.24.0). */
+  readonly gateExtras?: GateExtras;
   /** Stories: open with a filter, or a dialog showing. */
   readonly initial?: {
     readonly filter?: TreeFilter;
@@ -125,6 +128,7 @@ function Right(props: PlanViewProps & ReturnType<typeof useOpened>): ReactElemen
           props.onChanged(next);
           props.setPane({ kind: "node" });
         }}
+        extras={props.gateExtras}
       />
     );
   }

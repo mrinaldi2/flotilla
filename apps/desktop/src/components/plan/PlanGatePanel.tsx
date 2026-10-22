@@ -1,14 +1,20 @@
-// The owner's ruling on a node's gate (0.21.0, canvas D2): what was
-// submitted, what is already settled, the children an approval creates (each
-// can be left out), and a note to the lead, needed to send it back. A
-// proposed initiative is accepted or declined; the lead's request to skip
-// research is granted or refused. The owner also skips open research with a
-// reason, recorded on the node.
+// The owner's ruling on a node's gate (0.21.0, canvas D2), one panel for
+// every step (0.24.0): what was submitted, what is already settled, the
+// spikes and the questions answered, the children an approval creates (each
+// can be left out), the step it moves to, and a note to the lead, needed to
+// send it back. A proposed initiative is accepted or declined; the lead's
+// request to skip research is granted or refused; research waiting for the
+// owner has its findings approved or sent back. The owner also skips open
+// research with a reason, recorded on the node.
 
 import { useState } from "react";
-import type { CSSProperties, ReactElement } from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 import type { BoardApi } from "../../protocol/board";
-import type { PlanGate, PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
+import type {
+  PlanGate,
+  PlanNode,
+  PlanNodeDetail,
+} from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import {
   PlanDocKind,
   PlanResearchState,
@@ -17,7 +23,8 @@ import {
 import { day } from "./planHistory";
 import { leftOut, outcomeLine, planEdit } from "./planEdits";
 import type { PlanOutcome } from "./planEdits";
-import { fileName, kindWords, stageWord } from "./planText";
+import PlanGateFacts from "./PlanGateFacts";
+import { fileName, kindWords, researchAwaits, stageWord } from "./planText";
 
 interface GateWords {
   readonly question: string;
@@ -27,8 +34,8 @@ interface GateWords {
   readonly children?: { readonly legend: string; readonly hint: string };
 }
 
-/** What the panel asks for each kind of gate. */
-export function gateWords(gate: PlanGate): GateWords {
+/** What the panel asks for each kind of gate; `node` names research waiting for the owner. */
+export function gateWords(gate: PlanGate, node?: PlanNode): GateWords {
   switch (gate.stage) {
     case PlanStage.PROPOSED:
       return {
@@ -37,6 +44,13 @@ export function gateWords(gate: PlanGate): GateWords {
         sendBack: "Decline",
       };
     case PlanStage.RESEARCH:
+      if (node !== undefined && researchAwaits(node, gate)) {
+        return {
+          question: `Approve the research findings of ${node.title}?`,
+          approve: "Approve findings",
+          sendBack: "Send back",
+        };
+      }
       return { question: "Skip research?", approve: "Skip research", sendBack: "Keep research" };
     case PlanStage.PRD:
       return {
@@ -118,6 +132,10 @@ interface PanelProps {
   readonly onRuled: (node: PlanNode) => void;
   /** Its width, which the owner drags (0.22.0). */
   readonly style?: CSSProperties;
+  /** The node's cards and questions, once read. */
+  readonly detail?: PlanNodeDetail | null;
+  /** More for the owner before ruling: the gate's push requests (0.24.0). */
+  readonly extras?: ReactNode;
 }
 
 function useRuling(props: PanelProps) {
@@ -153,7 +171,7 @@ function useRuling(props: PanelProps) {
 
 export default function PlanGatePanel(props: PanelProps): ReactElement {
   const { gate, node } = props;
-  const words = gateWords(gate);
+  const words = gateWords(gate, node);
   const r = useRuling(props);
   const creating = r.kept.filter(Boolean).length;
   const by = [props.who(gate.submittedBy), day(gate.submittedAt), roundWords(gate.round)];
@@ -193,6 +211,8 @@ export default function PlanGatePanel(props: PanelProps): ReactElement {
           <span className="plan-dim">{`${words.children.hint} Untick one to leave it out.`}</span>
         </fieldset>
       ) : null}
+      <PlanGateFacts api={props.api} node={node} gate={gate} detail={props.detail ?? null} />
+      {props.extras}
       {props.canRule ? (
         <>
           <label className="field">

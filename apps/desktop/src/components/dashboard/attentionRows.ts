@@ -7,12 +7,14 @@ import type { AttentionRowJson } from "../../protocol/dashboard";
 import type { CleanupRowActions } from "./cleanupRows";
 import { cleanupRow } from "./cleanupRows";
 import type { RowViewProps } from "./DashRow";
+import type { FlowRowActions } from "./flowRows";
+import { flowRow } from "./flowRows";
 import type { PrRowActions } from "./prRows";
 import { prRow } from "./prRows";
 import type { QuestionAnswering } from "./questionRows";
 import { questionRow } from "./questionRows";
 
-export interface AttentionActions extends PrRowActions, CleanupRowActions {
+export interface AttentionActions extends PrRowActions, CleanupRowActions, FlowRowActions {
   readonly onOpenBot?: (botId: string) => void;
   /** Opens a message to a bot quoting what it asked. */
   readonly onReply?: (botId: string, quote: string) => void;
@@ -182,6 +184,6 @@ export function attentionRow(r: AttentionRowJson, a: AttentionActions): RowViewP
     case "question":
       return questionRow(r, a.questions);
     default:
-      return prRow(r, a) ?? cleanupRow(r, a);
+      return prRow(r, a) ?? cleanupRow(r, a) ?? flowRow(r, a);
   }
 }

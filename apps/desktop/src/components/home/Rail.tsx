@@ -13,13 +13,13 @@ interface RailProps {
   readonly endpoint: Endpoint;
   /** False on a read-only connection, which the status says. */
   readonly canControl: boolean;
-  /** The main chat panel is open. */
-  readonly chatOpen?: boolean;
-  /** Threads with a question for the owner: the Chat badge, as Needs you counts. */
-  readonly chatAsking?: number;
+  /** The service serves the Commands page (0.24.0, `commands_v1`). */
+  readonly commands?: boolean;
+  /** Commands running now, for the Commands badge. */
+  readonly commandsRunning?: number;
+  /** The service serves the Usage page (0.24.0, `usage_v1`). */
+  readonly usage?: boolean;
   readonly onSelect: (next: Selection) => void;
-  /** ⌘J: opens or closes the main chat. Without it, Chat isn't offered. */
-  readonly onToggleChat?: () => void;
   readonly onOpenSettings: (category?: SettingsCategory) => void;
 }
 
@@ -48,9 +48,11 @@ function Connection(
 interface RailItemProps {
   readonly glyph: string;
   readonly label: string;
-  readonly shortcut: string;
+  readonly shortcut?: string;
   readonly active: boolean;
   readonly badge?: number;
+  /** What the badge counts, in words: "waiting" by default. */
+  readonly badgeWord?: string;
   readonly onClick: () => void;
 }
 
@@ -61,7 +63,7 @@ function RailItem(props: RailItemProps): ReactElement {
       type="button"
       className={`rail-item${props.active ? " rail-item-on" : ""}`}
       aria-current={props.active ? "page" : undefined}
-      title={`${props.label} (${props.shortcut})`}
+      title={props.shortcut === undefined ? props.label : `${props.label} (${props.shortcut})`}
       onClick={props.onClick}
     >
       <span className="rail-glyph" aria-hidden="true">
@@ -69,7 +71,7 @@ function RailItem(props: RailItemProps): ReactElement {
       </span>
       {props.label}
       {badge > 0 ? (
-        <span className="rail-badge" aria-label={`${badge} waiting`}>
+        <span className="rail-badge" aria-label={`${badge} ${props.badgeWord ?? "waiting"}`}>
           {badge}
         </span>
       ) : null}
@@ -99,7 +101,7 @@ function useRailKeys(onSelect: (next: Selection) => void): void {
   }, [onSelect]);
 }
 
-/** The app's left rail: Projects · Needs you, with Settings at the bottom. */
+/** The app's left rail: Projects · Needs you · Commands · Usage, with Settings at the bottom. */
 export default function Rail(props: RailProps): ReactElement {
   const { selection, needsYou, onSelect, onOpenSettings } = props;
   useRailKeys(onSelect);
@@ -124,16 +126,28 @@ export default function Rail(props: RailProps): ReactElement {
           onSelect({ kind: "control" });
         }}
       />
-      {props.onToggleChat === undefined ? null : (
+      {props.commands === true ? (
         <RailItem
-          glyph="✉"
-          label="Chat"
-          shortcut="⌘J"
-          active={props.chatOpen === true}
-          badge={props.chatAsking}
-          onClick={props.onToggleChat}
+          glyph="⌘"
+          label="Commands"
+          active={selection.kind === "commands"}
+          badge={props.commandsRunning}
+          badgeWord="running"
+          onClick={() => {
+            onSelect({ kind: "commands" });
+          }}
         />
-      )}
+      ) : null}
+      {props.usage === true ? (
+        <RailItem
+          glyph="▥"
+          label="Usage"
+          active={selection.kind === "usage"}
+          onClick={() => {
+            onSelect({ kind: "usage" });
+          }}
+        />
+      ) : null}
       <span className="rail-spacer" />
       <Connection
         status={props.status}

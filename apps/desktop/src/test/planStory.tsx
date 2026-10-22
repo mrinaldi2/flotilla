@@ -47,6 +47,7 @@ export function PlanWindow(props: {
           bots={PLAN_BOTS}
           connected
           plan={plan}
+          addToast={() => {}}
           openNode={props.openNode}
           openGate={props.openGate}
           onOpenItem={props.onOpenItem}

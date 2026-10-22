@@ -1,0 +1,68 @@
+/* The research gate and the gate panel at every step (0.24.0). */
+
+/* The node's steps under the gate's bar. */
+.plan-gate-steps {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Spikes, questions answered, and the step approving moves it to. */
+.plan-gate-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.plan-gate-facts ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-gate-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.plan-gate-tick {
+  color: var(--green);
+  font-weight: 800;
+}
+
+.plan-gate-holds {
+  color: var(--amber);
+}
+
+.plan-gate-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Research documents, one per spike: the list that switches between them. */
+.plan-gate-doclist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-gate-doclist .btn[aria-pressed="true"] {
+  background: var(--bg-active);
+  border-color: var(--text-faint);
+  color: var(--text-strong);
+}

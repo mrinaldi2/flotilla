@@ -4,11 +4,14 @@ import type { ReactElement } from "react";
 import type { Board, BoardColumn } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { DaemonError } from "../../../protocol/connection";
 import { useClickOnce } from "../../../test/storyClick";
+import { flowColumns, flowRoles } from "../../../test/boardFlowFixtures";
 import { board, boards, mainColumns, proposals, recipeColumns } from "../../../test/boardsFixtures";
 import { DRAWER_NOW } from "../../../test/drawerFixtures";
 import { FakeDaemon } from "../../../test/fakeDaemon";
+import { bot } from "../../../test/fixtures";
 import BoardSettings from "./BoardSettings";
 import type { SettingsSection } from "./BoardSettings";
+import type { ColumnFlow } from "./columnFlow";
 import { RemoveColumnDialog } from "./ColumnsSection";
 
 const noop = (): void => {};
@@ -22,6 +25,7 @@ interface PanelProps {
   readonly canEdit: boolean;
   readonly expanded?: string;
   readonly api: FakeDaemon;
+  readonly flow?: ColumnFlow;
 }
 
 function Panel(props: PanelProps): ReactElement {
@@ -45,6 +49,7 @@ function Panel(props: PanelProps): ReactElement {
         initialSection={props.section}
         initiallyExpanded={props.expanded}
         now={DRAWER_NOW}
+        flow={props.flow}
       />
     </div>
   );
@@ -62,6 +67,27 @@ export const General: Story = () => <Recipes section="general" />;
 
 /** Columns: kind chips, WIP, visibility, order, and each column's rules in words. */
 export const Columns: Story = () => <Recipes section="columns" />;
+
+/** The bots of the On entry story: two Developers, a Tester asleep. */
+const FLOW: ColumnFlow = {
+  roles: flowRoles(),
+  bots: [
+    bot({ id: "b1", name: "Desktop Dev" }),
+    bot({ id: "b2", name: "Tester", state: "asleep" }),
+    bot({ id: "b3", name: "Desktop Dev 2" }),
+  ],
+  onCreateBot: noop,
+  creating: null,
+};
+
+/**
+ * The board runs the SDLC (0.24.0): each column's On entry role and who
+ * holds it; nobody holds Product, so To do offers a Product bot. Then the
+ * chain a card follows.
+ */
+export const ColumnsOnEntry: Story = () => (
+  <Recipes section="columns" columns={flowColumns()} flow={FLOW} />
+);
 
 /** A column expanded: who moves items in, where from, and the rule checklist. */
 export const ColumnRules: Story = () => <Recipes section="columns" expanded="rb-qa" />;

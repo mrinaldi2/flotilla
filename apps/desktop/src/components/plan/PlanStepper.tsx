@@ -14,6 +14,11 @@ interface Step {
   readonly sub: string;
 }
 
+const RESEARCH_SUB: Partial<Readonly<Record<PlanResearchState, string>>> = {
+  [PlanResearchState.CLOSED]: "Closed",
+  [PlanResearchState.AWAITING]: "Waiting for you",
+};
+
 /** The line under the current step, and under a passed Research step. */
 function stepSub(node: PlanNode, stage: PlanStage, state: StepState): string {
   if (stage === PlanStage.RESEARCH && node.research !== undefined && state !== "next") {
@@ -23,7 +28,7 @@ function stepSub(node: PlanNode, stage: PlanStage, state: StepState): string {
     }
     const n = research.spikes.length;
     const spikes = `${n} ${n === 1 ? "spike" : "spikes"}`;
-    return research.state === PlanResearchState.CLOSED ? `Closed · ${spikes}` : `Open · ${spikes}`;
+    return `${RESEARCH_SUB[research.state] ?? "Open"} · ${spikes}`;
   }
   if (state !== "now") {
     return "";

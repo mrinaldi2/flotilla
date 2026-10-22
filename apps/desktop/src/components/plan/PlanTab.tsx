@@ -1,11 +1,16 @@
 // The Plan tab's states (0.21.0): an older service, the tree loading or
 // failing, planning off for the project, or the plan itself. While it shows,
-// it watches the project so `plan_change` pushes keep the tree live.
+// it watches the project so `plan_change` pushes keep the tree live. A gate
+// lists the push requests of its node's cards (0.24.0).
 
 import { useEffect } from "react";
 import type { ReactElement } from "react";
+import type { AddToast } from "../../app/useToasts";
 import type { DaemonApi } from "../../protocol/api";
 import type { Bot, Project } from "../../protocol/entities";
+import { PUSH_REQUESTS_V1 } from "../../protocol/ownerActions";
+import OwnerActionList from "../ownerActions/OwnerActionList";
+import type { GateExtras } from "./PlanGateView";
 import type { UsePlan } from "./usePlan";
 import { usePlanWatch } from "./usePlan";
 import PlanView from "./PlanView";
@@ -17,11 +22,30 @@ interface PlanTabProps {
   readonly bots: readonly Bot[];
   readonly connected: boolean;
   readonly plan: UsePlan;
+  readonly addToast: AddToast;
   readonly openNode?: string;
   readonly openGate?: boolean;
   readonly onOpenItem?: (id: string) => void;
   readonly onOpenBoard?: (boardId: string) => void;
   readonly initial?: PlanViewProps["initial"];
+}
+
+/** A gate's push requests waiting for the owner (0.24.0), on a daemon that has them. */
+function pushRequests(props: PlanTabProps): GateExtras | undefined {
+  const { client, project, bots } = props;
+  if (!client.capabilities.includes(PUSH_REQUESTS_V1)) {
+    return undefined;
+  }
+  return (_node, itemIds) => (
+    <OwnerActionList
+      client={client}
+      connected={props.connected}
+      scope={{ projectId: project.id, itemIds, pushOnly: true, waitingOnly: true }}
+      addToast={props.addToast}
+      botName={(id) => bots.find((b) => b.id === id)?.name ?? "a bot"}
+      title="Push requests"
+    />
+  );
 }
 
 function Notice(props: {
@@ -87,6 +111,7 @@ export default function PlanTab(props: PlanTabProps): ReactElement {
       openGate={props.openGate}
       onOpenItem={props.onOpenItem}
       onOpenBoard={props.onOpenBoard}
+      gateExtras={pushRequests(props)}
       initial={props.initial}
     />
   );
