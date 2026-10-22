@@ -160,6 +160,10 @@ pub fn submit(
     for task in closed {
         app.db.try_close_task(&task, TaskState::Done)?;
     }
+    if s.verdict == Verdict::ChangesRequested {
+        let by = format!("{} (as {})", bot.name, role.as_str());
+        crate::prs::changes::requested(app, &pr, &by, s.summary);
+    }
     Ok(review)
 }
 
