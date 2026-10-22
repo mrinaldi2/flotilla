@@ -1,6 +1,6 @@
 [package]
 name = "flotilla-desktop"
-version = "0.23.4"
+version = "0.23.5"
 description = "Flotilla desktop client"
 license = "MIT"
 edition = "2021"
