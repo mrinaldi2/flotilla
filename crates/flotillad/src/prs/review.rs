@@ -137,9 +137,19 @@ pub fn submit(
             invalid("each finding needs a severity (must, should, nit) and text")
         );
     }
-    if s.verdict == Verdict::ChangesRequested && !s.findings.iter().any(|f| f.severity == "must") {
+    // A finding is fixed in this PR, before it is approved (the owner,
+    // 0.24.0): only a `nit` may go with an approval, and a `should` is a
+    // request for changes as a `must` is.
+    let to_fix = s.findings.iter().any(|f| f.severity != "nit");
+    if s.verdict == Verdict::Approved && to_fix {
         return Err(invalid(
-            "asking for changes needs at least one `must` finding",
+            "a `must` or `should` finding is fixed in this PR before it is approved: ask for \
+             changes with it, and approve the push that fixes it. Only a `nit` goes with an approval",
+        ));
+    }
+    if s.verdict == Verdict::ChangesRequested && !to_fix {
+        return Err(invalid(
+            "asking for changes needs at least one `must` or `should` finding",
         ));
     }
     let (review, closed) = app.db.board_tx(|t| {
@@ -271,7 +281,8 @@ fn open_task(app: &Arc<AppState>, pr: &Pr, role: ReviewRole, bot_id: &str) -> an
     let body = format!(
         "Review PR #{} ({}: {}) as {} at {}. Read it with pr_get {{number: {}}}, then \
          pr_review {{number: {}, sha: \"{}\", role: \"{}\", verdict, summary, findings}}. \
-         Asking for changes needs a `must` finding.",
+         A `must` or `should` finding is a request for changes, fixed in this PR before you \
+         approve; only a `nit` goes with an approval.",
         pr.number,
         pr.item_id,
         pr.title,
