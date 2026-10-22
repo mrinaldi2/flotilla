@@ -23,6 +23,18 @@ pub enum CommandStatus {
     Stopped,
 }
 
+/// What is known of the runtime process a bot's background commands run
+/// under (0.24.0): they die with it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Runtime {
+    /// Nothing known: trust the transcript.
+    Unknown,
+    /// It has none: asleep or queued.
+    Gone,
+    /// It started then: one begun earlier died with the previous process.
+    Since(DateTime<Utc>),
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Command {
     /// The tool call's id.
@@ -312,8 +324,11 @@ impl CommandLog {
 
     /// Every command, the running ones first, then the newest. A command
     /// still running in an earlier session stopped with it, and a foreground
-    /// one cannot be running while the bot is idle.
-    pub fn list(&self, busy: bool, limit: usize) -> Vec<Command> {
+    /// one cannot be running while the bot is idle. Any command dies with
+    /// the process that started it: one begun before the bot's runtime last
+    /// started, or a background one while it has none, is stopped, even when
+    /// a woken bot resumed the same session (0.24.0).
+    pub fn list(&self, busy: bool, runtime: Runtime, limit: usize) -> Vec<Command> {
         let mut out: Vec<Command> = self
             .commands
             .iter()
@@ -321,8 +336,16 @@ impl CommandLog {
             .map(|command| {
                 let mut command = command.clone();
                 let old_session = command.session.is_some() && command.session != self.last_session;
+                // Foreground or background, nothing outlives the process: a
+                // turn the bot slept through left its commands open, and
+                // they would show as running again each time it woke.
+                let outlived = match runtime {
+                    Runtime::Unknown => false,
+                    Runtime::Gone => command.background,
+                    Runtime::Since(since) => command.started_at < since,
+                };
                 if command.status == CommandStatus::Running
-                    && (old_session || (!command.background && !busy))
+                    && (old_session || outlived || (!command.background && !busy))
                 {
                     command.status = CommandStatus::Stopped;
                 }

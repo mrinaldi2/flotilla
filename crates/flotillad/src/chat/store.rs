@@ -143,8 +143,7 @@ impl ChatStore {
         Ok(read(&chat.commands, &chat.writes))
     }
 
-    /// The commands the bot ran, the running ones first, then the newest. A
-    /// background command still running shows the end of its output file.
+    /// Its commands, running first, then newest; a running background one shows its output's end.
     pub fn commands(
         &self,
         app: &AppState,
@@ -156,7 +155,8 @@ impl ChatStore {
         let (mut commands, tasks) = {
             let chat = lock(&chat);
             let tasks = super::command_marks::tasks_of(&chat.builder.turns);
-            (chat.commands.list(busy(app, bot), limit), tasks)
+            let runtime = app.supervisor.runtime(&bot.id);
+            (chat.commands.list(busy(app, bot), runtime, limit), tasks)
         };
         super::command_marks::mark(app, bot, &mut commands, &tasks);
         for command in &mut commands {

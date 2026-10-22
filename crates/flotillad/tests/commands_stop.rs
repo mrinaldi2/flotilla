@@ -12,6 +12,12 @@ use common::tasks::drain_until;
 use common::*;
 use serde_json::{json, Value};
 
+/// A transcript time this many seconds from now: after the test bot's
+/// runtime started, as a real command's is (0.24.0).
+fn now_plus(secs: i64) -> String {
+    (chrono::Utc::now() + chrono::Duration::seconds(secs)).to_rfc3339()
+}
+
 /// A process writing to `output` as a background command does, leading
 /// its own process group.
 fn serve(output: &std::path::Path) -> std::process::Child {
@@ -41,10 +47,10 @@ async fn only_the_owner_stops_a_running_command_and_the_bot_is_told() {
         &d,
         &bot_id,
         &[
-            bash("t1", "cargo test", false, "2026-10-01T10:00:00Z"),
-            result("t1", "test result: ok", false, "2026-10-01T10:00:09Z"),
-            bash("b1", "./serve.sh --port 8080", true, "2026-10-01T09:00:00Z"),
-            started("b1", "bx1", &output, "2026-10-01T09:00:01Z"),
+            bash("t1", "cargo test", false, &now_plus(60)),
+            result("t1", "test result: ok", false, &now_plus(69)),
+            bash("b1", "./serve.sh --port 8080", true, &now_plus(0)),
+            started("b1", "bx1", &output, &now_plus(1)),
         ],
     );
     let stop = json!({"type": "stop_command", "bot_id": bot_id, "command_id": "b1"});
@@ -123,8 +129,8 @@ async fn a_linked_bots_command_is_stopped_on_its_computer() {
         &t.win,
         &t.windev_id,
         &[
-            bash("w1", "msbuild player.sln", true, "2026-10-01T09:00:00Z"),
-            started("w1", "wx1", &output, "2026-10-01T09:00:01Z"),
+            bash("w1", "msbuild player.sln", true, &now_plus(0)),
+            started("w1", "wx1", &output, &now_plus(1)),
         ],
     );
     let stopped = t

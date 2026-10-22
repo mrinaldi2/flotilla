@@ -8,6 +8,12 @@ use common::peers::team;
 use common::*;
 use serde_json::{json, Value};
 
+/// A transcript time this many seconds from now: after the test bot's
+/// runtime started, as a real command's is (0.24.0).
+fn now_plus(secs: i64) -> String {
+    (chrono::Utc::now() + chrono::Duration::seconds(secs)).to_rfc3339()
+}
+
 /// Writes a Claude Code transcript for a bot on `d`.
 fn transcript(d: &TestDaemon, bot_id: &str, records: &[Value]) {
     let bot = d.app.db.get_bot(bot_id).expect("db").expect("bot");
@@ -25,7 +31,7 @@ fn transcript(d: &TestDaemon, bot_id: &str, records: &[Value]) {
 /// A finished test run, and a build still running in the background whose
 /// output goes to `output`.
 fn records(output: &std::path::Path) -> Vec<Value> {
-    let at = "2026-10-01T10:00:00Z";
+    let at = &now_plus(60);
     vec![
         json!({"type": "user", "uuid": "turn-1", "sessionId": "s1", "timestamp": at,
                "isMeta": true, "origin": {"kind": "peer"},
@@ -37,7 +43,7 @@ fn records(output: &std::path::Path) -> Vec<Value> {
                    {"type": "tool_use", "id": "b1", "name": "Bash",
                     "input": {"command": "./build.sh", "description": "Build the player",
                               "run_in_background": true}}]}}),
-        json!({"type": "user", "uuid": "r1", "sessionId": "s1", "timestamp": "2026-10-01T10:00:09Z",
+        json!({"type": "user", "uuid": "r1", "sessionId": "s1", "timestamp": now_plus(69),
                "message": {"content": [
                    {"type": "tool_result", "tool_use_id": "t1", "content": "test result: ok. 12 passed"},
                    {"type": "tool_result", "tool_use_id": "b1", "content": format!(
