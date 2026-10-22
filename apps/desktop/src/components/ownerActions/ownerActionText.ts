@@ -74,3 +74,49 @@ export function confirmBody(action: OwnerAction, proposer: string): string {
 export function fingerprint(action: OwnerAction): string {
   return action.sha256.slice(0, 8);
 }
+
+/** "expires in 23 h", "expires in 40 min"; null once it has. */
+export function expiresIn(action: OwnerAction, now: number): string | null {
+  const left = Date.parse(action.expires_at) - now;
+  if (!Number.isFinite(left) || left <= 0) {
+    return null;
+  }
+  const minutes = Math.floor(left / 60_000);
+  return minutes < 60
+    ? `expires in ${Math.max(1, minutes)} min`
+    : `expires in ${Math.floor(minutes / 60)} h`;
+}
+
+/** What a push request pushes (0.24.0): its kind and details, when it is one. */
+export type PushDetails = NonNullable<OwnerAction["push"]>;
+
+/** "a334dd34 · 2 files, +208 −3". */
+export function commitLine(push: PushDetails): string {
+  const files = push.files === 1 ? "1 file" : `${push.files} files`;
+  return `${push.commit.slice(0, 8)} · ${files}, +${push.additions} −${push.deletions}`;
+}
+
+/**
+ * GitHub's compare page for the push, when `repo` is "owner/name"; else null.
+ * Branch names are plain (letters, digits, `.`, `_`, `-`, `/`), so they go as written.
+ */
+export function diffUrl(push: PushDetails): string | null {
+  if (!/^[\w.-]+\/[\w.-]+$/u.test(push.repo)) {
+    return null;
+  }
+  return `https://github.com/${push.repo}/compare/${push.target}...${push.commit}`;
+}
+
+/** How a push went, in push words where they read better; null while it waits. */
+export function pushResultLine(action: OwnerAction, proposer: string): string | null {
+  switch (action.state) {
+    case "running":
+      return "◑ Pushing…";
+    case "succeeded":
+      return `✓ Pushed. ${proposer} goes on from here.`;
+    case "failed":
+      return `✗ The push failed${action.exit_code === null ? "" : ` · exit ${action.exit_code}`}. ${proposer} has been told.`;
+    default:
+      return resultLine(action, proposer);
+  }
+}

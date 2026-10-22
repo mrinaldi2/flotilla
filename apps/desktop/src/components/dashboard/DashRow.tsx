@@ -1,6 +1,7 @@
 // One Needs you row (H-018 §2.1): a glyph, what waits and why, and its one
 // action, or the computer to act on it off the board's home. A row answered
-// in place (0.22.0) opens its answer under it.
+// in place (0.22.0) opens its answer under it; a budget row (0.24.0) has a
+// second way to act.
 
 import { useId, useState } from "react";
 import type { MouseEvent, ReactElement } from "react";
@@ -25,6 +26,12 @@ export interface RowViewProps {
   readonly elsewhere?: string;
   /** Answered in place (0.22.0): the action opens this under the row, and closes it. */
   readonly inline?: () => ReactElement;
+  /** A second way to act, after the main one: "Raise budget…" (0.24.0). */
+  readonly secondary?: {
+    readonly action: string;
+    readonly label: string;
+    readonly onAction: () => void;
+  };
 }
 
 /** The row's one button; a row answered in place opens and closes its answer. */
@@ -38,10 +45,10 @@ function RowAction(props: {
     return null;
   }
   const inline = row.inline !== undefined;
-  return (
+  const main = (
     <button
       type="button"
-      className="btn btn-small"
+      className={row.secondary === undefined ? "btn btn-small" : "btn btn-small btn-primary"}
       aria-label={open ? "Close the question" : row.label}
       title={row.why}
       disabled={row.disabled}
@@ -50,6 +57,23 @@ function RowAction(props: {
     >
       {open ? "Close" : row.action}
     </button>
+  );
+  const second = row.secondary;
+  if (second === undefined) {
+    return main;
+  }
+  return (
+    <span className="dash-row-actions">
+      {main}
+      <button
+        type="button"
+        className="btn btn-small"
+        aria-label={second.label}
+        onClick={second.onAction}
+      >
+        {second.action}
+      </button>
+    </span>
   );
 }
 

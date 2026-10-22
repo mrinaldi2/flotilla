@@ -12,8 +12,10 @@ import type { Bot, Project } from "../../protocol/entities";
 import type { BoardColumn } from "../../protocol/gen/flotilla/board/v1/board_pb";
 import type { PlanNode } from "../../protocol/gen/flotilla/board/v1/plan_pb";
 import type { BoardSnapshot } from "../../protocol/gen/flotilla/board/v1/requests_pb";
+import { BOARD_FLOW_V1 } from "../../protocol/team";
 import { useNow } from "../control/useNow";
 import { ItemOwnerActions } from "../ownerActions/OwnerActionList";
+import { useCreateRoleBot } from "../team/createRoleBot";
 import BoardColumns from "./BoardColumns";
 import BoardDrawer from "./BoardDrawer";
 import BoardFilterBar from "./BoardFilterBar";
@@ -27,6 +29,7 @@ import NewBoardSheet from "./NewBoardSheet";
 import type { NewBoard } from "./NewBoardSheet";
 import BoardSettings from "./settings/BoardSettings";
 import type { SettingsSection } from "./settings/BoardSettings";
+import type { ColumnFlow } from "./settings/columnFlow";
 import { useBoardMoves } from "./useBoardMoves";
 import type { BoardMoves } from "./useBoardMoves";
 import { useBoardView } from "./useBoardView";
@@ -177,10 +180,31 @@ function Bar(
   );
 }
 
+/**
+ * Each column's On entry role (0.24.0): who holds it, and for the owner a
+ * bot made with a role nobody holds. Undefined without `board_flow_v1`.
+ */
+function useColumnFlow(p: Parts): ColumnFlow | undefined {
+  const { client, project, model, bots, addToast, adopt } = p.props;
+  const creator = useCreateRoleBot(client, project.id, addToast, (_bot, snapshot) =>
+    adopt(snapshot),
+  );
+  if (!client.capabilities.includes(BOARD_FLOW_V1)) {
+    return undefined;
+  }
+  return {
+    roles: model.roles,
+    bots,
+    onCreateBot: p.canStructure ? creator.create : undefined,
+    creating: creator.creating,
+  };
+}
+
 /** The right side: the open item's drawer, or the board's settings. */
 function Side(p: Parts & { readonly moves: BoardMoves }): ReactElement {
   const { props, view } = p;
   const { client, project, model, canControl } = props;
+  const flow = useColumnFlow(p);
   const { board, columns, cards } = view;
   const counts = new Map(
     columns.map((c) => [c.key, cards.filter((x) => x.columnKey === c.key).length]),
@@ -227,6 +251,7 @@ function Side(p: Parts & { readonly moves: BoardMoves }): ReactElement {
           initialSection={view.settings}
           initiallyExpanded={props.initial?.expanded}
           now={p.now}
+          flow={flow}
         />
       )}
     </>

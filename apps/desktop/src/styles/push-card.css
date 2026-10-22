@@ -1,1 +1,59 @@
 /* A push request (0.24.0): a bot asks the owner to push its branch. */
+
+.push-card {
+  border-color: var(--accent);
+}
+
+.push-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.push-card-icon {
+  flex: none;
+  color: var(--accent);
+}
+
+.push-card-expires {
+  margin-left: auto;
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--text-faint);
+}
+
+.push-card-details {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.push-card-details dt {
+  color: var(--text-dim);
+}
+
+.push-card-details dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+
+.push-card-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.push-card-reject {
+  color: var(--red);
+  background: transparent;
+}
+
+.push-card-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-faint);
+}

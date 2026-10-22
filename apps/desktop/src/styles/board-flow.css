@@ -1,1 +1,115 @@
 /* The board runs the SDLC (0.24.0): a column's On entry role, and who holds it. */
+
+.column-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 4px 0 0 26px;
+  font-size: 12px;
+}
+
+.column-flow-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+}
+
+.column-flow-pick select {
+  width: auto;
+  max-width: 120px;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+
+.column-flow-held {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+.column-flow-held-label {
+  color: var(--text-faint);
+}
+
+.column-flow-unheld {
+  color: var(--amber);
+}
+
+/* "▲ Nobody holds Product", under the rows. */
+.column-flow-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.column-flow-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--amber);
+  border-radius: 6px;
+}
+
+.column-flow-notice-title {
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.column-flow-notice-text {
+  flex: 1 1 160px;
+  color: var(--text-dim);
+}
+
+/* The chain a card follows: "To do · Product → Research · Architect → Done". */
+.column-flow-chain {
+  margin-top: 12px;
+}
+
+.column-flow-chain ol {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.column-flow-step {
+  display: inline-block;
+  padding: 3px 10px;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.column-flow-step-done {
+  color: var(--green);
+}
+
+.column-flow-back {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* A Needs you row with a second way to act (budget rows, 0.24.0). */
+.dash-row-actions {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}

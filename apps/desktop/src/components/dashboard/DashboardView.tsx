@@ -25,6 +25,7 @@ import type { QuestionAnswering } from "./questionRows";
 import { useConfirmRelayed } from "./useConfirmRelayed";
 import { useDashboard } from "./useDashboard";
 import { useDashboardDrawers } from "./useDashboardDrawers";
+import { useFlowRows } from "./useFlowRows";
 import { useMetrics } from "./useMetrics";
 import { useNeedsYouPrs } from "./useNeedsYouPrs";
 import { ActionItemsWidget, MeetingsWidget, offHomeOf } from "./MeetingWidgets";
@@ -52,6 +53,8 @@ export interface DashboardViewProps {
   readonly onOpenPr?: (pr: number, recheck: boolean) => void;
   /** "From the team", shown right after Needs you on the Overview. */
   readonly fromTheTeam?: ReactNode;
+  /** Opens a project's Settings on its budget (0.24.0, a budget row's Raise budget…). */
+  readonly onRaiseBudget?: (projectId: string) => void;
 }
 
 function asOf(at: string): string {
@@ -157,6 +160,14 @@ export default function DashboardView(props: DashboardViewProps): ReactElement {
   const metrics = useMetrics(client, project.id, connected);
   const prs = useNeedsYouPrs(client, project.id, connected, props.onOpenPr, dashboard);
   const cleanup = useCleanup(client, project.id, props.addToast, refresh);
+  const flowRows = useFlowRows({
+    client,
+    projectId: project.id,
+    addToast: props.addToast,
+    refresh,
+    onOpenBot: props.onOpenBot,
+    onRaiseBudget: props.onRaiseBudget,
+  });
 
   if (dashboard === null) {
     return <Loading error={error} onRetry={() => void refresh()} />;
@@ -206,6 +217,7 @@ export default function DashboardView(props: DashboardViewProps): ReactElement {
             prs={prs}
             onOpenPr={props.onOpenPr}
             {...cleanupRowActions(cleanup, connected)}
+            {...flowRows}
           />
           {props.fromTheTeam}
           <OwnerActionList
@@ -215,6 +227,7 @@ export default function DashboardView(props: DashboardViewProps): ReactElement {
             addToast={props.addToast}
             botName={botName}
             title="Commands for you to run"
+            pushTitle="Commands and pushes for you"
           />
           <BoardWidget board={dashboard.board} home={dashboard.home} onOpen={openBoard} />
           <ReleasesWidget

@@ -1,7 +1,7 @@
 import type { Story } from "@ladle/react";
 import type { ReactElement } from "react";
 import type { OwnerAction } from "../../protocol/ownerActions";
-import { ownerAction } from "../../test/ownerActionFixtures";
+import { ownerAction, PUSH_NOW, pushAction } from "../../test/ownerActionFixtures";
 import OwnerActionCard from "./OwnerActionCard";
 import OwnerActionConfirm from "./OwnerActionConfirm";
 
@@ -15,15 +15,20 @@ function Frame(props: { readonly children: ReactElement }): ReactElement {
   );
 }
 
-function Card(props: { readonly action: OwnerAction; readonly canRun?: boolean }): ReactElement {
+function Card(props: {
+  readonly action: OwnerAction;
+  readonly canRun?: boolean;
+  readonly proposer?: string;
+}): ReactElement {
   return (
     <Frame>
       <OwnerActionCard
         action={props.action}
-        proposer="DevOps"
+        proposer={props.proposer ?? "DevOps"}
         canRun={props.canRun ?? true}
         onRun={noop}
         onReject={noop}
+        now={PUSH_NOW}
       />
     </Frame>
   );
@@ -66,4 +71,28 @@ export const Confirm: Story = () => (
       hold={false}
     />
   </Frame>
+);
+
+/** A push request (0.24.0): the exact command, what it pushes, why, and Push. */
+export const PushWaiting: Story = () => <Card action={pushAction()} proposer="Automation Tester" />;
+
+/** Pushed: the bot goes on to open its pull request. */
+export const PushDone: Story = () => (
+  <Card
+    action={pushAction({
+      state: "succeeded",
+      exit_code: 0,
+      run_at: "2025-03-04T15:02:00Z",
+      finished_at: "2025-03-04T15:02:03Z",
+    })}
+    proposer="Automation Tester"
+  />
+);
+
+/** Rejected, with the owner's reason. */
+export const PushRejected: Story = () => (
+  <Card
+    action={pushAction({ state: "rejected", reject_reason: "Rebase on main first." })}
+    proposer="Automation Tester"
+  />
 );

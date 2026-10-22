@@ -2,13 +2,19 @@ import { create } from "@bufbuild/protobuf";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { Role } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import type { BoardColumn } from "../../../protocol/gen/flotilla/board/v1/board_pb";
 import { StructureResultSchema } from "../../../protocol/gen/flotilla/board/v1/requests_pb";
 import type { BoardCall } from "../../../protocol/board";
+import { flowColumns, flowRoles } from "../../../test/boardFlowFixtures";
 import { board, boardsSnapshot, proposals, recipeColumns } from "../../../test/boardsFixtures";
 import { FakeDaemon } from "../../../test/fakeDaemon";
+import { bot } from "../../../test/fixtures";
 import BoardSettings from "./BoardSettings";
 import type { SettingsSection } from "./BoardSettings";
 import { afterFor, limitChange, policyLine } from "./columnEdits";
+import type { ColumnFlow } from "./columnFlow";
+import { heldBy, namesText } from "./columnFlow";
 
 const recipes = board({
   id: "b-recipes",
@@ -22,7 +28,12 @@ const recipes = board({
 
 function renderSettings(
   section: SettingsSection,
-  over: { gated?: boolean; canEdit?: boolean } = {},
+  over: {
+    gated?: boolean;
+    canEdit?: boolean;
+    flow?: ColumnFlow;
+    columns?: readonly BoardColumn[];
+  } = {},
 ) {
   const applied = create(StructureResultSchema, {
     boardId: recipes.id,
@@ -43,7 +54,7 @@ function renderSettings(
     <BoardSettings
       api={fake}
       board={over.gated === true ? board() : recipes}
-      columns={recipeColumns()}
+      columns={over.columns ?? recipeColumns()}
       counts={new Map([["rb-qa", 2]])}
       canEdit={over.canEdit ?? true}
       proposals={proposals()}
@@ -52,6 +63,7 @@ function renderSettings(
       onClose={vi.fn<() => void>()}
       initialSection={section}
       now={Date.parse("2026-10-05T17:00:00Z")}
+      flow={over.flow}
     />,
   );
   const last = (): BoardCall | undefined => fake.boardCalls.at(-1);
@@ -215,5 +227,102 @@ describe("board settings", () => {
     renderSettings("automations", { gated: true, canEdit: false });
     expect(screen.getByText(/Automations are for custom boards/)).toBeInTheDocument();
     expect(screen.getByRole("note")).toHaveTextContent("Read only");
+  });
+});
+
+const FLOW_BOTS = [
+  bot({ id: "b1", name: "Desktop Dev" }),
+  bot({ id: "b2", name: "Tester", state: "asleep" }),
+  bot({ id: "b3", name: "Desktop Dev 2", state: "asleep" }),
+];
+
+function flowOf(over: Partial<ColumnFlow> = {}): ColumnFlow {
+  return { roles: flowRoles(), bots: FLOW_BOTS, creating: null, ...over };
+}
+
+describe("a column's On entry role", () => {
+  it("words who holds a role", () => {
+    const flow = flowOf();
+    expect(heldBy(Role.UNSPECIFIED, flow)).toEqual({ text: "—", unheld: false });
+    expect(heldBy(Role.PRODUCT, flow)).toEqual({ text: "nobody yet", unheld: true });
+    expect(heldBy(Role.TESTER, flow).text).toBe("Tester · asleep");
+    expect(heldBy(Role.DEV, flow).text).toBe("Desktop Dev, Desktop Dev 2");
+    expect(heldBy(Role.LEAD, flow).text).toBe("a bot");
+    expect(namesText([])).toBe("");
+    expect(namesText(["To do", "Inbox", "Ready"])).toBe("To do, Inbox and Ready");
+  });
+
+  it("saves the role a column assigns, and clears it with Nobody", async () => {
+    const user = userEvent.setup();
+    const { last } = renderSettings("columns", { flow: flowOf(), columns: flowColumns() });
+    const qa = screen.getByRole("combobox", { name: "On entry, QA assigns" });
+    expect(qa).toHaveValue(String(Role.TESTER));
+    await user.selectOptions(qa, "Architect");
+    await idle();
+    expect(last()).toMatchObject({
+      case: "columnUpdate",
+      value: { key: "rb-qa", onEntry: Role.ARCHITECT },
+    });
+    expect(last()?.value).not.toHaveProperty("setPolicy");
+    // A card never goes to the lead or the coach.
+    const roles = within(qa)
+      .getAllByRole("option")
+      .map((o) => o.textContent);
+    expect(roles).toContain("Product");
+    expect(roles).not.toContain("Lead");
+    expect(roles).not.toContain("Coach");
+    await user.selectOptions(qa, "Nobody");
+    await idle();
+    expect(last()).toMatchObject({ value: { key: "rb-qa", onEntry: Role.UNSPECIFIED } });
+  });
+
+  it("shows who holds each role, and offers a bot for the one nobody holds", async () => {
+    const user = userEvent.setup();
+    const onCreateBot = vi.fn<(role: Role) => void>();
+    renderSettings("columns", { flow: flowOf({ onCreateBot }), columns: flowColumns() });
+    expect(screen.getByText("nobody yet")).toHaveClass("column-flow-unheld");
+    expect(screen.getByText("Tester · asleep")).toBeInTheDocument();
+    expect(screen.getByText("Nobody holds Product")).toBeInTheDocument();
+    expect(
+      screen.getByText("Cards entering To do stay with whoever moved them."),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Create a Product bot" }));
+    expect(onCreateBot).toHaveBeenCalledWith(Role.PRODUCT);
+    const chain = screen.getByRole("region", { name: "How a card flows" });
+    expect(
+      within(chain)
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual(["To do · Product", "→ Doing · Developer", "→ QA · Tester", "→ Done"]);
+    expect(chain).toHaveTextContent(
+      "A failed review moves it back to Doing and re-assigns the Developer, with the Tester's note.",
+    );
+  });
+
+  it("says a bot is being created", () => {
+    renderSettings("columns", {
+      flow: flowOf({ onCreateBot: vi.fn<(role: Role) => void>(), creating: Role.PRODUCT }),
+      columns: flowColumns(),
+    });
+    expect(screen.getByRole("button", { name: "Creating…" })).toBeDisabled();
+  });
+
+  it("works on a release-gated board, read only for anyone but the owner", () => {
+    renderSettings("columns", {
+      gated: true,
+      canEdit: false,
+      flow: flowOf({ onCreateBot: vi.fn<(role: Role) => void>() }),
+      columns: flowColumns(),
+    });
+    expect(screen.getByRole("combobox", { name: "On entry, QA assigns" })).toBeDisabled();
+    expect(screen.getByText("Nobody holds Product")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Create a/ })).toBeNull();
+  });
+
+  it("isn't offered by a service before 0.24, or with no column assigning a role", () => {
+    renderSettings("columns", { columns: flowColumns() });
+    expect(screen.queryByRole("combobox", { name: /On entry/ })).toBeNull();
+    renderSettings("columns", { flow: flowOf() });
+    expect(screen.queryByRole("region", { name: "How a card flows" })).toBeNull();
   });
 });

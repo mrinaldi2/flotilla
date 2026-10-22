@@ -99,6 +99,9 @@ function Overview({ ctx }: { readonly ctx: TabContext }): ReactElement {
       onOpenPlanGate={(planNode) =>
         select({ kind: "project", projectId: project.id, tab: "plan", planNode, gate: true })
       }
+      onRaiseBudget={(projectId) =>
+        select({ kind: "project", projectId, tab: "settings", section: "budget" })
+      }
       fromTheTeam={
         <FromTheTeam
           row={ctx.row}
@@ -149,6 +152,7 @@ function Settings({ ctx }: { readonly ctx: TabContext }): ReactElement {
       onToast={ctx.addToast}
       ownerReview={client.capabilities.includes(PULL_REQUESTS)}
       focusOwnerReview={at.kind === "project" && at.section === "owner_review"}
+      focusBudget={at.kind === "project" && at.section === "budget"}
       plan={ctx.plan}
     />
   );
@@ -251,6 +255,7 @@ function Plan({ ctx }: { readonly ctx: TabContext }): ReactElement {
       bots={ctx.bots}
       connected={daemon.connected}
       plan={ctx.plan}
+      addToast={ctx.addToast}
       openNode={at.kind === "project" ? at.planNode : undefined}
       openGate={at.kind === "project" ? at.gate : undefined}
       onOpenItem={(item) =>
