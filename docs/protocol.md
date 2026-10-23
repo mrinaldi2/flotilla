@@ -1538,6 +1538,8 @@ was never pushed. The owner's moves aren't held to it.
 
 The owner's plan (`.scratch/plan-0.24.md`, answered 2026-10-21). Five capabilities, each advertised once its daemon step serves it: `board_flow_v1`, `commands_v1`, `push_requests_v1`, `research_gate_v1` and `usage_v1`.
 
+**A card held on the owner (0.24.0).** `ItemCard.owner_waiting` counts a bot's open questions to the owner about the card: asked on it (`item_comment asks_owner`), or from its thread with the card's `[card H-1]` lead (`message_owner {item}`). A question stops counting when the owner answers it (in the thread, or with a comment on the card), when it is dismissed, or when the card is done or cancelled, and a thread question about a closed card leaves Needs you too. The apps show "Waiting for you" on the card.
+
 **The board runs the SDLC (`board_flow_v1`).** `BoardColumn.on_entry` names a role; `column_add` and `column_update` take it, and `ROLE_UNSPECIFIED` clears it. `column_update` sets it on any board, a release-gated one too, without `set_policy`.
 - **On entry:** when a card enters such a column, by any move (a bot's, the owner's, or a fact such as `pr.opened`), the daemon assigns it to a holder of the role and tells the holder, as an assignment does. A new card entering its first column counts, as does a finalized draft. A card already assigned to a holder of that role keeps its assignee.
   - **The holder:** the bot that last held the card, if it still holds the role, so a card sent back goes to its Developer again. Otherwise the one `item_assign {role}` picks: awake and free, then asleep, which wakes it.

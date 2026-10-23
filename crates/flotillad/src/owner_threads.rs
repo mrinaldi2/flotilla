@@ -160,9 +160,23 @@ pub fn open_questions(
                 continue;
             }
         }
+        // A thread question naming a card ends with the card (0.24.0).
+        if let (None, Some(item_id)) = (&q.item_id, named_card(&q.title)) {
+            if cards::closed_here(app, item_id, &q.project_id)? {
+                continue;
+            }
+        }
         open.push(q);
     }
     Ok(open)
+}
+
+/// The card a thread question names with its `[card H-1]` lead, as the
+/// bots' message tool writes it.
+pub fn named_card(title: &str) -> Option<&str> {
+    let rest = &title[title.find("[card ")? + "[card ".len()..];
+    let id = &rest[..rest.find(']')?];
+    (!id.is_empty() && !id.contains(char::is_whitespace)).then_some(id)
 }
 
 /// `attention_dismiss` of an owner question here.

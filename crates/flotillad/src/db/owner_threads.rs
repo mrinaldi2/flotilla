@@ -13,7 +13,7 @@ use super::{parse_ts, ts, Db};
 /// messages too, under another name, and aren't the owner's; nor is the
 /// owner's chat a linked computer sent without proof here (H-306,
 /// `messaging::unverified_from`).
-const FROM_OWNER: &str = "(m.sender_kind = 'user' AND m.sender_name = 'user'
+pub(super) const FROM_OWNER: &str = "(m.sender_kind = 'user' AND m.sender_name = 'user'
      AND (m.id IN (SELECT message_id FROM owner_message)
           OR m.id NOT IN (SELECT message_id FROM peer_message)))";
 

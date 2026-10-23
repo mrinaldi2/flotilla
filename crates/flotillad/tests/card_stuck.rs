@@ -216,3 +216,46 @@ async fn a_question_about_a_draft_closes_when_its_discussion_ends() {
     );
     assert!(open(&f).is_empty(), "{:?}", open(&f));
 }
+
+/// 0.24.0: a card a bot is holding on the owner says so: its question from
+/// the thread naming the card ("[card H-1] …") counts on the card until the
+/// owner answers, and a question about a closed card is over.
+#[tokio::test]
+async fn a_card_held_on_the_owner_says_it_waits_for_them() {
+    let (mut f, _) = fresh(&["Builder"]).await;
+    let item = f.item("Combined smoke").await;
+    assert_eq!(f.card(&item.id).await.owner_waiting, 0);
+    f.bots[0]
+        .call(
+            "message_owner",
+            json!({"body": "Storage is down: can you start it?", "asks": true, "item": item.id}),
+        )
+        .await;
+    assert_eq!(
+        f.card(&item.id).await.owner_waiting,
+        1,
+        "asked from the thread"
+    );
+
+    // The owner answers in the thread: the card no longer waits.
+    f.owner
+        .request(
+            json!({"type": "send_user_message", "to_bot_id": f.bot_ids[0], "body": "Started."}),
+        )
+        .await;
+    assert_eq!(f.card(&item.id).await.owner_waiting, 0, "answered");
+
+    // Asked again, then the card is closed: nothing waits on a closed card.
+    f.bots[0]
+        .call(
+            "message_owner",
+            json!({"body": "One more thing?", "asks": true, "item": item.id}),
+        )
+        .await;
+    assert_eq!(f.card(&item.id).await.owner_waiting, 1);
+    f.owner_move(&item.id, "cancelled", Some("Not needed"))
+        .await;
+    assert_eq!(f.card(&item.id).await.owner_waiting, 0, "closed");
+    let open = flotillad::owner_threads::open_questions(&f.d.app, Some(&f.project), None).unwrap();
+    assert!(open.is_empty(), "{open:?}");
+}

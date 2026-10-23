@@ -297,6 +297,8 @@ pub struct ItemCard {
     pub plan_node_id: Option<String>,
     /// Its open questions for the owner (0.22.0).
     pub questions_open: u32,
+    /// A bot's open questions to the owner about it (0.24.0).
+    pub owner_waiting: u32,
 }
 
 /// What stops a card: its last refused move, or the next column's rules.
