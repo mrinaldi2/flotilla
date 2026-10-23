@@ -164,6 +164,12 @@
   color: var(--amber);
 }
 
+/* A bot holds the card on the owner (0.24.0). */
+.board-card-owner {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .plan-row-questions {
   flex: none;
   font-size: 12px;

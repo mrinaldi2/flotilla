@@ -77,6 +77,9 @@ function cardAccessibleName(
   if (stuck !== null) {
     parts.push(stuck);
   }
+  if (card.ownerWaiting > 0) {
+    parts.push("waiting for you");
+  }
   if (card.questionsOpen > 0) {
     parts.push(questionsWord(card.questionsOpen));
   }
@@ -103,6 +106,14 @@ function CardLines({
       : "The next column's rules stop it moving on.";
   return (
     <>
+      {card.ownerWaiting > 0 ? (
+        <div
+          className="board-card-line board-card-owner"
+          title="A bot asked you about this card: answer it in Needs you or the bot's thread."
+        >
+          <span aria-hidden="true">▲</span> Waiting for you
+        </div>
+      ) : null}
       {card.blocked ? (
         <div className="board-card-line board-card-blocked-line">
           <span aria-hidden="true">⛔</span> Blocked

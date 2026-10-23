@@ -14,6 +14,20 @@ use crate::kanban::model::ColumnCategory;
 use crate::messaging;
 
 /// Whether the owner has answered `q` on its card, or the card is closed.
+/// Whether a card here is done or cancelled: a question about it is over.
+pub(super) fn closed_here(app: &AppState, item_id: &str, project_id: &str) -> anyhow::Result<bool> {
+    let Some(item) = app.db.board_read(|t| t.item(item_id))? else {
+        return Ok(false);
+    };
+    Ok(app.db.board_columns(project_id)?.iter().any(|col| {
+        col.key == item.column_key
+            && matches!(
+                col.category,
+                ColumnCategory::Done | ColumnCategory::Cancelled
+            )
+    }))
+}
+
 pub(super) fn answered(app: &AppState, item_id: &str, q: &OwnerQuestion) -> anyhow::Result<bool> {
     let db = &app.db;
     if let Some(item) = db.board_read(|t| t.item(item_id))? {

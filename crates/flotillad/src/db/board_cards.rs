@@ -82,11 +82,25 @@ fn cards_with(
                     AND {holds}),
                 i.plan_node_id,
                 (SELECT count(*) FROM question q JOIN decision d ON d.id = q.decision_id
-                  WHERE q.item_id = i.id AND d.state IN ('open', 'held'))
+                  WHERE q.item_id = i.id AND d.state IN ('open', 'held')),
+                CASE WHEN i.category IN ('done', 'cancelled') THEN 0 ELSE (
+                  SELECT count(*) FROM owner_question oq
+                   WHERE oq.dismissed_at IS NULL AND oq.project_id = i.project_id
+                     AND (oq.item_id = i.id
+                          OR (oq.item_id IS NULL AND oq.title LIKE '%[card ' || i.id || ']%'))
+                     AND (oq.message_num IS NULL OR NOT EXISTS (
+                          SELECT 1 FROM message m JOIN conversation cv ON cv.id = m.conversation_id
+                           WHERE cv.bot_id = oq.bot_id AND m.num > oq.message_num AND {from_owner}))
+                     AND (oq.item_id IS NULL OR NOT EXISTS (
+                          SELECT 1 FROM item_comment ic WHERE ic.item_id = i.id
+                             AND ic.at > oq.created_at
+                             AND (ic.author = 'user' OR ic.author LIKE 'device:%')))
+                ) END
          FROM item i JOIN board_column c ON c.project_id = i.project_id AND c.key = i.column_key
          WHERE i.project_id = ?1 AND {states} {filter}
          ORDER BY c.ord, i.rank",
-        holds = super::board_keeper::MARK_HOLDS
+        holds = super::board_keeper::MARK_HOLDS,
+        from_owner = super::owner_threads::FROM_OWNER
     );
     let mut stmt = conn.prepare(&sql)?;
     let map = |r: &rusqlite::Row<'_>| -> rusqlite::Result<ItemCard> {
@@ -118,6 +132,7 @@ fn cards_with(
             move_block: None,
             plan_node_id: r.get(20)?,
             questions_open: r.get(21)?,
+            owner_waiting: r.get(22)?,
         })
     };
     let cards = match arg {

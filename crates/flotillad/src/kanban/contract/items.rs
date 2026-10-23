@@ -112,6 +112,7 @@ impl From<m::ItemCard> for c::ItemCard {
             }),
             plan_node_id: v.plan_node_id,
             questions_open: v.questions_open,
+            owner_waiting: v.owner_waiting,
             ..Default::default()
         };
         crate::compat018::card_out(&mut card);
@@ -151,6 +152,7 @@ impl TryFrom<c::ItemCard> for m::ItemCard {
             }),
             plan_node_id: v.plan_node_id,
             questions_open: v.questions_open,
+            owner_waiting: v.owner_waiting,
         })
     }
 }
