@@ -39,6 +39,7 @@ import { useDrawerAttachments } from "../attachments/useDrawerAttachments";
 import { useDraftDrawer } from "../drafts/useDraftDrawer";
 import type { Anchor } from "../useBoardMoves";
 import { AttachDesign, DesignSection } from "./DesignSection";
+import CardPrs from "./CardPrs";
 import DrawerBody from "./DrawerBody";
 import { DrawerHeader } from "./DrawerParts";
 import type { Tab } from "./DrawerTabsView";
@@ -92,6 +93,7 @@ export interface ItemDrawerProps {
   readonly initialDiscuss?: string;
   /** Opens another card here: a task's design (0.21.0). */
   readonly onOpenItem?: (id: string) => void;
+  readonly onOpenPr?: (number: number) => void; // its PRs' link (0.24.0)
   /** The board's open tasks, which a done Design card attaches to (0.21.0). */
   readonly designTasks?: readonly ItemCard[];
 }
@@ -313,6 +315,16 @@ function DrawerMain(props: { readonly p: ItemDrawerProps; readonly d: DrawerStat
       onComment={p.canComment ? d.state.comment : undefined}
       initialTab={p.initialTab}
       documents={documents}
+      prs={
+        <CardPrs
+          client={p.client}
+          projectId={p.projectId}
+          connected={p.connected ?? true}
+          itemId={p.itemId}
+          now={d.now}
+          onOpenPr={p.onOpenPr}
+        />
+      }
       questions={
         questionsOn(p.api) ? (
           <CardQuestions

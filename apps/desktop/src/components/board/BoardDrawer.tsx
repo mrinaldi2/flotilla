@@ -34,6 +34,8 @@ interface BoardDrawerProps {
   readonly connected?: boolean;
   readonly leadId?: string;
   readonly onOpen: (id: string | null) => void;
+  /** Opens a card's pull request in the Pull requests tab (0.24.0). */
+  readonly onOpenPr?: (number: number) => void;
   readonly onMove: ((card: ItemCard, anchor: Anchor) => void) | null;
   readonly onDraftDone?: (message: string) => void;
   /** "Now", for ages; stories pin it. */
@@ -96,6 +98,7 @@ export default function BoardDrawer(props: BoardDrawerProps): ReactElement | nul
       now={props.now === undefined ? undefined : () => props.now ?? 0}
       initialDiscuss={props.initialDiscuss}
       onOpenItem={props.onOpen}
+      onOpenPr={props.onOpenPr}
       designTasks={tasks}
     >
       {props.children}

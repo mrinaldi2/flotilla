@@ -56,6 +56,8 @@ export interface DrawerBodyProps {
   readonly onPasteImage: (file: File) => Promise<string | null>;
   readonly onComment?: PostComment;
   readonly initialTab?: Tab;
+  /** The card's pull requests and their state, under its status (0.24.0). */
+  readonly prs?: ReactNode;
   /** The card's questions for the owner, above the tabs and their comments (0.22.0). */
   readonly questions?: ReactNode;
   /** Artifact links listed with the documents, so the Links tab leaves them out. */
@@ -86,6 +88,7 @@ export default function DrawerBody(props: DrawerBodyProps): ReactElement {
           now={props.now}
         />
       )}
+      {props.isDraft ? null : props.prs}
       {props.children}
       {props.review}
       {props.editing ? null : props.questions}

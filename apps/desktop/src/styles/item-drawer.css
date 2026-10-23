@@ -338,3 +338,23 @@
 .board-card {
   cursor: pointer;
 }
+
+/* The card's pull requests, under its status (0.24.0). */
+.drawer-prs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+
+.drawer-pr {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.drawer-pr-title {
+  color: var(--text);
+}
