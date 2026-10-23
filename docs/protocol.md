@@ -1191,7 +1191,8 @@ serves all of it.
   prompt to answer, above a bot waiting) is a bot whose session isn't running:
   `AttentionRow.bot` names it and `bot_state` (24) says why, `crashed`,
   `auth_failed`, `rate_limited` or `stopped` (its session ended and didn't come
-  back; not while projects are paused for an install). A bot gets the row once
+  back; not while projects are paused for an install, and never for an
+  on-demand bot `asleep` or `queued` for a slot, which is resting, 0.24.0). A bot gets the row once
   it has been down for a minute, so a restart or a crash the supervisor
   recovers from raises none; `created_at` is when it went down, and `bot_state`
   the last of those four states it was in. The bot's own computer

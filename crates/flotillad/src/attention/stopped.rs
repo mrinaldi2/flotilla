@@ -1,6 +1,7 @@
 //! Bots whose session isn't running (0.20.0, `attention_bot_stopped`): one
 //! `bot_stopped` row per bot of the project here that has been down a
-//! minute, crashed, unable to sign in or rate limited, or stopped. A bot
+//! minute, crashed, unable to sign in or rate limited, or stopped, never one
+//! asleep or queued for a slot. A bot
 //! the supervisor brings straight back never gets one, and none is raised
 //! while projects are paused for an install. Stand-ins run elsewhere: their
 //! computer raises theirs.
@@ -28,6 +29,12 @@ pub(super) fn stopped_bots(app: &AppState, b: &mut Builder<'_>) -> anyhow::Resul
     bots.sort_by(|x, y| x.name.cmp(&y.name));
     for bot in bots.iter().filter(|bot| !bot.is_linked()) {
         let (state, reason) = app.supervisor.state(&bot.id);
+        // An on-demand bot asleep or waiting for a slot (0.23.0) is resting,
+        // not down: it wakes when there is work, so it needs nothing from
+        // the owner (0.24.0).
+        if matches!(state, BotState::Asleep | BotState::Queued) {
+            continue;
+        }
         let Some(down) = app.overview.down(&bot.id, state, bot.created_at) else {
             continue;
         };
