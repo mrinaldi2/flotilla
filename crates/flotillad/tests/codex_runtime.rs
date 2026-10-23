@@ -114,8 +114,11 @@ fn log(root: &Path) -> Vec<Value> {
         .collect()
 }
 
+/// Waits for a lifecycle hook. The fake runtime starts in well under a
+/// second, but a loaded CI runner has taken more than 5 s: 30 s only
+/// bounds a hang.
 async fn hook(started: &mut StartedSession, name: &str) {
-    tokio::time::timeout(Duration::from_secs(5), async {
+    tokio::time::timeout(Duration::from_secs(30), async {
         loop {
             match started.events.recv().await.unwrap() {
                 SessionEvent::Lifecycle { event, .. } if event == name => break,

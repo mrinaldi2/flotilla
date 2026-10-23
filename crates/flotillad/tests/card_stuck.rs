@@ -253,7 +253,8 @@ async fn a_card_held_on_the_owner_says_it_waits_for_them() {
         )
         .await;
     assert_eq!(f.card(&item.id).await.owner_waiting, 1);
-    f.owner_move(&item.id, "cancelled", Some("Not needed")).await;
+    f.owner_move(&item.id, "cancelled", Some("Not needed"))
+        .await;
     assert_eq!(f.card(&item.id).await.owner_waiting, 0, "closed");
     let open = flotillad::owner_threads::open_questions(&f.d.app, Some(&f.project), None).unwrap();
     assert!(open.is_empty(), "{open:?}");
