@@ -197,3 +197,44 @@ async fn linked_bots_are_listed_once_from_their_own_computer() {
             .online
     );
 }
+
+/// 0.24.0: an on-demand bot asleep, or queued for a slot, is resting and
+/// raises no "stopped" row, even after its session went down on the way to
+/// sleep.
+#[tokio::test]
+async fn an_asleep_or_queued_bot_raises_no_stopped_row() {
+    let d = spawn_daemon().await;
+    let mut owner = WsClient::connect(&d).await;
+    let pid = project(&mut owner, "Resting").await;
+    let bot = create_bot(&mut owner, &pid, "Architect").await;
+    let id = bot["id"].as_str().unwrap().to_string();
+    let since = chrono::Utc::now() - chrono::Duration::minutes(5);
+    for state in [BotState::Asleep, BotState::Queued] {
+        d.app
+            .supervisor
+            .set_state(&id, state, "asleep: nothing to do");
+        d.app
+            .overview
+            .set_down_for_tests(&id, BotState::Stopped, since);
+        let rows = flotillad::overview::attention_rows(&d.app, &pid).unwrap();
+        assert!(
+            rows.rows
+                .iter()
+                .all(|r| r.kind() != AttentionKind::BotStopped),
+            "{state:?}: {:?}",
+            rows.rows.iter().map(|r| &r.title).collect::<Vec<_>>()
+        );
+    }
+    // Really stopped, it has its row again.
+    d.app
+        .supervisor
+        .set_state(&id, BotState::Stopped, "session ended");
+    d.app
+        .overview
+        .set_down_for_tests(&id, BotState::Stopped, since);
+    let rows = flotillad::overview::attention_rows(&d.app, &pid).unwrap();
+    assert!(rows
+        .rows
+        .iter()
+        .any(|r| r.kind() == AttentionKind::BotStopped));
+}
