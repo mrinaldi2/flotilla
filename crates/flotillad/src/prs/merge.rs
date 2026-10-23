@@ -26,7 +26,7 @@ use crate::bot_permissions::Stored;
 use crate::decisions::{conflict, forbidden, invalid, not_found};
 use crate::kanban::api::{publish_moves, report_fact};
 use crate::kanban::facts::Fact;
-use crate::kanban::model::{ColumnCategory, Role};
+use crate::kanban::model::Role;
 use crate::prs::model::{Pr, PrState};
 use crate::prs::{mergeable, repo, review};
 use crate::releases::git_cache;
@@ -309,10 +309,8 @@ fn merged(
             .filter(|p| p.state.is_live())
             .map(|p| format!("#{} ({})", p.number, p.repo))
             .collect();
-        let in_review = t
-            .item(&pr.item_id)?
-            .is_some_and(|i| i.category == ColumnCategory::Review);
-        if !waiting.is_empty() || !in_review {
+        let reaches = crate::kanban::api::merge_reaches(t, &pr.item_id)?;
+        if !waiting.is_empty() || !reaches {
             return Ok((waiting, Vec::new()));
         }
         let note = format!("PR #{} merged", pr.number);

@@ -253,3 +253,32 @@ fn changes_asked_on_a_board_with_no_column_for_them_send_the_card_back() {
         .unwrap();
     assert_eq!(again, None);
 }
+
+/// 0.24.0: a merge reaches a custom board's card wherever the owner put the
+/// Review step (PhD's Review column is a Doing one), so its `pr.merged`
+/// automation decides; a release-gated card must be in Review.
+#[test]
+fn a_merge_reaches_a_custom_boards_open_card_in_any_column() {
+    let (db, p) = board();
+    let rs = db
+        .create_board(&p, "Research", "RS", Preset::Software)
+        .unwrap();
+    let custom = db
+        .create_item(
+            &NewItem {
+                board_id: Some(&rs.id),
+                acceptance_criteria: &[],
+                plan_node_id: None,
+                ..new_item(&p, "Sections")
+            },
+            &OWNER,
+        )
+        .unwrap();
+    let reaches = |id: &str| {
+        db.board_tx(|t| crate::kanban::api::merge_reaches(t, id))
+            .unwrap()
+    };
+    assert!(reaches(&custom.id), "an open card on a custom board");
+    let gated = db.create_item(&new_item(&p, "Board"), &OWNER).unwrap();
+    assert!(!reaches(&gated.id), "a release-gated card not in Review");
+}
