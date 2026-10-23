@@ -83,10 +83,10 @@ impl Review {
     }
 }
 
-/// Marks each `must` or `should` finding resolved in the commit the same
-/// role approved after it (0.24.0): an approval carries no such finding
-/// open, so approving a later head means it was fixed there. `reviews` are
-/// in the order they were given.
+/// Marks each finding resolved in the commit the same role approved after
+/// it (0.24.0): an approval carries no `must` or `should` open, so a later
+/// one means those were fixed there, and a `nit` it didn't raise again was
+/// settled with it. `reviews` are in the order they were given.
 pub fn resolve_findings(reviews: &mut [Review]) {
     for later in 0..reviews.len() {
         if reviews[later].verdict != Verdict::Approved {
@@ -95,7 +95,7 @@ pub fn resolve_findings(reviews: &mut [Review]) {
         let (role, sha) = (reviews[later].role.clone(), reviews[later].sha.clone());
         for earlier in reviews[..later].iter_mut().filter(|r| r.role == role) {
             for finding in &mut earlier.findings {
-                if finding.severity != "nit" && finding.resolved_in.is_none() {
+                if finding.resolved_in.is_none() {
                     finding.resolved_in = Some(sha.clone());
                 }
             }
@@ -136,6 +136,7 @@ mod tests {
 
     #[test]
     fn a_later_approval_by_the_same_role_resolves_its_findings() {
+        // The approval itself may carry a nit: it stays open on that review.
         let mut reviews = vec![
             review(
                 "architect",
@@ -144,15 +145,23 @@ mod tests {
                 &["should", "nit"],
             ),
             review("ux", "a1", Verdict::ChangesRequested, &["must"]),
-            review("architect", "b2", Verdict::Approved, &[]),
+            review("architect", "b2", Verdict::Approved, &["nit"]),
         ];
         resolve_findings(&mut reviews);
         let architect = &reviews[0].findings;
         assert_eq!(architect[0].resolved_in.as_deref(), Some("b2"));
-        assert_eq!(architect[1].resolved_in, None, "a nit stays a nit");
+        assert_eq!(
+            architect[1].resolved_in.as_deref(),
+            Some("b2"),
+            "a nit it didn't raise again is settled too"
+        );
         assert_eq!(
             reviews[1].findings[0].resolved_in, None,
             "UX hasn't approved since"
+        );
+        assert_eq!(
+            reviews[2].findings[0].resolved_in, None,
+            "the latest nit is open"
         );
     }
 }
