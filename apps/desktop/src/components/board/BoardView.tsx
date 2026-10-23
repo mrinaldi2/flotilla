@@ -23,6 +23,8 @@ interface BoardViewProps {
   readonly openBoard?: string;
   /** The project's plan nodes while planning is on (0.21.0): new cards belong to one. */
   readonly planNodes?: BoardProps["planNodes"];
+  /** Opens a card's pull request in the Pull requests tab (0.24.0). */
+  readonly onOpenPr?: (number: number) => void;
   /** Stories: open with a panel or sheet showing, at a pinned "now". */
   readonly initial?: BoardProps["initial"];
   readonly now?: number;

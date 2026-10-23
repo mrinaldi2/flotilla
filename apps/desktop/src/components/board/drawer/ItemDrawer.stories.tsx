@@ -8,6 +8,7 @@ import { bot } from "../../../test/fixtures";
 import { create } from "@bufbuild/protobuf";
 import { ARTIFACTS_V2 } from "../../../protocol/chat";
 import { ItemAttachmentSchema } from "../../../protocol/gen/flotilla/board/v1/board_pb";
+import { prDaemon, waitingPr } from "../../../test/prFixtures";
 import { licensingQuestion, questionsClient, saintsQuestion } from "../../../test/questionFixtures";
 import ItemDrawer from "./ItemDrawer";
 import type { DrawerSize } from "./useDrawerSize";
@@ -89,3 +90,32 @@ function QuestionsDrawer(): ReactElement {
 
 /** The card's questions above its tabs (0.22.0), and its artifact link as a document. */
 export const Questions: Story = () => <QuestionsDrawer />;
+
+function PrDrawer(): ReactElement {
+  const pr = { ...waitingPr(), itemId: "H-017", base: "develop", title: "Items in SQLite" };
+  const client = prDaemon([pr])
+    .onBoard("itemGet", () => ({ case: "item", value: itemDetail() }))
+    .onBoard("itemMoveCheck", () => ({ case: "moveCheck", value: drawerCheck() }));
+  return (
+    <div className="board-view" style={{ height: 720 }}>
+      <ItemDrawer
+        api={client}
+        client={client}
+        projectId={pr.projectId}
+        connected
+        itemId="H-017"
+        columns={defaultColumns()}
+        bots={BOTS}
+        canComment
+        onClose={noop}
+        onMove={noop}
+        onOpenPr={noop}
+        now={() => DRAWER_NOW}
+        initialSize={{ width: DRAWER_DEFAULT, wide: false }}
+      />
+    </div>
+  );
+}
+
+/** The card's pull request under its status, with what it waits for (0.24.0). */
+export const PullRequest: Story = () => <PrDrawer />;

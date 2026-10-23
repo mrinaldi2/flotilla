@@ -239,6 +239,9 @@ function Board({ ctx }: { readonly ctx: TabContext }): ReactElement {
       canControl={daemon.canControl}
       addToast={ctx.addToast}
       planNodes={nodesWhenOn(ctx.plan.status)}
+      onOpenPr={
+        client.capabilities.includes(PULL_REQUESTS) ? (pr) => ctx.onOpenPr(pr, false) : undefined
+      }
       {...boardOpening(daemon.selection)}
     />
   );

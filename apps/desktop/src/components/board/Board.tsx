@@ -47,6 +47,8 @@ export interface BoardProps {
   readonly openBoard?: string;
   /** The project's plan nodes while planning is on (0.21.0): new cards belong to one. */
   readonly planNodes?: readonly PlanNode[];
+  /** Opens a card's pull request in the Pull requests tab (0.24.0). */
+  readonly onOpenPr?: (number: number) => void;
   readonly model: BoardModel;
   readonly refresh: () => void;
   readonly adopt: (snapshot: BoardSnapshot) => void;
@@ -226,6 +228,7 @@ function Side(p: Parts & { readonly moves: BoardMoves }): ReactElement {
         connected={props.connected}
         leadId={project.lead_bot_id ?? undefined}
         onOpen={view.openItem}
+        onOpenPr={props.onOpenPr}
         onMove={canControl ? p.moves.openMenu : null}
         now={props.now}
         initialDiscuss={props.initial?.discuss}
