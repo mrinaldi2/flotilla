@@ -71,6 +71,26 @@ pub fn report_fact(
     system_move(t, project_id, &item, column, note, first, actor)
 }
 
+/// Whether a merged PR's fact goes to its card's board (0.24.0): a custom
+/// board's automations decide for any card still open, wherever its owner
+/// put the Review step; a release-gated board moves only a card in Review.
+pub fn merge_reaches(t: &BoardTx<'_>, item_id: &str) -> anyhow::Result<bool> {
+    let Some(item) = t.item(item_id)? else {
+        return Ok(false);
+    };
+    let custom = t
+        .board(&item.board_id)?
+        .is_some_and(|b| b.flow == BoardFlow::Custom);
+    Ok(if custom {
+        !matches!(
+            item.category,
+            ColumnCategory::Done | ColumnCategory::Cancelled
+        )
+    } else {
+        item.category == ColumnCategory::Review
+    })
+}
+
 /// Sends `item` back to work (0.23.5): to the nearest Doing column before
 /// the one it is in, on a board whose automations map no column for the
 /// fact that asked for it. Nothing moves when there is none, or when that
